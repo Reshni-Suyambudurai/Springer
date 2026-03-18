@@ -1,0 +1,89 @@
+:root {
+  /* Primary - Deep Professional Navy */
+  --primary-color: #032f8e;
+  --primary-hover: #1e40af;
+
+  /* Secondary - Soft Sky Blue (Used for light backgrounds/accents) */
+  --secondary-color: #6099f5;
+  --secondary-hover: #3b82f6;
+
+  /* Background & Text */
+  --bg-color: #f8fafc;
+  --text-color: #0f172a;
+
+  /* Navbar - Keeping it white for a clean, light look */
+  --navbar-bg: #ffffff;
+  --navbar-text: #0f172a;
+
+  /* Cards - Slate 50 border for subtle separation */
+  --card-bg: #ffffff;
+  --card-border: #e2e8f0;
+
+  /* General */
+  --border-color: #e2e8f0;
+
+  /* Inputs */
+  --input-bg: #ffffff;
+  --input-border: #cbd5e1;
+
+  /* Status Colors (Standard accessible palette) */
+  --success-color: #16a34a;
+  --warning-color: #ca8a04;
+  --danger-color: #dc2626;
+
+  /* Buttons */
+  --btn-color: #041d51;
+  --btn-hover: #5e9afa;
+
+  /* Shadows */
+  --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --card-shadow-hover: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+
+  /* Gradient */
+  --gradient-primary: linear-gradient(135deg, #032f8e, #3b82f6);
+}
+
+[data-theme="dark"] {
+  /* Primary - Lightened for visibility on dark backgrounds */
+  --primary-color: #3b82f6; 
+  --primary-hover: #60a5fa;
+
+  /* Secondary - Using a lighter tint for dark mode */
+  --secondary-color: #ffffff;
+  --secondary-hover: #e1eeffc6;
+
+  /* Background & Text */
+  --bg-color: #000001f7; /* Deepest Navy-Black */
+  --text-color: #f1f5f9;
+
+  /* Navbar */
+  --navbar-bg: #031f5d;
+  --navbar-text: #f1f5f9;
+
+  /* Cards */
+  --card-bg: #0f172a;
+  --card-border: #1e293b;
+
+  /* General */
+  --border-color: #1e293b;
+
+  /* Inputs */
+  --input-bg: #1e293b;
+  --input-border: #334155;
+
+  /* Status Colors - Brighter for Dark Mode */
+  --success-color: #4ade80;
+  --warning-color: #fbbf24;
+  --danger-color: #f87171;
+
+  /* Buttons */
+  --btn-color: #1e06fa;
+  --btn-hover: #60a5fa;
+
+  /* Shadows */
+  --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
+  --card-shadow-hover: 0 10px 15px -3px rgba(0, 0, 0, 0.6);
+
+  /* Gradient */
+  --gradient-primary: linear-gradient(135deg, #3b82f6, #60a5fa);
+}
