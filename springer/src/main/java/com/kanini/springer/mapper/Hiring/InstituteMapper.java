@@ -12,7 +12,7 @@ public class InstituteMapper {
         response.setInstituteId(institute.getInstituteId());
         response.setInstituteName(institute.getInstituteName());
         response.setInstituteTier(institute.getInstituteTier() != null ? institute.getInstituteTier().toString() : null);
-        response.setLocation(institute.getLocation());
+     
         response.setState(institute.getState());
         response.setCity(institute.getCity());
         response.setIsActive(institute.getIsActive());

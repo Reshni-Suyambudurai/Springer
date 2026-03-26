@@ -5,6 +5,8 @@ import com.kanini.springer.dto.Hiring.HiringCycleResponse;
 import com.kanini.springer.dto.Hiring.HiringCycleSummaryResponse;
 import com.kanini.springer.entity.HiringReq.HiringCycle;
 import com.kanini.springer.entity.enums.Enums.CycleStatus;
+import com.kanini.springer.exception.ResourceNotFoundException;
+import com.kanini.springer.exception.ValidationException;
 import com.kanini.springer.mapper.Hiring.HiringCycleMapper;
 import com.kanini.springer.repository.Hiring.HiringCycleRepository;
 import com.kanini.springer.service.Hiring.IHiringCycleService;
@@ -28,12 +30,12 @@ public class HiringCycleServiceImpl implements IHiringCycleService {
     public HiringCycleResponse createCycle(HiringCycleRequest request) {
         // Validation: Check if cycle year already exists
         if (cycleRepository.findByCycleYear(request.getCycleYear()).isPresent()) {
-            throw new RuntimeException("Hiring cycle for year " + request.getCycleYear() + " already exists");
+            throw new ValidationException("Hiring cycle for year " + request.getCycleYear() + " already exists");
         }
         
         // Validation: Cycle year should be current year or future
         if (request.getCycleYear() < java.time.Year.now().getValue()) {
-            throw new RuntimeException("Cycle year cannot be in the past");
+            throw new ValidationException("Cycle year cannot be in the past");
         }
         
         HiringCycle cycle = new HiringCycle();
@@ -48,7 +50,7 @@ public class HiringCycleServiceImpl implements IHiringCycleService {
             try {
                 cycle.setJd(request.getJd().getBytes());
             } catch (IOException e) {
-                throw new RuntimeException("Failed to upload job description file: " + e.getMessage());
+                throw new ValidationException("Failed to upload job description file: " + e.getMessage());
             }
         }
         
@@ -59,7 +61,7 @@ public class HiringCycleServiceImpl implements IHiringCycleService {
     @Override
     public HiringCycleResponse getCycleById(Long cycleId) {
         HiringCycle cycle = cycleRepository.findById(cycleId)
-                .orElseThrow(() -> new RuntimeException("Hiring cycle not found with ID: " + cycleId));
+                .orElseThrow(() -> new ResourceNotFoundException("Hiring cycle", "ID", cycleId));
         return mapper.toResponse(cycle);
     }
     
@@ -90,7 +92,7 @@ public class HiringCycleServiceImpl implements IHiringCycleService {
                     .map(mapper::toResponse)
                     .collect(Collectors.toList());
         } catch (IllegalArgumentException e) {
-            throw new RuntimeException("Invalid cycle status: " + status + ". Valid values are: OPEN, CLOSED");
+            throw new ValidationException("Invalid cycle status: " + status + ". Valid values are: OPEN, CLOSED");
         }
     }
     
@@ -98,7 +100,7 @@ public class HiringCycleServiceImpl implements IHiringCycleService {
     @Transactional
     public HiringCycleResponse updateCycle(Long cycleId, HiringCycleRequest request) {
         HiringCycle cycle = cycleRepository.findById(cycleId)
-                .orElseThrow(() -> new RuntimeException("Hiring cycle not found with ID: " + cycleId));
+                .orElseThrow(() -> new ResourceNotFoundException("Hiring cycle", "ID", cycleId));
 
         // Partial update - only update fields that are provided
         
@@ -107,7 +109,7 @@ public class HiringCycleServiceImpl implements IHiringCycleService {
             // Validation: If changing year, check if new year already exists
             if (!cycle.getCycleYear().equals(request.getCycleYear())) {
                 if (cycleRepository.findByCycleYear(request.getCycleYear()).isPresent()) {
-                    throw new RuntimeException("Hiring cycle for year " + request.getCycleYear() + " already exists");
+                    throw new ValidationException("Hiring cycle for year " + request.getCycleYear() + " already exists");
                 }
             }
             cycle.setCycleYear(request.getCycleYear());
@@ -133,7 +135,7 @@ public class HiringCycleServiceImpl implements IHiringCycleService {
             try {
                 cycle.setJd(request.getJd().getBytes());
             } catch (IOException e) {
-                throw new RuntimeException("Failed to upload job description file: " + e.getMessage());
+                throw new ValidationException("Failed to upload job description file: " + e.getMessage());
             }
         }
         
@@ -145,11 +147,11 @@ public class HiringCycleServiceImpl implements IHiringCycleService {
     
     public void deleteCycle(Long cycleId) {
         HiringCycle cycle = cycleRepository.findById(cycleId)
-                .orElseThrow(() -> new RuntimeException("Hiring cycle not found with ID: " + cycleId));
+                .orElseThrow(() -> new ResourceNotFoundException("Hiring cycle", "ID", cycleId));
         
         // Validation: Cannot delete cycle if it has demands
         if (cycle.getHiringDemands() != null && !cycle.getHiringDemands().isEmpty()) {
-            throw new RuntimeException("Cannot delete cycle with existing hiring demands");
+            throw new ValidationException("Cannot delete cycle with existing hiring demands");
         }
         
         cycleRepository.delete(cycle);
@@ -158,7 +160,7 @@ public class HiringCycleServiceImpl implements IHiringCycleService {
     @Override
     public HiringCycleResponse toggleCycleStatus(Long cycleId) {
         HiringCycle cycle = cycleRepository.findById(cycleId)
-                .orElseThrow(() -> new RuntimeException("Hiring cycle not found with ID: " + cycleId));
+                .orElseThrow(() -> new ResourceNotFoundException("Hiring cycle", "ID", cycleId));
         
         // Toggle status between OPEN and CLOSED
         if (cycle.getStatus() == CycleStatus.OPEN) {
@@ -174,10 +176,10 @@ public class HiringCycleServiceImpl implements IHiringCycleService {
     @Override
     public byte[] getJdByCycleId(Long cycleId) {
         HiringCycle cycle = cycleRepository.findById(cycleId)
-                .orElseThrow(() -> new RuntimeException("Hiring cycle not found with ID: " + cycleId));
+                .orElseThrow(() -> new ResourceNotFoundException("Hiring cycle", "ID", cycleId));
         
         if (cycle.getJd() == null || cycle.getJd().length == 0) {
-            throw new RuntimeException("No job description file found for cycle ID: " + cycleId);
+            throw new ResourceNotFoundException("Job description file", "cycle ID", cycleId);
         }
         
         return cycle.getJd();

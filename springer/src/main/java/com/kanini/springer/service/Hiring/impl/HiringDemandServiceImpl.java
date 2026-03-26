@@ -10,6 +10,8 @@ import com.kanini.springer.entity.HiringReq.User;
 import com.kanini.springer.entity.enums.Enums.ApprovalStatus;
 import com.kanini.springer.entity.enums.Enums.BusinessUnit;
 import com.kanini.springer.entity.enums.Enums.CycleStatus;
+import com.kanini.springer.exception.ResourceNotFoundException;
+import com.kanini.springer.exception.ValidationException;
 import com.kanini.springer.mapper.Hiring.HiringDemandMapper;
 import com.kanini.springer.repository.Drive.RequisitionSkillRepository;
 import com.kanini.springer.repository.Hiring.HiringCycleRepository;
@@ -41,27 +43,27 @@ public class HiringDemandServiceImpl implements IHiringDemandService {
     public HiringDemandResponse createDemand(HiringDemandRequest request, Long userId) {
         // Validation: Check if cycle exists
         HiringCycle cycle = cycleRepository.findById(request.getCycleId())
-                .orElseThrow(() -> new RuntimeException("Hiring cycle not found with ID: " + request.getCycleId()));
+                .orElseThrow(() -> new ResourceNotFoundException("Hiring cycle", "ID", request.getCycleId()));
         
         // Validation: Check if cycle is OPEN
         if (cycle.getStatus() != CycleStatus.OPEN) {
-            throw new RuntimeException("Cannot create demand for a closed hiring cycle");
+            throw new ValidationException("Cannot create demand for a closed hiring cycle");
         }
         
         // Validation: Check if user exists
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found with ID: " + userId));
+                .orElseThrow(() -> new ResourceNotFoundException("User", "ID", userId));
         
         // Validation: Demand count must be positive
         if (request.getDemandCount() <= 0) {
-            throw new RuntimeException("Demand count must be greater than zero");
+            throw new ValidationException("Demand count must be greater than zero");
         }
         
         // Validation: Check if all skill IDs exist
         List<Skill> skills = new ArrayList<>();
         for (Long skillId : request.getSkillIds()) {
             Skill skill = skillRepository.findById(skillId)
-                    .orElseThrow(() -> new RuntimeException("Skill not found with ID: " + skillId));
+                    .orElseThrow(() -> new ResourceNotFoundException("Skill", "ID", skillId));
             skills.add(skill);
         }
         
@@ -87,8 +89,9 @@ public class HiringDemandServiceImpl implements IHiringDemandService {
         requisitionSkillRepository.saveAll(requisitionSkills);
         
         // Reload demand to get the requisition skills for response
-        savedDemand = demandRepository.findById(savedDemand.getDemandId())
-                .orElseThrow(() -> new RuntimeException("Error retrieving saved demand"));
+        Long demandId = savedDemand.getDemandId();
+        savedDemand = demandRepository.findById(demandId)
+                .orElseThrow(() -> new ResourceNotFoundException("Hiring demand", "ID", demandId));
         
         return mapper.toResponse(savedDemand);
     }
@@ -96,7 +99,7 @@ public class HiringDemandServiceImpl implements IHiringDemandService {
     @Override
     public HiringDemandResponse getDemandById(Long demandId) {
         HiringDemand demand = demandRepository.findById(demandId)
-                .orElseThrow(() -> new RuntimeException("Hiring demand not found with ID: " + demandId));
+                .orElseThrow(() -> new ResourceNotFoundException("Hiring demand", "ID", demandId));
         return mapper.toResponse(demand);
     }
     
@@ -111,7 +114,7 @@ public class HiringDemandServiceImpl implements IHiringDemandService {
     public List<HiringDemandResponse> getDemandsByCycle(Long cycleId) {
         // Validation: Check if cycle exists
         if (!cycleRepository.existsById(cycleId)) {
-            throw new RuntimeException("Hiring cycle not found with ID: " + cycleId);
+            throw new ResourceNotFoundException("Hiring cycle", "ID", cycleId);
         }
         
         return demandRepository.findByCycleCycleId(cycleId).stream()
@@ -127,7 +130,7 @@ public class HiringDemandServiceImpl implements IHiringDemandService {
                     .map(mapper::toResponse)
                     .collect(Collectors.toList());
         } catch (IllegalArgumentException e) {
-            throw new RuntimeException("Invalid approval status: " + status + 
+            throw new ValidationException("Invalid approval status: " + status + 
                     ". Valid values are: DRAFT, SUBMITTED, APPROVED, REJECTED");
         }
     }
@@ -136,7 +139,7 @@ public class HiringDemandServiceImpl implements IHiringDemandService {
     @Transactional
     public HiringDemandResponse updateDemand(Long demandId, HiringDemandRequest request) {
         HiringDemand demand = demandRepository.findById(demandId)
-                .orElseThrow(() -> new RuntimeException("Hiring demand not found with ID: " + demandId));
+                .orElseThrow(() -> new ResourceNotFoundException("Hiring demand", "ID", demandId));
         
         // Partial update - only update fields that are provided
         
@@ -145,10 +148,10 @@ public class HiringDemandServiceImpl implements IHiringDemandService {
             // Validation: If changing cycle, check if new cycle exists and is OPEN
             if (!demand.getCycle().getCycleId().equals(request.getCycleId())) {
                 HiringCycle newCycle = cycleRepository.findById(request.getCycleId())
-                        .orElseThrow(() -> new RuntimeException("Hiring cycle not found with ID: " + request.getCycleId()));
+                        .orElseThrow(() -> new ResourceNotFoundException("Hiring cycle", "ID", request.getCycleId()));
                 
                 if (newCycle.getStatus() != CycleStatus.OPEN) {
-                    throw new RuntimeException("Cannot move demand to a closed hiring cycle");
+                    throw new ValidationException("Cannot move demand to a closed hiring cycle");
                 }
                 demand.setCycle(newCycle);
             }
@@ -163,7 +166,7 @@ public class HiringDemandServiceImpl implements IHiringDemandService {
         if (request.getDemandCount() != null) {
             // Validation: Demand count must be positive
             if (request.getDemandCount() <= 0) {
-                throw new RuntimeException("Demand count must be greater than zero");
+                throw new ValidationException("Demand count must be greater than zero");
             }
             demand.setDemandCount(request.getDemandCount());
         }
@@ -191,7 +194,7 @@ public class HiringDemandServiceImpl implements IHiringDemandService {
             List<Skill> skills = new ArrayList<>();
             for (Long skillId : request.getSkillIds()) {
                 Skill skill = skillRepository.findById(skillId)
-                        .orElseThrow(() -> new RuntimeException("Skill not found with ID: " + skillId));
+                        .orElseThrow(() -> new ResourceNotFoundException("Skill", "ID", skillId));
                 skills.add(skill);
             }
             
@@ -210,7 +213,7 @@ public class HiringDemandServiceImpl implements IHiringDemandService {
         
         // Reload demand to get the updated requisition skills
         updatedDemand = demandRepository.findById(demandId)
-                .orElseThrow(() -> new RuntimeException("Error retrieving updated demand"));
+                .orElseThrow(() -> new ResourceNotFoundException("Hiring demand", "ID", demandId));
         
         return mapper.toResponse(updatedDemand);
     }
@@ -219,11 +222,11 @@ public class HiringDemandServiceImpl implements IHiringDemandService {
     @Transactional
     public void deleteDemand(Long demandId) {
         HiringDemand demand = demandRepository.findById(demandId)
-                .orElseThrow(() -> new RuntimeException("Hiring demand not found with ID: " + demandId));
+                .orElseThrow(() -> new ResourceNotFoundException("Hiring demand", "ID", demandId));
         
         // Validation: Cannot delete if demand is already approved
         if (demand.getApprovalStatus() == ApprovalStatus.APPROVED) {
-            throw new RuntimeException("Cannot delete approved hiring demand");
+            throw new ValidationException("Cannot delete approved hiring demand");
         }
         
         // Delete associated requisition skills first

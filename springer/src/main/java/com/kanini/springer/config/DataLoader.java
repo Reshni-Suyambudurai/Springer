@@ -4,6 +4,8 @@ import com.kanini.springer.entity.HiringReq.*;
 import com.kanini.springer.entity.enums.Enums.*;
 import com.kanini.springer.repository.Hiring.HiringCycleRepository;
 import com.kanini.springer.repository.Hiring.InstituteRepository;
+import com.kanini.springer.repository.Hiring.InstituteProgramRepository;
+import com.kanini.springer.repository.Hiring.ProgramRepository;
 import com.kanini.springer.repository.Hiring.RoleRepository;
 import com.kanini.springer.repository.Hiring.SkillRepository;
 import com.kanini.springer.repository.Hiring.UserRepository;
@@ -16,6 +18,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * Data loader to seed initial/demo data into the database
@@ -30,6 +33,8 @@ public class DataLoader {
     private final HiringCycleRepository hiringCycleRepository;
     private final InstituteRepository instituteRepository;
     private final SkillRepository skillRepository;
+    private final ProgramRepository programRepository;
+    private final InstituteProgramRepository instituteProgramRepository;
 
     @Bean
     @Transactional
@@ -55,7 +60,13 @@ public class DataLoader {
             // 4. Seed Institutes
             seedInstitutes();
 
-            // 5. Seed Skills
+            // 5. Seed Programs
+            seedPrograms();
+
+            // 6. Seed Institute Programs (relationships)
+            seedInstitutePrograms();
+
+            // 7. Seed Skills
             seedSkills();
 
             log.info("Data seeding completed successfully!");
@@ -96,18 +107,16 @@ public class DataLoader {
         Role hiringManagerRole = roleRepository.findByRoleName(RoleName.HIRING_MANAGER).orElseThrow();
         Role membersRole = roleRepository.findByRoleName(RoleName.MEMBERS).orElseThrow();
         Role adminRole = roleRepository.findByRoleName(RoleName.SYSTEM_ADMIN).orElseThrow();
-        Role techincalTrainRole = roleRepository.findByRoleName(RoleName.TRAINING_COORDINATOR).orElseThrow();
-
+        Role trainingCoordinatorRole = roleRepository.findByRoleName(RoleName.TRAINING_COORDINATOR).orElseThrow();
         // Create users
         User[] users = {
             createUser("Sudha", "sudha@kanini.com", "password123", "Talent Acquisition", "Chennai", taHeadRole),
             createUser("Mozhi", "mozhi@kanini.com", "password123", "Talent Acquisition", "Bangalore", taRecruiterRole),
-            createUser("Priya", "priya@kanini.com", "password123", "Talent Acquisition", "Chennai", taHeadRole),
-            createUser("Lavanya", "lavanya@kanini.com", "password123", "Technical Trainer", "Bangalore", techincalTrainRole),
-            createUser("Parthiban", "parthiban@kanini.com", "password123", "Product Engineering", "Coimbatore", hiringManagerRole),
+            createUser("Priya", "priya@kanini.com", "password123", "Product Engineering", "Chennai", hiringManagerRole),
+            createUser("Soundharya", "soundharya@kanini.com", "password123", "HR & Analytics", "Bangalore", hiringManagerRole),
+            createUser("Ramesh", "ramesh@kanini.com", "password123", "Product Engineering", "Coimbatore", membersRole),
             createUser("Reshni", "reshni@kanini.com", "password123", "Data Analytics & AI", "Coimbatore", adminRole),
-            createUser("Ramesh", "ramesh@kanini.com", "password123", "Product Engineering", "Coimbatore", membersRole)
-        
+            createUser("Lavanya", "lavanya@kanini.com", "password123", "Data Analytics & AI", "Coimbatore", trainingCoordinatorRole)
         };
 
         userRepository.saveAll(java.util.Arrays.asList(users));
@@ -211,5 +220,84 @@ public class DataLoader {
         }
 
         log.info("Seeded {} skills", skillNames.length);
+    }
+
+    private void seedPrograms() {
+        log.info("Seeding programs...");
+
+        // Seed all available degree programs from the enum
+        ProgramName[] programs = ProgramName.values();
+        
+        for (ProgramName programName : programs) {
+            Program program = new Program();
+            program.setProgramName(programName);
+            programRepository.save(program);
+        }
+
+        log.info("Seeded {} programs", programs.length);
+    }
+
+    private void seedInstitutePrograms() {
+        log.info("Seeding institute programs relationships...");
+
+        // Get all institutes and programs
+        List<Institute> institutes = instituteRepository.findAll();
+        List<Program> programs = programRepository.findAll();
+
+        // Anna University - offers B.Tech, M.Tech, MBA, PhD
+        assignProgramsToInstitute(institutes, programs, "Anna University", 
+            ProgramName.B_TECH, ProgramName.M_TECH, ProgramName.MBA, ProgramName.PHD);
+
+        // SSN College of Engineering - offers B.E, M.E, M.Tech
+        assignProgramsToInstitute(institutes, programs, "SSN College of Engineering", 
+            ProgramName.B_E, ProgramName.M_E, ProgramName.M_TECH);
+
+        // PSG College of Technology - offers B.E, M.E, MBA, MCA
+        assignProgramsToInstitute(institutes, programs, "PSG College of Technology", 
+            ProgramName.B_E, ProgramName.M_E, ProgramName.MBA, ProgramName.MCA);
+
+        // Amrita Vishwa Vidyapeetham - offers B.Tech, M.Tech, MBA, PhD, MCA, M.Sc
+        assignProgramsToInstitute(institutes, programs, "Amrita Vishwa Vidyapeetham", 
+            ProgramName.B_TECH, ProgramName.M_TECH, ProgramName.MBA, ProgramName.PHD, ProgramName.MCA, ProgramName.M_SC);
+
+        // VIT University - offers B.Tech, M.Tech, MBA, PhD, MCA
+        assignProgramsToInstitute(institutes, programs, "VIT University", 
+            ProgramName.B_TECH, ProgramName.M_TECH, ProgramName.MBA, ProgramName.PHD, ProgramName.MCA);
+
+        // SRM Institute - offers B.Tech, M.Tech, MBA, BCA, MCA, BBA
+        assignProgramsToInstitute(institutes, programs, "SRM Institute of Science and Technology", 
+            ProgramName.B_TECH, ProgramName.M_TECH, ProgramName.MBA, ProgramName.BCA, ProgramName.MCA, ProgramName.BBA);
+
+        // Karunya Institute - offers B.E, M.E, MBA, DIPLOMA
+        assignProgramsToInstitute(institutes, programs, "Karunya Institute of Technology", 
+            ProgramName.B_E, ProgramName.M_E, ProgramName.MBA, ProgramName.DIPLOMA);
+
+        // CEG - College of Engineering Guindy - offers B.E, M.E, M.Tech, PhD
+        assignProgramsToInstitute(institutes, programs, "CEG - College of Engineering Guindy", 
+            ProgramName.B_E, ProgramName.M_E, ProgramName.M_TECH, ProgramName.PHD);
+
+        log.info("Seeded institute-program relationships for {} institutes", institutes.size());
+    }
+
+    private void assignProgramsToInstitute(List<Institute> institutes, List<Program> programs, 
+                                           String instituteName, ProgramName... programNames) {
+        Institute institute = institutes.stream()
+            .filter(i -> i.getInstituteName().contains(instituteName))
+            .findFirst().orElse(null);
+        
+        if (institute != null) {
+            for (ProgramName programName : programNames) {
+                Program program = programs.stream()
+                 .filter(p -> p.getProgramName() == programName)
+                 .findFirst().orElse(null);
+                
+                if (program != null) {
+                    InstituteProgram instituteProgram = new InstituteProgram();
+                    instituteProgram.setInstitute(institute);
+                    instituteProgram.setProgram(program);
+                    instituteProgramRepository.save(instituteProgram);
+                }
+            }
+        }
     }
 }

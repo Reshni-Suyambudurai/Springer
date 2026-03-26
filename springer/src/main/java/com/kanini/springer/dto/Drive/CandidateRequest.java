@@ -1,5 +1,6 @@
 package com.kanini.springer.dto.Drive;
 
+import com.kanini.springer.entity.enums.Enums.ApplicationType;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -29,6 +30,7 @@ public class CandidateRequest {
     private Integer passoutYear;
     private LocalDate dateOfBirth;
     private String aadhaarNumber;
+    private ApplicationType applicationType; // STANDARD or PREMIUM
     private List<Long> skillIds; // List of skill IDs from Skills master table
 }
 

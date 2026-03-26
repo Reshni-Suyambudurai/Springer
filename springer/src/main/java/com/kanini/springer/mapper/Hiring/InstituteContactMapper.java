@@ -15,6 +15,7 @@ public class InstituteContactMapper {
         response.setTpoName(contact.getTpoName());
         response.setTpoEmail(contact.getTpoEmail());
         response.setTpoMobile(contact.getTpoMobile());
+        response.setTpoDesignation(contact.getTpoDesignation());
         response.setTpoStatus(contact.getTpoStatus() != null ? contact.getTpoStatus().toString() : null);
         response.setIsPrimary(contact.getIsPrimary());
         response.setCreatedAt(contact.getCreatedAt());

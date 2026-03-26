@@ -6,6 +6,8 @@ import com.kanini.springer.entity.Drive.Drive;
 import com.kanini.springer.entity.Drive.DriveAssignment;
 import com.kanini.springer.entity.HiringReq.User;
 import com.kanini.springer.entity.enums.Enums.AssignmentStatus;
+import com.kanini.springer.exception.ResourceNotFoundException;
+import com.kanini.springer.exception.ValidationException;
 import com.kanini.springer.mapper.Drive.DriveAssignmentMapper;
 import com.kanini.springer.repository.Drive.ApplicationRepository;
 import com.kanini.springer.repository.Drive.DriveAssignmentRepository;
@@ -34,33 +36,33 @@ public class DriveAssignmentServiceImpl implements IDriveAssignmentService {
     public DriveAssignmentResponse createAssignment(DriveAssignmentRequest request) {
         // Validate required fields
         if (request.getDriveId() == null) {
-            throw new RuntimeException("Drive ID is required");
+            throw new ValidationException("Drive ID is required");
         }
         if (request.getUserId() == null) {
-            throw new RuntimeException("User ID is required");
+            throw new ValidationException("User ID is required");
         }
         if (request.getApplicationId() == null) {
-            throw new RuntimeException("Application ID is required");
+            throw new ValidationException("Application ID is required");
         }
         if (request.getCreatedBy() == null) {
-            throw new RuntimeException("Created by user ID is required");
+            throw new ValidationException("Created by user ID is required");
         }
         
         // Fetch drive
         Drive drive = driveRepository.findById(request.getDriveId())
-            .orElseThrow(() -> new RuntimeException("Drive not found with ID: " + request.getDriveId()));
+            .orElseThrow(() -> new ResourceNotFoundException("Drive", "ID", request.getDriveId()));
         
         // Fetch user (panel member)
         User user = userRepository.findById(request.getUserId())
-            .orElseThrow(() -> new RuntimeException("User not found with ID: " + request.getUserId()));
+            .orElseThrow(() -> new ResourceNotFoundException("User", "ID", request.getUserId()));
         
         // Fetch application
         Application application = applicationRepository.findById(request.getApplicationId())
-            .orElseThrow(() -> new RuntimeException("Application not found with ID: " + request.getApplicationId()));
+            .orElseThrow(() -> new ResourceNotFoundException("Application", "ID", request.getApplicationId()));
         
         // Fetch created by user
         User createdByUser = userRepository.findById(request.getCreatedBy())
-            .orElseThrow(() -> new RuntimeException("Created by user not found with ID: " + request.getCreatedBy()));
+            .orElseThrow(() -> new ResourceNotFoundException("User", "ID", request.getCreatedBy()));
         
         // Create assignment
         DriveAssignment assignment = new DriveAssignment();
@@ -96,29 +98,29 @@ public class DriveAssignmentServiceImpl implements IDriveAssignmentService {
         
         // Validate required fields
         if (request.getDriveId() == null) {
-            throw new RuntimeException("Drive ID is required");
+            throw new ValidationException("Drive ID is required");
         }
         if (request.getUserId() == null) {
-            throw new RuntimeException("User ID is required");
+            throw new ValidationException("User ID is required");
         }
         if (request.getApplicationIds() == null || request.getApplicationIds().isEmpty()) {
-            throw new RuntimeException("Application IDs list cannot be empty");
+            throw new ValidationException("Application IDs list cannot be empty");
         }
         if (request.getCreatedBy() == null) {
-            throw new RuntimeException("Created by user ID is required");
+            throw new ValidationException("Created by user ID is required");
         }
         
         // Fetch drive
         Drive drive = driveRepository.findById(request.getDriveId())
-            .orElseThrow(() -> new RuntimeException("Drive not found with ID: " + request.getDriveId()));
+            .orElseThrow(() -> new ResourceNotFoundException("Drive", "ID", request.getDriveId()));
         
         // Fetch user (panel member)
         User user = userRepository.findById(request.getUserId())
-            .orElseThrow(() -> new RuntimeException("User not found with ID: " + request.getUserId()));
+            .orElseThrow(() -> new ResourceNotFoundException("User", "ID", request.getUserId()));
         
         // Fetch created by user
         User createdByUser = userRepository.findById(request.getCreatedBy())
-            .orElseThrow(() -> new RuntimeException("Created by user not found with ID: " + request.getCreatedBy()));
+            .orElseThrow(() -> new ResourceNotFoundException("User", "ID", request.getCreatedBy()));
         
         // Parse status (default PLANNED)
         AssignmentStatus status = AssignmentStatus.PLANNED;
@@ -192,11 +194,11 @@ public class DriveAssignmentServiceImpl implements IDriveAssignmentService {
     @Transactional(readOnly = true)
     public DriveAssignmentResponse getAssignmentById(Integer assignmentId) {
         if (assignmentId == null) {
-            throw new RuntimeException("Assignment ID is required");
+            throw new ValidationException("Assignment ID is required");
         }
         
         DriveAssignment assignment = driveAssignmentRepository.findById(assignmentId)
-            .orElseThrow(() -> new RuntimeException("Assignment not found with ID: " + assignmentId));
+            .orElseThrow(() -> new ResourceNotFoundException("Assignment", "ID", assignmentId));
         
         return mapper.toResponse(assignment);
     }
@@ -205,7 +207,7 @@ public class DriveAssignmentServiceImpl implements IDriveAssignmentService {
     @Transactional(readOnly = true)
     public List<DriveAssignmentResponse> getAssignmentsByDriveId(Long driveId) {
         if (driveId == null) {
-            throw new RuntimeException("Drive ID is required");
+            throw new ValidationException("Drive ID is required");
         }
         
         List<DriveAssignment> assignments = driveAssignmentRepository.findByDriveDriveId(driveId);
@@ -219,23 +221,23 @@ public class DriveAssignmentServiceImpl implements IDriveAssignmentService {
     @Transactional
     public DriveAssignmentResponse updateAssignmentStatus(Integer assignmentId, DriveAssignmentStatusUpdateRequest request) {
         if (assignmentId == null) {
-            throw new RuntimeException("Assignment ID is required");
+            throw new ValidationException("Assignment ID is required");
         }
         
         if (request.getStatus() == null || request.getStatus().isBlank()) {
-            throw new RuntimeException("Status is required");
+            throw new ValidationException("Status is required");
         }
         
         // Find assignment
         DriveAssignment assignment = driveAssignmentRepository.findById(assignmentId)
-            .orElseThrow(() -> new RuntimeException("Assignment not found with ID: " + assignmentId));
+            .orElseThrow(() -> new ResourceNotFoundException("Assignment", "ID", assignmentId));
         
         // Parse and validate status
         AssignmentStatus newStatus;
         try {
             newStatus = AssignmentStatus.valueOf(request.getStatus());
         } catch (IllegalArgumentException e) {
-            throw new RuntimeException("Invalid status: " + request.getStatus());
+            throw new ValidationException("Invalid status: " + request.getStatus());
         }
         
         // Update status
@@ -248,12 +250,12 @@ public class DriveAssignmentServiceImpl implements IDriveAssignmentService {
     @Transactional
     public DriveAssignmentResponse deleteAssignment(Integer assignmentId) {
         if (assignmentId == null) {
-            throw new RuntimeException("Assignment ID is required");
+            throw new ValidationException("Assignment ID is required");
         }
         
         // Find assignment
         DriveAssignment assignment = driveAssignmentRepository.findById(assignmentId)
-            .orElseThrow(() -> new RuntimeException("Assignment not found with ID: " + assignmentId));
+            .orElseThrow(() -> new ResourceNotFoundException("Assignment", "ID", assignmentId));
         
         // Toggle isActive (soft delete)
         assignment.setIsActive(!assignment.getIsActive());
@@ -267,7 +269,7 @@ public class DriveAssignmentServiceImpl implements IDriveAssignmentService {
         BulkDriveAssignmentResponse response = new BulkDriveAssignmentResponse();
         
         if (request.getAssignmentIds() == null || request.getAssignmentIds().isEmpty()) {
-            throw new RuntimeException("Assignment IDs list cannot be empty");
+            throw new ValidationException("Assignment IDs list cannot be empty");
         }
         
         int totalProcessed = 0;

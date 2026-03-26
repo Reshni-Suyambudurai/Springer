@@ -21,6 +21,7 @@ public class InstituteWithTPOsResponse {
     private Boolean isActive;
     private LocalDateTime createdAt;
     private List<TPODetails> tpoDetails;
+    private List<ProgramDetails> programs; // Programs offered by this institute
     
     @Data
     @NoArgsConstructor
@@ -30,8 +31,17 @@ public class InstituteWithTPOsResponse {
         private String tpoName;
         private String tpoEmail;
         private String tpoMobile;
+        private String tpoDesignation;
         private String tpoStatus;
         private Boolean isPrimary;
         private LocalDateTime createdAt;
+    }
+    
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ProgramDetails {
+        private Long programId;
+        private String programName;
     }
 }

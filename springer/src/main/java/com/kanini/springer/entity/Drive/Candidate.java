@@ -16,7 +16,10 @@ import com.kanini.springer.entity.DocumentProcessing.DocumentSubmission;
 import com.kanini.springer.entity.DocumentProcessing.OfferLetter;
 import com.kanini.springer.entity.HiringReq.HiringCycle;
 import com.kanini.springer.entity.HiringReq.Institute;
-import com.kanini.springer.entity.enums.Enums.CandidateStatus;
+import com.kanini.springer.entity.enums.Enums.ApplicationType;
+import com.kanini.springer.entity.enums.Enums.ApplicationStage;
+
+import com.kanini.springer.entity.enums.Enums.LifecycleStatus;
 
 /**
  * The candidates details who appear for the drive
@@ -31,7 +34,7 @@ import com.kanini.springer.entity.enums.Enums.CandidateStatus;
     indexes = {
         @Index(name = "idx_candidate_institute_id", columnList = "institute_id"),
         @Index(name = "idx_candidate_cycle_id", columnList = "cycle_id"),
-        @Index(name = "idx_candidate_status", columnList = "status"),
+        @Index(name = "idx_candidate_application_stage", columnList = "applicationStage"),
         @Index(name = "idx_candidate_passout_year", columnList = "passoutYear")
     }
 )
@@ -88,8 +91,18 @@ public class Candidate {
     @Column(columnDefinition = "TEXT")
     private String reason; // Required only when eligibility was overridden/exception
 
+    @Column(columnDefinition = "TEXT")
+    private String statusHistory; // To store all the status update action with the userId and createdAt time (JSON format)
+
     @Enumerated(EnumType.STRING)
-    private CandidateStatus status;
+    private ApplicationType applicationType; // STANDARD, PREMIUM
+
+    @Enumerated(EnumType.STRING)
+    private ApplicationStage applicationStage; // APPLIED, SHORTLISTED, INVITED, SCHEDULED, SELECTED, OFFERED,JOINED, REJECTED, DROPPED
+
+    @Enumerated(EnumType.STRING)
+    private LifecycleStatus lifecycleStatus; // ACTIVE, CLOSED
+
 
     private LocalDateTime updatedAt;
 

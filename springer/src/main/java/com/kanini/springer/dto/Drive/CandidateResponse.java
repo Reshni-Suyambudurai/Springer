@@ -36,7 +36,10 @@ public class CandidateResponse {
     private String aadhaarNumber;
     private Boolean isEligible;
     private String reason;
-    private String status;
+    private String statusHistory;
+    private String applicationType; // STANDARD or PREMIUM
+    private String applicationStage; // APPLIED, SHORTLISTED, etc.
+    private String lifecycleStatus; // ACTIVE or CLOSED
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private List<String> skillNames; // List of skill names

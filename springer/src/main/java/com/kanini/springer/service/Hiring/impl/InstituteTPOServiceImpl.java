@@ -6,6 +6,8 @@ import com.kanini.springer.dto.Hiring.InstituteContactResponse;
 import com.kanini.springer.entity.HiringReq.Institute;
 import com.kanini.springer.entity.HiringReq.InstituteContact;
 import com.kanini.springer.entity.enums.Enums.ContactStatus;
+import com.kanini.springer.exception.ResourceNotFoundException;
+import com.kanini.springer.exception.ValidationException;
 import com.kanini.springer.mapper.Hiring.InstituteContactMapper;
 import com.kanini.springer.repository.Hiring.InstituteContactRepository;
 import com.kanini.springer.repository.Hiring.InstituteRepository;
@@ -43,11 +45,11 @@ public class InstituteTPOServiceImpl implements IInstituteTPOService {
     public InstituteContactResponse createContact(InstituteContactRequest request) {
         // Validate that the institute exists
         Institute institute = instituteRepository.findById(request.getInstituteId())
-                .orElseThrow(() -> new RuntimeException("Institute not found with ID: " + request.getInstituteId()));
+                .orElseThrow(() -> new ResourceNotFoundException("Institute", "ID", request.getInstituteId()));
         
         // Validate that email is unique
         if (contactRepository.findByTpoEmail(request.getTpoEmail()).isPresent()) {
-            throw new RuntimeException("Contact already exists with email: " + request.getTpoEmail());
+            throw new ValidationException("Contact already exists with email: " + request.getTpoEmail());
         }
         
         InstituteContact contact = new InstituteContact();
@@ -55,6 +57,7 @@ public class InstituteTPOServiceImpl implements IInstituteTPOService {
         contact.setTpoName(request.getTpoName());
         contact.setTpoEmail(request.getTpoEmail());
         contact.setTpoMobile(request.getTpoMobile());
+        contact.setTpoDesignation(request.getTpoDesignation());
         
         if (request.getTpoStatus() != null && !request.getTpoStatus().isBlank()) {
             contact.setTpoStatus(ContactStatus.valueOf(request.getTpoStatus()));
@@ -147,6 +150,7 @@ public class InstituteTPOServiceImpl implements IInstituteTPOService {
                 contact.setTpoName(request.getTpoName());
                 contact.setTpoEmail(request.getTpoEmail());
                 contact.setTpoMobile(request.getTpoMobile());
+                contact.setTpoDesignation(request.getTpoDesignation());
                 
                 if (request.getTpoStatus() != null && !request.getTpoStatus().isBlank()) {
                     contact.setTpoStatus(ContactStatus.valueOf(request.getTpoStatus()));
@@ -205,7 +209,7 @@ public class InstituteTPOServiceImpl implements IInstituteTPOService {
     @Override
     public InstituteContactResponse getContactById(Integer tpoId) {
         InstituteContact contact = contactRepository.findByIdWithInstitute(tpoId)
-                .orElseThrow(() -> new RuntimeException("Contact not found with ID: " + tpoId));
+                .orElseThrow(() -> new ResourceNotFoundException("Contact", "ID", tpoId));
         return mapper.toResponse(contact);
     }
     
@@ -213,12 +217,12 @@ public class InstituteTPOServiceImpl implements IInstituteTPOService {
     @Transactional
     public InstituteContactResponse updateContact(Integer tpoId, InstituteContactRequest request) {
         InstituteContact contact = contactRepository.findById(tpoId)
-                .orElseThrow(() -> new RuntimeException("Contact not found with ID: " + tpoId));
+                .orElseThrow(() -> new ResourceNotFoundException("Contact", "ID", tpoId));
         
         // Partial update - only update fields that are provided
         if (request.getInstituteId() != null) {
             Institute institute = instituteRepository.findById(request.getInstituteId())
-                    .orElseThrow(() -> new RuntimeException("Institute not found with ID: " + request.getInstituteId()));
+                    .orElseThrow(() -> new ResourceNotFoundException("Institute", "ID", request.getInstituteId()));
             contact.setInstitute(institute);
         }
         
@@ -231,7 +235,7 @@ public class InstituteTPOServiceImpl implements IInstituteTPOService {
             contactRepository.findByTpoEmail(request.getTpoEmail())
                     .ifPresent(existingContact -> {
                         if (!existingContact.getTpoId().equals(tpoId)) {
-                            throw new RuntimeException("Contact already exists with email: " + request.getTpoEmail());
+                            throw new ValidationException("Contact already exists with email: " + request.getTpoEmail());
                         }
                     });
             contact.setTpoEmail(request.getTpoEmail());
@@ -239,6 +243,10 @@ public class InstituteTPOServiceImpl implements IInstituteTPOService {
         
         if (request.getTpoMobile() != null && !request.getTpoMobile().isBlank()) {
             contact.setTpoMobile(request.getTpoMobile());
+        }
+        
+        if (request.getTpoDesignation() != null) {
+            contact.setTpoDesignation(request.getTpoDesignation());
         }
         
         if (request.getTpoStatus() != null && !request.getTpoStatus().isBlank()) {
@@ -257,7 +265,7 @@ public class InstituteTPOServiceImpl implements IInstituteTPOService {
     @Transactional
     public void deleteContact(Integer tpoId) {
         InstituteContact contact = contactRepository.findById(tpoId)
-                .orElseThrow(() -> new RuntimeException("Contact not found with ID: " + tpoId));
+                .orElseThrow(() -> new ResourceNotFoundException("Contact", "ID", tpoId));
         
         // Toggle tpoStatus between ACTIVE and INACTIVE
         if (contact.getTpoStatus() == ContactStatus.ACTIVE) {
@@ -348,6 +356,7 @@ public class InstituteTPOServiceImpl implements IInstituteTPOService {
                 contact.setTpoName(request.getTpoName());
                 contact.setTpoEmail(request.getTpoEmail());
                 contact.setTpoMobile(request.getTpoMobile());
+                contact.setTpoDesignation(request.getTpoDesignation());
                 
                 if (request.getTpoStatus() != null && !request.getTpoStatus().isBlank()) {
                     contact.setTpoStatus(ContactStatus.valueOf(request.getTpoStatus()));

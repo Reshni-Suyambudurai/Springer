@@ -71,7 +71,6 @@ public class ManualOverride {
     public static class FieldChange {
         private String field;
         private Object old;
-        @Column(name = "new_value")
         private Object newValue;
     }
 }

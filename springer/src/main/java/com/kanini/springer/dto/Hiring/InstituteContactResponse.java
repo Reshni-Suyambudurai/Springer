@@ -17,6 +17,7 @@ public class InstituteContactResponse {
     private String tpoName;
     private String tpoEmail;
     private String tpoMobile;
+    private String tpoDesignation; // qualification of the tpo
     private String tpoStatus;
     private Boolean isPrimary;
     private LocalDateTime createdAt;

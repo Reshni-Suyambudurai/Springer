@@ -1,6 +1,7 @@
 package com.kanini.springer.service.Hiring;
 
 import com.kanini.springer.dto.Hiring.BulkInsertResponse;
+import com.kanini.springer.dto.Hiring.InstituteNameResponse;
 import com.kanini.springer.dto.Hiring.InstituteRequest;
 import com.kanini.springer.dto.Hiring.InstituteResponse;
 import com.kanini.springer.dto.Hiring.InstituteWithTPOsResponse;
@@ -50,4 +51,9 @@ public interface IInstituteService {
      * Get a single institute with its TPOs by institute ID
      */
     InstituteWithTPOsResponse getInstituteWithTPOsById(Long instituteId);
+    
+    /**
+     * Get all institute names and IDs only
+     */
+    List<InstituteNameResponse> getAllInstituteNames();
 }

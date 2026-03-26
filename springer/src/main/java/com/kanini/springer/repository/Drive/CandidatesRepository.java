@@ -1,7 +1,7 @@
 package com.kanini.springer.repository.Drive;
 
 import com.kanini.springer.entity.Drive.Candidate;
-import com.kanini.springer.entity.enums.Enums.CandidateStatus;
+import com.kanini.springer.entity.enums.Enums.ApplicationStage;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -29,9 +29,9 @@ public interface CandidatesRepository extends JpaRepository<Candidate, Long> {
     List<Candidate> findByInstituteInstituteId(Long instituteId);
     
     /**
-     * Find candidates by status
+     * Find candidates by stage
      */
-    List<Candidate> findByStatus(CandidateStatus status);
+    List<Candidate> findByApplicationStage(ApplicationStage stage);
     
     /**
      * Find candidates by cycle ID

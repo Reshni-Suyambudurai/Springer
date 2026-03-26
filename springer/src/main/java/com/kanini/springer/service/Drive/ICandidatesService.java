@@ -1,6 +1,8 @@
 package com.kanini.springer.service.Drive;
 
 import com.kanini.springer.dto.Drive.BulkCandidateCreateResponse;
+import com.kanini.springer.dto.Drive.BulkCandidateLifecycleUpdateRequest;
+import com.kanini.springer.dto.Drive.BulkCandidateLifecycleUpdateResponse;
 import com.kanini.springer.dto.Drive.BulkCandidateStatusUpdateRequest;
 import com.kanini.springer.dto.Drive.BulkCandidateStatusUpdateResponse;
 import com.kanini.springer.dto.Drive.CandidateRequest;
@@ -56,7 +58,7 @@ public interface ICandidatesService {
      * @param updatedBy User ID who is updating
      * @return Updated candidate response
      */
-    CandidateResponse updateCandidate(Long candidateId, CandidateUpdateRequest request, Long updatedBy);
+    CandidateResponse updateCandidate(Long candidateId, CandidateUpdateRequest request);
     
     /**
      * Update candidate status
@@ -70,5 +72,13 @@ public interface ICandidatesService {
      * @return Response with successful and failed updates
      */
     BulkCandidateStatusUpdateResponse bulkUpdateCandidateStatus(BulkCandidateStatusUpdateRequest request);
+    
+    /**
+     * Bulk update candidate lifecycle status
+     * Updates lifecycle status for all specified candidates
+     * @param request Bulk lifecycle update request with candidate IDs and new lifecycle status
+     * @return Response with successful and failed updates
+     */
+    BulkCandidateLifecycleUpdateResponse bulkUpdateCandidateLifecycleStatus(BulkCandidateLifecycleUpdateRequest request);
 }
 

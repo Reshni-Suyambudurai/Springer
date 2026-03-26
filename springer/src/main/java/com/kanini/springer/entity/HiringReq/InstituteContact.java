@@ -48,15 +48,23 @@ public class InstituteContact {
     @Pattern(regexp = "^[6-9]\\d{9}$", message = "Mobile number should be a valid 10-digit Indian number")
     private String tpoMobile;
     
+    private String tpoDesignation; // qualification of the tpo
+    
     @Enumerated(EnumType.STRING)
     private ContactStatus tpoStatus;
     
     private Boolean isPrimary; // true=primary contact
     
     private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
     
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
+    }
+      
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = LocalDateTime.now();
     }
 }

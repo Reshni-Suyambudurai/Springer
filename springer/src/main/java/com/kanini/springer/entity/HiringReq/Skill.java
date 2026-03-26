@@ -9,6 +9,7 @@ import java.util.List;
 
 import com.kanini.springer.entity.Drive.CandidateSkill;
 import com.kanini.springer.entity.Drive.RequisitionSkill;
+import com.kanini.springer.entity.enums.Enums.SkillCategory;
 
 /**
  * Master table containing all available skills in the system
@@ -30,6 +31,9 @@ public class Skill {
     private Long skillId;
     
     private String skillName; // e.g., Java, Testing, Python
+    
+    @Enumerated(EnumType.STRING)
+    private SkillCategory category; // TECHNICAL, SOFT_SKILL
     
     @OneToMany(mappedBy = "skill", cascade = CascadeType.ALL)
     private List<RequisitionSkill> requisitionSkills;

@@ -2,6 +2,7 @@ package com.kanini.springer.service.User.impl;
 
 import com.kanini.springer.dto.Authentication.LoginResponse;
 import com.kanini.springer.entity.HiringReq.User;
+import com.kanini.springer.exception.ValidationException;
 import com.kanini.springer.repository.Hiring.UserRepository;
 import com.kanini.springer.service.User.IUserService;
 import com.kanini.springer.util.JwtUtil;
@@ -21,16 +22,16 @@ public class UserServiceImp implements IUserService {
     public LoginResponse authenticate(String email, String password) {
         // Find user by email with role eagerly fetched
         User user = userRepository.findByEmailWithRole(email)
-                .orElseThrow(() -> new RuntimeException("Invalid email or password"));
+                .orElseThrow(() -> new ValidationException("Invalid email or password"));
         
         // Check password (Note: In production, use password encoder)
         if (!user.getPassword().equals(password)) {
-            throw new RuntimeException("Invalid email or password");
+            throw new ValidationException("Invalid email or password");
         }
         
         // Check if user is active
         if (!user.getIsActive()) {
-            throw new RuntimeException("User account is inactive");
+            throw new ValidationException("User account is inactive");
         }
         
         // Generate JWT token

@@ -10,6 +10,8 @@ import com.kanini.springer.entity.HiringReq.Institute;
 import com.kanini.springer.entity.HiringReq.User;
 import com.kanini.springer.entity.enums.Enums.DriveMode;
 import com.kanini.springer.entity.enums.Enums.DriveStatus;
+import com.kanini.springer.exception.ResourceNotFoundException;
+import com.kanini.springer.exception.ValidationException;
 import com.kanini.springer.mapper.Drive.DriveMapper;
 import com.kanini.springer.repository.Drive.DriveRepository;
 import com.kanini.springer.repository.Drive.DriveRoundRepository;
@@ -41,22 +43,22 @@ public class DriveScheduleServiceImpl implements IDriveScheduleService {
     public DriveResponse createDrive(DriveRequest request) {
         // Validate required fields
         if (request.getCycleId() == null) {
-            throw new RuntimeException("Cycle ID is required");
+            throw new ValidationException("Cycle ID is required");
         }
         if (request.getDriveName() == null || request.getDriveName().isBlank()) {
-            throw new RuntimeException("Drive name is required");
+            throw new ValidationException("Drive name is required");
         }
         if (request.getStartDate() == null) {
-            throw new RuntimeException("Start date is required");
+            throw new ValidationException("Start date is required");
         }
         if (request.getEndDate() == null) {
-            throw new RuntimeException("End date is required");
+            throw new ValidationException("End date is required");
         }
         if (request.getLocation() == null || request.getLocation().isBlank()) {
-            throw new RuntimeException("Location is required");
+            throw new ValidationException("Location is required");
         }
         if (request.getCreatedBy() == null) {
-            throw new RuntimeException("Created by user ID is required");
+            throw new ValidationException("Created by user ID is required");
         }
         
         // Convert request to entity using mapper
@@ -71,8 +73,9 @@ public class DriveScheduleServiceImpl implements IDriveScheduleService {
         }
         
         // Reload drive with rounds to return
-        Drive reloadedDrive = driveRepository.findById(savedDrive.getDriveId())
-            .orElseThrow(() -> new RuntimeException("Drive not found after creation"));
+        Long driveId = savedDrive.getDriveId();
+        Drive reloadedDrive = driveRepository.findById(driveId)
+            .orElseThrow(() -> new ResourceNotFoundException("Drive", "ID", driveId));
         
         return mapper.toResponse(reloadedDrive, true);
     }
@@ -81,11 +84,11 @@ public class DriveScheduleServiceImpl implements IDriveScheduleService {
     @Transactional(readOnly = true)
     public DriveResponse getDriveById(Long driveId) {
         if (driveId == null) {
-            throw new RuntimeException("Drive ID is required");
+            throw new ValidationException("Drive ID is required");
         }
         
         Drive drive = driveRepository.findById(driveId)
-            .orElseThrow(() -> new RuntimeException("Drive not found with ID: " + driveId));
+            .orElseThrow(() -> new ResourceNotFoundException("Drive", "ID", driveId));
         
         // Include rounds in response
         return mapper.toResponse(drive, true);
@@ -106,12 +109,12 @@ public class DriveScheduleServiceImpl implements IDriveScheduleService {
     @Transactional
     public DriveResponse updateDrive(Long driveId, DriveUpdateRequest request) {
         if (driveId == null) {
-            throw new RuntimeException("Drive ID is required");
+            throw new ValidationException("Drive ID is required");
         }
         
         // Find existing drive
         Drive drive = driveRepository.findById(driveId)
-            .orElseThrow(() -> new RuntimeException("Drive not found with ID: " + driveId));
+            .orElseThrow(() -> new ResourceNotFoundException("Drive", "ID", driveId));
         
         // Update fields if provided
         if (request.getDriveName() != null && !request.getDriveName().isBlank()) {
@@ -125,7 +128,7 @@ public class DriveScheduleServiceImpl implements IDriveScheduleService {
         // Update institute (can set to null for off-campus or update to new institute)
         if (request.getInstituteId() != null) {
             Institute institute = instituteRepository.findById(request.getInstituteId())
-                .orElseThrow(() -> new RuntimeException("Institute not found with ID: " + request.getInstituteId()));
+                .orElseThrow(() -> new ResourceNotFoundException("Institute", "ID", request.getInstituteId()));
             drive.setInstitute(institute);
             drive.setDriveMode(DriveMode.ON_CAMPUS);
         }
@@ -156,14 +159,14 @@ public class DriveScheduleServiceImpl implements IDriveScheduleService {
                 DriveStatus newStatus = DriveStatus.valueOf(request.getDriveStatus());
                 drive.setStatus(newStatus);
             } catch (IllegalArgumentException e) {
-                throw new RuntimeException("Invalid drive status: " + request.getDriveStatus());
+                throw new ValidationException("Invalid drive status: " + request.getDriveStatus());
             }
         }
         
         // Set updated by user
         if (request.getUpdatedBy() != null) {
             User updatedBy = userRepository.findById(request.getUpdatedBy())
-                .orElseThrow(() -> new RuntimeException("User not found with ID: " + request.getUpdatedBy()));
+                .orElseThrow(() -> new ResourceNotFoundException("User", "ID", request.getUpdatedBy()));
             drive.setUpdatedByUser(updatedBy);
         }
         
@@ -171,7 +174,7 @@ public class DriveScheduleServiceImpl implements IDriveScheduleService {
         // But check cutoffLocked flag first
         if (request.getRoundConfigIds() != null) {
             if (Boolean.TRUE.equals(drive.getCutoffLocked())) {
-                throw new RuntimeException("Cannot update drive rounds - cutoff is locked");
+                throw new ValidationException("Cannot update drive rounds - cutoff is locked");
             }
             
             // Delete existing rounds and create new ones
@@ -187,8 +190,9 @@ public class DriveScheduleServiceImpl implements IDriveScheduleService {
         Drive updatedDrive = driveRepository.save(drive);
         
         // Reload with rounds
-        Drive reloadedDrive = driveRepository.findById(updatedDrive.getDriveId())
-            .orElseThrow(() -> new RuntimeException("Drive not found after update"));
+        Long savedDriveId = updatedDrive.getDriveId();
+        Drive reloadedDrive = driveRepository.findById(savedDriveId)
+            .orElseThrow(() -> new ResourceNotFoundException("Drive", "ID", savedDriveId));
         
         return mapper.toResponse(reloadedDrive, true);
     }
@@ -201,7 +205,7 @@ public class DriveScheduleServiceImpl implements IDriveScheduleService {
         
         for (Long roundConfigId : roundConfigIds) {
             RoundTemplate roundTemplate = roundTemplateRepository.findById(roundConfigId)
-                .orElseThrow(() -> new RuntimeException("Round template not found with ID: " + roundConfigId));
+                .orElseThrow(() -> new ResourceNotFoundException("Round template", "ID", roundConfigId));
             
             DriveRound driveRound = new DriveRound();
             driveRound.setDrive(drive);

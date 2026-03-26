@@ -6,7 +6,8 @@ import com.kanini.springer.entity.Drive.Candidate;
 import com.kanini.springer.entity.Drive.CandidateSkill;
 import com.kanini.springer.entity.HiringReq.HiringCycle;
 import com.kanini.springer.entity.HiringReq.Institute;
-import com.kanini.springer.entity.enums.Enums.CandidateStatus;
+import com.kanini.springer.entity.enums.Enums.ApplicationStage;
+import com.kanini.springer.entity.enums.Enums.LifecycleStatus;
 import com.kanini.springer.repository.Hiring.HiringCycleRepository;
 import com.kanini.springer.repository.Hiring.InstituteRepository;
 import lombok.RequiredArgsConstructor;
@@ -46,6 +47,7 @@ public class CandidateMapper {
         response.setAadhaarNumber(candidate.getAadhaarNumber());
         response.setIsEligible(candidate.getIsEligible());
         response.setReason(candidate.getReason());
+        response.setStatusHistory(candidate.getStatusHistory());
         response.setCreatedAt(candidate.getCreatedAt());
         response.setUpdatedAt(candidate.getUpdatedAt());
         
@@ -62,9 +64,19 @@ public class CandidateMapper {
             response.setCycleId(candidate.getCycle().getCycleId());
         }
         
-        // Map status enum to string
-        if (candidate.getStatus() != null) {
-            response.setStatus(candidate.getStatus().toString());
+        // Map applicationType enum to string
+        if (candidate.getApplicationType() != null) {
+            response.setApplicationType(candidate.getApplicationType().toString());
+        }
+        
+        // Map applicationStage enum to string
+        if (candidate.getApplicationStage() != null) {
+            response.setApplicationStage(candidate.getApplicationStage().toString());
+        }
+        
+        // Map lifecycleStatus enum to string
+        if (candidate.getLifecycleStatus() != null) {
+            response.setLifecycleStatus(candidate.getLifecycleStatus().toString());
         }
         
         // Map candidate skills to skill names
@@ -126,9 +138,17 @@ public class CandidateMapper {
         candidate.setDateOfBirth(request.getDateOfBirth());
         candidate.setAadhaarNumber(request.getAadhaarNumber());
         
+        // Set applicationType from request
+        if (request.getApplicationType() != null) {
+            candidate.setApplicationType(request.getApplicationType());
+        }
+        
         // Note: isEligible and reason are set by eligibility validation, not from request
-        // Status is always APPLIED for new candidates
-        candidate.setStatus(CandidateStatus.APPLIED);
+        // ApplicationStage is always APPLIED for new candidates
+        candidate.setApplicationStage(ApplicationStage.APPLIED);
+        
+        // LifecycleStatus is always ACTIVE for new candidates
+        candidate.setLifecycleStatus(LifecycleStatus.ACTIVE);
         
         return candidate;
     }

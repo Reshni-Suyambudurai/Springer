@@ -7,6 +7,8 @@ import com.kanini.springer.dto.Drive.RoundTemplateResponse;
 import com.kanini.springer.dto.Drive.RoundTemplateUpdateRequest;
 import com.kanini.springer.entity.Drive.RoundTemplate;
 import com.kanini.springer.entity.HiringReq.User;
+import com.kanini.springer.exception.ResourceNotFoundException;
+import com.kanini.springer.exception.ValidationException;
 import com.kanini.springer.mapper.Drive.RoundTemplateMapper;
 import com.kanini.springer.repository.Drive.RoundTemplateRepository;
 import com.kanini.springer.repository.Hiring.UserRepository;
@@ -32,22 +34,22 @@ public class RoundTemplateServiceImpl implements IRoundTemplateService {
     public RoundTemplateResponse createRoundTemplate(RoundTemplateRequest request) {
         // Validate required fields
         if (request.getRoundNo() == null) {
-            throw new RuntimeException("Round number is required");
+            throw new ValidationException("Round number is required");
         }
         if (request.getRoundName() == null || request.getRoundName().isBlank()) {
-            throw new RuntimeException("Round name is required");
+            throw new ValidationException("Round name is required");
         }
         if (request.getOutoffScore() == null) {
-            throw new RuntimeException("Out of score is required");
+            throw new ValidationException("Out of score is required");
         }
         if (request.getMinScore() == null) {
-            throw new RuntimeException("Minimum score is required");
+            throw new ValidationException("Minimum score is required");
         }
         if (request.getWeightage() == null) {
-            throw new RuntimeException("Weightage is required");
+            throw new ValidationException("Weightage is required");
         }
         if (request.getCreatedBy() == null) {
-            throw new RuntimeException("Created by user ID is required");
+            throw new ValidationException("Created by user ID is required");
         }
         
         // Convert request to entity using mapper
@@ -63,11 +65,11 @@ public class RoundTemplateServiceImpl implements IRoundTemplateService {
     @Transactional(readOnly = true)
     public RoundTemplateResponse getRoundTemplateById(Long roundConfigId) {
         if (roundConfigId == null) {
-            throw new RuntimeException("Round template ID is required");
+            throw new ValidationException("Round template ID is required");
         }
         
         RoundTemplate roundTemplate = roundTemplateRepository.findById(roundConfigId)
-            .orElseThrow(() -> new RuntimeException("Round template not found with ID: " + roundConfigId));
+            .orElseThrow(() -> new ResourceNotFoundException("Round template", "ID", roundConfigId));
         
         return mapper.toResponse(roundTemplate);
     }
@@ -86,12 +88,12 @@ public class RoundTemplateServiceImpl implements IRoundTemplateService {
     @Transactional
     public RoundTemplateResponse updateRoundTemplate(Long roundConfigId, RoundTemplateUpdateRequest request) {
         if (roundConfigId == null) {
-            throw new RuntimeException("Round template ID is required");
+            throw new ValidationException("Round template ID is required");
         }
         
         // Find existing round template
         RoundTemplate roundTemplate = roundTemplateRepository.findById(roundConfigId)
-            .orElseThrow(() -> new RuntimeException("Round template not found with ID: " + roundConfigId));
+            .orElseThrow(() -> new ResourceNotFoundException("Round template", "ID", roundConfigId));
         
         // Update fields if provided
         if (request.getRoundNo() != null) {
@@ -120,7 +122,7 @@ public class RoundTemplateServiceImpl implements IRoundTemplateService {
                 String sectionsJson = objectMapper.writeValueAsString(request.getSections());
                 roundTemplate.setSections(sectionsJson);
             } catch (JsonProcessingException e) {
-                throw new RuntimeException("Failed to serialize sections to JSON: " + e.getMessage());
+                throw new ValidationException("Failed to serialize sections to JSON: " + e.getMessage());
             }
         }
         
@@ -138,12 +140,12 @@ public class RoundTemplateServiceImpl implements IRoundTemplateService {
     @Transactional
     public RoundTemplateResponse deleteRoundTemplate(Long roundConfigId) {
         if (roundConfigId == null) {
-            throw new RuntimeException("Round template ID is required");
+            throw new ValidationException("Round template ID is required");
         }
         
         // Find existing round template
         RoundTemplate roundTemplate = roundTemplateRepository.findById(roundConfigId)
-            .orElseThrow(() -> new RuntimeException("Round template not found with ID: " + roundConfigId));
+            .orElseThrow(() -> new ResourceNotFoundException("Round template", "ID", roundConfigId));
         
         // Toggle isActive status (soft delete)
         roundTemplate.setIsActive(!roundTemplate.getIsActive());

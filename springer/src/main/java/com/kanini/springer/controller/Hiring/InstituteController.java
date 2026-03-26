@@ -1,6 +1,7 @@
 package com.kanini.springer.controller.Hiring;
 
 import com.kanini.springer.dto.Hiring.BulkInsertResponse;
+import com.kanini.springer.dto.Hiring.InstituteNameResponse;
 import com.kanini.springer.dto.Hiring.InstituteRequest;
 import com.kanini.springer.dto.Hiring.InstituteResponse;
 import com.kanini.springer.dto.Hiring.InstituteWithTPOsResponse;
@@ -103,5 +104,12 @@ public class InstituteController {
     public ResponseEntity<ApiResponse<InstituteWithTPOsResponse>> getInstituteWithTPOsById(@PathVariable("id") Long instituteId) {
         InstituteWithTPOsResponse response = instituteService.getInstituteWithTPOsById(instituteId);
         return ResponseEntity.ok(new ApiResponse<>(true, "Institute with TPO details retrieved successfully", response));
+    }
+    
+    @GetMapping("/names")
+    @Operation(summary = "Get all institute names", description = "Retrieves all institute IDs and names only (lightweight endpoint for dropdowns)")
+    public ResponseEntity<ApiResponse<List<InstituteNameResponse>>> getAllInstituteNames() {
+        List<InstituteNameResponse> responses = instituteService.getAllInstituteNames();
+        return ResponseEntity.ok(new ApiResponse<>(true, "Institute names retrieved successfully", responses));
     }
 }

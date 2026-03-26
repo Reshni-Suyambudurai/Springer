@@ -39,9 +39,7 @@ public class Institute {
     
     @Enumerated(EnumType.STRING)
     private InstituteTier instituteTier; // TIER_1, TIER_2, TIER_3
-    @Column(columnDefinition = "TEXT")
-    private String location; // optional - GOOGLE location url
-    
+ 
     private String state;
     
     private String city;
@@ -52,6 +50,9 @@ public class Institute {
     
     @OneToMany(mappedBy = "institute", cascade = CascadeType.ALL)
     private List<InstituteContact> instituteContacts;
+    
+    @OneToMany(mappedBy = "institute", cascade = CascadeType.ALL)
+    private List<InstituteProgram> institutePrograms;
     
     @OneToMany(mappedBy = "institute", cascade = CascadeType.ALL)
     private List<Candidate> candidates;

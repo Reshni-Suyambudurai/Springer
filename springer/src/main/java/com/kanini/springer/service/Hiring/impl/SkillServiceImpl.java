@@ -2,8 +2,8 @@ package com.kanini.springer.service.Hiring.impl;
 
 import com.kanini.springer.dto.Hiring.SkillRequest;
 import com.kanini.springer.dto.Hiring.SkillResponse;
-import com.kanini.springer.entity.HiringReq.Skill;
-import com.kanini.springer.mapper.Hiring.SkillsMapper;
+import com.kanini.springer.entity.HiringReq.Skill;import com.kanini.springer.exception.ResourceNotFoundException;
+import com.kanini.springer.exception.ValidationException;import com.kanini.springer.mapper.Hiring.SkillsMapper;
 import com.kanini.springer.repository.Hiring.SkillRepository;
 import com.kanini.springer.service.Hiring.ISkills;
 import lombok.RequiredArgsConstructor;
@@ -25,7 +25,7 @@ public class SkillServiceImpl implements ISkills {
     public SkillResponse createSkill(SkillRequest request) {
         // Validation: Check if skill already exists
         if (skillRepository.existsBySkillName(request.getSkillName())) {
-            throw new RuntimeException("Skill already exists with name: " + request.getSkillName());
+            throw new ValidationException("Skill already exists with name: " + request.getSkillName());
         }
         
         Skill skill = new Skill();
@@ -38,7 +38,7 @@ public class SkillServiceImpl implements ISkills {
     @Override
     public SkillResponse getSkillById(Long skillId) {
         Skill skill = skillRepository.findById(skillId)
-                .orElseThrow(() -> new RuntimeException("Skill not found with ID: " + skillId));
+                .orElseThrow(() -> new ResourceNotFoundException("Skill", "ID", skillId));
         return mapper.toResponse(skill);
     }
     
@@ -53,12 +53,12 @@ public class SkillServiceImpl implements ISkills {
     @Transactional
     public SkillResponse updateSkill(Long skillId, SkillRequest request) {
         Skill skill = skillRepository.findById(skillId)
-                .orElseThrow(() -> new RuntimeException("Skill not found with ID: " + skillId));
+                .orElseThrow(() -> new ResourceNotFoundException("Skill", "ID", skillId));
         
         // Validation: Check if new name already exists (excluding current skill)
         if (skillRepository.existsBySkillName(request.getSkillName()) 
                 && !skill.getSkillName().equals(request.getSkillName())) {
-            throw new RuntimeException("Skill already exists with name: " + request.getSkillName());
+            throw new ValidationException("Skill already exists with name: " + request.getSkillName());
         }
         
         skill.setSkillName(request.getSkillName());
@@ -70,15 +70,15 @@ public class SkillServiceImpl implements ISkills {
     @Transactional
     public void deleteSkill(Long skillId) {
         Skill skill = skillRepository.findById(skillId)
-                .orElseThrow(() -> new RuntimeException("Skill not found with ID: " + skillId));
+                .orElseThrow(() -> new ResourceNotFoundException("Skill", "ID", skillId));
         
         // Validation: Check if skill is being used in any requisitions or candidates
         if (skill.getRequisitionSkills() != null && !skill.getRequisitionSkills().isEmpty()) {
-            throw new RuntimeException("Cannot delete skill that is referenced in hiring demands");
+            throw new ValidationException("Cannot delete skill that is referenced in hiring demands");
         }
         
         if (skill.getCandidateSkills() != null && !skill.getCandidateSkills().isEmpty()) {
-            throw new RuntimeException("Cannot delete skill that is referenced in candidate profiles");
+            throw new ValidationException("Cannot delete skill that is referenced in candidate profiles");
         }
         
         skillRepository.delete(skill);
@@ -87,7 +87,7 @@ public class SkillServiceImpl implements ISkills {
     @Override
     public SkillResponse getSkillByName(String skillName) {
         Skill skill = skillRepository.findBySkillName(skillName)
-                .orElseThrow(() -> new RuntimeException("Skill not found with name: " + skillName));
+                .orElseThrow(() -> new ResourceNotFoundException("Skill", "name", skillName));
         return mapper.toResponse(skill);
     }
 }

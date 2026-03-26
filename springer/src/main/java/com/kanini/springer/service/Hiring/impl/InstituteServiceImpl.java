@@ -1,16 +1,23 @@
 package com.kanini.springer.service.Hiring.impl;
 
 import com.kanini.springer.dto.Hiring.BulkInsertResponse;
+import com.kanini.springer.dto.Hiring.InstituteNameResponse;
 import com.kanini.springer.dto.Hiring.InstituteRequest;
 import com.kanini.springer.dto.Hiring.InstituteResponse;
 import com.kanini.springer.dto.Hiring.InstituteWithTPOsResponse;
 import com.kanini.springer.entity.HiringReq.Institute;
 import com.kanini.springer.entity.HiringReq.InstituteContact;
+import com.kanini.springer.entity.HiringReq.InstituteProgram;
+import com.kanini.springer.entity.HiringReq.Program;
 import com.kanini.springer.entity.enums.Enums.InstituteTier;
+import com.kanini.springer.exception.ResourceNotFoundException;
+import com.kanini.springer.exception.ValidationException;
 import com.kanini.springer.mapper.Hiring.InstituteMapper;
 import com.kanini.springer.mapper.Hiring.InstituteWithTPOsMapper;
 import com.kanini.springer.repository.Hiring.InstituteContactRepository;
+import com.kanini.springer.repository.Hiring.InstituteProgramRepository;
 import com.kanini.springer.repository.Hiring.InstituteRepository;
+import com.kanini.springer.repository.Hiring.ProgramRepository;
 import com.kanini.springer.service.Hiring.IInstituteService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -28,6 +35,8 @@ public class InstituteServiceImpl implements IInstituteService {
     
     private final InstituteRepository instituteRepository;
     private final InstituteContactRepository contactRepository;
+    private final InstituteProgramRepository instituteProgramRepository;
+    private final ProgramRepository programRepository;
     private final InstituteMapper mapper;
     private final InstituteWithTPOsMapper withTPOsMapper;
     
@@ -36,7 +45,7 @@ public class InstituteServiceImpl implements IInstituteService {
     public InstituteResponse createInstitute(InstituteRequest request) {
         // Validation: Check if institute name already exists
         if (instituteRepository.findByInstituteName(request.getInstituteName()).isPresent()) {
-            throw new RuntimeException("Institute already exists with name: " + request.getInstituteName());
+            throw new ValidationException("Institute already exists with name: " + request.getInstituteName());
         }
         
         Institute institute = new Institute();
@@ -46,7 +55,6 @@ public class InstituteServiceImpl implements IInstituteService {
             institute.setInstituteTier(InstituteTier.valueOf(request.getInstituteTier()));
         }
         
-        institute.setLocation(request.getLocation());
         institute.setState(request.getState());
         institute.setCity(request.getCity());
         institute.setIsActive(request.getIsActive() != null ? request.getIsActive() : true);
@@ -98,7 +106,7 @@ public class InstituteServiceImpl implements IInstituteService {
                     institute.setInstituteTier(InstituteTier.valueOf(request.getInstituteTier()));
                 }
                 
-                institute.setLocation(request.getLocation());
+              
                 institute.setState(request.getState());
                 institute.setCity(request.getCity());
                 institute.setIsActive(request.getIsActive() != null ? request.getIsActive() : true);
@@ -146,7 +154,7 @@ public class InstituteServiceImpl implements IInstituteService {
     @Override
     public InstituteResponse getInstituteById(Long instituteId) {
         Institute institute = instituteRepository.findById(instituteId)
-                .orElseThrow(() -> new RuntimeException("Institute not found with ID: " + instituteId));
+                .orElseThrow(() -> new ResourceNotFoundException("Institute", "ID", instituteId));
         return mapper.toResponse(institute);
     }
     
@@ -154,7 +162,7 @@ public class InstituteServiceImpl implements IInstituteService {
     @Transactional
     public InstituteResponse updateInstitute(Long instituteId, InstituteRequest request) {
         Institute institute = instituteRepository.findById(instituteId)
-                .orElseThrow(() -> new RuntimeException("Institute not found with ID: " + instituteId));
+                .orElseThrow(() -> new ResourceNotFoundException("Institute", "ID", instituteId));
         
         // Partial update - only update fields that are provided
         if (request.getInstituteName() != null && !request.getInstituteName().isBlank()) {
@@ -162,7 +170,7 @@ public class InstituteServiceImpl implements IInstituteService {
             instituteRepository.findByInstituteName(request.getInstituteName())
                     .ifPresent(existingInstitute -> {
                         if (!existingInstitute.getInstituteId().equals(instituteId)) {
-                            throw new RuntimeException("Institute already exists with name: " + request.getInstituteName());
+                            throw new ValidationException("Institute already exists with name: " + request.getInstituteName());
                         }
                     });
             institute.setInstituteName(request.getInstituteName());
@@ -170,11 +178,8 @@ public class InstituteServiceImpl implements IInstituteService {
         
         if (request.getInstituteTier() != null && !request.getInstituteTier().isBlank()) {
             institute.setInstituteTier(InstituteTier.valueOf(request.getInstituteTier()));
-        }
-        
-        if (request.getLocation() != null) {
-            institute.setLocation(request.getLocation());
-        }
+        }        
+     
         
         if (request.getState() != null) {
             institute.setState(request.getState());
@@ -188,6 +193,24 @@ public class InstituteServiceImpl implements IInstituteService {
             institute.setIsActive(request.getIsActive());
         }
         
+        // Handle program mappings if provided
+        if (request.getProgramIds() != null && !request.getProgramIds().isEmpty()) {
+            // Remove existing program mappings
+            List<InstituteProgram> existingMappings = instituteProgramRepository.findByInstituteInstituteId(instituteId);
+            instituteProgramRepository.deleteAll(existingMappings);
+            
+            // Add new program mappings
+            for (Long programId : request.getProgramIds()) {
+                Program program = programRepository.findById(programId)
+                        .orElseThrow(() -> new ResourceNotFoundException("Program", "ID", programId));
+                
+                InstituteProgram instituteProgram = new InstituteProgram();
+                instituteProgram.setInstitute(institute);
+                instituteProgram.setProgram(program);
+                instituteProgramRepository.save(instituteProgram);
+            }
+        }
+        
         Institute updatedInstitute = instituteRepository.save(institute);
         return mapper.toResponse(updatedInstitute);
     }
@@ -196,7 +219,7 @@ public class InstituteServiceImpl implements IInstituteService {
     @Transactional
     public void deleteInstitute(Long instituteId) {
         Institute institute = instituteRepository.findById(instituteId)
-                .orElseThrow(() -> new RuntimeException("Institute not found with ID: " + instituteId));
+                .orElseThrow(() -> new ResourceNotFoundException("Institute", "ID", instituteId));
         
         // Toggle isActive status (true <-> false)
         institute.setIsActive(!institute.getIsActive());
@@ -209,17 +232,31 @@ public class InstituteServiceImpl implements IInstituteService {
         
         return institutesPage.map(institute -> {
             List<InstituteContact> contacts = contactRepository.findByInstituteInstituteId(institute.getInstituteId());
-            return withTPOsMapper.toResponse(institute, contacts);
+            List<InstituteProgram> programs = instituteProgramRepository.findByInstituteInstituteId(institute.getInstituteId());
+            return withTPOsMapper.toResponse(institute, contacts, programs);
         });
     }
     
     @Override
     public InstituteWithTPOsResponse getInstituteWithTPOsById(Long instituteId) {
         Institute institute = instituteRepository.findById(instituteId)
-                .orElseThrow(() -> new RuntimeException("Institute not found with ID: " + instituteId));
+                .orElseThrow(() -> new ResourceNotFoundException("Institute", "ID", instituteId));
         
         List<InstituteContact> contacts = contactRepository.findByInstituteInstituteId(institute.getInstituteId());
+        List<InstituteProgram> programs = instituteProgramRepository.findByInstituteInstituteId(institute.getInstituteId());
         
-        return withTPOsMapper.toResponse(institute, contacts);
+        return withTPOsMapper.toResponse(institute, contacts, programs);
+    }
+    
+    @Override
+    public List<InstituteNameResponse> getAllInstituteNames() {
+        List<Institute> institutes = instituteRepository.findAll();
+        
+        return institutes.stream()
+                .map(institute -> new InstituteNameResponse(
+                        institute.getInstituteId(),
+                        institute.getInstituteName()
+                ))
+                .collect(Collectors.toList());
     }
 }

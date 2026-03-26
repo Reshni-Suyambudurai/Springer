@@ -16,9 +16,26 @@
   }, {
     "field" : "historyOfArrears",
     "operator" : "<=",
-    "value" : 2,
-   
+    "value" : 3.0,
+    "min" : null,
+    "max" : null,
     "message" : "Number of arrears is <= {value}"
+  }, {
+    "field" : "degree",
+    "operator" : "IN",
+    "value" : null,
+    "min" : null,
+    "max" : null,
+    "allowedValues" : [ "B.TECH", "M.TECH", "B.E", "M.E" ],
+    "message" : "Degree isn't eligible"
+  }, {
+    "field" : "department",
+    "operator" : "IN",
+    "value" : null,
+    "min" : null,
+    "max" : null,
+    "allowedValues" : [ "CSE","EEE","IT" ],
+    "message" : "Department isn't eligible"
   } ],
   "logic" : "AND"
 }

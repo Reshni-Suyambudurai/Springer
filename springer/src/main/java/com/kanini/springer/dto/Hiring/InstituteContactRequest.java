@@ -13,6 +13,7 @@ public class InstituteContactRequest {
     private String tpoName;
     private String tpoEmail;
     private String tpoMobile;
+    private String tpoDesignation; // qualification of the tpo
     private String tpoStatus; // ACTIVE, INACTIVE
     private Boolean isPrimary;
 }

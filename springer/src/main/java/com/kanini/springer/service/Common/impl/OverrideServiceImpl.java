@@ -6,6 +6,8 @@ import com.kanini.springer.dto.Common.ManualOverrideResponse;
 import com.kanini.springer.entity.HiringReq.User;
 import com.kanini.springer.entity.utils.ManualOverride;
 import com.kanini.springer.entity.enums.Enums.OverrideEntityType;
+import com.kanini.springer.exception.ResourceNotFoundException;
+import com.kanini.springer.exception.ValidationException;
 import com.kanini.springer.mapper.Common.ManualOverrideMapper;
 import com.kanini.springer.repository.Hiring.UserRepository;
 import com.kanini.springer.repository.Common.ManualOverrideRepository;
@@ -34,31 +36,31 @@ public class OverrideServiceImpl implements IOverrideService {
     public ManualOverrideResponse logOverride(ManualOverrideRequest request) {
         // Validate request
         if (request.getEntityType() == null || request.getEntityType().isBlank()) {
-            throw new RuntimeException("Entity type is required");
+            throw new ValidationException("Entity type is required");
         }
         if (request.getEntityId() == null) {
-            throw new RuntimeException("Entity ID is required");
+            throw new ValidationException("Entity ID is required");
         }
         if (request.getOverrideReason() == null || request.getOverrideReason().isBlank()) {
-            throw new RuntimeException("Override reason is required");
+            throw new ValidationException("Override reason is required");
         }
         if (request.getCreatedBy() == null) {
-            throw new RuntimeException("Created by user ID is required");
+            throw new ValidationException("Created by user ID is required");
         }
         if (request.getChanges() == null || request.getChanges().isEmpty()) {
-            throw new RuntimeException("Changes are required");
+            throw new ValidationException("Changes are required");
         }
         
         // Validate and fetch user
         User user = userRepository.findById(request.getCreatedBy())
-                .orElseThrow(() -> new RuntimeException("User not found with ID: " + request.getCreatedBy()));
+                .orElseThrow(() -> new ResourceNotFoundException("User", "ID", request.getCreatedBy()));
         
         // Validate entity type
         OverrideEntityType entityType;
         try {
             entityType = OverrideEntityType.valueOf(request.getEntityType());
         } catch (IllegalArgumentException e) {
-            throw new RuntimeException("Invalid entity type: " + request.getEntityType());
+            throw new ValidationException("Invalid entity type: " + request.getEntityType());
         }
         
         // Create ManualOverride entity
@@ -95,7 +97,7 @@ public class OverrideServiceImpl implements IOverrideService {
     @Override
     public List<ManualOverrideResponse> getOverridesByDate(LocalDate fromDate) {
         if (fromDate == null) {
-            throw new RuntimeException("From date is required");
+            throw new ValidationException("From date is required");
         }
         
         LocalDateTime fromDateTime = fromDate.atStartOfDay();
@@ -106,14 +108,14 @@ public class OverrideServiceImpl implements IOverrideService {
     @Override
     public List<ManualOverrideResponse> getOverridesByEntityType(String entityType) {
         if (entityType == null || entityType.isBlank()) {
-            throw new RuntimeException("Entity type is required");
+            throw new ValidationException("Entity type is required");
         }
         
         OverrideEntityType overrideEntityType;
         try {
             overrideEntityType = OverrideEntityType.valueOf(entityType);
         } catch (IllegalArgumentException e) {
-            throw new RuntimeException("Invalid entity type: " + entityType);
+            throw new ValidationException("Invalid entity type: " + entityType);
         }
         
         List<ManualOverride> overrides = overrideRepository.findByEntityTypeWithUser(overrideEntityType);
@@ -123,17 +125,17 @@ public class OverrideServiceImpl implements IOverrideService {
     @Override
     public List<ManualOverrideResponse> getOverridesByEntityTypeAndEntityId(String entityType, Long entityId) {
         if (entityType == null || entityType.isBlank()) {
-            throw new RuntimeException("Entity type is required");
+            throw new ValidationException("Entity type is required");
         }
         if (entityId == null) {
-            throw new RuntimeException("Entity ID is required");
+            throw new ValidationException("Entity ID is required");
         }
         
         OverrideEntityType overrideEntityType;
         try {
             overrideEntityType = OverrideEntityType.valueOf(entityType);
         } catch (IllegalArgumentException e) {
-            throw new RuntimeException("Invalid entity type: " + entityType);
+            throw new ValidationException("Invalid entity type: " + entityType);
         }
         
         List<ManualOverride> overrides = overrideRepository.findByEntityTypeAndEntityIdWithUser(overrideEntityType, entityId);
@@ -143,12 +145,12 @@ public class OverrideServiceImpl implements IOverrideService {
     @Override
     public List<ManualOverrideResponse> getOverridesByUserId(Long userId) {
         if (userId == null) {
-            throw new RuntimeException("User ID is required");
+            throw new ValidationException("User ID is required");
         }
         
         // Validate user exists
         if (!userRepository.existsById(userId)) {
-            throw new RuntimeException("User not found with ID: " + userId);
+            throw new ResourceNotFoundException("User", "ID", userId);
         }
         
         List<ManualOverride> overrides = overrideRepository.findByCreatedByUserIdWithUser(userId);
@@ -160,11 +162,11 @@ public class OverrideServiceImpl implements IOverrideService {
         List<FieldChangeDTO> changes = new ArrayList<>();
         
         if (oldEntity == null || newEntity == null) {
-            throw new RuntimeException("Both old and new entity must not be null");
+            throw new ValidationException("Both old and new entity must not be null");
         }
         
         if (!oldEntity.getClass().equals(newEntity.getClass())) {
-            throw new RuntimeException("Old and new entity must be of the same type");
+            throw new ValidationException("Old and new entity must be of the same type");
         }
         
         Class<?> entityClass = oldEntity.getClass();
@@ -216,6 +218,19 @@ public class OverrideServiceImpl implements IOverrideService {
         
         // Skip collections and complex relationships (to avoid lazy loading issues)
         if (java.util.Collection.class.isAssignableFrom(field.getType())) {
+            return true;
+        }
+        
+        // Skip JPA relationship fields (ManyToOne, OneToMany, OneToOne, ManyToMany)
+        if (field.isAnnotationPresent(jakarta.persistence.ManyToOne.class) ||
+            field.isAnnotationPresent(jakarta.persistence.OneToMany.class) ||
+            field.isAnnotationPresent(jakarta.persistence.OneToOne.class) ||
+            field.isAnnotationPresent(jakarta.persistence.ManyToMany.class)) {
+            return true;
+        }
+        
+        // Skip fields whose type is a JPA Entity (to avoid lazy loading issues)
+        if (field.getType().isAnnotationPresent(jakarta.persistence.Entity.class)) {
             return true;
         }
         

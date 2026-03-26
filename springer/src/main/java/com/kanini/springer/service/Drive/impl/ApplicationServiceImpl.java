@@ -11,7 +11,9 @@ import com.kanini.springer.entity.Drive.Candidate;
 import com.kanini.springer.entity.Drive.Drive;
 import com.kanini.springer.entity.HiringReq.User;
 import com.kanini.springer.entity.enums.Enums.ApplicationStatus;
-import com.kanini.springer.entity.enums.Enums.CandidateStatus;
+import com.kanini.springer.entity.enums.Enums.ApplicationStage;
+import com.kanini.springer.exception.ResourceNotFoundException;
+import com.kanini.springer.exception.ValidationException;
 import com.kanini.springer.mapper.Drive.ApplicationMapper;
 import com.kanini.springer.repository.Drive.ApplicationRepository;
 import com.kanini.springer.repository.Drive.CandidatesRepository;
@@ -43,22 +45,22 @@ public class ApplicationServiceImpl implements IApplicationService {
         
         // Validate required fields
         if (request.getDriveId() == null) {
-            throw new RuntimeException("Drive ID is required");
+            throw new ValidationException("Drive ID is required");
         }
         if (request.getCandidateIds() == null || request.getCandidateIds().isEmpty()) {
-            throw new RuntimeException("Candidate IDs list cannot be empty");
+            throw new ValidationException("Candidate IDs list cannot be empty");
         }
         if (request.getCreatedBy() == null) {
-            throw new RuntimeException("Created by user ID is required");
+            throw new ValidationException("Created by user ID is required");
         }
         
         // Fetch drive
         Drive drive = driveRepository.findById(request.getDriveId())
-            .orElseThrow(() -> new RuntimeException("Drive not found with ID: " + request.getDriveId()));
+            .orElseThrow(() -> new ResourceNotFoundException("Drive", "ID", request.getDriveId()));
         
         // Fetch created by user
         User createdByUser = userRepository.findById(request.getCreatedBy())
-            .orElseThrow(() -> new RuntimeException("User not found with ID: " + request.getCreatedBy()));
+            .orElseThrow(() -> new ResourceNotFoundException("User", "ID", request.getCreatedBy()));
         
         int totalProcessed = 0;
         int successCount = 0;
@@ -80,10 +82,10 @@ public class ApplicationServiceImpl implements IApplicationService {
                 String candidateName = candidate.getFirstName() + 
                         (candidate.getLastName() != null ? " " + candidate.getLastName() : "");
                 
-                // Validate: candidateStatus must be SHORTLISTED
-                if (candidate.getStatus() != CandidateStatus.SHORTLISTED) {
+                // Validate: applicationStage must be SHORTLISTED
+                if (candidate.getApplicationStage() != ApplicationStage.SHORTLISTED) {
                     response.getErrorMessages().add(candidateName + " (ID: " + candidateId + ") is not SHORTLISTED. Current status: " + 
-                            (candidate.getStatus() != null ? candidate.getStatus() : "null"));
+                            (candidate.getApplicationStage() != null ? candidate.getApplicationStage() : "null"));
                     failureCount++;
                     continue;
                 }
@@ -110,7 +112,7 @@ public class ApplicationServiceImpl implements IApplicationService {
                 Application savedApplication = applicationRepository.save(application);
                 
                 // Update candidate status to SCHEDULED
-                candidate.setStatus(CandidateStatus.SCHEDULED);
+                candidate.setApplicationStage(ApplicationStage.SCHEDULED);
                 candidatesRepository.save(candidate);
                 
                 // Add to successful applications
@@ -144,7 +146,7 @@ public class ApplicationServiceImpl implements IApplicationService {
     @Transactional(readOnly = true)
     public List<ApplicationResponse> getApplicationsByDriveId(Long driveId) {
         if (driveId == null) {
-            throw new RuntimeException("Drive ID is required");
+            throw new ValidationException("Drive ID is required");
         }
         
         List<Application> applications = applicationRepository.findByDriveDriveId(driveId);
@@ -158,23 +160,23 @@ public class ApplicationServiceImpl implements IApplicationService {
     @Transactional
     public ApplicationResponse updateApplicationStatus(Long applicationId, ApplicationStatusUpdateRequest request) {
         if (applicationId == null) {
-            throw new RuntimeException("Application ID is required");
+            throw new ValidationException("Application ID is required");
         }
         
         if (request.getApplicationStatus() == null || request.getApplicationStatus().isBlank()) {
-            throw new RuntimeException("Application status is required");
+            throw new ValidationException("Application status is required");
         }
         
         // Find application
         Application application = applicationRepository.findById(applicationId)
-            .orElseThrow(() -> new RuntimeException("Application not found with ID: " + applicationId));
+            .orElseThrow(() -> new ResourceNotFoundException("Application", "ID", applicationId));
         
         // Parse and validate status
         ApplicationStatus newStatus;
         try {
             newStatus = ApplicationStatus.valueOf(request.getApplicationStatus());
         } catch (IllegalArgumentException e) {
-            throw new RuntimeException("Invalid application status: " + request.getApplicationStatus());
+            throw new ValidationException("Invalid application status: " + request.getApplicationStatus());
         }
         
         // Update status
@@ -193,7 +195,7 @@ public class ApplicationServiceImpl implements IApplicationService {
         
         // Validate required fields
         if (request.getApplications() == null || request.getApplications().isEmpty()) {
-            throw new RuntimeException("Applications list cannot be empty");
+            throw new ValidationException("Applications list cannot be empty");
         }
         
         int totalProcessed = 0;
@@ -244,19 +246,19 @@ public class ApplicationServiceImpl implements IApplicationService {
                 // Update candidate status based on application status
                 Candidate candidate = application.getCandidate();
                 if (candidate != null) {
-                    CandidateStatus newCandidateStatus = null;
+                    ApplicationStage newCandidateStage = null;
                     
                     if (newStatus == ApplicationStatus.SELECTED) {
-                        // If application status is SELECTED → candidate status = SELECTED
-                        newCandidateStatus = CandidateStatus.SELECTED;
+                        // If application status is SELECTED → candidate stage = SELECTED
+                        newCandidateStage = ApplicationStage.SELECTED;
                     } else if (newStatus == ApplicationStatus.FAILED || newStatus == ApplicationStatus.DROPPED) {
-                        // If application status is FAILED or DROPPED → candidate status = REJECTED
-                        newCandidateStatus = CandidateStatus.REJECTED;
+                        // If application status is FAILED or DROPPED → candidate stage = REJECTED
+                        newCandidateStage = ApplicationStage.REJECTED;
                     }
                     
-                    // Update candidate status if applicable
-                    if (newCandidateStatus != null) {
-                        candidate.setStatus(newCandidateStatus);
+                    // Update candidate stage if applicable
+                    if (newCandidateStage != null) {
+                        candidate.setApplicationStage(newCandidateStage);
                         candidatesRepository.save(candidate);
                     }
                 }

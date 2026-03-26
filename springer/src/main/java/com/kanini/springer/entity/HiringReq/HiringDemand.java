@@ -55,6 +55,8 @@ public class HiringDemand {
     
     private LocalDateTime createdAt;
     
+    private LocalDateTime updatedAt;
+    
     @OneToMany(mappedBy = "demand", cascade = CascadeType.ALL)
     private List<RequisitionSkill> requisitionSkills;
     
@@ -62,5 +64,10 @@ public class HiringDemand {
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
+    }
+    
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = LocalDateTime.now();
     }
 }

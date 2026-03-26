@@ -10,6 +10,7 @@ public class Enums {
         TA_HEAD,
         TA_RECRUITER,
         HIRING_MANAGER,
+        
         MEMBERS,
         HR_OPERATIONS,
         TRAINING_COORDINATOR,
@@ -43,23 +44,65 @@ public class Enums {
         ACTIVE,
         INACTIVE
     }
+
+   public enum ProgramName {
+    B_TECH,
+    M_TECH,
+    MBA,
+    MCA,
+    BCA,
+    B_E,
+    M_E,
+    B_SC,
+    M_SC,
+    BBA,
+    B_COM,
+    M_COM,
+    B_A,
+    M_A,
+    DIPLOMA,
+    PHD
+}
+
      public enum BusinessUnit {
         DATA_ANALYTICS_AND_AI,
         SERVICENOW,
         PRODUCT_ENGINEERING
     }
 
-    // Candidate overall status
-    public enum CandidateStatus {
+    // Skill category
+    public enum SkillCategory {
+        TECHNICAL,
+        SOFT_SKILL
+    }
+
+    // Candidate application type
+    public enum ApplicationType {
+        STANDARD,
+        PREMIUM
+    }
+
+    // Candidate application stage
+    public enum ApplicationStage {
         APPLIED,
         SHORTLISTED,
+        INVITED,
         SCHEDULED,
         SELECTED,
-        REJECTED,
         OFFERED,
         JOINED,
+        REJECTED,
+        ACCEPTED,
         DROPPED
     }
+
+    // Candidate lifecycle status
+    public enum LifecycleStatus {
+        ACTIVE,
+        CLOSED
+    }
+
+   
 
     // Drive mode
     public enum DriveMode {

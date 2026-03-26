@@ -4,6 +4,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -15,4 +17,5 @@ public class InstituteRequest {
     private String state;
     private String city;
     private Boolean isActive;
+    private List<Long> programIds; // List of program IDs to map to this institute
 }

@@ -3,6 +3,8 @@ package com.kanini.springer.service.Drive.impl;
 import com.kanini.springer.dto.Common.FieldChangeDTO;
 import com.kanini.springer.dto.Common.ManualOverrideRequest;
 import com.kanini.springer.dto.Drive.BulkCandidateCreateResponse;
+import com.kanini.springer.dto.Drive.BulkCandidateLifecycleUpdateRequest;
+import com.kanini.springer.dto.Drive.BulkCandidateLifecycleUpdateResponse;
 import com.kanini.springer.dto.Drive.BulkCandidateStatusUpdateRequest;
 import com.kanini.springer.dto.Drive.BulkCandidateStatusUpdateResponse;
 import com.kanini.springer.dto.Drive.CandidateRequest;
@@ -13,10 +15,10 @@ import com.kanini.springer.dto.Drive.EligibilityValidationResult;
 import com.kanini.springer.entity.Drive.Candidate;
 import com.kanini.springer.entity.Drive.CandidateSkill;
 import com.kanini.springer.entity.HiringReq.HiringCycle;
-import com.kanini.springer.entity.HiringReq.Institute;
 import com.kanini.springer.entity.HiringReq.Skill;
 import com.kanini.springer.entity.HiringReq.User;
-import com.kanini.springer.entity.enums.Enums.CandidateStatus;
+import com.kanini.springer.entity.enums.Enums.ApplicationStage;
+import com.kanini.springer.entity.enums.Enums.LifecycleStatus;
 import com.kanini.springer.entity.enums.Enums.CycleStatus;
 import com.kanini.springer.mapper.Drive.CandidateMapper;
 import com.kanini.springer.repository.Drive.CandidateSkillRepository;
@@ -25,6 +27,8 @@ import com.kanini.springer.repository.Hiring.HiringCycleRepository;
 import com.kanini.springer.repository.Hiring.InstituteRepository;
 import com.kanini.springer.repository.Hiring.SkillRepository;
 import com.kanini.springer.repository.Hiring.UserRepository;
+import com.kanini.springer.exception.ResourceNotFoundException;
+import com.kanini.springer.exception.ValidationException;
 import com.kanini.springer.service.Common.IOverrideService;
 import com.kanini.springer.service.Drive.ICandidatesService;
 import com.kanini.springer.service.Drive.IEligibilityRuleService;
@@ -56,13 +60,13 @@ public class CandidatesServiceImpl implements ICandidatesService {
     public CandidateResponse createCandidate(CandidateRequest request) {
         // Validate required fields
         if (request.getFirstName() == null || request.getFirstName().isBlank()) {
-            throw new RuntimeException("First name is required");
+            throw new ValidationException("First name is required");
         }
         if (request.getEmail() == null || request.getEmail().isBlank()) {
-            throw new RuntimeException("Email is required");
+            throw new ValidationException("Email is required");
         }
         if (request.getMobile() == null || request.getMobile().isBlank()) {
-            throw new RuntimeException("Mobile number is required");
+            throw new ValidationException("Mobile number is required");
         }
         
         // Check for existing candidate by email or aadhaar
@@ -106,21 +110,21 @@ public class CandidatesServiceImpl implements ICandidatesService {
                 String errorMsg = "Candidate with email/aadhaar already exists but data doesn't match. Mismatched fields: " + 
                                   String.join(", ", mismatchedFields) + 
                                   ". Please verify the candidate information.";
-                throw new RuntimeException(errorMsg);
+                throw new ValidationException(errorMsg);
             }
             
             // Check if they're in the same cycle
             if (request.getCycleId() != null && existingCandidate.getCycle() != null && 
                 existingCandidate.getCycle().getCycleId().equals(request.getCycleId())) {
                 // Same cycle - reject
-                throw new RuntimeException("Candidate already exists in this cycle with email: " + request.getEmail());
+                throw new ValidationException("Candidate already exists in this cycle with email: " + request.getEmail());
             }
             
             // Identity verified and different cycle - reuse existing candidate and update cycleId
             if (request.getCycleId() != null) {
                 validateCycleIsOpen(request.getCycleId());
                 HiringCycle newCycle = hiringCycleRepository.findById(request.getCycleId())
-                        .orElseThrow(() -> new RuntimeException("Hiring cycle not found with ID: " + request.getCycleId()));
+                        .orElseThrow(() -> new ResourceNotFoundException("Hiring cycle", "ID", request.getCycleId()));
                 existingCandidate.setCycle(newCycle);
             }
             
@@ -144,7 +148,9 @@ public class CandidatesServiceImpl implements ICandidatesService {
             EligibilityValidationResult eligibilityResult = eligibilityRuleService.checkEligibility(
                     existingCandidate.getCgpa(),
                     existingCandidate.getPassoutYear(),
-                    existingCandidate.getHistoryOfArrears()
+                    existingCandidate.getHistoryOfArrears(),
+                    existingCandidate.getDegree(),
+                    existingCandidate.getDepartment()
             );
             
             existingCandidate.setIsEligible(eligibilityResult.isEligible());
@@ -156,8 +162,19 @@ public class CandidatesServiceImpl implements ICandidatesService {
                 existingCandidate.setReason("");
             }
             
-            // Reset status to APPLIED for new cycle
-            existingCandidate.setStatus(CandidateStatus.APPLIED);
+            // Reset applicationStage to APPLIED for new cycle
+            existingCandidate.setApplicationStage(ApplicationStage.APPLIED);
+            
+            // Reset lifecycleStatus to ACTIVE for new cycle
+            existingCandidate.setLifecycleStatus(LifecycleStatus.ACTIVE);
+            
+            // Set applicationType from request if provided
+            if (request.getApplicationType() != null) {
+                existingCandidate.setApplicationType(request.getApplicationType());
+            }
+            
+            // Append to statusHistory
+            appendStatusHistory(existingCandidate, existingCandidate.getApplicationStage(), "System");
             
             // Save updated candidate (createdAt remains old, updatedAt gets updated automatically)
             Candidate savedCandidate = candidatesRepository.save(existingCandidate);
@@ -171,8 +188,9 @@ public class CandidatesServiceImpl implements ICandidatesService {
             }
             
             // Reload candidate with skills
-            savedCandidate = candidatesRepository.findByIdWithInstitute(savedCandidate.getCandidateId())
-                    .orElseThrow(() -> new RuntimeException("Error reloading candidate"));
+            Long candidateId = savedCandidate.getCandidateId();
+            savedCandidate = candidatesRepository.findByIdWithInstitute(candidateId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Candidate", "ID", candidateId));
             
             return mapper.toResponse(savedCandidate);
         }
@@ -189,7 +207,9 @@ public class CandidatesServiceImpl implements ICandidatesService {
         EligibilityValidationResult eligibilityResult = eligibilityRuleService.checkEligibility(
                 candidate.getCgpa(),
                 candidate.getPassoutYear(),
-                candidate.getHistoryOfArrears()
+                candidate.getHistoryOfArrears(),
+                candidate.getDegree(),
+                candidate.getDepartment()
         );
         
         candidate.setIsEligible(eligibilityResult.isEligible());
@@ -199,6 +219,12 @@ public class CandidatesServiceImpl implements ICandidatesService {
             candidate.setReason(reason);
         }
         
+        // Initialize statusHistory with first entry
+        // Note: applicationStage is set to APPLIED in mapper.toEntity()
+        // Note: lifecycleStatus is set to ACTIVE in mapper.toEntity()
+        // Note: applicationType is set from request in mapper.toEntity()
+        appendStatusHistory(candidate, candidate.getApplicationStage(), "System");
+        
         Candidate savedCandidate = candidatesRepository.save(candidate);
         
         // Map candidate skills
@@ -207,8 +233,9 @@ public class CandidatesServiceImpl implements ICandidatesService {
         }
         
         // Reload candidate with skills
-        savedCandidate = candidatesRepository.findByIdWithInstitute(savedCandidate.getCandidateId())
-                .orElseThrow(() -> new RuntimeException("Error reloading candidate"));
+        Long candidateId = savedCandidate.getCandidateId();
+        savedCandidate = candidatesRepository.findByIdWithInstitute(candidateId)
+                .orElseThrow(() -> new ResourceNotFoundException("Candidate", "ID", candidateId));
         
         return mapper.toResponse(savedCandidate);
     }
@@ -405,7 +432,9 @@ public class CandidatesServiceImpl implements ICandidatesService {
                     EligibilityValidationResult eligibilityResult = eligibilityRuleService.checkEligibility(
                             candidate.getCgpa(),
                             candidate.getPassoutYear(),
-                            candidate.getHistoryOfArrears()
+                            candidate.getHistoryOfArrears(),
+                            candidate.getDegree(),
+                            candidate.getDepartment()
                     );
                     
                     candidate.setIsEligible(eligibilityResult.isEligible());
@@ -415,11 +444,17 @@ public class CandidatesServiceImpl implements ICandidatesService {
                         candidate.setReason(reason);
                     }
                     
+                    // Initialize statusHistory with first entry
+                    // Note: applicationStage is set to APPLIED in mapper.toEntity()
+                    // Note: lifecycleStatus is set to ACTIVE in mapper.toEntity()
+                    // Note: applicationType is set from request in mapper.toEntity()
+                    appendStatusHistory(candidate, candidate.getApplicationStage(), "System");
+                    
                     candidatesToInsert.add(candidate);
                     insertRequests.add(request);
                 } catch (Exception e) {
                     // This shouldn't happen as we validated already, but handle gracefully
-                    throw new RuntimeException("Error creating candidate entity: " + e.getMessage(), e);
+                    throw new ValidationException("Error creating candidate entity: " + e.getMessage());
                 }
             }
         }
@@ -432,7 +467,7 @@ public class CandidatesServiceImpl implements ICandidatesService {
             // Update cycleId if provided
             if (request.getCycleId() != null) {
                 HiringCycle newCycle = hiringCycleRepository.findById(request.getCycleId())
-                        .orElseThrow(() -> new RuntimeException("Hiring cycle not found with ID: " + request.getCycleId()));
+                        .orElseThrow(() -> new ResourceNotFoundException("Hiring cycle", "ID", request.getCycleId()));
                 existingCandidate.setCycle(newCycle);
             }
             
@@ -456,7 +491,9 @@ public class CandidatesServiceImpl implements ICandidatesService {
             EligibilityValidationResult eligibilityResult = eligibilityRuleService.checkEligibility(
                     existingCandidate.getCgpa(),
                     existingCandidate.getPassoutYear(),
-                    existingCandidate.getHistoryOfArrears()
+                    existingCandidate.getHistoryOfArrears(),
+                    existingCandidate.getDegree(),
+                    existingCandidate.getDepartment()
             );
             
             existingCandidate.setIsEligible(eligibilityResult.isEligible());
@@ -468,8 +505,19 @@ public class CandidatesServiceImpl implements ICandidatesService {
                 existingCandidate.setReason("");
             }
             
-            // Reset status to APPLIED for new cycle
-            existingCandidate.setStatus(CandidateStatus.APPLIED);
+            // Reset applicationStage to APPLIED for new cycle
+            existingCandidate.setApplicationStage(ApplicationStage.APPLIED);
+            
+            // Reset lifecycleStatus to ACTIVE for new cycle
+            existingCandidate.setLifecycleStatus(LifecycleStatus.ACTIVE);
+            
+            // Set applicationType from request if provided
+            if (request.getApplicationType() != null) {
+                existingCandidate.setApplicationType(request.getApplicationType());
+            }
+            
+            // Append to statusHistory
+            appendStatusHistory(existingCandidate, existingCandidate.getApplicationStage(), "System");
             
             // Update skills if provided
             if (request.getSkillIds() != null && !request.getSkillIds().isEmpty()) {
@@ -531,7 +579,7 @@ public class CandidatesServiceImpl implements ICandidatesService {
     @Override
     public CandidateResponse getCandidateById(Long candidateId) {
         Candidate candidate = candidatesRepository.findByIdWithInstitute(candidateId)
-                .orElseThrow(() -> new RuntimeException("Candidate not found with ID: " + candidateId));
+                .orElseThrow(() -> new ResourceNotFoundException("Candidate", "ID", candidateId));
         return mapper.toResponse(candidate);
     }
     
@@ -539,7 +587,7 @@ public class CandidatesServiceImpl implements ICandidatesService {
     public List<CandidateResponse> getCandidatesByInstituteId(Long instituteId) {
         // Validate institute exists
         if (!instituteRepository.existsById(instituteId)) {
-            throw new RuntimeException("Institute not found with ID: " + instituteId);
+            throw new ResourceNotFoundException("Institute", "ID", instituteId);
         }
         
         List<Candidate> candidates = candidatesRepository.findByInstituteIdWithInstitute(instituteId);
@@ -550,7 +598,7 @@ public class CandidatesServiceImpl implements ICandidatesService {
     public List<CandidateResponse> getCandidatesByCycleId(Long cycleId) {
         // Validate cycle exists
         if (!hiringCycleRepository.existsById(cycleId)) {
-            throw new RuntimeException("Hiring cycle not found with ID: " + cycleId);
+            throw new ResourceNotFoundException("Hiring cycle", "ID", cycleId);
         }
         
         List<Candidate> candidates = candidatesRepository.findByCycleIdWithDetails(cycleId);
@@ -559,96 +607,50 @@ public class CandidatesServiceImpl implements ICandidatesService {
     
     @Override
     @Transactional
-    public CandidateResponse updateCandidate(Long candidateId, CandidateUpdateRequest request, Long updatedBy) {
-        // Validate mandatory reason field
+    public CandidateResponse updateCandidate(Long candidateId, CandidateUpdateRequest request) {
+        // Validate mandatory fields
         if (request.getReason() == null || request.getReason().isBlank()) {
-            throw new RuntimeException("Reason is required for candidate update");
+            throw new ValidationException("Reason is required for eligibility status update");
+        }
+        if (request.getIsEligible() == null) {
+            throw new ValidationException("Eligibility status is required");
+        }
+        if (request.getUpdatedBy() == null) {
+            throw new ValidationException("User ID (updatedBy) is required for audit trail");
         }
         
-        // Fetch old state
-        Candidate oldCandidate = candidatesRepository.findById(candidateId)
-                .orElseThrow(() -> new RuntimeException("Candidate not found with ID: " + candidateId));
+        // Validate user exists BEFORE starting transaction operations
+        if (!userRepository.existsById(request.getUpdatedBy())) {
+            throw new ResourceNotFoundException("User", "ID", request.getUpdatedBy());
+        }
+        
+        // Fetch candidate
+        Candidate candidate = candidatesRepository.findById(candidateId)
+                .orElseThrow(() -> new ResourceNotFoundException("Candidate", "ID", candidateId));
         
         // Create a copy for change detection
-        Candidate oldCandidateCopy = createCandidateCopy(oldCandidate);
+        Candidate oldCandidateCopy = createCandidateCopy(candidate);
         
-        // Update fields (partial update)
-        if (request.getInstituteId() != null) {
-            Institute institute = instituteRepository.findById(request.getInstituteId())
-                    .orElseThrow(() -> new RuntimeException("Institute not found with ID: " + request.getInstituteId()));
-            oldCandidate.setInstitute(institute);
-        }
-        
-        if (request.getCycleId() != null) {
-            // Validate that the new cycle is OPEN
-            validateCycleIsOpen(request.getCycleId());
-            
-            HiringCycle cycle = hiringCycleRepository.findById(request.getCycleId())
-                    .orElseThrow(() -> new RuntimeException("Hiring cycle not found with ID: " + request.getCycleId()));
-            oldCandidate.setCycle(cycle);
-        }
-        
-        if (request.getFirstName() != null && !request.getFirstName().isBlank()) {
-            oldCandidate.setFirstName(request.getFirstName());
-        }
-        
-        if (request.getLastName() != null) {
-            oldCandidate.setLastName(request.getLastName());
-        }
-        
-        if (request.getEmail() != null && !request.getEmail().isBlank()) {
-            // Check if email is unique (excluding current candidate)
-            candidatesRepository.findByEmail(request.getEmail()).ifPresent(existing -> {
-                if (!existing.getCandidateId().equals(candidateId)) {
-                    throw new RuntimeException("Email already exists: " + request.getEmail());
-                }
-            });
-            oldCandidate.setEmail(request.getEmail());
-        }
-        
-        if (request.getMobile() != null && !request.getMobile().isBlank()) {
-            oldCandidate.setMobile(request.getMobile());
-        }
-        
-        
-        
-        if (request.getDateOfBirth() != null) {
-            oldCandidate.setDateOfBirth(request.getDateOfBirth());
-        }
-        
-        if (request.getAadhaarNumber() != null) {
-            oldCandidate.setAadhaarNumber(request.getAadhaarNumber());
-        }
-        
-        // isEligible can be manually overridden (e.g., exception cases)
-        if (request.getIsEligible() != null) {
-            oldCandidate.setIsEligible(request.getIsEligible());
-        }
-        
-        // Note: status is not updated via CandidateUpdateRequest
-        // Use updateCandidateStatus() for status changes
+        // Update only isEligible field
+        candidate.setIsEligible(request.getIsEligible());
         
         // Detect changes
-        List<FieldChangeDTO> changes = overrideService.detectChanges(oldCandidateCopy, oldCandidate);
+        List<FieldChangeDTO> changes = overrideService.detectChanges(oldCandidateCopy, candidate);
         
         // Save updated candidate
-        Candidate updatedCandidate = candidatesRepository.save(oldCandidate);
+        Candidate updatedCandidate = candidatesRepository.save(candidate);
         
-        // Log override if there are changes and updatedBy is provided
-        if (!changes.isEmpty() && updatedBy != null) {
+        // Log override if there are changes
+        if (!changes.isEmpty()) {
             ManualOverrideRequest overrideRequest = new ManualOverrideRequest();
             overrideRequest.setEntityType("CANDIDATES");
             overrideRequest.setEntityId(candidateId);
             overrideRequest.setChanges(changes);
-            overrideRequest.setOverrideReason(request.getReason()); // Use reason from request
-            overrideRequest.setCreatedBy(updatedBy);
+            overrideRequest.setOverrideReason(request.getReason());
+            overrideRequest.setCreatedBy(request.getUpdatedBy());
             
-            try {
-                overrideService.logOverride(overrideRequest);
-            } catch (Exception e) {
-                // Log error but don't fail the update
-                System.err.println("Error logging override: " + e.getMessage());
-            }
+            // No try-catch needed - if this fails, we want the whole transaction to rollback
+            overrideService.logOverride(overrideRequest);
         }
         
         return mapper.toResponse(updatedCandidate);
@@ -658,33 +660,33 @@ public class CandidatesServiceImpl implements ICandidatesService {
     @Transactional
     public CandidateResponse updateCandidateStatus(Long candidateId, CandidateStatusUpdateRequest request) {
         Candidate candidate = candidatesRepository.findById(candidateId)
-                .orElseThrow(() -> new RuntimeException("Candidate not found with ID: " + candidateId));
+                .orElseThrow(() -> new ResourceNotFoundException("Candidate", "ID", candidateId));
         
         if (request.getStatus() == null || request.getStatus().isBlank()) {
-            throw new RuntimeException("Status is required");
+            throw new ValidationException("Status is required");
         }
         
         // Parse the new status
-        CandidateStatus newStatus = CandidateStatus.valueOf(request.getStatus());
+        ApplicationStage newStatus = ApplicationStage.valueOf(request.getStatus());
         
         // Check if the candidate is eligible for status progression
         // Only eligible candidates can be SHORTLISTED, SCHEDULED, SELECTED, REJECTED, OFFERED, or JOINED
         if (!candidate.getIsEligible() && 
-            (newStatus == CandidateStatus.SHORTLISTED ||
-             newStatus == CandidateStatus.SCHEDULED ||
-             newStatus == CandidateStatus.SELECTED ||
-             newStatus == CandidateStatus.REJECTED ||
-             newStatus == CandidateStatus.OFFERED ||
-             newStatus == CandidateStatus.JOINED)) {
-            throw new RuntimeException("Cannot update status to " + newStatus + ". Candidate is not eligible. Only eligible candidates can progress in recruitment.");
+            (newStatus == ApplicationStage.SHORTLISTED ||
+             newStatus == ApplicationStage.SCHEDULED ||
+             newStatus == ApplicationStage.SELECTED ||
+             newStatus == ApplicationStage.REJECTED ||
+             newStatus == ApplicationStage.OFFERED ||
+             newStatus == ApplicationStage.JOINED)) {
+            throw new ValidationException("Cannot update status to " + newStatus + ". Candidate is not eligible. Only eligible candidates can progress in recruitment.");
         }
         
         // Create copy for change detection
         Candidate oldCandidate = createCandidateCopy(candidate);
         
         // Update status
-        CandidateStatus oldStatus = candidate.getStatus();
-        candidate.setStatus(newStatus);
+        ApplicationStage oldStatus = candidate.getApplicationStage();
+        candidate.setApplicationStage(newStatus);
         
         // Fetch username and update reason field
         String userName = "Unknown";
@@ -705,6 +707,8 @@ public class CandidatesServiceImpl implements ICandidatesService {
             candidate.setReason("The \"" + newStatus + "\" update by " + userName);
         }
         
+        // Append to statusHistory
+        appendStatusHistory(candidate, newStatus, userName);
         
         // Save
         Candidate updatedCandidate = candidatesRepository.save(candidate);
@@ -713,7 +717,7 @@ public class CandidatesServiceImpl implements ICandidatesService {
         if (request.getUpdatedBy() != null) {
             List<FieldChangeDTO> changes = new ArrayList<>();
             FieldChangeDTO statusChange = new FieldChangeDTO();
-            statusChange.setField("status");
+            statusChange.setField("applicationStage");
             statusChange.setOld(oldStatus != null ? oldStatus.toString() : null);
             statusChange.setNewValue(newStatus.toString());
             changes.add(statusChange);
@@ -741,19 +745,19 @@ public class CandidatesServiceImpl implements ICandidatesService {
         BulkCandidateStatusUpdateResponse response = new BulkCandidateStatusUpdateResponse();
         
         if (request.getCandidateIds() == null || request.getCandidateIds().isEmpty()) {
-            throw new RuntimeException("Candidate IDs list cannot be empty");
+            throw new ValidationException("Candidate IDs list cannot be empty");
         }
         
         if (request.getStatus() == null || request.getStatus().isBlank()) {
-            throw new RuntimeException("Status is required");
+            throw new ValidationException("Status is required");
         }
         
         // Parse and validate the new status
-        CandidateStatus newStatus;
+        ApplicationStage newStatus;
         try {
-            newStatus = CandidateStatus.valueOf(request.getStatus());
+            newStatus = ApplicationStage.valueOf(request.getStatus());
         } catch (IllegalArgumentException e) {
-            throw new RuntimeException("Invalid status: " + request.getStatus());
+            throw new ValidationException("Invalid status: " + request.getStatus());
         }
         
         // Fetch username if updatedBy is provided
@@ -784,12 +788,12 @@ public class CandidatesServiceImpl implements ICandidatesService {
                 
                 // Check eligibility for progression statuses
                 if (!candidate.getIsEligible() && 
-                    (newStatus == CandidateStatus.SHORTLISTED ||
-                     newStatus == CandidateStatus.SCHEDULED ||
-                     newStatus == CandidateStatus.SELECTED ||
-                     newStatus == CandidateStatus.REJECTED ||
-                     newStatus == CandidateStatus.OFFERED ||
-                     newStatus == CandidateStatus.JOINED)) {
+                    (newStatus == ApplicationStage.SHORTLISTED ||
+                     newStatus == ApplicationStage.SCHEDULED ||
+                     newStatus == ApplicationStage.SELECTED ||
+                     newStatus == ApplicationStage.REJECTED ||
+                     newStatus == ApplicationStage.OFFERED ||
+                     newStatus == ApplicationStage.JOINED)) {
                     
                     String candidateName = candidate.getFirstName() + 
                             (candidate.getLastName() != null ? " " + candidate.getLastName() : "");
@@ -799,8 +803,8 @@ public class CandidatesServiceImpl implements ICandidatesService {
                 }
                 
                 // Update status
-                CandidateStatus oldStatus = candidate.getStatus();
-                candidate.setStatus(newStatus);
+                ApplicationStage oldStatus = candidate.getApplicationStage();
+                candidate.setApplicationStage(newStatus);
                 
                 // Append reason to existing reason with format: . "The 'STATUS' update by userName"
                 String statusUpdateReason = ". The \"" + newStatus + "\" update by " + userName;
@@ -812,10 +816,97 @@ public class CandidatesServiceImpl implements ICandidatesService {
                     candidate.setReason("The \"" + newStatus + "\" update by " + userName);
                 }
                 
+                // Append to statusHistory
+                appendStatusHistory(candidate, newStatus, userName);
+                
                 // Save candidate
                 candidatesRepository.save(candidate);
                 
                
+                
+                response.getSuccessfulCandidateIds().add(candidateId);
+                successCount++;
+                
+            } catch (Exception e) {
+                response.getErrorMessages().add("Error updating candidate " + candidateId + ": " + e.getMessage());
+                failureCount++;
+            }
+        }
+        
+        response.setTotalProcessed(totalProcessed);
+        response.setSuccessCount(successCount);
+        response.setFailureCount(failureCount);
+        
+        return response;
+    }
+    
+    @Override
+    @Transactional
+    public BulkCandidateLifecycleUpdateResponse bulkUpdateCandidateLifecycleStatus(BulkCandidateLifecycleUpdateRequest request) {
+        BulkCandidateLifecycleUpdateResponse response = new BulkCandidateLifecycleUpdateResponse();
+        
+        if (request.getCandidateIds() == null || request.getCandidateIds().isEmpty()) {
+            throw new ValidationException("Candidate IDs list cannot be empty");
+        }
+        
+        if (request.getLifecycleStatus() == null || request.getLifecycleStatus().isBlank()) {
+            throw new ValidationException("Lifecycle status is required");
+        }
+        
+        // Parse and validate the new lifecycle status
+        LifecycleStatus newLifecycleStatus;
+        try {
+            newLifecycleStatus = LifecycleStatus.valueOf(request.getLifecycleStatus());
+        } catch (IllegalArgumentException e) {
+            throw new ValidationException("Invalid lifecycle status: " + request.getLifecycleStatus() + ". Must be ACTIVE or CLOSED");
+        }
+        
+        // Fetch username if updatedBy is provided
+        String userName = "System";
+        if (request.getUpdatedBy() != null) {
+            User user = userRepository.findById(request.getUpdatedBy()).orElse(null);
+            if (user != null) {
+                userName = user.getUsername();
+            }
+        }
+        
+        int totalProcessed = 0;
+        int successCount = 0;
+        int failureCount = 0;
+        
+        for (Long candidateId : request.getCandidateIds()) {
+            totalProcessed++;
+            
+            try {
+                // Find candidate
+                Candidate candidate = candidatesRepository.findById(candidateId).orElse(null);
+                
+                if (candidate == null) {
+                    response.getErrorMessages().add("Candidate with ID " + candidateId + " not found");
+                    failureCount++;
+                    continue;
+                }
+                
+                // Update lifecycle status
+                LifecycleStatus oldLifecycleStatus = candidate.getLifecycleStatus();
+                candidate.setLifecycleStatus(newLifecycleStatus);
+                
+                // Append to statusHistory (not using appendStatusHistory since this is lifecycleStatus, not applicationStage)
+                java.time.LocalDateTime now = java.time.LocalDateTime.now();
+                java.time.format.DateTimeFormatter formatter = java.time.format.DateTimeFormatter.ofPattern("d/M/yy - h:mma");
+                String formattedDate = now.format(formatter).toLowerCase();
+                
+                String historyEntry = "Lifecycle status updated to " + newLifecycleStatus + " by " + userName + " on " + formattedDate + ".";
+                
+                String currentHistory = candidate.getStatusHistory();
+                if (currentHistory == null || currentHistory.isEmpty()) {
+                    candidate.setStatusHistory(historyEntry);
+                } else {
+                    candidate.setStatusHistory(currentHistory + "\n" + historyEntry);
+                }
+                
+                // Save candidate
+                candidatesRepository.save(candidate);
                 
                 response.getSuccessfulCandidateIds().add(candidateId);
                 successCount++;
@@ -855,21 +946,25 @@ public class CandidatesServiceImpl implements ICandidatesService {
         copy.setAadhaarNumber(original.getAadhaarNumber());
         copy.setIsEligible(original.getIsEligible());
         copy.setReason(original.getReason());
-        copy.setStatus(original.getStatus());
+        copy.setApplicationStage(original.getApplicationStage());
+        copy.setStatusHistory(original.getStatusHistory());
+        copy.setApplicationType(original.getApplicationType());
+        copy.setLifecycleStatus(original.getLifecycleStatus());
         return copy;
     }
     
     /**
      * Helper method to validate that a hiring cycle is OPEN
      * @param cycleId Cycle ID to validate
-     * @throws RuntimeException if cycle not found or not OPEN
+     * @throws ResourceNotFoundException if cycle not found
+     * @throws ValidationException if not OPEN
      */
     private void validateCycleIsOpen(Long cycleId) {
         HiringCycle cycle = hiringCycleRepository.findById(cycleId)
-                .orElseThrow(() -> new RuntimeException("Hiring cycle not found with ID: " + cycleId));
+                .orElseThrow(() -> new ResourceNotFoundException("Hiring cycle", "ID", cycleId));
         
         if (cycle.getStatus() != CycleStatus.OPEN) {
-            throw new RuntimeException("Cannot add candidates to cycle " + cycleId + ". Cycle status is " + cycle.getStatus() + ". Only OPEN cycles accept new candidates.");
+            throw new ValidationException("Cannot add candidates to cycle " + cycleId + ". Cycle status is " + cycle.getStatus() + ". Only OPEN cycles accept new candidates.");
         }
     }
     
@@ -879,13 +974,35 @@ public class CandidatesServiceImpl implements ICandidatesService {
     private void mapCandidateSkills(Candidate candidate, List<Long> skillIds) {
         for (Long skillId : skillIds) {
             Skill skill = skillRepository.findById(skillId)
-                    .orElseThrow(() -> new RuntimeException("Skill not found with ID: " + skillId));
+                    .orElseThrow(() -> new ResourceNotFoundException("Skill", "ID", skillId));
             
             CandidateSkill candidateSkill = new CandidateSkill();
             candidateSkill.setCandidate(candidate);
             candidateSkill.setSkill(skill);
             
             candidateSkillRepository.save(candidateSkill);
+        }
+    }
+    
+    /**
+     * Helper method to append status history with formatted timestamp
+     * Format: "Updated to {stage} by {userName} on 24/3/25 - 10:12pm."
+     * @param candidate The candidate to update
+     * @param newStage The new application stage
+     * @param userName The name of the user making the update
+     */
+    private void appendStatusHistory(Candidate candidate, com.kanini.springer.entity.enums.Enums.ApplicationStage newStage, String userName) {
+        java.time.LocalDateTime now = java.time.LocalDateTime.now();
+        java.time.format.DateTimeFormatter formatter = java.time.format.DateTimeFormatter.ofPattern("d/M/yy - h:mma");
+        String formattedDate = now.format(formatter).toLowerCase();
+        
+        String historyEntry = "Updated to " + newStage + " by " + userName + " on " + formattedDate + ".";
+        
+        String currentHistory = candidate.getStatusHistory();
+        if (currentHistory == null || currentHistory.isEmpty()) {
+            candidate.setStatusHistory(historyEntry);
+        } else {
+            candidate.setStatusHistory(currentHistory + "\n" + historyEntry);
         }
     }
 }

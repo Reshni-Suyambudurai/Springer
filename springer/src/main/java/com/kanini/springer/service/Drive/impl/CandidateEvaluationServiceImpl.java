@@ -10,8 +10,10 @@ import com.kanini.springer.entity.Drive.Candidate;
 import com.kanini.springer.entity.Drive.CandidateEvaluation;
 import com.kanini.springer.entity.Drive.RoundTemplate;
 import com.kanini.springer.entity.HiringReq.User;
-import com.kanini.springer.entity.enums.Enums.CandidateStatus;
+import com.kanini.springer.entity.enums.Enums.ApplicationStage;
 import com.kanini.springer.entity.enums.Enums.EvaluationStatus;
+import com.kanini.springer.exception.ResourceNotFoundException;
+import com.kanini.springer.exception.ValidationException;
 import com.kanini.springer.mapper.Drive.CandidateEvaluationMapper;
 import com.kanini.springer.repository.Drive.ApplicationRepository;
 import com.kanini.springer.repository.Drive.CandidateEvaluationRepository;
@@ -48,39 +50,39 @@ public class CandidateEvaluationServiceImpl implements ICandidateEvaluationServi
     public CandidateEvaluationResponse createEvaluation(CandidateEvaluationRequest request) {
         // Validate required fields
         if (request.getApplicationId() == null) {
-            throw new RuntimeException("Application ID is required");
+            throw new ValidationException("Application ID is required");
         }
         if (request.getRoundConfigId() == null) {
-            throw new RuntimeException("Round config ID is required");
+            throw new ValidationException("Round config ID is required");
         }
         if (request.getScore() == null) {
-            throw new RuntimeException("Score is required");
+            throw new ValidationException("Score is required");
         }
         if (request.getEvaluationStatus() == null || request.getEvaluationStatus().isBlank()) {
-            throw new RuntimeException("Evaluation status is required");
+            throw new ValidationException("Evaluation status is required");
         }
         if (request.getReviewedBy() == null) {
-            throw new RuntimeException("Reviewed by user ID is required");
+            throw new ValidationException("Reviewed by user ID is required");
         }
         
         // Fetch application
         Application application = applicationRepository.findById(request.getApplicationId())
-            .orElseThrow(() -> new RuntimeException("Application not found with ID: " + request.getApplicationId()));
+            .orElseThrow(() -> new ResourceNotFoundException("Application", "ID", request.getApplicationId()));
         
         // Fetch round template
         RoundTemplate roundTemplate = roundTemplateRepository.findById(request.getRoundConfigId())
-            .orElseThrow(() -> new RuntimeException("Round template not found with ID: " + request.getRoundConfigId()));
+            .orElseThrow(() -> new ResourceNotFoundException("Round template", "ID", request.getRoundConfigId()));
         
         // Fetch reviewed by user
         User reviewedByUser = userRepository.findById(request.getReviewedBy())
-            .orElseThrow(() -> new RuntimeException("User not found with ID: " + request.getReviewedBy()));
+            .orElseThrow(() -> new ResourceNotFoundException("User", "ID", request.getReviewedBy()));
         
         // Parse evaluation status
         EvaluationStatus evaluationStatus;
         try {
             evaluationStatus = EvaluationStatus.valueOf(request.getEvaluationStatus());
         } catch (IllegalArgumentException e) {
-            throw new RuntimeException("Invalid evaluation status: " + request.getEvaluationStatus());
+            throw new ValidationException("Invalid evaluation status: " + request.getEvaluationStatus());
         }
         
         // Create evaluation
@@ -98,7 +100,7 @@ public class CandidateEvaluationServiceImpl implements ICandidateEvaluationServi
                 String sectionScoreJson = objectMapper.writeValueAsString(request.getSectionScore());
                 evaluation.setSectionScore(sectionScoreJson);
             } catch (JsonProcessingException e) {
-                throw new RuntimeException("Failed to serialize sectionScore to JSON: " + e.getMessage());
+                throw new ValidationException("Failed to serialize sectionScore to JSON: " + e.getMessage());
             }
         }
         
@@ -120,22 +122,22 @@ public class CandidateEvaluationServiceImpl implements ICandidateEvaluationServi
         
         // Validate required fields
         if (request.getRoundConfigId() == null) {
-            throw new RuntimeException("Round config ID is required");
+            throw new ValidationException("Round config ID is required");
         }
         if (request.getReviewedBy() == null) {
-            throw new RuntimeException("Reviewed by user ID is required");
+            throw new ValidationException("Reviewed by user ID is required");
         }
         if (request.getEvaluations() == null || request.getEvaluations().isEmpty()) {
-            throw new RuntimeException("Evaluations list cannot be empty");
+            throw new ValidationException("Evaluations list cannot be empty");
         }
         
         // Fetch round template (common for all)
         RoundTemplate roundTemplate = roundTemplateRepository.findById(request.getRoundConfigId())
-            .orElseThrow(() -> new RuntimeException("Round template not found with ID: " + request.getRoundConfigId()));
+            .orElseThrow(() -> new ResourceNotFoundException("Round template", "ID", request.getRoundConfigId()));
         
         // Fetch reviewed by user (common for all)
         User reviewedByUser = userRepository.findById(request.getReviewedBy())
-            .orElseThrow(() -> new RuntimeException("User not found with ID: " + request.getReviewedBy()));
+            .orElseThrow(() -> new ResourceNotFoundException("User", "ID", request.getReviewedBy()));
         
         int totalProcessed = 0;
         int successCount = 0;
@@ -242,7 +244,7 @@ public class CandidateEvaluationServiceImpl implements ICandidateEvaluationServi
     @Transactional(readOnly = true)
     public List<CandidateEvaluationResponse> getEvaluationsByApplicationId(Long applicationId) {
         if (applicationId == null) {
-            throw new RuntimeException("Application ID is required");
+            throw new ValidationException("Application ID is required");
         }
         
         List<CandidateEvaluation> evaluations = evaluationRepository.findByApplicationApplicationId(applicationId);
@@ -256,7 +258,7 @@ public class CandidateEvaluationServiceImpl implements ICandidateEvaluationServi
     @Transactional(readOnly = true)
     public List<CandidateEvaluationSummaryResponse> getEvaluationsSummaryByDriveId(Long driveId) {
         if (driveId == null) {
-            throw new RuntimeException("Drive ID is required");
+            throw new ValidationException("Drive ID is required");
         }
         
         // Get all applications for the drive
@@ -316,20 +318,20 @@ public class CandidateEvaluationServiceImpl implements ICandidateEvaluationServi
     @Transactional
     public CandidateEvaluationResponse updateEvaluationStatus(Long scoreId, EvaluationStatusUpdateRequest request) {
         if (scoreId == null) {
-            throw new RuntimeException("Score ID is required");
+            throw new ValidationException("Score ID is required");
         }
         
         if (request.getEvaluationStatus() == null || request.getEvaluationStatus().isBlank()) {
-            throw new RuntimeException("Evaluation status is required");
+            throw new ValidationException("Evaluation status is required");
         }
         
         if (request.getUpdatedBy() == null) {
-            throw new RuntimeException("Updated by user ID is required");
+            throw new ValidationException("Updated by user ID is required");
         }
         
         // Find evaluation
         CandidateEvaluation evaluation = evaluationRepository.findById(scoreId)
-            .orElseThrow(() -> new RuntimeException("Evaluation not found with ID: " + scoreId));
+            .orElseThrow(() -> new ResourceNotFoundException("Evaluation", "ID", scoreId));
         
         // Store old status for comparison
         EvaluationStatus oldStatus = evaluation.getStatus();
@@ -339,7 +341,7 @@ public class CandidateEvaluationServiceImpl implements ICandidateEvaluationServi
         try {
             newStatus = EvaluationStatus.valueOf(request.getEvaluationStatus());
         } catch (IllegalArgumentException e) {
-            throw new RuntimeException("Invalid evaluation status: " + request.getEvaluationStatus());
+            throw new ValidationException("Invalid evaluation status: " + request.getEvaluationStatus());
         }
         
         // Update status
@@ -371,7 +373,7 @@ public class CandidateEvaluationServiceImpl implements ICandidateEvaluationServi
      * Helper method to update candidate status when evaluation fails
      */
     private void updateCandidateStatusOnFailure(Candidate candidate, String roundName) {
-        candidate.setStatus(CandidateStatus.REJECTED);
+        candidate.setApplicationStage(ApplicationStage.REJECTED);
         
         String failReason = "Failed in " + roundName;
         if (candidate.getReason() != null && !candidate.getReason().isBlank()) {
@@ -385,7 +387,7 @@ public class CandidateEvaluationServiceImpl implements ICandidateEvaluationServi
      * Helper method to update candidate status when marked absent
      */
     private void updateCandidateStatusOnAbsent(Candidate candidate, String roundName) {
-        candidate.setStatus(CandidateStatus.REJECTED);
+        candidate.setApplicationStage(ApplicationStage.REJECTED);
         
         String absentReason = "Absent in " + roundName;
         if (candidate.getReason() != null && !candidate.getReason().isBlank()) {
@@ -399,7 +401,7 @@ public class CandidateEvaluationServiceImpl implements ICandidateEvaluationServi
      * Helper method to update candidate status when changed from FAIL to PASS
      */
     private void updateCandidateStatusOnPassAfterFail(Candidate candidate, String roundName) {
-        candidate.setStatus(CandidateStatus.SHORTLISTED);
+        candidate.setApplicationStage(ApplicationStage.SHORTLISTED);
         
         String passReason = "Re-evaluated and passed in " + roundName;
         if (candidate.getReason() != null && !candidate.getReason().isBlank()) {
@@ -424,9 +426,9 @@ public class CandidateEvaluationServiceImpl implements ICandidateEvaluationServi
             changes.add(statusChange);
             
             FieldChangeDTO candidateStatusChange = new FieldChangeDTO();
-            candidateStatusChange.setField("candidateStatus");
-            candidateStatusChange.setOld(candidate.getStatus() != null ? candidate.getStatus().toString() : null);
-            candidateStatusChange.setNewValue(candidate.getStatus().toString());
+            candidateStatusChange.setField("applicationStage");
+            candidateStatusChange.setOld(candidate.getApplicationStage() != null ? candidate.getApplicationStage().toString() : null);
+            candidateStatusChange.setNewValue(candidate.getApplicationStage().toString());
             changes.add(candidateStatusChange);
             
             ManualOverrideRequest overrideRequest = new ManualOverrideRequest();

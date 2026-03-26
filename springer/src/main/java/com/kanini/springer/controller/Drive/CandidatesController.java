@@ -2,6 +2,8 @@ package com.kanini.springer.controller.Drive;
 
 import com.kanini.springer.dto.Authentication.ApiResponse;
 import com.kanini.springer.dto.Drive.BulkCandidateCreateResponse;
+import com.kanini.springer.dto.Drive.BulkCandidateLifecycleUpdateRequest;
+import com.kanini.springer.dto.Drive.BulkCandidateLifecycleUpdateResponse;
 import com.kanini.springer.dto.Drive.BulkCandidateStatusUpdateRequest;
 import com.kanini.springer.dto.Drive.BulkCandidateStatusUpdateResponse;
 import com.kanini.springer.dto.Drive.CandidateRequest;
@@ -91,14 +93,13 @@ public class CandidatesController {
     }
     
     @PatchMapping("/{id}")
-    @Operation(summary = "Update candidate", 
-               description = "Partially updates a candidate. Requires mandatory 'reason' field. Automatically logs changes to manual_override table.")
+    @Operation(summary = "Update candidate eligibility", 
+               description = "Updates only the isEligible status with mandatory reason and updatedBy. Automatically logs changes to manual_override table for audit trail.")
     public ResponseEntity<ApiResponse<CandidateResponse>> updateCandidate(
             @PathVariable("id") Long candidateId,
-            @RequestBody CandidateUpdateRequest request,
-            @RequestParam(required = false) Long updatedBy) {
-        CandidateResponse response = candidatesService.updateCandidate(candidateId, request, updatedBy);
-        return ResponseEntity.ok(new ApiResponse<>(true, "Candidate updated successfully", response));
+            @RequestBody CandidateUpdateRequest request) {
+        CandidateResponse response = candidatesService.updateCandidate(candidateId, request);
+        return ResponseEntity.ok(new ApiResponse<>(true, "Candidate eligibility updated successfully", response));
     }
     
     @PatchMapping("/{id}/status")
@@ -117,6 +118,19 @@ public class CandidatesController {
     public ResponseEntity<ApiResponse<BulkCandidateStatusUpdateResponse>> bulkUpdateCandidateStatus(
             @RequestBody BulkCandidateStatusUpdateRequest request) {
         BulkCandidateStatusUpdateResponse response = candidatesService.bulkUpdateCandidateStatus(request);
+        
+        String message = String.format("Processed %d candidates: %d successful, %d failed", 
+                response.getTotalProcessed(), response.getSuccessCount(), response.getFailureCount());
+        
+        return ResponseEntity.ok(new ApiResponse<>(true, message, response));
+    }
+    
+    @PatchMapping("/lifecycle-status/bulk")
+    @Operation(summary = "Bulk update candidate lifecycle status", 
+               description = "Updates lifecycle status (ACTIVE/CLOSED) for multiple candidates at once. Appends update to statusHistory.")
+    public ResponseEntity<ApiResponse<BulkCandidateLifecycleUpdateResponse>> bulkUpdateCandidateLifecycleStatus(
+            @RequestBody BulkCandidateLifecycleUpdateRequest request) {
+        BulkCandidateLifecycleUpdateResponse response = candidatesService.bulkUpdateCandidateLifecycleStatus(request);
         
         String message = String.format("Processed %d candidates: %d successful, %d failed", 
                 response.getTotalProcessed(), response.getSuccessCount(), response.getFailureCount());

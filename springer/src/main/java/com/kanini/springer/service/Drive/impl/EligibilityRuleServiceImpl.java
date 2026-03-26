@@ -4,6 +4,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.kanini.springer.dto.Drive.EligibilityRuleDTO;
 import com.kanini.springer.dto.Drive.EligibilityRuleUpdateRequest;
 import com.kanini.springer.dto.Drive.EligibilityValidationResult;
+import com.kanini.springer.exception.ResourceNotFoundException;
+import com.kanini.springer.exception.ValidationException;
 import com.kanini.springer.service.Drive.IEligibilityRuleService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -20,7 +22,7 @@ public class EligibilityRuleServiceImpl implements IEligibilityRuleService {
     private static final String RULES_FILE_PATH = "EligibilityRule.json";
     
     @Override
-    public EligibilityValidationResult checkEligibility(BigDecimal cgpa, Integer passoutYear, Integer historyOfArrears) {
+    public EligibilityValidationResult checkEligibility(BigDecimal cgpa, Integer passoutYear, Integer historyOfArrears, String degree, String department) {
         EligibilityValidationResult result = new EligibilityValidationResult();
         result.setEligible(true);
         
@@ -36,7 +38,7 @@ public class EligibilityRuleServiceImpl implements IEligibilityRuleService {
             boolean hasAnyPass = false;
             
             for (EligibilityRuleDTO rule : rulesConfig.getRules()) {
-                boolean rulePass = evaluateRule(rule, cgpa, passoutYear, historyOfArrears);
+                boolean rulePass = evaluateRule(rule, cgpa, passoutYear, historyOfArrears, degree, department);
                 
                 if (!rulePass) {
                     String message = formatMessage(rule.getMessage(), rule);
@@ -72,7 +74,7 @@ public class EligibilityRuleServiceImpl implements IEligibilityRuleService {
         try {
             return loadRulesFromFile();
         } catch (IOException e) {
-            throw new RuntimeException("Failed to load eligibility rules: " + e.getMessage());
+            throw new ValidationException("Failed to load eligibility rules: " + e.getMessage());
         }
     }
     
@@ -81,7 +83,7 @@ public class EligibilityRuleServiceImpl implements IEligibilityRuleService {
         try {
             // Validate request
             if (request.getRules() == null || request.getRules().isEmpty()) {
-                throw new RuntimeException("Rules cannot be empty");
+                throw new ValidationException("Rules cannot be empty");
             }
             
             if (request.getLogic() == null || request.getLogic().isBlank()) {
@@ -94,7 +96,7 @@ public class EligibilityRuleServiceImpl implements IEligibilityRuleService {
             
             return request;
         } catch (IOException e) {
-            throw new RuntimeException("Failed to update eligibility rules: " + e.getMessage());
+            throw new ValidationException("Failed to update eligibility rules: " + e.getMessage());
         }
     }
     
@@ -105,7 +107,7 @@ public class EligibilityRuleServiceImpl implements IEligibilityRuleService {
         File file = new File(RULES_FILE_PATH);
         
         if (!file.exists()) {
-            throw new RuntimeException("EligibilityRule.json file not found");
+            throw new ResourceNotFoundException("EligibilityRule.json", "file", RULES_FILE_PATH);
         }
         
         return objectMapper.readValue(file, EligibilityRuleUpdateRequest.class);
@@ -114,11 +116,17 @@ public class EligibilityRuleServiceImpl implements IEligibilityRuleService {
     /**
      * Evaluate a single rule
      */
-    private boolean evaluateRule(EligibilityRuleDTO rule, BigDecimal cgpa, Integer passoutYear, Integer historyOfArrears) {
+    private boolean evaluateRule(EligibilityRuleDTO rule, BigDecimal cgpa, Integer passoutYear, Integer historyOfArrears, String degree, String department) {
         String field = rule.getField();
         String operator = rule.getOperator();
         
         try {
+            // Handle string fields (degree, department) with IN operator
+            if ("IN".equalsIgnoreCase(operator)) {
+                return evaluateInOperator(field, rule.getAllowedValues(), degree, department);
+            }
+            
+            // Handle numeric fields
             Double fieldValue = null;
             
             // Get the field value based on the field name
@@ -179,6 +187,37 @@ public class EligibilityRuleServiceImpl implements IEligibilityRuleService {
     }
     
     /**
+     * Evaluate IN operator for string fields (degree, department)
+     */
+    private boolean evaluateInOperator(String field, java.util.List<String> allowedValues, String degree, String department) {
+        if (allowedValues == null || allowedValues.isEmpty()) {
+            return true; // No restriction, pass by default
+        }
+        
+        // Get the field value based on the field name and check directly
+        switch (field.toLowerCase()) {
+            case "degree":
+                if (degree == null || degree.isBlank()) {
+                    return false; // Missing required data
+                }
+                final String degreeValue = degree.trim();
+                return allowedValues.stream()
+                        .anyMatch(allowed -> allowed.equalsIgnoreCase(degreeValue));
+                
+            case "department":
+                if (department == null || department.isBlank()) {
+                    return false; // Missing required data
+                }
+                final String departmentValue = department.trim();
+                return allowedValues.stream()
+                        .anyMatch(allowed -> allowed.equalsIgnoreCase(departmentValue));
+                
+            default:
+                return true; // Unknown field, pass by default
+        }
+    }
+    
+    /**
      * Format message with placeholders
      */
     private String formatMessage(String message, EligibilityRuleDTO rule) {
@@ -198,6 +237,10 @@ public class EligibilityRuleServiceImpl implements IEligibilityRuleService {
         
         if (rule.getMax() != null) {
             formatted = formatted.replace("{max}", rule.getMax().toString());
+        }
+        
+        if (rule.getAllowedValues() != null && !rule.getAllowedValues().isEmpty()) {
+            formatted = formatted.replace("{allowedValues}", String.join(", ", rule.getAllowedValues()));
         }
         
         return formatted;
