@@ -58,6 +58,7 @@ public class InstituteWithTPOsMapper {
     
     private ProgramDetails mapToProgramDetails(InstituteProgram instituteProgram) {
         ProgramDetails programDetails = new ProgramDetails();
+        programDetails.setInstituteProgramId(instituteProgram.getId()); // Mapping ID
         programDetails.setProgramId(instituteProgram.getProgram().getProgramId());
         programDetails.setProgramName(instituteProgram.getProgram().getProgramName().name());
         return programDetails;

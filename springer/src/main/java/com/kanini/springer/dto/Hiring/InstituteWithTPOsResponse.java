@@ -41,6 +41,7 @@ public class InstituteWithTPOsResponse {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class ProgramDetails {
+        private Long instituteProgramId; // Mapping ID for deletion
         private Long programId;
         private String programName;
     }

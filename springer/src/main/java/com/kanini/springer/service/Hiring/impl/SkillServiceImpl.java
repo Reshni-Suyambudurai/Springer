@@ -2,8 +2,11 @@ package com.kanini.springer.service.Hiring.impl;
 
 import com.kanini.springer.dto.Hiring.SkillRequest;
 import com.kanini.springer.dto.Hiring.SkillResponse;
-import com.kanini.springer.entity.HiringReq.Skill;import com.kanini.springer.exception.ResourceNotFoundException;
-import com.kanini.springer.exception.ValidationException;import com.kanini.springer.mapper.Hiring.SkillsMapper;
+import com.kanini.springer.entity.HiringReq.Skill;
+import com.kanini.springer.entity.enums.Enums.SkillCategory;
+import com.kanini.springer.exception.ResourceNotFoundException;
+import com.kanini.springer.exception.ValidationException;
+import com.kanini.springer.mapper.Hiring.SkillsMapper;
 import com.kanini.springer.repository.Hiring.SkillRepository;
 import com.kanini.springer.service.Hiring.ISkills;
 import lombok.RequiredArgsConstructor;
@@ -28,8 +31,17 @@ public class SkillServiceImpl implements ISkills {
             throw new ValidationException("Skill already exists with name: " + request.getSkillName());
         }
         
+        // Validate and parse category
+        SkillCategory category;
+        try {
+            category = SkillCategory.valueOf(request.getCategory());
+        } catch (IllegalArgumentException e) {
+            throw new ValidationException("Invalid skill category: " + request.getCategory() + ". Must be TECHNICAL or SOFT_SKILL");
+        }
+        
         Skill skill = new Skill();
         skill.setSkillName(request.getSkillName());
+        skill.setCategory(category);
         
         Skill savedSkill = skillRepository.save(skill);
         return mapper.toResponse(savedSkill);
@@ -61,7 +73,16 @@ public class SkillServiceImpl implements ISkills {
             throw new ValidationException("Skill already exists with name: " + request.getSkillName());
         }
         
+        // Validate and parse category
+        SkillCategory category;
+        try {
+            category = SkillCategory.valueOf(request.getCategory());
+        } catch (IllegalArgumentException e) {
+            throw new ValidationException("Invalid skill category: " + request.getCategory() + ". Must be TECHNICAL or SOFT_SKILL");
+        }
+        
         skill.setSkillName(request.getSkillName());
+        skill.setCategory(category);
         Skill updatedSkill = skillRepository.save(skill);
         return mapper.toResponse(updatedSkill);
     }

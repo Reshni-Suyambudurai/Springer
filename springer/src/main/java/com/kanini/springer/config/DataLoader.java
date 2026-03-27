@@ -190,7 +190,8 @@ public class DataLoader {
     private void seedSkills() {
         log.info("Seeding skills...");
 
-        String[] skillNames = {
+        // Technical Skills
+        String[] technicalSkills = {
             // Programming Languages
             "Java", "Python", "JavaScript", "C++", "C#", "Go", "Rust",
             
@@ -210,16 +211,30 @@ public class DataLoader {
             "Manual Testing", "Selenium", "JUnit", "Jest", "Cypress",
             
             // Others
-            "ServiceNow", "Salesforce", "SAP", "Communication", "Problem Solving"
+            "ServiceNow", "Salesforce", "SAP"
         };
 
-        for (String skillName : skillNames) {
+        for (String skillName : technicalSkills) {
             Skill skill = new Skill();
             skill.setSkillName(skillName);
+            skill.setCategory(SkillCategory.TECHNICAL);
             skillRepository.save(skill);
         }
 
-        log.info("Seeded {} skills", skillNames.length);
+        // Soft Skills
+        String[] softSkills = {
+            "Communication", "Problem Solving", "Leadership", "Teamwork", 
+            "Time Management", "Adaptability", "Critical Thinking", "Creativity"
+        };
+
+        for (String skillName : softSkills) {
+            Skill skill = new Skill();
+            skill.setSkillName(skillName);
+            skill.setCategory(SkillCategory.SOFT_SKILL);
+            skillRepository.save(skill);
+        }
+
+        log.info("Seeded {} technical skills and {} soft skills", technicalSkills.length, softSkills.length);
     }
 
     private void seedPrograms() {

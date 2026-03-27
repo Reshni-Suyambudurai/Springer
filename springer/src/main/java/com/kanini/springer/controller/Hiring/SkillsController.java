@@ -90,4 +90,6 @@ public class SkillsController {
         skillService.deleteSkill(id);
         return ResponseEntity.ok(ApiResponse.success("Skill deleted successfully", null));
     }
+
+    
 }

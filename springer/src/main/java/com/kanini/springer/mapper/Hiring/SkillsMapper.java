@@ -14,6 +14,7 @@ public class SkillsMapper {
         SkillResponse response = new SkillResponse();
         response.setSkillId(skill.getSkillId());
         response.setSkillName(skill.getSkillName());
+        response.setCategory(skill.getCategory() != null ? skill.getCategory().toString() : null);
         return response;
     }
 }

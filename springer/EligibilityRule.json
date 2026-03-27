@@ -2,40 +2,43 @@
   "rules" : [ {
     "field" : "cgpa",
     "operator" : ">=",
-    "value" : 8.5,
+    "value" : 8.3,
     "min" : null,
     "max" : null,
-    "message" : "CGPA must be at least {value}"
+    "message" : "CGPA must be at least {value}",
+    "allowedValues" : null
   }, {
     "field" : "passoutYear",
     "operator" : "BETWEEN",
     "value" : null,
     "min" : 2023,
     "max" : 2026,
-    "message" : "Passout year must be between {min} and {max}"
+    "message" : "Passout year must be between {min} and {max}",
+    "allowedValues" : null
   }, {
     "field" : "historyOfArrears",
     "operator" : "<=",
     "value" : 3.0,
     "min" : null,
     "max" : null,
-    "message" : "Number of arrears is <= {value}"
+    "message" : "Number of arrears is <= {value}",
+    "allowedValues" : null
   }, {
     "field" : "degree",
     "operator" : "IN",
     "value" : null,
     "min" : null,
     "max" : null,
-    "allowedValues" : [ "B.TECH", "M.TECH", "B.E", "M.E" ],
-    "message" : "Degree isn't eligible"
+    "message" : "Degree isn't eligible",
+    "allowedValues" : [ "BE" ]
   }, {
     "field" : "department",
     "operator" : "IN",
     "value" : null,
     "min" : null,
     "max" : null,
-    "allowedValues" : [ "CSE","EEE","IT" ],
-    "message" : "Department isn't eligible"
+    "message" : "Department isn't eligible",
+    "allowedValues" : [ "AI", "AIML", "CSE", "IT", "DS" ]
   } ],
   "logic" : "AND"
 }

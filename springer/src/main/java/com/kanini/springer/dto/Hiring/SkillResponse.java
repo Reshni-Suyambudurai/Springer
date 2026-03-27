@@ -11,4 +11,5 @@ public class SkillResponse {
     
     private Long skillId;
     private String skillName;
+    private String category; // TECHNICAL or SOFT_SKILL
 }

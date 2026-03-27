@@ -145,6 +145,7 @@ public class InstituteServiceImpl implements IInstituteService {
     }
     
     @Override
+    @Transactional(readOnly = true)
     public List<InstituteResponse> getAllInstitutes() {
         return instituteRepository.findAll().stream()
                 .map(mapper::toResponse)
@@ -227,6 +228,7 @@ public class InstituteServiceImpl implements IInstituteService {
     }
     
     @Override
+    @Transactional(readOnly = true)
     public Page<InstituteWithTPOsResponse> getAllInstitutesWithTPOs(Pageable pageable) {
         Page<Institute> institutesPage = instituteRepository.findAll(pageable);
         
@@ -238,6 +240,7 @@ public class InstituteServiceImpl implements IInstituteService {
     }
     
     @Override
+    @Transactional(readOnly = true)
     public InstituteWithTPOsResponse getInstituteWithTPOsById(Long instituteId) {
         Institute institute = instituteRepository.findById(instituteId)
                 .orElseThrow(() -> new ResourceNotFoundException("Institute", "ID", instituteId));
