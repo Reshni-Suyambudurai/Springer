@@ -29,7 +29,7 @@ public class DriveScheduleController {
     @Operation(summary = "Create a new drive schedule", 
                description = "Creates a new drive schedule with optional round configurations. " +
                              "Drive status defaults to PLANNED if not provided. " +
-                             "eligibilityLocked and cutoffLocked default to false.")
+                             "eligibilityLocked defaults to false.")
     public ResponseEntity<ApiResponse<DriveResponse>> createDrive(@RequestBody DriveRequest request) {
         DriveResponse response = driveScheduleService.createDrive(request);
         return ResponseEntity.status(HttpStatus.CREATED)
@@ -54,7 +54,7 @@ public class DriveScheduleController {
     
     @PatchMapping("/{driveId}")
     @Operation(summary = "Update drive schedule", 
-               description = "Updates a drive schedule. Drive rounds can be updated only if cutoffLocked is false. " +
+               description = "Updates a drive schedule including drive rounds. " +
                              "When updating, updatedAt and updatedBy fields are automatically set.")
     public ResponseEntity<ApiResponse<DriveResponse>> updateDrive(
             @PathVariable Long driveId,

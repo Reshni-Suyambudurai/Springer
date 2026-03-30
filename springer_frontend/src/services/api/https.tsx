@@ -8,6 +8,7 @@ export const http = axios.create({
     }
 });
 
+// Request interceptor - Add auth token to requests
 http.interceptors.request.use((config)=>{
   const token = tokenstore.getToken();
   if(token){
@@ -18,4 +19,35 @@ http.interceptors.request.use((config)=>{
   }
   
   return config;
-})
+});
+
+// Response interceptor - Handle authentication errors
+http.interceptors.response.use(
+  (response) => {
+    // Pass through successful responses
+    return response;
+  },
+  (error) => {
+    // Handle 401 Unauthorized responses (token expired or invalid)
+    if (error.response && error.response.status === 401) {
+      // Check if response has the expected structure
+      const responseData = error.response.data;
+      
+      // Clear user session
+      tokenstore.clear();
+      
+      // Redirect to login page
+      window.location.href = '/login';
+      
+      // Return rejected promise with error details
+      return Promise.reject({
+        message: responseData?.message || 'Unauthorized - Please login again',
+        success: false,
+        data: responseData?.data || null
+      });
+    }
+    
+    // For other errors, pass them through
+    return Promise.reject(error);
+  }
+);

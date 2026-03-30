@@ -28,7 +28,6 @@ public class DriveResponse {
     private LocalDate endDate;
     private String location;
     private Boolean eligibilityLocked;
-    private Boolean cutoffLocked;
     private String status;
     private LocalDateTime createdAt;
     private Long createdBy;

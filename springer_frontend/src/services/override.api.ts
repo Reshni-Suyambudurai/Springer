@@ -75,7 +75,7 @@ export const overrideApi = {
    */
   async getOverridesByEntityTypeAndEntityId(entityType: string, entityId: number): Promise<ApiResponse<ManualOverrideResponse[]>> {
     try {
-      const response = await http.get('/overrides/by-entity', {
+      const response = await http.get('/overrides/by-entity-id', {
         params: { entityType, entityId }
       });
       return response.data;

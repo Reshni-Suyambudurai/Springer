@@ -7,14 +7,18 @@ import com.kanini.springer.dto.Drive.BulkCandidateLifecycleUpdateRequest;
 import com.kanini.springer.dto.Drive.BulkCandidateLifecycleUpdateResponse;
 import com.kanini.springer.dto.Drive.BulkCandidateStatusUpdateRequest;
 import com.kanini.springer.dto.Drive.BulkCandidateStatusUpdateResponse;
+import com.kanini.springer.dto.Drive.CandidateFilterRequest;
 import com.kanini.springer.dto.Drive.CandidateRequest;
 import com.kanini.springer.dto.Drive.CandidateResponse;
 import com.kanini.springer.dto.Drive.CandidateStatusUpdateRequest;
 import com.kanini.springer.dto.Drive.CandidateUpdateRequest;
+import com.kanini.springer.dto.Drive.CandidateValidationRequest;
+import com.kanini.springer.dto.Drive.CandidateValidationResponse;
 import com.kanini.springer.dto.Drive.EligibilityValidationResult;
 import com.kanini.springer.entity.Drive.Candidate;
 import com.kanini.springer.entity.Drive.CandidateSkill;
 import com.kanini.springer.entity.HiringReq.HiringCycle;
+import com.kanini.springer.entity.HiringReq.Institute;
 import com.kanini.springer.entity.HiringReq.Skill;
 import com.kanini.springer.entity.HiringReq.User;
 import com.kanini.springer.entity.enums.Enums.ApplicationStage;
@@ -32,13 +36,21 @@ import com.kanini.springer.exception.ValidationException;
 import com.kanini.springer.service.Common.IOverrideService;
 import com.kanini.springer.service.Drive.ICandidatesService;
 import com.kanini.springer.service.Drive.IEligibilityRuleService;
+import com.kanini.springer.specification.CandidateSpecification;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 @Service
@@ -69,64 +81,53 @@ public class CandidatesServiceImpl implements ICandidatesService {
             throw new ValidationException("Mobile number is required");
         }
         
-        // Check for existing candidate by email or aadhaar
-        Candidate existingCandidate = null;
-        
-        // Check by email
-        existingCandidate = candidatesRepository.findByEmail(request.getEmail()).orElse(null);
-        
-        // If not found by email, check by aadhaar (if provided)
-        if (existingCandidate == null && request.getAadhaarNumber() != null && !request.getAadhaarNumber().isBlank()) {
-            existingCandidate = candidatesRepository.findByAadhaarNumber(request.getAadhaarNumber()).orElse(null);
+        // Validate cycle status if cycleId is provided
+        if (request.getCycleId() != null) {
+            validateCycleIsOpen(request.getCycleId());
         }
         
-        // If candidate exists, verify it's the same person before reusing
-        if (existingCandidate != null) {
-            // Verify candidate identity by matching CGPA, DOB, Passout Year, and Institute
-            List<String> mismatchedFields = new ArrayList<>();
-            
-            if (request.getCgpa() != null && existingCandidate.getCgpa() != null && 
-                existingCandidate.getCgpa().compareTo(request.getCgpa()) != 0) {
-                mismatchedFields.add("CGPA (existing: " + existingCandidate.getCgpa() + ", provided: " + request.getCgpa() + ")");
-            }
-            
-            if (request.getDateOfBirth() != null && existingCandidate.getDateOfBirth() != null && 
-                !existingCandidate.getDateOfBirth().equals(request.getDateOfBirth())) {
-                mismatchedFields.add("Date of Birth");
-            }
-            
-            if (request.getPassoutYear() != null && existingCandidate.getPassoutYear() != null && 
-                !existingCandidate.getPassoutYear().equals(request.getPassoutYear())) {
-                mismatchedFields.add("Passout Year (existing: " + existingCandidate.getPassoutYear() + ", provided: " + request.getPassoutYear() + ")");
-            }
-            
-            if (request.getInstituteId() != null && existingCandidate.getInstitute() != null && 
-                !existingCandidate.getInstitute().getInstituteId().equals(request.getInstituteId())) {
-                mismatchedFields.add("Institute (existing ID: " + existingCandidate.getInstitute().getInstituteId() + ", provided ID: " + request.getInstituteId() + ")");
-            }
-            
-            // If any fields don't match, reject with detailed error
-            if (!mismatchedFields.isEmpty()) {
-                String errorMsg = "Candidate with email/aadhaar already exists but data doesn't match. Mismatched fields: " + 
-                                  String.join(", ", mismatchedFields) + 
-                                  ". Please verify the candidate information.";
-                throw new ValidationException(errorMsg);
-            }
+        // Get institute name for comprehensive matching
+        Institute institute = instituteRepository.findById(request.getInstituteId())
+                .orElseThrow(() -> new ResourceNotFoundException("Institute", "ID", request.getInstituteId()));
+        String instituteName = institute.getInstituteName();
+        
+        // Check for existing candidate using comprehensive matching criteria
+        List<Candidate> matches = candidatesRepository.findMatchingCandidates(
+                request.getFirstName(),
+                request.getLastName(),
+                instituteName,
+                request.getDegree(),
+                request.getDepartment(),
+                request.getDateOfBirth(),
+                request.getPassoutYear(),
+                request.getAadhaarNumber()
+        );
+        
+        // If candidate exists, check cycle and provide detailed error
+        if (!matches.isEmpty()) {
+            Candidate existingCandidate = matches.get(0);
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("d/M/yy - h:mma");
+            String candidateName = existingCandidate.getFirstName() + " " + existingCandidate.getLastName();
+            String formattedDate = existingCandidate.getCreatedAt().format(formatter).toLowerCase();
             
             // Check if they're in the same cycle
             if (request.getCycleId() != null && existingCandidate.getCycle() != null && 
                 existingCandidate.getCycle().getCycleId().equals(request.getCycleId())) {
-                // Same cycle - reject
-                throw new ValidationException("Candidate already exists in this cycle with email: " + request.getEmail());
+                // Same cycle - reject with detailed message
+                String errorMsg = String.format(
+                        "Duplicate: %s applied on %s with %s stage and %s lifecycle status",
+                        candidateName,
+                        formattedDate,
+                        existingCandidate.getApplicationStage(),
+                        existingCandidate.getLifecycleStatus()
+                );
+                throw new ValidationException(errorMsg);
             }
             
-            // Identity verified and different cycle - reuse existing candidate and update cycleId
-            if (request.getCycleId() != null) {
-                validateCycleIsOpen(request.getCycleId());
-                HiringCycle newCycle = hiringCycleRepository.findById(request.getCycleId())
-                        .orElseThrow(() -> new ResourceNotFoundException("Hiring cycle", "ID", request.getCycleId()));
-                existingCandidate.setCycle(newCycle);
-            }
+            // Different cycle - reuse existing candidate and update cycleId
+            HiringCycle newCycle = hiringCycleRepository.findById(request.getCycleId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Hiring cycle", "ID", request.getCycleId()));
+            existingCandidate.setCycle(newCycle);
             
             // Update only mutable fields (identity fields like CGPA, DOB, passout year, institute are already verified)
             existingCandidate.setFirstName(request.getFirstName());
@@ -196,12 +197,25 @@ public class CandidatesServiceImpl implements ICandidatesService {
         }
         
         // No existing candidate - create new one
-        // Validate cycle status if cycleId is provided
-        if (request.getCycleId() != null) {
-            validateCycleIsOpen(request.getCycleId());
+        Candidate candidate = mapper.toEntity(request);
+        
+        // Check if email already exists
+        Optional<Candidate> existingEmail = candidatesRepository.findByEmail(request.getEmail());
+        if (existingEmail.isPresent()) {
+            String existingName = existingEmail.get().getFirstName() + 
+                                  (existingEmail.get().getLastName() != null ? " " + existingEmail.get().getLastName() : "");
+            throw new ValidationException("Email already exists for candidate: " + existingName);
         }
         
-        Candidate candidate = mapper.toEntity(request);
+        // Check if aadhaar already exists (if provided)
+        if (request.getAadhaarNumber() != null && !request.getAadhaarNumber().isBlank()) {
+            Optional<Candidate> existingAadhaar = candidatesRepository.findByAadhaarNumber(request.getAadhaarNumber());
+            if (existingAadhaar.isPresent()) {
+                String existingName = existingAadhaar.get().getFirstName() + 
+                                      (existingAadhaar.get().getLastName() != null ? " " + existingAadhaar.get().getLastName() : "");
+                throw new ValidationException("Aadhaar number already exists for candidate: " + existingName);
+            }
+        }
         
         // Check eligibility based on rules
         EligibilityValidationResult eligibilityResult = eligibilityRuleService.checkEligibility(
@@ -273,107 +287,76 @@ public class CandidatesServiceImpl implements ICandidatesService {
                 } else {
                     emailsInBatch.add(request.getEmail().toLowerCase());
                     
-                    // Check against database - if exists, verify identity then check cycle
-                    Candidate existingCandidate = candidatesRepository.findByEmail(request.getEmail()).orElse(null);
-                    if (existingCandidate != null) {
-                        // Verify candidate identity before reusing
-                        List<String> mismatchedFields = new ArrayList<>();
-                        
-                        if (request.getCgpa() != null && existingCandidate.getCgpa() != null && 
-                            existingCandidate.getCgpa().compareTo(request.getCgpa()) != 0) {
-                            mismatchedFields.add("CGPA");
-                        }
-                        
-                        if (request.getDateOfBirth() != null && existingCandidate.getDateOfBirth() != null && 
-                            !existingCandidate.getDateOfBirth().equals(request.getDateOfBirth())) {
-                            mismatchedFields.add("Date of Birth");
-                        }
-                        
-                        if (request.getPassoutYear() != null && existingCandidate.getPassoutYear() != null && 
-                            !existingCandidate.getPassoutYear().equals(request.getPassoutYear())) {
-                            mismatchedFields.add("Passout Year");
-                        }
-                        
-                        if (request.getInstituteId() != null && existingCandidate.getInstitute() != null && 
-                            !existingCandidate.getInstitute().getInstituteId().equals(request.getInstituteId())) {
-                            mismatchedFields.add("Institute");
-                        }
-                        
-                        // If fields don't match, add validation error
-                        if (!mismatchedFields.isEmpty()) {
-                            validationErrors.add(candidateRef + ": Email exists but candidate data doesn't match (" + 
-                                               String.join(", ", mismatchedFields) + " mismatch) - " + request.getEmail());
-                        } else {
-                            // Identity verified - check if same cycle
-                            if (request.getCycleId() != null && existingCandidate.getCycle() != null && 
-                                existingCandidate.getCycle().getCycleId().equals(request.getCycleId())) {
-                                validationErrors.add(candidateRef + ": Email already exists in same cycle - " + request.getEmail());
-                            } else {
-                                // Different cycle - mark for update
-                                candidatesToUpdate.add(existingCandidate);
-                                updateIndices.add(i);
-                            }
-                        }
+                    // Check if email already exists in database
+                    Optional<Candidate> existingEmail = candidatesRepository.findByEmail(request.getEmail());
+                    if (existingEmail.isPresent()) {
+                        String existingName = existingEmail.get().getFirstName() + 
+                                              (existingEmail.get().getLastName() != null ? " " + existingEmail.get().getLastName() : "");
+                        validationErrors.add(candidateRef + ": Email already exists for candidate - " + existingName);
                     }
                 }
             }
             
-            // Validate aadhaar uniqueness within batch and database (if provided)
+            // Validate aadhaar uniqueness within batch (if provided)
             if (request.getAadhaarNumber() != null && !request.getAadhaarNumber().isBlank()) {
                 if (aadhaarsInBatch.contains(request.getAadhaarNumber())) {
                     validationErrors.add(candidateRef + ": Duplicate Aadhaar within batch - " + request.getAadhaarNumber());
                 } else {
                     aadhaarsInBatch.add(request.getAadhaarNumber());
                     
-                    // Check against database - if exists, verify identity then check cycle
-                    Candidate existingByAadhaar = candidatesRepository.findByAadhaarNumber(request.getAadhaarNumber()).orElse(null);
-                    if (existingByAadhaar != null) {
-                        // Check if already marked for update by email
-                        boolean alreadyMarkedForUpdate = candidatesToUpdate.stream()
-                            .anyMatch(c -> c.getCandidateId().equals(existingByAadhaar.getCandidateId()));
-                        
-                        if (!alreadyMarkedForUpdate) {
-                            // Verify candidate identity before reusing
-                            List<String> mismatchedFields = new ArrayList<>();
-                            
-                            if (request.getCgpa() != null && existingByAadhaar.getCgpa() != null && 
-                                existingByAadhaar.getCgpa().compareTo(request.getCgpa()) != 0) {
-                                mismatchedFields.add("CGPA");
-                            }
-                            
-                            if (request.getDateOfBirth() != null && existingByAadhaar.getDateOfBirth() != null && 
-                                !existingByAadhaar.getDateOfBirth().equals(request.getDateOfBirth())) {
-                                mismatchedFields.add("Date of Birth");
-                            }
-                            
-                            if (request.getPassoutYear() != null && existingByAadhaar.getPassoutYear() != null && 
-                                !existingByAadhaar.getPassoutYear().equals(request.getPassoutYear())) {
-                                mismatchedFields.add("Passout Year");
-                            }
-                            
-                            if (request.getInstituteId() != null && existingByAadhaar.getInstitute() != null && 
-                                !existingByAadhaar.getInstitute().getInstituteId().equals(request.getInstituteId())) {
-                                mismatchedFields.add("Institute");
-                            }
-                            
-                            // If fields don't match, add validation error
-                            if (!mismatchedFields.isEmpty()) {
-                                validationErrors.add(candidateRef + ": Aadhaar exists but candidate data doesn't match (" + 
-                                                   String.join(", ", mismatchedFields) + " mismatch) - " + request.getAadhaarNumber());
-                            } else {
-                                // Identity verified - check if same cycle
-                                if (request.getCycleId() != null && existingByAadhaar.getCycle() != null && 
-                                    existingByAadhaar.getCycle().getCycleId().equals(request.getCycleId())) {
-                                    validationErrors.add(candidateRef + ": Aadhaar already exists in same cycle - " + request.getAadhaarNumber());
-                                } else {
-                                    // Different cycle - mark for update
-                                    candidatesToUpdate.add(existingByAadhaar);
-                                    updateIndices.add(i);
-                                }
-                            }
-                        }
+                    // Check if aadhaar already exists in database
+                    Optional<Candidate> existingAadhaar = candidatesRepository.findByAadhaarNumber(request.getAadhaarNumber());
+                    if (existingAadhaar.isPresent()) {
+                        String existingName = existingAadhaar.get().getFirstName() + 
+                                              (existingAadhaar.get().getLastName() != null ? " " + existingAadhaar.get().getLastName() : "");
+                        validationErrors.add(candidateRef + ": Aadhaar number already exists for candidate - " + existingName);
                     }
                 }
+            }
+            
+            // Check against database using comprehensive matching
+            try {
+                Institute institute = instituteRepository.findById(request.getInstituteId())
+                        .orElseThrow(() -> new ResourceNotFoundException("Institute", "ID", request.getInstituteId()));
+                String instituteName = institute.getInstituteName();
+                
+                List<Candidate> matches = candidatesRepository.findMatchingCandidates(
+                        request.getFirstName(),
+                        request.getLastName(),
+                        instituteName,
+                        request.getDegree(),
+                        request.getDepartment(),
+                        request.getDateOfBirth(),
+                        request.getPassoutYear(),
+                        request.getAadhaarNumber()
+                );
+                
+                if (!matches.isEmpty()) {
+                    Candidate existingCandidate = matches.get(0);
+                    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("d/M/yy - h:mma");
+                    String candidateName = existingCandidate.getFirstName() + " " + existingCandidate.getLastName();
+                    String formattedDate = existingCandidate.getCreatedAt().format(formatter).toLowerCase();
+                    
+                    // Check if same cycle
+                    if (request.getCycleId() != null && existingCandidate.getCycle() != null && 
+                        existingCandidate.getCycle().getCycleId().equals(request.getCycleId())) {
+                        // Same cycle - add error
+                        String errorMsg = String.format(
+                                "Duplicate: %s applied on %s with %s stage and %s lifecycle status",
+                                candidateName,
+                                formattedDate,
+                                existingCandidate.getApplicationStage(),
+                                existingCandidate.getLifecycleStatus()
+                        );
+                        validationErrors.add(candidateRef + ": " + errorMsg);
+                    } else {
+                        // Different cycle - mark for update
+                        candidatesToUpdate.add(existingCandidate);
+                        updateIndices.add(i);
+                    }
+                }
+            } catch (Exception e) {
+                validationErrors.add(candidateRef + ": Error checking for duplicates - " + e.getMessage());
             }
             
             // Validate cycle if provided
@@ -532,22 +515,38 @@ public class CandidatesServiceImpl implements ICandidatesService {
         allCandidatesToSave.addAll(candidatesToInsert);
         List<Candidate> savedCandidates = candidatesRepository.saveAll(allCandidatesToSave);
         
+        // Flush to ensure all IDs are generated for new candidates
+        candidatesRepository.flush();
+        
         // Map skills for each saved candidate
         List<CandidateRequest> allRequests = new ArrayList<>();
         allRequests.addAll(updateRequests);
         allRequests.addAll(insertRequests);
         
+        System.out.println("DEBUG: Total saved candidates: " + savedCandidates.size());
+        System.out.println("DEBUG: Total requests with potential skills: " + allRequests.size());
+        
         for (int i = 0; i < savedCandidates.size(); i++) {
             Candidate savedCandidate = savedCandidates.get(i);
             CandidateRequest request = allRequests.get(i);
             
+            System.out.println("DEBUG: Processing candidate " + (i+1) + "/" + savedCandidates.size() + 
+                             " - ID: " + savedCandidate.getCandidateId() + 
+                             ", Name: " + savedCandidate.getFirstName() +
+                             ", SkillIds in request: " + (request.getSkillIds() != null ? request.getSkillIds().size() : 0));
+            
             if (request.getSkillIds() != null && !request.getSkillIds().isEmpty()) {
                 try {
+                    System.out.println("DEBUG: Mapping " + request.getSkillIds().size() + " skills for candidate ID: " + savedCandidate.getCandidateId());
                     mapCandidateSkills(savedCandidate, request.getSkillIds());
+                    System.out.println("DEBUG: Successfully mapped skills for candidate ID: " + savedCandidate.getCandidateId());
                 } catch (Exception e) {
                     // Log but don't fail the entire batch
-                    System.err.println("Warning: Error mapping skills for candidate " + savedCandidate.getCandidateId() + ": " + e.getMessage());
+                    System.err.println("ERROR: Failed to map skills for candidate " + savedCandidate.getCandidateId() + ": " + e.getMessage());
+                    e.printStackTrace();
                 }
+            } else {
+                System.out.println("DEBUG: No skills to map for candidate ID: " + savedCandidate.getCandidateId());
             }
         }
         
@@ -688,23 +687,13 @@ public class CandidatesServiceImpl implements ICandidatesService {
         ApplicationStage oldStatus = candidate.getApplicationStage();
         candidate.setApplicationStage(newStatus);
         
-        // Fetch username and update reason field
+        // Fetch username for status history
         String userName = "Unknown";
         if (request.getUpdatedBy() != null) {
             User user = userRepository.findById(request.getUpdatedBy()).orElse(null);
             if (user != null) {
                 userName = user.getUsername();
             }
-        }
-        
-        // Append reason to existing reason with format: . "The 'STATUS' update by userName"
-        String statusUpdateReason = ". The \"" + newStatus + "\" update by " + userName;
-        
-        if (candidate.getReason() != null && !candidate.getReason().isBlank()) {
-            candidate.setReason(candidate.getReason() + statusUpdateReason);
-        } else {
-            // If no existing reason, just set the update reason without leading dot
-            candidate.setReason("The \"" + newStatus + "\" update by " + userName);
         }
         
         // Append to statusHistory
@@ -806,24 +795,12 @@ public class CandidatesServiceImpl implements ICandidatesService {
                 ApplicationStage oldStatus = candidate.getApplicationStage();
                 candidate.setApplicationStage(newStatus);
                 
-                // Append reason to existing reason with format: . "The 'STATUS' update by userName"
-                String statusUpdateReason = ". The \"" + newStatus + "\" update by " + userName;
-                
-                if (candidate.getReason() != null && !candidate.getReason().isBlank()) {
-                    candidate.setReason(candidate.getReason() + statusUpdateReason);
-                } else {
-                    // If no existing reason, just set the update reason without leading dot
-                    candidate.setReason("The \"" + newStatus + "\" update by " + userName);
-                }
-                
                 // Append to statusHistory
                 appendStatusHistory(candidate, newStatus, userName);
                 
                 // Save candidate
                 candidatesRepository.save(candidate);
-                
-               
-                
+            
                 response.getSuccessfulCandidateIds().add(candidateId);
                 successCount++;
                 
@@ -924,6 +901,86 @@ public class CandidatesServiceImpl implements ICandidatesService {
         return response;
     }
     
+    @Override
+    @Transactional(readOnly = true)
+    public List<CandidateValidationResponse> bulkValidateCandidates(List<CandidateValidationRequest> requests) {
+        List<CandidateValidationResponse> responses = new ArrayList<>();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("d/M/yy - h:mma");
+        
+        for (CandidateValidationRequest req : requests) {
+            try {
+                // Get institute name for query
+                Institute institute = instituteRepository.findById(req.getInstituteId())
+                        .orElseThrow(() -> new ResourceNotFoundException("Institute", "ID", req.getInstituteId()));
+                String instituteName = institute.getInstituteName();
+                
+                // Find matching candidates
+                List<Candidate> matches = candidatesRepository.findMatchingCandidates(
+                        req.getFirstName(),
+                        req.getLastName(),
+                        instituteName,
+                        req.getDegree(),
+                        req.getDepartment(),
+                        req.getDateOfBirth(),
+                        req.getPassoutYear(),
+                        req.getAadhaarNumber()
+                );
+                
+                // Determine status and build comment
+                CandidateValidationResponse response = new CandidateValidationResponse();
+                response.setTempId(req.getTempId());
+                
+                if (matches.isEmpty()) {
+                    response.setStatus("NEW");
+                    response.setCanProceed(true);
+                    response.setComment("New candidate - no existing record found");
+                } else {
+                    // Take the first match (most recent by default from query order)
+                    Candidate match = matches.get(0);
+                    String candidateName = match.getFirstName() + " " + match.getLastName();
+                    String formattedDate = match.getCreatedAt().format(formatter).toLowerCase();
+                    
+                    // Check if in same cycle
+                    if (match.getCycle().getCycleId().equals(req.getCycleId())) {
+                        response.setStatus("DUPLICATE");
+                        response.setCanProceed(false);
+                        response.setComment(String.format(
+                                "Duplicate: %s applied on %s with %s stage and %s lifecycle status",
+                                candidateName,
+                                formattedDate,
+                                match.getApplicationStage(),
+                                match.getLifecycleStatus()
+                        ));
+                    } else {
+                        response.setStatus("OLD");
+                        response.setCanProceed(true);
+                        response.setComment(String.format(
+                                "Old entry: %s Applied to %s on %s with %s stage and %s lifecycle status",
+                                candidateName,
+                                match.getCycle().getCycleName(),
+                                formattedDate,
+                                match.getApplicationStage(),
+                                match.getLifecycleStatus()
+                        ));
+                    }
+                }
+                
+                responses.add(response);
+                
+            } catch (Exception e) {
+                // Handle validation error gracefully
+                CandidateValidationResponse errorResponse = new CandidateValidationResponse();
+                errorResponse.setTempId(req.getTempId());
+                errorResponse.setStatus("ERROR");
+                errorResponse.setCanProceed(false);
+                errorResponse.setComment("Validation error: " + e.getMessage());
+                responses.add(errorResponse);
+            }
+        }
+        
+        return responses;
+    }
+    
    
     
     /**
@@ -1004,6 +1061,145 @@ public class CandidatesServiceImpl implements ICandidatesService {
         } else {
             candidate.setStatusHistory(currentHistory + "\n" + historyEntry);
         }
+    }
+    
+    /**
+     * Get active candidates with pagination filtered by cycle
+     * Returns only candidates with lifecycleStatus = ACTIVE for a specific cycle
+     * Supports infinite scroll with page-based loading
+     * 
+     * @param cycleId Cycle ID to filter candidates
+     * @param pageable Pagination information (page number, page size, sorting)
+     * @return Page of active candidates for the specified cycle with all related data
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public Page<CandidateResponse> getActiveCandidatesPaginated(Long cycleId, Pageable pageable) {
+        // Fetch paginated candidates with cycleId and lifecycleStatus = ACTIVE
+        Page<Candidate> candidatesPage = candidatesRepository.findByCycleIdAndLifecycleStatusWithDetails(
+                cycleId,
+                LifecycleStatus.ACTIVE, 
+                pageable
+        );
+        
+        // Map entities to response DTOs
+        return candidatesPage.map(mapper::toResponse);
+    }
+    
+    /**
+     * Get candidates with dynamic filtering and pagination
+     * Uses JPA Specifications for optimized dynamic queries
+     * 
+     * @param filterRequest Filter criteria including sorting and pagination
+     * @return Page of filtered candidates
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public Page<CandidateResponse> getCandidatesWithFilters(CandidateFilterRequest filterRequest) {
+        // Build Specification from filter request
+        Specification<Candidate> spec = CandidateSpecification.withFilters(filterRequest);
+        
+        // Create Pageable with sorting
+        Sort sort = createSort(filterRequest.getSortBy(), filterRequest.getSortDirection());
+        Pageable pageable = PageRequest.of(
+                filterRequest.getPage() != null ? filterRequest.getPage() : 0,
+                filterRequest.getSize() != null ? filterRequest.getSize() : 20,
+                sort
+        );
+        
+        // Execute query with specification
+        Page<Candidate> candidatesPage = candidatesRepository.findAll(spec, pageable);
+        
+        // Map to response DTOs
+        return candidatesPage.map(mapper::toResponse);
+    }
+    
+    /**
+     * Create Sort object from sortBy and sortDirection
+     * Defaults to candidateId DESC if not specified
+     */
+    private Sort createSort(String sortBy, String sortDirection) {
+        if (sortBy == null || sortBy.isEmpty()) {
+            return Sort.by(Sort.Direction.DESC, "candidateId");
+        }
+        
+        Sort.Direction direction = "ASC".equalsIgnoreCase(sortDirection) 
+                ? Sort.Direction.ASC 
+                : Sort.Direction.DESC;
+        
+        return Sort.by(direction, sortBy);
+    }
+    
+    @Override
+    @Transactional(readOnly = true)
+    public com.kanini.springer.dto.Drive.FilterOptionsResponse getFilterOptionsByCycle(Long cycleId) {
+        // Validate cycle exists
+        HiringCycle cycle = hiringCycleRepository.findById(cycleId)
+                .orElseThrow(() -> new ResourceNotFoundException("Hiring cycle not found with ID: " + cycleId));
+        
+        // Optimized: Use only 4 database queries (reduced from 7)
+        // Each query fetches multiple related values using pairs
+        
+        // Query 1: Institute names
+        List<String> institutes = candidatesRepository
+                .findDistinctInstituteNamesByCycleAndStatus(cycleId, LifecycleStatus.ACTIVE);
+        
+        // Query 2: State-City pairs (builds both states list and state-to-cities map)
+        List<Object[]> stateCityPairs = candidatesRepository
+                .findDistinctStateCityPairsByCycleAndStatus(cycleId, LifecycleStatus.ACTIVE);
+        
+        java.util.Set<String> statesSet = new java.util.LinkedHashSet<>();
+        java.util.Map<String, List<String>> stateToCitiesMap = new java.util.HashMap<>();
+        
+        for (Object[] pair : stateCityPairs) {
+            String state = (String) pair[0];
+            String city = (String) pair[1];
+            
+            statesSet.add(state);
+            stateToCitiesMap
+                    .computeIfAbsent(state, k -> new java.util.ArrayList<>())
+                    .add(city);
+        }
+        
+        List<String> states = new java.util.ArrayList<>(statesSet);
+        java.util.Collections.sort(states);
+        
+        // Sort cities within each state
+        stateToCitiesMap.forEach((state, citiesList) -> java.util.Collections.sort(citiesList));
+        
+        // Query 3: Degree-Department pairs (builds both degrees and departments lists)
+        List<Object[]> degreeDepartmentPairs = candidatesRepository
+                .findDistinctDegreeDepartmentPairsByCycleAndStatus(cycleId, LifecycleStatus.ACTIVE);
+        
+        java.util.Set<String> degreesSet = new java.util.LinkedHashSet<>();
+        java.util.Set<String> departmentsSet = new java.util.LinkedHashSet<>();
+        
+        for (Object[] pair : degreeDepartmentPairs) {
+            String degree = (String) pair[0];
+            String department = (String) pair[1];
+            
+            if (degree != null) degreesSet.add(degree);
+            if (department != null) departmentsSet.add(department);
+        }
+        
+        List<String> degrees = new java.util.ArrayList<>(degreesSet);
+        List<String> departments = new java.util.ArrayList<>(departmentsSet);
+        java.util.Collections.sort(degrees);
+        java.util.Collections.sort(departments);
+        
+        // Query 4: Skills
+        List<String> skills = candidatesRepository
+                .findDistinctSkillsByCycleAndStatus(cycleId, LifecycleStatus.ACTIVE);
+        
+        // Build and return response
+        return new com.kanini.springer.dto.Drive.FilterOptionsResponse(
+                institutes,
+                states,
+                stateToCitiesMap,
+                degrees,
+                departments,
+                skills
+        );
     }
 }
 

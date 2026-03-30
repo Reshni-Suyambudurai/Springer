@@ -64,10 +64,11 @@ export interface DriveUpdateRequest {
 // Eligibility Rule structures
 export interface EligibilityRuleDTO {
   field: string;
-  operator: string;
-  value?: number;
-  min?: number;
-  max?: number;
+  operator: string; // ">=", "<=", ">", "<", "==", "BETWEEN", "IN"
+  value?: number | null;
+  min?: number | null;
+  max?: number | null;
+  allowedValues?: string[];
   message: string;
 }
 

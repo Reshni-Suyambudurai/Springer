@@ -1,0 +1,101 @@
+.settings-container {
+  padding: 40px 20px;
+  min-height: 100vh;
+}
+
+.settings-header {
+  margin-bottom: 40px;
+  text-align: center;
+}
+
+.settings-header h1 {
+  font-weight: 600;
+  color: #1a1a1a;
+  margin-bottom: 8px;
+}
+
+.settings-grid {
+  margin-top: 24px;
+}
+
+.settings-card {
+  height: 100%;
+  border-radius: 12px;
+  border: 1px solid #e0e0e0;
+}
+
+.settings-card-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 32px 24px !important;
+  min-height: 240px;
+  justify-content: center;
+}
+
+.settings-card-icon {
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background-color: rgba(0, 0, 0, 0.04);
+}
+
+.settings-card-title {
+  font-weight: 600;
+  color: #1a1a1a;
+  margin-bottom: 12px;
+}
+
+.settings-card-description {
+  line-height: 1.6;
+  font-size: 14px;
+}
+
+/* Hover effects */
+.settings-card:hover .settings-card-icon {
+  background-color: rgba(0, 0, 0, 0.08);
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .settings-container {
+    padding: 24px 16px;
+  }
+
+  .settings-header {
+    margin-bottom: 24px;
+  }
+
+  .settings-card-content {
+    padding: 24px 16px !important;
+    min-height: 200px;
+  }
+
+  .settings-card-icon {
+    width: 60px;
+    height: 60px;
+  }
+
+  .settings-card-icon svg {
+    font-size: 40px !important;
+  }
+}
+
+@media (max-width: 600px) {
+  .settings-grid {
+    margin-top: 16px;
+  }
+
+  .settings-card-title {
+    font-size: 1.25rem;
+  }
+
+  .settings-card-description {
+    font-size: 13px;
+  }
+}

@@ -65,7 +65,6 @@ public class DriveMapper {
         response.setEndDate(drive.getEndDate());
         response.setLocation(drive.getLocation());
         response.setEligibilityLocked(drive.getEligibilityLocked());
-        response.setCutoffLocked(drive.getCutoffLocked());
         
         if (drive.getStatus() != null) {
             response.setStatus(drive.getStatus().toString());
@@ -150,7 +149,6 @@ public class DriveMapper {
         
         // Set defaults
         drive.setEligibilityLocked(request.getEligibilityLocked() != null ? request.getEligibilityLocked() : false);
-        drive.setCutoffLocked(request.getCutoffLocked() != null ? request.getCutoffLocked() : false);
         
         // Parse and set status (default to PLANNED)
         if (request.getDriveStatus() != null && !request.getDriveStatus().isBlank()) {

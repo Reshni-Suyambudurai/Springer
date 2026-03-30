@@ -5,6 +5,7 @@ import { tokenstore } from "../../auth/tokenstore";
 import type { LoginRequest } from "../../types/auth.types";
 import { showToast } from "../../utils/toast";
 import { getDashboardPathByRole } from "../../utils/navigation";
+import { syncEligibilityFiltersToSession } from "../../utils/eligibilityFilterSync";
 import "../../css/Authentication/Login.css";
 
 import IconButton from "@mui/material/IconButton";
@@ -101,6 +102,11 @@ const Login: React.FC = () => {
         username: response.username,
         email: response.email,
       });
+
+      // Sync eligibility rules to sessionStorage filters (async, non-blocking)
+      syncEligibilityFiltersToSession().catch((err: unknown) => 
+        console.warn("Failed to sync eligibility filters:", err)
+      );
 
       showToast("Login successful! Welcome back.", "success");
       const dashboardPath = getDashboardPathByRole(response.roleName);

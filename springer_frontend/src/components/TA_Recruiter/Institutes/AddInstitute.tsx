@@ -32,21 +32,20 @@ import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import AddIcon from "@mui/icons-material/Add";
 import UploadIcon from "@mui/icons-material/Upload";
 import DownloadIcon from "@mui/icons-material/Download";
-import EditIcon from "@mui/icons-material/Edit";
 import CloseIcon from "@mui/icons-material/Close";
+import DeleteIcon from "@mui/icons-material/Delete";
 import "../../../css/TA_Recruiter/Institutes/AddInstitute.css";
 
 const AddInstitute: React.FC = () => {
   const navigate = useNavigate();
   const [addDialog, setAddDialog] = useState(false);
   const [bulkData, setBulkData] = useState<InstituteRequest[]>([]);
-  const [editIndex, setEditIndex] = useState<number | null>(null);
+  const [duplicateIndices, setDuplicateIndices] = useState<Set<number>>(new Set());
   const [showErrorOverlay, setShowErrorOverlay] = useState(false);
   const [errorMessages, setErrorMessages] = useState<string[]>([]);
   const [singleForm, setSingleForm] = useState<InstituteRequest>({
     instituteName: "",
     instituteTier: "TIER_1",
-    location: "",
     state: "",
     city: "",
     isActive: true,
@@ -65,7 +64,6 @@ const AddInstitute: React.FC = () => {
       setSingleForm({
         instituteName: "",
         instituteTier: "TIER_1",
-        location: "",
         state: "",
         city: "",
         isActive: true,
@@ -76,12 +74,12 @@ const AddInstitute: React.FC = () => {
     }
   };
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     const reader = new FileReader();
-    reader.onload = (event) => {
+    reader.onload = async (event) => {
       try {
         const data = new Uint8Array(event.target?.result as ArrayBuffer);
         const workbook = XLSX.read(data, { type: "array" });
@@ -91,10 +89,9 @@ const AddInstitute: React.FC = () => {
         const institutes: InstituteRequest[] = jsonData.map((row) => ({
           instituteName: (row["Institute Name"] || row["instituteName"] || "") as string,
           instituteTier: (row["Tier"] || row["instituteTier"] || "TIER_1") as string,
-          location: (row["Location"] || row["location"] || "") as string,
           state: (row["State"] || row["state"] || "") as string,
           city: (row["City"] || row["city"] || "") as string,
-          isActive: row["Active"] !== undefined ? Boolean(row["Active"]) : true,
+          isActive: true,
         }));
 
         // Validate
@@ -109,11 +106,38 @@ const AddInstitute: React.FC = () => {
           showToast(`Validation errors: ${errors.join(", ")}`, "error");
         } else {
           setBulkData(institutes);
-          showToast(`${institutes.length} institutes loaded`, "success");
+          
+          // Check for duplicates against existing institutes
+          try {
+            const response = await instituteApi.getAllInstituteNames();
+            const existingNames = new Set(
+              response.data.map(inst => inst.instituteName.toLowerCase())
+            );
+            
+            const duplicates = new Set<number>();
+            institutes.forEach((inst, idx) => {
+              if (existingNames.has(inst.instituteName.toLowerCase())) {
+                duplicates.add(idx);
+              }
+            });
+            
+            setDuplicateIndices(duplicates);
+            
+            if (duplicates.size > 0) {
+              showToast(`${institutes.length} institutes loaded. ${duplicates.size} duplicate(s) found - highlighted in warning color`, "error");
+            } else {
+              showToast(`${institutes.length} institutes loaded`, "success");
+            }
+          } catch (error: unknown) {
+            const err = error as { message?: string };
+            showToast(err.message || "Failed to check for duplicates", "error");
+            // Still set the data even if duplicate check fails
+            showToast(`${institutes.length} institutes loaded (duplicate check failed)`, "success");
+          }
         }
-      } catch (error) {
-        console.error(error);
-        showToast("Failed to read file", "error");
+      } catch (error: unknown) {
+        const err = error as { message?: string };
+        showToast(err.message || "Failed to read file", "error");
       }
     };
     reader.readAsArrayBuffer(file);
@@ -145,8 +169,8 @@ const AddInstitute: React.FC = () => {
       }
     } catch (error: unknown) {
       const err = error as {
-        message: string;
-        success: boolean;
+        message?: string;
+        success?: boolean;
         data?: { errorMessages?: string[] };
       };
 
@@ -159,17 +183,29 @@ const AddInstitute: React.FC = () => {
     }
   };
 
+  const handleRemoveRow = (index: number) => {
+    const updated = bulkData.filter((_, idx) => idx !== index);
+    setBulkData(updated);
+    
+    // Update duplicate indices
+    const newDuplicates = new Set<number>();
+    duplicateIndices.forEach(dupIdx => {
+      if (dupIdx < index) {
+        newDuplicates.add(dupIdx);
+      } else if (dupIdx > index) {
+        newDuplicates.add(dupIdx - 1);
+      }
+    });
+    setDuplicateIndices(newDuplicates);
+    
+    showToast("Row removed", "success");
+  };
+
   const handleDownloadFormat = () => {
     const link = document.createElement("a");
     link.href = "/files/college_Data.xlsx";
     link.download = "college_Data.xlsx";
     link.click();
-  };
-
-  const handleEditCell = (index: number, field: keyof InstituteRequest, value: string | boolean) => {
-    const updated = [...bulkData];
-    updated[index] = { ...updated[index], [field]: value };
-    setBulkData(updated);
   };
 
   return (
@@ -223,7 +259,12 @@ const AddInstitute: React.FC = () => {
           <CardContent>
             <Box className="add-institute-bulk-header">
               <Typography variant="h6">Uploaded Data ({bulkData.length} institutes)</Typography>
-              <Button variant="contained" onClick={handleBulkUpload} className="add-institute-bulk-upload-btn">
+              <Button 
+                variant="contained" 
+                onClick={handleBulkUpload} 
+                className="add-institute-bulk-upload-btn"
+                disabled={duplicateIndices.size > 0}
+              >
                 Upload to Database
               </Button>
             </Box>
@@ -236,7 +277,6 @@ const AddInstitute: React.FC = () => {
                     <TableCell className="table-header">Tier</TableCell>
                     <TableCell className="table-header">City</TableCell>
                     <TableCell className="table-header">State</TableCell>
-                    <TableCell className="table-header">Location URL</TableCell>
                     <TableCell className="table-header">Actions</TableCell>
                   </TableRow>
                 </TableHead>
@@ -244,70 +284,26 @@ const AddInstitute: React.FC = () => {
                   {bulkData.map((inst, index) => (
                     <TableRow key={index}>
                       <TableCell>
-                        {editIndex === index ? (
-                          <TextField
-                            size="small"
-                            value={inst.instituteName}
-                            onChange={(e) => handleEditCell(index, "instituteName", e.target.value)}
-                          />
+                        {duplicateIndices.has(index) ? (
+                          <Box className="duplicate-name-container">
+                            <span className="warning-dot"></span>
+                            <span className="duplicate-name-text">{inst.instituteName}</span>
+                          </Box>
                         ) : (
                           inst.instituteName
                         )}
                       </TableCell>
-                      <TableCell>
-                        {editIndex === index ? (
-                          <Select
-                            size="small"
-                            value={inst.instituteTier}
-                            onChange={(e) => handleEditCell(index, "instituteTier", e.target.value)}
-                          >
-                            <MenuItem value="TIER_1">TIER 1</MenuItem>
-                            <MenuItem value="TIER_2">TIER 2</MenuItem>
-                            <MenuItem value="TIER_3">TIER 3</MenuItem>
-                          </Select>
-                        ) : (
-                          inst.instituteTier
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        {editIndex === index ? (
-                          <TextField
-                            size="small"
-                            value={inst.city}
-                            onChange={(e) => handleEditCell(index, "city", e.target.value)}
-                          />
-                        ) : (
-                          inst.city
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        {editIndex === index ? (
-                          <TextField
-                            size="small"
-                            value={inst.state}
-                            onChange={(e) => handleEditCell(index, "state", e.target.value)}
-                          />
-                        ) : (
-                          inst.state
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        {editIndex === index ? (
-                          <TextField
-                            size="small"
-                            value={inst.location}
-                            onChange={(e) => handleEditCell(index, "location", e.target.value)}
-                          />
-                        ) : (
-                          inst.location
-                        )}
-                      </TableCell>
+                      <TableCell>{inst.instituteTier}</TableCell>
+                      <TableCell>{inst.city}</TableCell>
+                      <TableCell>{inst.state}</TableCell>
                       <TableCell>
                         <IconButton
                           size="small"
-                          onClick={() => setEditIndex(editIndex === index ? null : index)}
+                          onClick={() => handleRemoveRow(index)}
+                          className="bulk-delete-btn"
+                          title="Remove row"
                         >
-                          <EditIcon fontSize="small" />
+                          <DeleteIcon fontSize="small" />
                         </IconButton>
                       </TableCell>
                     </TableRow>
@@ -354,12 +350,6 @@ const AddInstitute: React.FC = () => {
               fullWidth
               value={singleForm.city}
               onChange={(e) => setSingleForm({ ...singleForm, city: e.target.value })}
-            />
-            <TextField
-              label="Location (Google Maps URL)"
-              fullWidth
-              value={singleForm.location}
-              onChange={(e) => setSingleForm({ ...singleForm, location: e.target.value })}
             />
           </Box>
         </DialogContent>

@@ -1,24 +1,17 @@
-import { useState } from "react";
 import { Outlet } from "react-router-dom";
 import Navbar from "./Navbar";
 import Sidebar from "./Sidebar";
 import "../../css/Common/DashboardLayout.css";
 
 function DashboardLayout() {
-  const [sidebarOpen, setSidebarOpen] = useState(true);
-
-  const toggleSidebar = () => {
-    setSidebarOpen(!sidebarOpen);
-  };
-
   return (
     <div className="layout">
-      <Navbar onSidebarToggle={toggleSidebar} />
+      <Navbar />
 
       <div className="layout-body">
-        <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+        <Sidebar />
 
-        <main className={`layout-content ${sidebarOpen ? 'sidebar-open' : 'sidebar-closed'}`}>
+        <main className="layout-content">
           <Outlet />
         </main>
       </div>

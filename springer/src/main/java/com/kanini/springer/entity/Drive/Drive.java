@@ -38,9 +38,7 @@ public class Drive {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "cycle_id")
     private HiringCycle cycle;
-    
-
-    
+     
     private String driveName;
     
     @Column(columnDefinition = "TEXT")
@@ -60,9 +58,7 @@ public class Drive {
     
     private String location; // like chennai, coimbatore or online
     
-    private Boolean eligibilityLocked; // locked once the drive date is confirmed
-    
-    private Boolean cutoffLocked;
+    private Boolean eligibilityLocked; // locked once the drive date is confirmed   
     
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)

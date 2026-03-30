@@ -12,13 +12,19 @@ import type {
   InstituteRequest, 
   InstituteResponse, 
   InstituteWithTPOsResponse,
-  PagedInstituteWithTPOsResponse
+  PagedInstituteWithTPOsResponse,
+  InstituteNameResponse
 } from "../types/TA_Recruiter/Hiring/institute.types";
 import type { 
   InstituteContactRequest, 
   InstituteContactResponse,
   BulkInsertResponse
 } from "../types/TA_Recruiter/Hiring/instituteContact.types";
+import type { 
+  ProgramResponse,
+  InstituteProgramRequest
+} from "../types/TA_Recruiter/Hiring/program.types";
+
 
 // ==================== HIRING CYCLE APIs ====================
 export const hiringCycleApi = {
@@ -415,6 +421,19 @@ export const instituteApi = {
     } catch (error) {
       throw handleAxiosError(error);
     }
+  },
+
+  /**
+   * Get all institute names (lightweight for dropdowns)
+   * GET /api/institutes/names
+   */
+  async getAllInstituteNames(): Promise<ApiResponse<InstituteNameResponse[]>> {
+    try {
+      const response = await http.get('/institutes/names');
+      return response.data;
+    } catch (error) {
+      throw handleAxiosError(error);
+    }
   }
 };
 
@@ -505,6 +524,48 @@ export const instituteTPOApi = {
   async deleteContact(tpoId: number): Promise<ApiResponse<string>> {
     try {
       const response = await http.delete(`/institutes/contacts/${tpoId}`);
+      return response.data;
+    } catch (error) {
+      throw handleAxiosError(error);
+    }
+  }
+};
+
+// ==================== PROGRAM MANAGEMENT APIs ====================
+export const programApi = {
+  /**
+   * Get all programs
+   * GET /api/programs
+   */
+  async getAllPrograms(): Promise<ApiResponse<ProgramResponse[]>> {
+    try {
+      const response = await http.get('/programs');
+      return response.data;
+    } catch (error) {
+      throw handleAxiosError(error);
+    }
+  },
+
+  /**
+   * Add programs to institute(s)
+   * POST /api/programs/institute-mappings
+   */
+  async addProgramsToInstitute(mappings: InstituteProgramRequest[]): Promise<ApiResponse<void>> {
+    try {
+      const response = await http.post('/programs/institute-mappings', mappings);
+      return response.data;
+    } catch (error) {
+      throw handleAxiosError(error);
+    }
+  },
+
+  /**
+   * Delete institute-program mapping
+   * DELETE /api/programs/institute-mappings/{id}
+   */
+  async removeInstituteProgramMapping(instituteProgramId: number): Promise<ApiResponse<string>> {
+    try {
+      const response = await http.delete(`/programs/institute-mappings/${instituteProgramId}`);
       return response.data;
     } catch (error) {
       throw handleAxiosError(error);

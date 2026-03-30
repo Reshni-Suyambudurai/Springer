@@ -23,7 +23,6 @@ public class DriveRequest {
     private LocalDate endDate; // required
     private String location; // required
     private Boolean eligibilityLocked; // default false if not sent
-    private Boolean cutoffLocked; // default false if not sent
     private String driveStatus; // default "PLANNED" if not sent
     private Long createdBy; // userId, required
     private List<Long> roundConfigIds; // optional - array of round_config_id

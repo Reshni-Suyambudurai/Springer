@@ -22,8 +22,7 @@ public class DriveUpdateRequest {
     private LocalDate endDate;
     private String location;
     private Boolean eligibilityLocked;
-    private Boolean cutoffLocked;
     private String driveStatus;
     private Long updatedBy; // userId
-    private List<Long> roundConfigIds; // can update rounds if cutoffLocked = false
+    private List<Long> roundConfigIds; // optional - can update drive rounds
 }

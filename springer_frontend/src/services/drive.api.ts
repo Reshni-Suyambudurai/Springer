@@ -2,7 +2,7 @@ import {http} from "./api/https";
 import { handleAxiosError } from "./api.error";
 
 // Common type imports
-import type { ApiResponse } from "../types/api.response";
+import type { ApiResponse, Page } from "../types/api.response";
 
 // Drive-specific type imports
 import type { 
@@ -31,7 +31,10 @@ import type {
   CandidateStatusUpdateRequest,
   BulkCandidateStatusUpdateRequest,
   BulkCandidateStatusUpdateResponse,
-  BulkCandidateCreateResponse
+  BulkCandidateCreateResponse,
+  CandidateValidationRequest,
+  CandidateValidationResponse,
+  FilterOptionsResponse
 } from "../types/TA_Recruiter/Drive/candidate.types";
 import type { 
   CandidateEvaluationRequest, 
@@ -322,12 +325,76 @@ export const candidateApi = {
   },
 
   /**
+   * Bulk validate candidates before creation
+   * POST /api/candidates/validate/bulk
+   */
+  async bulkValidateCandidates(data: CandidateValidationRequest[]): Promise<ApiResponse<CandidateValidationResponse[]>> {
+    try {
+      const response = await http.post('/candidates/validate/bulk', data);
+      return response.data;
+    } catch (error) {
+      throw handleAxiosError(error);
+    }
+  },
+
+  /**
    * Get all candidates
    * GET /api/candidates
    */
   async getAllCandidates(): Promise<ApiResponse<CandidateResponse[]>> {
     try {
       const response = await http.get('/candidates');
+      return response.data;
+    } catch (error) {
+      throw handleAxiosError(error);
+    }
+  },
+
+  /**
+   * Get active candidates with pagination (for infinite scroll)
+   * GET /api/candidates/active/paginated
+   */
+  async getActiveCandidatesPaginated(
+    cycleId: number,
+    page: number = 0,
+    size: number = 20,
+    sortBy: string = 'candidateId',
+    sortDirection: 'ASC' | 'DESC' = 'DESC'
+  ): Promise<ApiResponse<Page<CandidateResponse>>> {
+    try {
+      const response = await http.get('/candidates/active/paginated', {
+        params: { cycleId, page, size, sortBy, sortDirection }
+      });
+      return response.data;
+    } catch (error) {
+      throw handleAxiosError(error);
+    }
+  },
+
+  /**
+   * Get candidates with dynamic filtering and pagination
+   * POST /api/candidates/filter
+   */
+  async getCandidatesWithFilters(filterRequest: {
+    cycleId: number;
+    lifecycleStatus?: string;
+    candidateName?: string;
+    instituteName?: string;
+    state?: string;
+    cities?: string[];
+    degrees?: string[];
+    departments?: string[];
+    eligibility?: string[];
+    applicationTypes?: string[];
+    applicationStages?: string[];
+    skills?: string[];
+    sortBy?: string;
+    sortDirection?: 'ASC' | 'DESC';
+    page?: number;
+    size?: number;
+  }): Promise<ApiResponse<Page<CandidateResponse>>> {
+    try {
+      const response = await http.post('/candidates/filter', filterRequest);
       return response.data;
     } catch (error) {
       throw handleAxiosError(error);
@@ -374,13 +441,12 @@ export const candidateApi = {
   },
 
   /**
-   * Update candidate
+   * Update candidate eligibility status
    * PATCH /api/candidates/{id}
    */
-  async updateCandidate(candidateId: number, data: CandidateUpdateRequest, updatedBy?: number): Promise<ApiResponse<CandidateResponse>> {
+  async updateCandidate(candidateId: number, data: CandidateUpdateRequest): Promise<ApiResponse<CandidateResponse>> {
     try {
-      const params = updatedBy ? { updatedBy } : {};
-      const response = await http.patch(`/candidates/${candidateId}`, data, { params });
+      const response = await http.patch(`/candidates/${candidateId}`, data);
       return response.data;
     } catch (error) {
       throw handleAxiosError(error);
@@ -433,6 +499,23 @@ export const candidateApi = {
   async updateEligibilityRules(data: EligibilityRuleUpdateRequest): Promise<ApiResponse<EligibilityRuleUpdateRequest>> {
     try {
       const response = await http.patch('/candidates/eligibility-rules', data);
+      return response.data;
+    } catch (error) {
+      throw handleAxiosError(error);
+    }
+  },
+
+  /**
+   * Get distinct filter options for a specific cycle
+   * GET /api/candidates/filter-options
+   * Returns all unique values for institutes, states, cities, degrees, departments, and skills
+   * for candidates with lifecycleStatus = ACTIVE in the specified cycle
+   */
+  async getFilterOptions(cycleId: number): Promise<ApiResponse<FilterOptionsResponse>> {
+    try {
+      const response = await http.get('/candidates/filter-options', {
+        params: { cycleId }
+      });
       return response.data;
     } catch (error) {
       throw handleAxiosError(error);

@@ -195,6 +195,7 @@ public class InstituteTPOServiceImpl implements IInstituteTPOService {
     }
     
     @Override
+    @Transactional(readOnly = true)
     public List<InstituteContactResponse> getContactsByInstituteId(Long instituteId) {
         // Validate that institute exists
         if (!instituteRepository.existsById(instituteId)) {

@@ -9,10 +9,7 @@ import lombok.NoArgsConstructor;
  * Contains all the email templates used in the app
  */
 @Entity
-@Table(name = "email_templates",
-    indexes = {
-        @Index(name = "idx_email_template_name", columnList = "templateName")
-    }
+@Table(name = "email_templates"
 )
 @Data
 @NoArgsConstructor

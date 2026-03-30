@@ -33,7 +33,6 @@ public interface IDriveScheduleService {
     
     /**
      * Update drive schedule and optionally drive rounds
-     * Checks cutoffLocked flag - if true, rounds cannot be updated
      * @param driveId Drive ID to update
      * @param request Update request with fields to modify
      * @return DriveResponse with updated drive details

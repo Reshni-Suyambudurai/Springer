@@ -1,0 +1,201 @@
+.round-template-container {
+  padding: 40px 20px;
+  min-height: 100vh;
+  background-color: var(--color-bg);
+}
+
+.template-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 32px;
+  position: relative;
+}
+
+.template-header-content {
+  flex: 1;
+  text-align: center;
+  padding-right: 64px; /* Compensate for back button width */
+  padding-left: 64px; /* Compensate for add button on right */
+}
+
+.template-header-actions {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.template-header h1 {
+  font-weight: 600;
+  color: var(--color-text);
+  margin-bottom: 8px;
+}
+
+.add-template-button {
+  background-color: var(--color-primary);
+  color: white;
+  transition: all 0.3s ease;
+}
+
+.add-template-button:hover {
+  background-color: var(--color-primary-hover);
+  transform: scale(1.1);
+}
+
+/* Filter Section */
+.filter-section {
+  margin-bottom: 32px;
+  padding: 24px;
+  background-color: var(--color-surface);
+  border-radius: 8px;
+  border: 1px solid var(--color-border);
+  min-width: 96%;
+}
+
+.MuiGrid-container {
+  width: 100%;
+}
+
+/* Templates List */
+.templates-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.template-card {
+  border-radius: 8px;
+  border: 1px solid var(--color-border);
+  transition: all 0.3s ease;
+  background-color: var(--color-surface);
+}
+
+.template-card:hover {
+  border-color: var(--color-primary);
+  box-shadow: var(--shadow-card);
+}
+
+.template-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.template-title-section {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+}
+
+.template-title {
+  font-weight: 600;
+  color: var(--color-text);
+  margin: 0;
+}
+
+.template-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.template-details {
+  margin-top: 16px;
+}
+
+.sections-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.section-chip {
+  font-weight: 500;
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+/* Dialog Sections Input */
+.section-input-row {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+/* Responsive Design */
+@media (max-width: 900px) {
+  .round-template-container {
+    padding: 24px 16px;
+  }
+
+  .template-header {
+    flex-direction: row;
+    align-items: center;
+  }
+
+  .template-card-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .template-title-section {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .template-actions {
+    align-self: flex-end;
+  }
+}
+
+@media (max-width: 600px) {
+  .template-header h1 {
+    font-size: 1.75rem;
+  }
+
+  .add-template-button {
+    padding: 8px;
+  }
+
+  .section-input-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .section-input-row .MuiTextField-root {
+    width: 100% !important;
+  }
+
+  .section-input-row .MuiIconButton-root {
+    align-self: flex-end;
+  }
+}
+
+/* Animation */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.template-card {
+  animation: fadeIn 0.3s ease;
+}
+
+/* Loading State */
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  gap: 16px;
+}

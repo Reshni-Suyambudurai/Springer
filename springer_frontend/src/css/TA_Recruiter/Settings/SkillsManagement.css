@@ -1,0 +1,196 @@
+.skills-management-container {
+  padding: 40px 20px;
+  min-height: 100vh;
+  background-color: var(--color-bg);
+}
+
+.skills-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 32px;
+  position: relative;
+}
+
+.skills-header-content {
+  flex: 1;
+  text-align: center;
+  padding-right: 64px; /* Compensate for back button width */
+}
+
+.skills-header h1 {
+  font-weight: 600;
+  color: var(--color-text);
+  margin-bottom: 8px;
+}
+
+.add-skill-button {
+  background-color: var(--color-primary);
+  color: white;
+  transition: all 0.3s ease;
+}
+
+.add-skill-button:hover {
+  background-color: var(--color-primary-hover);
+  transform: scale(1.1);
+}
+
+/* Filter Section */
+.filter-section {
+  margin-bottom: 32px;
+  max-width: 400px;
+}
+
+.filter-section .MuiTextField-root {
+  background-color: var(--color-surface);
+  border-radius: 8px;
+}
+
+.skills-search-icon {
+  margin-right: 8px;
+  color: var(--color-text-secondary);
+}
+
+/* Category Section */
+.skills-category-section {
+  margin-bottom: 32px;
+}
+
+.skills-category-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.skills-category-add-button {
+  background-color: var(--color-primary);
+  color: white;
+}
+
+.skills-category-add-button:hover {
+  background-color: var(--color-primary-dark);
+}
+
+.skills-category-empty-alert {
+  margin-bottom: 16px;
+}
+
+.skills-category-grid {
+  margin-bottom: 16px;
+}
+
+.skills-category-divider {
+  margin-top: 16px;
+}
+
+/* Skills Grid */
+.skills-grid {
+  margin-top: 24px;
+}
+
+.skill-card {
+  border-radius: 8px;
+  border: 1px solid var(--color-border);
+  transition: all 0.3s ease;
+  background-color: var(--color-surface);
+  height: 100%;
+}
+
+.skill-card:hover {
+  border-color: var(--color-primary);
+  box-shadow: var(--shadow-card);
+  transform: translateY(-2px);
+}
+
+.skill-card-content {
+  padding: 16px !important;
+}
+
+.skill-card-inner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.skill-name {
+  flex: 1;
+  font-weight: 500;
+  color: var(--color-text);
+  word-break: break-word;
+}
+
+.edit-icon {
+  opacity: 0.6;
+  transition: opacity 0.3s ease;
+}
+
+.skill-card:hover .edit-icon {
+  opacity: 1;
+}
+
+/* Dialog Styles */
+.MuiDialog-paper {
+  border-radius: 12px;
+}
+
+/* Responsive Design */
+@media (max-width: 900px) {
+  .skills-management-container {
+    padding: 24px 16px;
+  }
+
+  .skills-header {
+    flex-direction: row;
+    align-items: center;
+  }
+
+  .filter-section {
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 600px) {
+  .skills-header h1 {
+    font-size: 1.75rem;
+  }
+
+  .add-skill-button {
+    padding: 8px;
+  }
+
+  .skill-card-content {
+    padding: 12px !important;
+  }
+}
+
+/* Empty State */
+.skills-grid .MuiAlert-root {
+  border-radius: 8px;
+}
+
+/* Animation */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.skill-card {
+  animation: fadeIn 0.3s ease;
+}
+
+/* Loading State */
+.skills-loading-container {
+  margin-top: 32px;
+  text-align: center;
+}
+
+.skills-loading-text {
+  margin-top: 16px;
+}

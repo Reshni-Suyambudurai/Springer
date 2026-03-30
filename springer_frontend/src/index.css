@@ -7,6 +7,19 @@
   --text-xl: 1.75rem;   /* 28px */
 }
 
+/* Prevent page-level scrollbars */
+html, body {
+  overflow: hidden;
+  height: 100%;
+  width: 100%;
+}
+
+#root {
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+}
+
 /* Base */
 body {
   margin: 0;

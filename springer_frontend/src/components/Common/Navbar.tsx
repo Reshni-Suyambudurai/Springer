@@ -1,13 +1,10 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { tokenstore } from '../../auth/tokenstore';
+import kaniniLogo from '../../assets/kanini_Logo.png';
 import '../../css/Common/Navbar.css';
 
-interface NavbarProps {
-    onSidebarToggle?: () => void;
-}
-
-function Navbar({ onSidebarToggle }: NavbarProps) {
+function Navbar() {
     const [showProfile, setShowProfile] = useState(false);
     const [theme, setTheme] = useState<'light' | 'dark'>(tokenstore.getTheme());
     const [notifications] = useState(0); // example unread count
@@ -51,31 +48,8 @@ function Navbar({ onSidebarToggle }: NavbarProps) {
         <nav className="navbar">
             <div className="navbar-content">
                 <div className="navbar-left">
-                    {onSidebarToggle && (
-                        <button
-                            className="hamburger-btn"
-                            onClick={onSidebarToggle}
-                            aria-label="Toggle sidebar"
-                            title="Toggle sidebar"
-                        >
-                            <svg
-                                width="24"
-                                height="24"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="2"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                            >
-                                <line x1="3" y1="6" x2="21" y2="6" />
-                                <line x1="3" y1="12" x2="21" y2="12" />
-                                <line x1="3" y1="18" x2="21" y2="18" />
-                            </svg>
-                        </button>
-                    )}
                     <div className="navbar-logo">
-                        <span className="logo-icon">S</span>
+                        <img src={kaniniLogo} alt="Kanini Logo" className="logo-img" />
                     </div>
                     <span className="navbar-title">Springer</span>
                 </div>

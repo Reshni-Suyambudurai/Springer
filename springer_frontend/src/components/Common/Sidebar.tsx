@@ -1,20 +1,13 @@
 import { tokenstore } from "../../auth/tokenstore";
 import { Link, useLocation } from "react-router-dom";
-import { useEffect } from "react";
-import type { MenuItem, SidebarProps } from "../../types/sidebar"
+import type { MenuItem } from "../../types/sidebar"
 import '../../css/Common/Sidebar.css';
 
 
-function Sidebar({ isOpen, onClose }: SidebarProps) {
+function Sidebar() {
   const user = tokenstore.getUser();
   const location = useLocation();
   const role = user?.roleName;
-
-  useEffect(() => {
-    if (window.innerWidth <= 768 && onClose) {
-      onClose();
-    }
-  }, [location.pathname, onClose]);
 
   const menu: Record<string, MenuItem[]> = {
 
@@ -23,7 +16,7 @@ function Sidebar({ isOpen, onClose }: SidebarProps) {
         name: "Dashboard",
         path: "/ta-head/dashboard",
         icon: (
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <rect x="3" y="3" width="7" height="7" />
             <rect x="14" y="3" width="7" height="7" />
             <rect x="14" y="14" width="7" height="7" />
@@ -35,7 +28,7 @@ function Sidebar({ isOpen, onClose }: SidebarProps) {
         name: "Hiring Cycle",
         path: "/hiring-cycle",
         icon: (
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <polyline points="23 4 23 10 17 10" />
             <polyline points="1 20 1 14 7 14" />
             <path d="M3.5 9a9 9 0 0114.13-3.36L23 10M1 14l5.37 4.36A9 9 0 0020.5 15" />
@@ -46,7 +39,7 @@ function Sidebar({ isOpen, onClose }: SidebarProps) {
         name: "Hiring Calendar",
         path: "/hiring-calendar",
         icon: (
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <rect x="3" y="4" width="18" height="18" rx="2" />
             <line x1="16" y1="2" x2="16" y2="6" />
             <line x1="8" y1="2" x2="8" y2="6" />
@@ -58,7 +51,7 @@ function Sidebar({ isOpen, onClose }: SidebarProps) {
         name: "Academy Dashboard",
         path: "/academy-dashboard",
         icon: (
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <path d="M22 10L12 5 2 10l10 5 10-5z" />
             <path d="M6 12v5c3 2 9 2 12 0v-5" />
           </svg>
@@ -68,7 +61,7 @@ function Sidebar({ isOpen, onClose }: SidebarProps) {
         name: "Request",
         path: "/requests",
         icon: (
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <rect x="8" y="2" width="8" height="4" />
             <path d="M16 4h2a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h2" />
           </svg>
@@ -76,10 +69,10 @@ function Sidebar({ isOpen, onClose }: SidebarProps) {
       }
     ],
 
-    TA_RECRUITER: [
+    TRAINING_COORDINATOR: [
       {
         name: "Dashboard",
-        path: "/ta-recruiter/dashboard",
+        path: "/training-coordinator/dashboard",
         icon: (
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <rect x="3" y="3" width="7" height="7" />
@@ -88,7 +81,23 @@ function Sidebar({ isOpen, onClose }: SidebarProps) {
             <rect x="3" y="14" width="7" height="7" />
           </svg>
         )
-      },
+      },  
+      
+    ],
+
+    TA_RECRUITER: [
+        {
+          name: "Dashboard",
+          path: "/ta-recruiter/dashboard",
+          icon: (
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <rect x="3" y="3" width="7" height="7" />
+              <rect x="14" y="3" width="7" height="7" />
+              <rect x="14" y="14" width="7" height="7" />
+              <rect x="3" y="14" width="7" height="7" />
+            </svg>
+          )
+        },
       {
         name: "Hiring Cycle",
         path: "/hiring-cycle",
@@ -102,7 +111,7 @@ function Sidebar({ isOpen, onClose }: SidebarProps) {
       },
       {
         name: "Hiring Calendar",
-        path: "/hiring-calendar",
+        path: "/ta-recruiter/drive-calendar",
         icon: (
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <rect x="3" y="4" width="18" height="18" rx="2" />
@@ -176,7 +185,7 @@ function Sidebar({ isOpen, onClose }: SidebarProps) {
       },
       {
         name: "Manage",
-        path: "/manage",
+        path: "/ta-recruiter/settings",
         icon: (
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <circle cx="12" cy="12" r="3" />
@@ -413,36 +422,29 @@ function Sidebar({ isOpen, onClose }: SidebarProps) {
   const links = menu[role as keyof typeof menu] || [];
 
   return (
-    <>
-      {isOpen && <div className="sidebar-overlay" onClick={onClose} />}
+    <aside className="sidebar">
+      <nav className="sidebar-nav">
+        {links.map((item) => (
+          <Link
+            key={item.path}
+            to={item.path}
+            className={`sidebar-link ${location.pathname === item.path ? 'active' : ''}`}
+          >
+            <span className="sidebar-icon">{item.icon}</span>
+            <span className="sidebar-text">{item.name}</span>
+          </Link>
+        ))}
+      </nav>
 
-      <aside className={`sidebar ${isOpen ? 'open' : 'closed'}`}>
-        <nav className="sidebar-nav">
-          {links.map((item) => (
-            <Link
-              key={item.path}
-              to={item.path}
-              className={`sidebar-link ${location.pathname === item.path ? 'active' : ''}`}
-            >
-              <span className="sidebar-icon">{item.icon}</span>
-              <span className="sidebar-text">{item.name}</span>
-            </Link>
-          ))}
-        </nav>
-
-        {user && (
-          <div className="sidebar-user">
-            <div className="sidebar-user-avatar">
-              {user.username.charAt(0).toUpperCase()}
-            </div>
-            <div className="sidebar-user-info">
-              <div className="sidebar-user-name">{user.username}</div>
-              <div className="sidebar-user-role">{user.roleName}</div>
-            </div>
+      {user && (
+        <div className="sidebar-user">
+          <div className="sidebar-user-avatar">
+            {user.username.charAt(0).toUpperCase()}
           </div>
-        )}
-      </aside>
-    </>
+          <div className="sidebar-user-role">{user.roleName}</div>
+        </div>
+      )}
+    </aside>
   );
 }
 

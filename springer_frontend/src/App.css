@@ -1,7 +1,7 @@
 :root {
   /* Brand */
-  --color-primary: #032f8e;
-  --color-primary-hover: #1d4ed8;
+  --color-primary: #0a0a98d6;
+  --color-primary-hover: #0941c3a7;
 
   /* Backgrounds */
   --color-bg: #f8fafc;
@@ -15,12 +15,12 @@
   --color-border: #e2e8f0;
 
   /* Accent */
-  --color-accent: #6099f5;
+  --color-accent: #7ea3e2;
 
   /* Status */
-  --color-success: #16a34a;
-  --color-warning: #ca8a04;
-  --color-danger: #dc2626;
+  --color-success: #3ee37b;
+  --color-warning: #f8c14b;
+  --color-danger: #f65c5c;
 
   /* Buttons */
   --btn-bg: var(--color-primary);
@@ -28,6 +28,11 @@
 
   /* Shadows */
   --shadow-card: 0 4px 6px rgba(0,0,0,0.1);
+
+  --color-orange: #f97316;
+  --color-purple: #8b5cf6;
+  --color-green: #22c55e;
+  --color-blue: #2ddef9;
 }
 
 [data-theme="dark"] {

@@ -149,10 +149,6 @@ public class DriveScheduleServiceImpl implements IDriveScheduleService {
             drive.setEligibilityLocked(request.getEligibilityLocked());
         }
         
-        if (request.getCutoffLocked() != null) {
-            drive.setCutoffLocked(request.getCutoffLocked());
-        }
-        
         // Update status if provided
         if (request.getDriveStatus() != null && !request.getDriveStatus().isBlank()) {
             try {
@@ -171,12 +167,7 @@ public class DriveScheduleServiceImpl implements IDriveScheduleService {
         }
         
         // Update drive rounds if roundConfigIds are provided
-        // But check cutoffLocked flag first
         if (request.getRoundConfigIds() != null) {
-            if (Boolean.TRUE.equals(drive.getCutoffLocked())) {
-                throw new ValidationException("Cannot update drive rounds - cutoff is locked");
-            }
-            
             // Delete existing rounds and create new ones
             driveRoundRepository.deleteByDriveDriveId(driveId);
             driveRoundRepository.flush(); // Ensure deletions are committed
