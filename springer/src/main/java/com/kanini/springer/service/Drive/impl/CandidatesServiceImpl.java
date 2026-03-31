@@ -45,7 +45,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
+import com.kanini.springer.dto.Drive.FilterOptionsResponse;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -1132,7 +1132,7 @@ public class CandidatesServiceImpl implements ICandidatesService {
     
     @Override
     @Transactional(readOnly = true)
-    public com.kanini.springer.dto.Drive.FilterOptionsResponse getFilterOptionsByCycle(Long cycleId) {
+    public FilterOptionsResponse getFilterOptionsByCycle(Long cycleId) {
         // Validate cycle exists
         HiringCycle cycle = hiringCycleRepository.findById(cycleId)
                 .orElseThrow(() -> new ResourceNotFoundException("Hiring cycle not found with ID: " + cycleId));

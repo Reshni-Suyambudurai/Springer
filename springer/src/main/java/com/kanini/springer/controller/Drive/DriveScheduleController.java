@@ -2,9 +2,11 @@ package com.kanini.springer.controller.Drive;
 
 import com.kanini.springer.dto.Authentication.ApiResponse;
 import com.kanini.springer.dto.Drive.CandidateEvaluationSummaryResponse;
+import com.kanini.springer.dto.Drive.CycleIdRequest;
 import com.kanini.springer.dto.Drive.DriveRequest;
 import com.kanini.springer.dto.Drive.DriveResponse;
 import com.kanini.springer.dto.Drive.DriveUpdateRequest;
+import com.kanini.springer.dto.Drive.UpcomingDriveSummaryResponse;
 import com.kanini.springer.service.Drive.ICandidateEvaluationService;
 import com.kanini.springer.service.Drive.IDriveScheduleService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -72,6 +74,26 @@ public class DriveScheduleController {
             @PathVariable Long driveId) {
         List<CandidateEvaluationSummaryResponse> responses = evaluationService.getEvaluationsSummaryByDriveId(driveId);
         return ResponseEntity.ok(new ApiResponse<>(true, "Evaluations summary retrieved successfully", responses));
+    }
+    
+    @PostMapping("/upcoming")
+    @Operation(summary = "Get upcoming drives for a specific cycle", 
+               description = "Retrieves upcoming drives (start date >= today) for a specific hiring cycle. " +
+                             "Returns only driveId, driveName, and driveMode for minimal payload.")
+    public ResponseEntity<ApiResponse<List<UpcomingDriveSummaryResponse>>> getUpcomingDrivesByCycle(
+            @RequestBody CycleIdRequest request) {
+        List<UpcomingDriveSummaryResponse> responses = driveScheduleService.getUpcomingDrivesByCycle(request.getCycleId());
+        return ResponseEntity.ok(new ApiResponse<>(true, "Upcoming drives retrieved successfully", responses));
+    }
+    
+    @PostMapping("/by-cycle")
+    @Operation(summary = "Get all drive schedules for a specific cycle", 
+               description = "Retrieves all drive schedules for a specific hiring cycle with complete drive details including rounds. " +
+                             "Returns driveId, driveName, dates, location, status, and associated drive rounds.")
+    public ResponseEntity<ApiResponse<List<DriveResponse>>> getDrivesByCycleId(
+            @RequestBody CycleIdRequest request) {
+        List<DriveResponse> responses = driveScheduleService.getDrivesByCycleId(request.getCycleId());
+        return ResponseEntity.ok(new ApiResponse<>(true, "Drive schedules retrieved successfully", responses));
     }
 }
 

@@ -5,11 +5,16 @@
 
 /* Container */
 .candidate-details-container {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
   padding: 24px;
   max-width: 1400px;
   margin: 0 auto;
   background-color: var(--color-bg);
-  min-height: 100vh;
+  box-sizing: border-box;
+  overflow: hidden;
+  
 }
 
 /* Loading & Error States */
@@ -28,11 +33,13 @@
    HEADER CARD
    =================================== */
 .candidate-details-header-card {
+  flex-shrink: 0;
   margin-bottom: 24px !important;
   background: var(--color-surface) !important;
   border-radius: 12px !important;
   border: 1px solid var(--color-border) !important;
   box-shadow: var(--shadow-card) !important;
+  
 }
 
 .header-card-content-compact {
@@ -45,6 +52,31 @@
   justify-content: space-between;
   gap: 20px;
   min-height: 48px;
+}
+
+/* Scrollable Cards Content */
+.candidate-info-cards {
+  flex: 1;
+  overflow-y: auto;
+   padding-bottom: 6%;
+}
+
+.candidate-info-cards::-webkit-scrollbar {
+  width: 8px;
+}
+
+.candidate-info-cards::-webkit-scrollbar-track {
+  background: var(--color-bg);
+  border-radius: 4px;
+}
+
+.candidate-info-cards::-webkit-scrollbar-thumb {
+  background: var(--color-primary);
+  border-radius: 4px;
+}
+
+.candidate-info-cards::-webkit-scrollbar-thumb:hover {
+  background: var(--color-primary-hover);
 }
 
 .header-left {

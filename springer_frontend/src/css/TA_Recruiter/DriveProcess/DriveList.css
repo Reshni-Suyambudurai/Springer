@@ -1,0 +1,309 @@
+/* ========== Container ========== */
+.drive-list-container {
+  padding: 16px;
+  background-color: var(--color-bg);
+  min-height: 100vh;
+}
+
+/* ========== Header — mirrors InstitutesList header ========== */
+.drive-list-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  gap: 16px;
+  background: var(--color-surface) !important;
+  padding: 16px 20px !important;
+  border-radius: 12px !important;
+  border: 1px solid var(--color-border) !important;
+  position: relative;
+  flex-shrink: 0;
+  box-shadow: none !important;
+}
+
+.drive-list-back-btn {
+  color: var(--color-primary) !important;
+  border: 1px solid var(--color-border) !important;
+  background: var(--color-surface) !important;
+  transition: all 0.3s ease !important;
+  z-index: 1;
+}
+
+.drive-list-back-btn:hover {
+  background: var(--color-primary) !important;
+  color: var(--color-surface) !important;
+  transform: scale(1.1);
+}
+
+.drive-list-header-center {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.drive-list-title {
+  color: var(--color-text) !important;
+  font-weight: 600 !important;
+  margin: 0 !important;
+}
+
+.drive-list-subtitle {
+  color: var(--color-text-muted) !important;
+  margin: 0 !important;
+}
+
+/* Balances the back button so title stays centered */
+.drive-list-header-spacer {
+  width: 40px;
+  flex-shrink: 0;
+}
+
+/* ========== Loading ========== */
+.drive-list-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 80px 24px;
+}
+
+.drive-list-loading-spinner {
+  color: var(--color-primary) !important;
+}
+
+.drive-list-loading-text {
+  color: var(--color-text-muted) !important;
+}
+
+/* ========== Empty State ========== */
+.drive-list-empty-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 64px 24px !important;
+  border-radius: 12px !important;
+  background: var(--color-surface) !important;
+  border: 1px solid var(--color-border) !important;
+  box-shadow: none !important;
+  text-align: center;
+}
+
+.drive-list-empty-title {
+  color: var(--color-text) !important;
+  font-weight: 600 !important;
+}
+
+.drive-list-empty-subtitle {
+  color: var(--color-text-muted) !important;
+}
+
+/* ========== Grid ========== */
+.drive-list-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 20px;
+}
+
+/* ========== Card ========== */
+.drive-list-card {
+  background-color: var(--color-surface) !important;
+  border: 1px solid var(--color-border) !important;
+  border-radius: 12px !important;
+  padding: 20px !important;
+  box-shadow: none !important;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.drive-list-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Card Header */
+.drive-list-card-header {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.drive-list-card-title {
+  font-size: 18px !important;
+  font-weight: 600 !important;
+  color: var(--color-text) !important;
+  word-break: break-word;
+}
+
+.drive-list-card-badges {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* ========== Badges ========== */
+.drive-list-badge {
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+
+.drive-list-mode-on-campus {
+  background-color: var(--color-blue);
+  color: var(--color-surface);
+}
+
+.drive-list-mode-off-campus {
+  background-color: var(--color-purple);
+  color: var(--color-surface);
+}
+
+.drive-list-status-planned {
+  background-color: var(--color-yellow);
+  color: var(--color-text);
+}
+
+.drive-list-status-scheduled {
+  background-color: var(--color-blue);
+  color: var(--color-surface);
+}
+
+.drive-list-status-ongoing {
+  background-color: var(--color-orange);
+  color: var(--color-surface);
+}
+
+.drive-list-status-completed {
+  background-color: var(--color-success);
+  color: var(--color-surface);
+}
+
+.drive-list-status-cancelled {
+  background-color: var(--color-danger);
+  color: var(--color-surface);
+}
+
+/* ========== Card Body ========== */
+.drive-list-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  border-top: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.drive-list-card-info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.drive-list-card-info-row:last-child {
+  border-bottom: none;
+}
+
+.drive-list-card-label {
+  font-size: 13px !important;
+  color: var(--color-text-muted) !important;
+  font-weight: 500 !important;
+}
+
+.drive-list-card-value {
+  font-size: 13px !important;
+  color: var(--color-text) !important;
+  font-weight: 600 !important;
+  text-align: right;
+}
+
+/* ========== Card Actions ========== */
+.drive-list-card-actions {
+  display: flex;
+  gap: 10px;
+  padding-top: 4px;
+}
+
+.drive-list-btn {
+  flex: 1;
+  border-radius: 8px !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  padding: 8px 12px !important;
+  text-transform: none !important;
+  transition: all 0.2s ease !important;
+}
+
+.drive-list-btn-details {
+  background-color: var(--color-primary) !important;
+  color: var(--color-surface) !important;
+  border: none !important;
+}
+
+.drive-list-btn-details:hover {
+  background-color: var(--color-primary-hover) !important;
+}
+
+.drive-list-btn-score {
+  background-color: var(--color-surface) !important;
+  color: var(--color-primary) !important;
+  border: 1px solid var(--color-primary) !important;
+}
+
+.drive-list-btn-score:hover {
+  background-color: var(--color-primary) !important;
+  color: var(--color-surface) !important;
+}
+
+/* ========== Responsive ========== */
+@media (max-width: 768px) {
+  .drive-list-container {
+    padding: 12px;
+  }
+
+  .drive-list-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .drive-list-title {
+    font-size: 20px !important;
+  }
+
+  .drive-list-header-center {
+    position: static;
+    transform: none;
+  }
+
+  .drive-list-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .drive-list-header-spacer {
+    display: none;
+  }
+
+  .drive-list-card-info-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+  }
+
+  .drive-list-card-value {
+    text-align: left;
+  }
+}
+

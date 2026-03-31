@@ -4,7 +4,6 @@ import {
   Button,
   Card,
   CardContent,
-  Container,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -301,89 +300,86 @@ const RoundTemplateManagement: React.FC = () => {
 
   if (loading) {
     return (
-      <Container maxWidth="lg" sx={{ mt: 4, textAlign: "center" }}>
+      <Box className="round-loading-container">
         <CircularProgress />
-        <Typography sx={{ mt: 2 }}>Loading round templates...</Typography>
-      </Container>
+        <Typography className="round-loading-text">Loading round templates...</Typography>
+      </Box>
     );
   }
 
   return (
-    <Container maxWidth="lg" className="round-template-container">
-      <Box className="template-header">
-        <BackButton inline />
-        <Box className="template-header-content">
-          <Typography variant="h4" component="h1" gutterBottom>
-            Round Template Management
-          </Typography>
-          <Typography variant="body1" color="text.secondary">
-            Configure interview round templates
-          </Typography>
-        </Box>
-        <Box className="template-header-actions">
-          <IconButton
-            color="primary"
-            onClick={handleAddClick}
-            className="add-template-button"
-            size="large"
-          >
-            <AddIcon fontSize="large" />
-          </IconButton>
-        </Box>
-      </Box>
+    <Box className="round-template-container">
+      {/* Header with Filters */}
+      <Card className="round-header-card">
+        <Box className="round-header-content">
+          <Box className="round-header-left">
+            <BackButton inline />
+          </Box>
+          
+          <Box className="round-header-filters">
+            <Grid container spacing={2}>
+              <Grid size={{ xs: 12, sm: 4 }}>
+                <TextField
+                  fullWidth
+                  size="small"
+                  label="Filter by Name"
+                  value={filterRoundName}
+                  onChange={(e) => setFilterRoundName(e.target.value)}
+                />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 4 }}>
+                <TextField
+                  fullWidth
+                  size="small"
+                  label="Filter by Round No"
+                  type="number"
+                  value={filterRoundNo}
+                  onChange={(e) => setFilterRoundNo(e.target.value)}
+                />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 4 }}>
+                <FormControl fullWidth size="small">
+                  <InputLabel>Status</InputLabel>
+                  <Select
+                    value={filterIsActive}
+                    label="Status"
+                    onChange={(e) => setFilterIsActive(e.target.value)}
+                  >
+                    <MenuItem value="all">All</MenuItem>
+                    <MenuItem value="true">Active</MenuItem>
+                    <MenuItem value="false">Inactive</MenuItem>
+                  </Select>
+                </FormControl>
+              </Grid>
+            </Grid>
+          </Box>
 
-      {/* Filters */}
-      <Box className="filter-section">
-        <Grid container spacing={2}>
-          <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-            <TextField
-              fullWidth
-              size="small"
-              label="Filter by Name"
-              value={filterRoundName}
-              onChange={(e) => setFilterRoundName(e.target.value)}
-            />
-          </Grid>
-          <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-            <TextField
-              fullWidth
-              size="small"
-              label="Filter by Round No"
-              type="number"
-              value={filterRoundNo}
-              onChange={(e) => setFilterRoundNo(e.target.value)}
-            />
-          </Grid>
-          <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-            <FormControl fullWidth size="small">
-              <InputLabel>Status</InputLabel>
-              <Select
-                value={filterIsActive}
-                label="Status"
-                onChange={(e) => setFilterIsActive(e.target.value)}
-              >
-                <MenuItem value="all">All</MenuItem>
-                <MenuItem value="true">Active</MenuItem>
-                <MenuItem value="false">Inactive</MenuItem>
-              </Select>
-            </FormControl>
-          </Grid>
-        </Grid>
-      </Box>
+          <Box className="round-header-right">
+            <IconButton
+              onClick={handleAddClick}
+              className="round-add-button"
+            >
+              <AddIcon />
+            </IconButton>
+          </Box>
+        </Box>
+      </Card>
 
-      {/* Templates List */}
-      <Box className="templates-list">
-        {filteredTemplates.length === 0 ? (
-          <Alert severity="info">
-            No round templates found. Click the + button to create one.
-          </Alert>
-        ) : (
-          filteredTemplates.map((template) => (
-            <Card key={template.roundConfigId} className="template-card">
-              <CardContent>
-                <Box className="template-card-header">
-                  <Box className="template-title-section">
-                    <Typography variant="h6" className="template-title">
+      {/* Scrollable Content */}
+      <Box className="round-content-wrapper">
+        {/* Templates List */}
+        <Box className="round-templates-list">
+          {filteredTemplates.length === 0 ? (
+            <Alert severity="info">
+              No round templates found. Click the + button to create one.
+            </Alert>
+          ) : (
+            filteredTemplates.map((template) => (
+              <Card key={template.roundConfigId} className="round-template-card">
+                <CardContent>
+                <Box className="round-template-card-header">
+                  <Box className="round-template-title-section">
+                    <Typography variant="h6" className="round-template-title">
                       Round {template.roundNo}: {template.roundName}
                     </Typography>
                     <Chip
@@ -392,11 +388,11 @@ const RoundTemplateManagement: React.FC = () => {
                       size="small"
                     />
                   </Box>
-                  <Box className="template-actions">
+                  <Box className="round-template-actions">
                     <IconButton
                       size="small"
                       onClick={() => handleEditClick(template)}
-                      color="primary"
+                      className="round-edit-button"
                       title="Edit"
                     >
                       <EditIcon fontSize="small" />
@@ -404,7 +400,7 @@ const RoundTemplateManagement: React.FC = () => {
                     <IconButton
                       size="small"
                       onClick={() => handleDeleteClick(template)}
-                      color={template.isActive ? "success" : "warning"}
+                      className={template.isActive ? "round-toggle-active" : "round-toggle-inactive"}
                       title={template.isActive ? "Deactivate" : "Activate"}
                     >
                       {template.isActive ? (
@@ -416,66 +412,67 @@ const RoundTemplateManagement: React.FC = () => {
                   </Box>
                 </Box>
 
-                <Box className="template-details">
+                <Box className="round-template-details">
                   <Grid container spacing={2}>
                     <Grid size={{ xs: 6, sm: 3 }}>
-                      <Typography variant="caption" color="text.secondary">
+                      <Typography variant="caption" className="round-detail-label">
                         Total Score
                       </Typography>
-                      <Typography variant="body1" fontWeight="600">
+                      <Typography variant="body1" className="round-detail-value">
                         {template.outoffScore}
                       </Typography>
                     </Grid>
                     <Grid size={{ xs: 6, sm: 3 }}>
-                      <Typography variant="caption" color="text.secondary">
+                      <Typography variant="caption" className="round-detail-label">
                         Min Score
                       </Typography>
-                      <Typography variant="body1" fontWeight="600">
+                      <Typography variant="body1" className="round-detail-value">
                         {template.minScore}
                       </Typography>
                     </Grid>
                     <Grid size={{ xs: 6, sm: 3 }}>
-                      <Typography variant="caption" color="text.secondary">
+                      <Typography variant="caption" className="round-detail-label">
                         Weightage
                       </Typography>
-                      <Typography variant="body1" fontWeight="600">
+                      <Typography variant="body1" className="round-detail-value">
                         {template.weightage}%
                       </Typography>
                     </Grid>
                     <Grid size={{ xs: 6, sm: 3 }}>
-                      <Typography variant="caption" color="text.secondary">
+                      <Typography variant="caption" className="round-detail-label">
                         Created By
                       </Typography>
-                      <Typography variant="body1" fontWeight="600">
+                      <Typography variant="body1" className="round-detail-value">
                         {template.createdByName}
                       </Typography>
                     </Grid>
                   </Grid>
 
                   {template.sections.length > 0 && (
-                    <>
-                      <Divider sx={{ my: 2 }} />
-                      <Typography variant="subtitle2" gutterBottom>
+                    <Box className="round-sections-container">
+                      <Divider className="round-sections-divider" />
+                      <Typography variant="subtitle2" className="round-sections-title">
                         Sections:
                       </Typography>
-                      <Box className="sections-list">
+                      <Box className="round-sections-list">
                         {template.sections.map((section, idx) => (
                           <Chip
                             key={idx}
                             label={`${section.sectionName}: ${section.outOf}`}
                             variant="outlined"
                             size="small"
-                            className="section-chip"
+                            className="round-section-chip"
                           />
                         ))}
                       </Box>
-                    </>
+                    </Box>
                   )}
                 </Box>
               </CardContent>
             </Card>
           ))
         )}
+        </Box>
       </Box>
 
       {/* Add/Edit Dialog */}
@@ -484,19 +481,20 @@ const RoundTemplateManagement: React.FC = () => {
         onClose={handleDialogClose}
         maxWidth="md"
         fullWidth
+        className="round-dialog"
       >
-        <DialogTitle>
-          <Box display="flex" justifyContent="space-between" alignItems="center">
+        <DialogTitle className="round-dialog-title">
+          <Box className="round-dialog-title-container">
             <Typography variant="h6">
               {editMode ? "Edit Round Template" : "Create Round Template"}
             </Typography>
-            <IconButton onClick={handleDialogClose} size="small">
+            <IconButton onClick={handleDialogClose} size="small" className="round-dialog-close-btn">
               <CloseIcon />
             </IconButton>
           </Box>
         </DialogTitle>
-        <DialogContent>
-          <Grid container spacing={2} sx={{ mt: 1 }}>
+        <DialogContent className="round-dialog-content">
+          <Grid container spacing={2} className="round-dialog-grid">
             <Grid size={{ xs: 12, sm: 6 }}>
               <TextField
                 fullWidth
@@ -613,7 +611,7 @@ const RoundTemplateManagement: React.FC = () => {
           </Button>
         </DialogActions>
       </Dialog>
-    </Container>
+    </Box>
   );
 };
 

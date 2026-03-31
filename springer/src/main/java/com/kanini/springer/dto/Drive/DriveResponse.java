@@ -6,7 +6,6 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.List;
 
 /**
  * Response DTO for Drive schedule
@@ -35,5 +34,4 @@ public class DriveResponse {
     private LocalDateTime updatedAt;
     private Long updatedBy;
     private String updatedByName;
-    private List<DriveRoundResponse> driveRounds; // included only for getById
 }

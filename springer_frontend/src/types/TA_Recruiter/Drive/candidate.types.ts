@@ -2,21 +2,34 @@
 // Maps to backend DTOs in com.kanini.springer.dto.Drive
 
 // Enum types matching backend enums
-export type ApplicationType = 'STANDARD' | 'PREMIUM';
+export const ApplicationType = {
+  STANDARD: 'STANDARD',
+  PREMIUM: 'PREMIUM'
+} as const;
 
-export type ApplicationStage = 
-  | 'APPLIED' 
-  | 'SHORTLISTED' 
-  | 'INVITED' 
-  | 'SCHEDULED' 
-  | 'SELECTED' 
-  | 'OFFERED' 
-  | 'JOINED' 
-  | 'REJECTED' 
-  | 'ACCEPTED' 
-  | 'DROPPED';
+export type ApplicationType = typeof ApplicationType[keyof typeof ApplicationType];
 
-export type LifecycleStatus = 'ACTIVE' | 'CLOSED';
+export const ApplicationStage = {
+  APPLIED: 'APPLIED',
+  SHORTLISTED: 'SHORTLISTED',
+  INVITED: 'INVITED',
+  SCHEDULED: 'SCHEDULED',
+  SELECTED: 'SELECTED',
+  OFFERED: 'OFFERED',
+  JOINED: 'JOINED',
+  REJECTED: 'REJECTED',
+  ACCEPTED: 'ACCEPTED',
+  DROPPED: 'DROPPED'
+} as const;
+
+export type ApplicationStage = typeof ApplicationStage[keyof typeof ApplicationStage];
+
+export const LifecycleStatus = {
+  ACTIVE: 'ACTIVE',
+  CLOSED: 'CLOSED'
+} as const;
+
+export type LifecycleStatus = typeof LifecycleStatus[keyof typeof LifecycleStatus];
 
 // Degree constants and type (compatible with erasableSyntaxOnly)
 export const Degree = {

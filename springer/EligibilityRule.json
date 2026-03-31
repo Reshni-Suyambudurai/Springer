@@ -18,7 +18,7 @@
   }, {
     "field" : "historyOfArrears",
     "operator" : "<=",
-    "value" : 2.0,
+    "value" : 3.0,
     "min" : null,
     "max" : null,
     "message" : "Number of arrears is <= {value}",
@@ -30,7 +30,7 @@
     "min" : null,
     "max" : null,
     "message" : "Degree isn't eligible",
-    "allowedValues" : [ "BE" ]
+    "allowedValues" : [ ]
   }, {
     "field" : "department",
     "operator" : "IN",
@@ -38,7 +38,7 @@
     "min" : null,
     "max" : null,
     "message" : "Department isn't eligible",
-    "allowedValues" : [ "CSE", "IT" ]
+    "allowedValues" : [ ]
   } ],
   "logic" : "AND"
 }

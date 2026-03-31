@@ -1,151 +1,362 @@
 .eligibility-management-container {
-  padding: 40px 20px;
-  min-height: 100vh;
+  padding: 10px;
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
   background-color: var(--color-bg);
+  box-sizing: border-box;
 }
 
-.eligibility-header {
-  display: flex;
-  align-items: center;
-  margin-bottom: 32px;
-  position: relative;
+.eligibility-header-card {
+  padding: 16px 20px !important;
+  margin-bottom: 16px !important;
+  border-radius: 12px !important;
+  border: 1px solid var(--color-border) !important;
+  background: var(--color-surface) !important;
+  box-shadow: var(--shadow-card) !important;
 }
 
 .eligibility-header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+}
+
+.eligibility-header-left {
+  width: 50px;
+}
+
+.eligibility-header-center {
   flex: 1;
   text-align: center;
-  padding-right: 64px; /* Compensate for back button width */
 }
 
-.eligibility-header h1 {
+.eligibility-header-center h1 {
   font-weight: 600;
   color: var(--color-text);
-  margin-bottom: 8px;
+  margin-bottom: 4px;
 }
 
-.eligibility-card {
-  border-radius: 12px;
-  box-shadow: var(--shadow-card);
-  background-color: var(--color-surface);
+.eligibility-header-right {
+  width: 50px;
 }
 
-.rules-simple-container {
+.eligibility-content-wrapper {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 0 4px 40px 4px;
+}
+
+.eligibility-content-wrapper::-webkit-scrollbar {
+  width: 6px;
+}
+
+.eligibility-content-wrapper::-webkit-scrollbar-track {
+  background: var(--color-bg);
+}
+
+.eligibility-content-wrapper::-webkit-scrollbar-thumb {
+  background: var(--color-primary);
+  border-radius: 3px;
+}
+
+.eligibility-content-wrapper::-webkit-scrollbar-thumb:hover {
+  background: var(--color-primary-hover);
+}
+
+.eligibility-rule-card {
+  border-radius: 12px !important;
+  border: 1px solid var(--color-border) !important;
+  transition: all 0.3s ease;
+  background-color: var(--color-surface) !important;
+  height: 100%;
+  cursor: pointer;
+  margin:20px;
+}
+
+.eligibility-rule-card:hover {
+  border-color: var(--color-primary) !important;
+  box-shadow: var(--shadow-card) !important;
+  transform: translateY(-4px);
+}
+
+.eligibility-rule-card-content {
+  padding: 20px !important;
+}
+
+.eligibility-rule-header {
   display: flex;
-  flex-direction: column;
-  gap: 24px;
-  margin-bottom: 32px;
-  min-height: 200px;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
 }
 
-.rule-simple-item {
-  padding: 24px;
-  border-radius: 8px;
-  background-color: var(--color-bg);
-  border: 1px solid var(--color-border);
+.eligibility-rule-title {
+  font-weight: 600 !important;
+  color: var(--color-primary) !important;
+  font-size: 1.1rem !important;
+}
+
+.eligibility-edit-icon {
+  color: var(--color-primary) !important;
+  opacity: 0.7;
   transition: all 0.3s ease;
 }
 
-.rule-simple-item:hover {
-  border-color: var(--color-primary);
-  box-shadow: 0 2px 8px rgba(3, 47, 142, 0.1);
+.eligibility-rule-card:hover .eligibility-edit-icon {
+  opacity: 1;
+  transform: scale(1.1);
 }
 
-.rules-actions {
-  margin-top: 24px;
-  padding-top: 24px;
-  border-top: 1px solid var(--color-border);
-}
-
-/* Loading State */
-.eligibility-loading-container {
-  margin-top: 32px;
-  text-align: center;
-}
-
-.eligibility-loading-text {
-  margin-top: 16px;
-}
-
-/* Input Groups */
-.eligibility-input-group-horizontal {
+.eligibility-rule-details {
   display: flex;
-  gap: 16px;
-  align-items: center;
-}
-
-.eligibility-input-flex {
-  flex: 1;
-}
-
-/* Error Message Space */
-.eligibility-error-space {
-  min-height: 20px;
-  margin-top: 4px;
-}
-
-/* Select All Button Container */
-.eligibility-select-all-container {
-  margin-bottom: 8px;
-  display: flex;
+  flex-direction: column;
   gap: 8px;
 }
 
-/* Checkbox Grid for IN operator */
-.eligibility-checkbox-grid {
+.eligibility-rule-operator,
+.eligibility-rule-value {
+  color: var(--color-text-muted) !important;
+}
+
+.eligibility-rule-operator span,
+.eligibility-rule-value span {
+  font-weight: 600;
+  color: var(--color-text) !important;
+}
+
+.eligibility-chips-preview {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+
+.eligibility-chip {
+  background-color: var(--color-primary) !important;
+  color: white !important;
+}
+
+.eligibility-chip-more {
+  background-color: var(--color-text-muted) !important;
+  color: white !important;
+}
+
+.eligibility-chip-all {
+  background-color: var(--color-green) !important;
+  color: white !important;
+  font-weight: 600 !important;
+}
+
+.eligibility-loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  gap: 16px;
+}
+
+.eligibility-loading-text {
+  color: var(--color-text-muted);
+}
+
+.eligibility-dialog-title {
+  background-color: var(--color-surface) !important;
+  border-bottom: 1px solid var(--color-border) !important;
+}
+
+.dialog-title-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.dialog-close-btn {
+  color: var(--color-text-muted) !important;
+  transition: all 0.2s ease;
+}
+
+.dialog-close-btn:hover {
+  color: var(--color-text) !important;
+  transform: scale(1.1);
+}
+
+.eligibility-dialog-content {
+  padding: 24px !important;
+  background-color: var(--color-bg) !important;
+}
+
+.eligibility-dialog .MuiDialog-paperWidthXs .eligibility-dialog-content {
+  padding: 20px !important;
+}
+
+.eligibility-dialog-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.eligibility-compact-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.eligibility-compact-label {
+  font-weight: 600 !important;
+  color: var(--color-text) !important;
+  font-size: 0.95rem !important;
+}
+
+.eligibility-range-separator {
+  display: flex;
+  align-items: center;
+  color: var(--color-text-muted) !important;
+  font-weight: 500;
+  padding: 0 8px;
+}
+
+.eligibility-error-space {
+  min-height: 24px;
+  display: flex;
+  align-items: center;
+  margin-top: 4px;
+}
+
+.eligibility-error-text {
+  color: var(--color-error) !important;
+  font-size: 0.75rem !important;
+  line-height: 1.4;
+}
+
+.eligibility-field-label {
+  color: var(--color-text-muted) !important;
+}
+
+.eligibility-field-label strong {
+  color: var(--color-text) !important;
+}
+
+.eligibility-between-inputs {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.eligibility-select-buttons {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.eligibility-checkbox-container {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
   gap: 8px;
   max-height: 300px;
   overflow-y: auto;
-  border: 1px solid #e0e0e0;
-  border-radius: 4px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
   padding: 16px;
-  background-color: #fafafa;
+  background-color: var(--color-surface);
 }
 
-/* Chips Display */
-.eligibility-chips-container {
-  display: flex;
-  gap: 4px;
-  flex-wrap: wrap;
+.eligibility-checkbox-container::-webkit-scrollbar {
+  width: 6px;
 }
 
-/* Action Buttons */
-.eligibility-actions-row {
-  display: flex;
-  gap: 16px;
+.eligibility-checkbox-container::-webkit-scrollbar-track {
+  background: var(--color-bg);
 }
 
-/* Responsive Design */
+.eligibility-checkbox-container::-webkit-scrollbar-thumb {
+  background: var(--color-primary);
+  border-radius: 3px;
+}
+
+.eligibility-error-message {
+  margin-top: 8px !important;
+  font-size: 0.875rem !important;
+}
+
+.eligibility-helper-text {
+  margin-top: 8px !important;
+  font-size: 0.875rem !important;
+  color: var(--color-text-muted) !important;
+  font-style: italic;
+}
+
+.eligibility-dialog-actions {
+  padding: 16px 24px !important;
+  background-color: var(--color-surface) !important;
+  border-top: 1px solid var(--color-border) !important;
+  gap: 12px;
+}
+
+.eligibility-save-button {
+  background-color: var(--color-primary) !important;
+  color: white !important;
+}
+
+.eligibility-save-button:hover {
+  background-color: var(--color-primary-hover) !important;
+}
+
+.eligibility-dialog .MuiDialog-paper {
+  border-radius: 12px !important;
+}
+
+.eligibility-dialog .MuiDialog-paperWidthXs {
+  max-width: 400px !important;
+}
+
 @media (max-width: 900px) {
   .eligibility-management-container {
-    padding: 24px 16px;
+    padding: 8px;
   }
 
-  .rule-simple-item {
-    padding: 16px;
+  .eligibility-header-card {
+    padding: 12px 16px !important;
   }
 
-  .eligibility-checkbox-grid {
-    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  .eligibility-header-content {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .eligibility-header-left,
+  .eligibility-header-center,
+  .eligibility-header-right {
+    width: 100%;
+  }
+
+  .eligibility-header-center {
+    text-align: left;
+  }
+
+  .eligibility-between-inputs {
+    flex-direction: column;
+  }
+
+  .eligibility-checkbox-container {
+    grid-template-columns: 1fr;
   }
 }
 
 @media (max-width: 600px) {
-  .eligibility-header h1 {
-    font-size: 1.75rem;
+  .eligibility-header-center h1 {
+    font-size: 1.25rem;
   }
 
-  .rules-simple-container {
-    gap: 16px;
+  .eligibility-rule-card-content {
+    padding: 16px !important;
   }
 
-  .eligibility-input-group-horizontal {
+  .eligibility-select-buttons {
     flex-direction: column;
-    align-items: stretch;
-  }
-
-  .eligibility-checkbox-grid {
-    grid-template-columns: 1fr;
   }
 }

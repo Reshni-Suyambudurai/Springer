@@ -1,6 +1,17 @@
 // Application Type Definitions
 // Maps to backend DTOs in com.kanini.springer.dto.Drive
 
+/**
+ * Application Status enum matching backend
+ */
+export type ApplicationStatus =
+  | 'IN_DRIVE'
+  | 'DROPPED'
+  | 'FAILED'
+  | 'PASSED'
+  | 'ON_HOLD'
+  | 'SELECTED';
+
 export interface ApplicationRequest {
   driveId: number;
   candidateIds: number[];
@@ -15,14 +26,14 @@ export interface ApplicationResponse {
   candidateName: string;
   candidateEmail: string;
   registrationCode: string;
-  applicationStatus: string;
+  applicationStatus: ApplicationStatus;
   createdAt: string; // ISO-8601 format from LocalDateTime
   createdBy: number;
   createdByName: string;
 }
 
 export interface ApplicationStatusUpdateRequest {
-  applicationStatus: string;
+  applicationStatus: ApplicationStatus;
 }
 
 export interface BulkApplicationResponse {
@@ -36,7 +47,7 @@ export interface BulkApplicationResponse {
 // Nested type for bulk application status update
 export interface ApplicationStatusData {
   applicationId: number;
-  applicationStatus: string;
+  applicationStatus: ApplicationStatus;
 }
 
 export interface BulkApplicationStatusUpdateRequest {

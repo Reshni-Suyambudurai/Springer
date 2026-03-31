@@ -9,6 +9,7 @@ import { useCandidateFilters } from "../../../hooks/useCandidateFilters";
 import { useCandidatesPagination } from "../../../hooks/useCandidatesPagination";
 import { useFilterOptions } from "../../../contexts/FilterOptionsContext";
 import CandidateFilter from "./CandidateFilter";
+import ScheduleDrive from "./ScheduleDrive";
 import {
   Box,
   Button,
@@ -44,6 +45,7 @@ const CandidateList: React.FC = () => {
   const [selectedCycle, setSelectedCycle] = useState<number | null>(null);
   const [bulkStatusUpdate, setBulkStatusUpdate] = useState<string>("");
   const [updatingBulkStatus, setUpdatingBulkStatus] = useState<boolean>(false);
+  const [sendingInvite, setSendingInvite] = useState<boolean>(false);
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(() => tokenstore.getSidebarOpen());
   const [selectMode, setSelectMode] = useState<boolean>(false);
   const [selectedCandidates, setSelectedCandidates] = useState<Set<number>>(new Set());
@@ -72,7 +74,7 @@ const CandidateList: React.FC = () => {
     uniqueApplicationStages,
     uniqueApplicationTypes,
     hasActiveFilters,
-  } = useCandidateFilters(allCandidates);
+  } = useCandidateFilters();
 
   // Calculate cities based on selected state from context data
   const citiesForSelectedState = React.useMemo(() => {
@@ -213,10 +215,65 @@ const CandidateList: React.FC = () => {
     });
   };
 
-  const handleSendInvite = () => {
-    if (!selectedCycle) return;
-    showToast("Invite sent to all candidates in this cycle", "success");
-    // TODO: Implement actual invite logic
+  const handleSendInvite = async () => {
+    if (!selectedCycle) {
+      showToast("Please select a hiring cycle first", "error");
+      return;
+    }
+
+    const user = tokenstore.getUser();
+    if (!user) {
+      showToast("Unable to get user information", "error");
+      return;
+    }
+
+    // Determine which candidates to update based on select mode
+    const candidateIdsToUpdate = selectMode 
+      ? Array.from(selectedCandidates) 
+      : allCandidates.map((c) => c.candidateId);
+
+    if (candidateIdsToUpdate.length === 0) {
+      showToast(
+        selectMode 
+          ? "Please select candidates to invite" 
+          : "No candidates available to invite", 
+        "error"
+      );
+      return;
+    }
+
+    setSendingInvite(true);
+    try {
+      const response = await candidateApi.bulkUpdateCandidateStatus({
+        candidateIds: candidateIdsToUpdate,
+        status: "INVITED",
+        reason: `Bulk invite to ${candidateIdsToUpdate.length} candidate(s)`,
+        updatedBy: user.userId,
+      });
+
+      if (response.data) {
+        showToast(
+          `Invited ${response.data.successCount} candidates successfully. ${response.data.failureCount} failed.`,
+          response.data.failureCount > 0 ? "error" : "success"
+        );
+        
+        // Clear selections and exit select mode if active
+        if (selectMode) {
+          setSelectedCandidates(new Set());
+          setSelectMode(false);
+        }
+        
+        // Refresh candidates with current filters
+        if (selectedCycle) {
+          await fetchCandidates(selectedCycle, filters, false);
+        }
+      }
+    } catch (error) {
+      showToast("Failed to send invites to candidates", "error");
+      console.error("Error sending invites:", error);
+    } finally {
+      setSendingInvite(false);
+    }
   };
 
   // Toggle select mode
@@ -246,6 +303,12 @@ const CandidateList: React.FC = () => {
   };
 
   const handleBulkStatusUpdate = async () => {
+    const user = tokenstore.getUser();
+    if (!user) {
+      showToast("Unable to get user information", "error");
+      return;
+    }
+
     // Determine which candidates to update based on select mode
     const candidateIdsToUpdate = selectMode 
       ? Array.from(selectedCandidates) 
@@ -267,7 +330,7 @@ const CandidateList: React.FC = () => {
         candidateIds: candidateIdsToUpdate,
         status: bulkStatusUpdate,
         reason: `Bulk status update to ${bulkStatusUpdate}`,
-        updatedBy: 1, // TODO: Replace with actual logged-in user ID
+        updatedBy: user.userId,
       });
 
       if (response.data) {
@@ -283,9 +346,9 @@ const CandidateList: React.FC = () => {
           setSelectMode(false);
         }
         
-        // Refresh candidates
+        // Refresh candidates with current filters
         if (selectedCycle) {
-          await fetchCandidates(selectedCycle);
+          await fetchCandidates(selectedCycle, filters, false);
         }
       }
     } catch (error) {
@@ -293,6 +356,20 @@ const CandidateList: React.FC = () => {
       console.error("Error updating bulk status:", error);
     } finally {
       setUpdatingBulkStatus(false);
+    }
+  };
+
+  // Callback after successful scheduling
+  const handleScheduleComplete = async () => {
+    // Clear selections if in select mode
+    if (selectMode) {
+      setSelectedCandidates(new Set());
+      setSelectMode(false);
+    }
+    
+    // Refresh candidates with current filters
+    if (selectedCycle) {
+      await fetchCandidates(selectedCycle, filters, false);
     }
   };
 
@@ -363,7 +440,8 @@ const CandidateList: React.FC = () => {
                       disabled={selectMode ? selectedCandidates.size === 0 : allCandidates.length === 0}
                     >
                       <MenuItem value="">Select Status</MenuItem>                 
-                      <MenuItem value="SHORTLISTED">SHORTLISTED</MenuItem>                
+                      <MenuItem value="SHORTLISTED">SHORTLISTED</MenuItem>   
+                                  
                       <MenuItem value="SELECTED">SELECTED</MenuItem>
                       <MenuItem value="REJECTED">REJECTED</MenuItem>
                       <MenuItem value="OFFERED">OFFERED</MenuItem>
@@ -395,12 +473,28 @@ const CandidateList: React.FC = () => {
                     {selectMode ? "Deselect" : "Select"}
                   </Button>
 
-                  <IconButton
-                    onClick={handleSendInvite}
-                    className="send-invite-btn"
-                  >
-                    <EmailIcon />
-                  </IconButton>
+                  <ScheduleDrive
+                    cycleId={selectedCycle}
+                    candidateIds={selectMode ? Array.from(selectedCandidates) : allCandidates.map((c) => c.candidateId)}
+                    selectMode={selectMode}
+                    selectedCount={selectedCandidates.size}
+                    onScheduleComplete={handleScheduleComplete}
+                  />
+
+                  <Tooltip title={`Send invite to ${selectMode ? selectedCandidates.size : allCandidates.length} candidate(s)`}>
+                    <span>
+                      <IconButton
+                        onClick={handleSendInvite}
+                        disabled={
+                          (selectMode ? selectedCandidates.size === 0 : allCandidates.length === 0) ||
+                          sendingInvite
+                        }
+                        className="send-invite-btn"
+                      >
+                        <EmailIcon />
+                      </IconButton>
+                    </span>
+                  </Tooltip>
                 </>
               )}
             </Box>
@@ -443,9 +537,8 @@ const CandidateList: React.FC = () => {
                   component={Paper} 
                   className="candidates-table-container"
                   onScroll={handleScroll}
-                  style={{ maxHeight: 'calc(100vh - 190px)', overflowY: 'auto' }}
                 >
-                  <Table>
+                  <Table stickyHeader>
                     <TableHead>
                       <TableRow>
                         <TableCell className="table-header">College Name</TableCell>
@@ -465,20 +558,21 @@ const CandidateList: React.FC = () => {
                           onClick={() => !selectMode && handleCandidateView(candidate.candidateId)}
                         >
                           <TableCell>
-                            <Box className="institute-name-cell">
-                              <SchoolIcon 
-                                className={
-                                  selectMode
-                                    ? selectedCandidates.has(candidate.candidateId)
-                                      ? "institute-icon-small selectable selected"
-                                      : "institute-icon-small selectable"
-                                    : "institute-icon-small"
-                                }
-                                onClick={(e) => selectMode && handleToggleCandidateSelection(candidate.candidateId, e)}
-                                style={{ cursor: selectMode ? 'pointer' : 'default' }}
-                              />
-                              <Typography>{candidate.instituteName || "N/A"}</Typography>
-                            </Box>
+                            <Tooltip title={candidate.instituteName || "N/A"} placement="top-start">
+                              <Box className="institute-name-cell">
+                                <SchoolIcon 
+                                  className={
+                                    selectMode
+                                      ? selectedCandidates.has(candidate.candidateId)
+                                        ? "institute-icon-small selectable selected"
+                                        : "institute-icon-small selectable"
+                                      : "institute-icon-small"
+                                  }
+                                  onClick={(e) => selectMode && handleToggleCandidateSelection(candidate.candidateId, e)}
+                                />
+                                <Typography>{candidate.instituteName || "N/A"}</Typography>
+                              </Box>
+                            </Tooltip>
                           </TableCell>
                           <TableCell>
                             <Tooltip
@@ -516,9 +610,9 @@ const CandidateList: React.FC = () => {
                       ))}
                       {loadingMore && (
                         <TableRow>
-                          <TableCell colSpan={7} align="center" style={{ padding: '20px' }}>
+                          <TableCell colSpan={7} align="center" className="loading-more-cell">
                             <CircularProgress size={24} />
-                            <Typography variant="body2" style={{ marginTop: '8px' }}>
+                            <Typography variant="body2" className="loading-more-text">
                               Loading more candidates...
                             </Typography>
                           </TableCell>

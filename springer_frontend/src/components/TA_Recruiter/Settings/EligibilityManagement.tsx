@@ -4,7 +4,10 @@ import {
   Button,
   Card,
   CardContent,
-  Container,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
   Grid,
   TextField,
   Typography,
@@ -16,18 +19,19 @@ import {
   FormGroup,
   FormControl,
   FormHelperText,
+  IconButton,
 } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
-import SaveIcon from "@mui/icons-material/Save";
-import CancelIcon from "@mui/icons-material/Cancel";
+import CloseIcon from "@mui/icons-material/Close";
 import { candidateApi } from "../../../services/drive.api";
 import { showToast } from "../../../utils/toast";
 import { syncEligibilityFiltersToSession } from "../../../utils/eligibilityFilterSync";
 import BackButton from "../../Common/BackButton";
+import { Degree, Department } from "../../../types/TA_Recruiter/Drive/candidate.types";
 import type {
   EligibilityRuleDTO,
   EligibilityRuleUpdateRequest,
-} from "../../../types/TA_Recruiter/Drive/driveSchedule.types";
+} from "../../../types/TA_Recruiter/Drive/eligibility.types";
 import "../../../css/TA_Recruiter/Settings/EligibilityManagement.css";
 
 const FIELD_OPTIONS = [
@@ -38,25 +42,17 @@ const FIELD_OPTIONS = [
   { value: "department", label: "Department" },
 ];
 
-const DEGREE_OPTIONS = [
-  "BE", "BTech", "ME", "MTech", "BSc", "MSc", "BCA", "MCA", 
-  "BCom", "MCom", "MBA", "BA", "MA", "Diploma", "PhD"
-];
-
-const DEPARTMENT_OPTIONS = [
-  "CSE", "IT", "ECE", "EEE", "MECH", "CIVIL", "AI", "DS", "AIML", 
-  "CYBER SECURITY", "ROBOTICS", "COMPUTER APPLICATIONS", "INFORMATION SYSTEMS",
-  "MATHEMATICS", "PHYSICS", "CHEMISTRY", "STATISTICS", "COMMERCE", 
-  "BUSINESS ADMINISTRATION", "ECONOMICS", "ENGLISH"
-];
+const DEGREE_OPTIONS = Object.values(Degree);
+const DEPARTMENT_OPTIONS = Object.values(Department);
 
 const EligibilityManagement: React.FC = () => {
   const [loading, setLoading] = useState(true);
-  const [editMode, setEditMode] = useState(false);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [selectedRuleIndex, setSelectedRuleIndex] = useState<number | null>(null);
+  const [editedRule, setEditedRule] = useState<EligibilityRuleDTO | null>(null);
   const [saving, setSaving] = useState(false);
   const [rules, setRules] = useState<EligibilityRuleDTO[]>([]);
-  const [originalData, setOriginalData] = useState<EligibilityRuleUpdateRequest | null>(null);
-  const [errors, setErrors] = useState<Record<number, string>>({});
+  const [error, setError] = useState<string>("");
 
   useEffect(() => {
     fetchEligibilityRules();
@@ -68,7 +64,6 @@ const EligibilityManagement: React.FC = () => {
       const response = await candidateApi.getEligibilityRules();
       if (response.success && response.data) {
         setRules(response.data.rules || []);
-        setOriginalData(response.data);
       } else {
         showToast(response.message || "Failed to load eligibility rules", "error");
       }
@@ -76,7 +71,6 @@ const EligibilityManagement: React.FC = () => {
       console.error("Error fetching eligibility rules:", error);
       let errorMessage = "Failed to load eligibility rules";
       
-      // Extract error message from API response
       if (error && typeof error === 'object') {
         if ('message' in error && typeof error.message === 'string') {
           errorMessage = error.message;
@@ -96,16 +90,18 @@ const EligibilityManagement: React.FC = () => {
     }
   };
 
-  const handleEdit = () => {
-    setEditMode(true);
+  const handleOpenDialog = (index: number) => {
+    setSelectedRuleIndex(index);
+    setEditedRule({ ...rules[index] });
+    setError("");
+    setDialogOpen(true);
   };
 
-  const handleCancel = () => {
-    if (originalData) {
-      setRules(originalData.rules || []);
-    }
-    setErrors({});
-    setEditMode(false);
+  const handleCloseDialog = () => {
+    setDialogOpen(false);
+    setSelectedRuleIndex(null);
+    setEditedRule(null);
+    setError("");
   };
 
   const validateRule = (rule: EligibilityRuleDTO): string => {
@@ -117,7 +113,6 @@ const EligibilityManagement: React.FC = () => {
         return "Max value is required";
       }
       
-      // Check for negative values
       if (rule.field === "cgpa" || rule.field === "passoutYear" || rule.field === "historyOfArrears") {
         if (rule.min < 0) {
           return "Min value cannot be negative";
@@ -127,7 +122,6 @@ const EligibilityManagement: React.FC = () => {
         }
       }
       
-      // Additional validation for specific fields
       if (rule.field === "cgpa") {
         if (rule.min > 10) {
           return "CGPA cannot exceed 10.0";
@@ -137,7 +131,6 @@ const EligibilityManagement: React.FC = () => {
         }
       }
       
-      // Check for 4-digit year for passoutYear field
       if (rule.field === "passoutYear") {
         const minStr = String(rule.min);
         const maxStr = String(rule.max);
@@ -153,23 +146,18 @@ const EligibilityManagement: React.FC = () => {
         return "Min value must be less than or equal to Max value";
       }
     } else if (rule.operator === "IN") {
-      if (!rule.allowedValues || rule.allowedValues.length === 0) {
-        return "At least one value must be selected";
-      }
+      // Empty selection is allowed - backend treats it as "all values eligible"
     } else {
-      // For >=, <=, >, <, ==
       if (rule.value === null || rule.value === undefined) {
         return "Value is required";
       }
       
-      // Check for negative values
       if (rule.field === "cgpa" || rule.field === "passoutYear" || rule.field === "historyOfArrears") {
         if (rule.value < 0) {
           return "Value cannot be negative";
         }
       }
       
-      // Additional validation for specific fields
       if (rule.field === "cgpa" && rule.value > 10) {
         return "CGPA cannot exceed 10.0";
       }
@@ -187,55 +175,41 @@ const EligibilityManagement: React.FC = () => {
     return "";
   };
 
-  const validateAllRules = (): boolean => {
-    const newErrors: Record<number, string> = {};
-    let hasErrors = false;
-
-    rules.forEach((rule, index) => {
-      const error = validateRule(rule);
-      if (error) {
-        newErrors[index] = error;
-        hasErrors = true;
-      }
-    });
-
-    setErrors(newErrors);
-    return !hasErrors;
-  };
-
   const handleSave = async () => {
-    // Validate all rules
-    if (!validateAllRules()) {
-      showToast("Please fix all validation errors before saving", "error");
+    if (!editedRule || selectedRuleIndex === null) return;
+
+    const validationError = validateRule(editedRule);
+    if (validationError) {
+      setError(validationError);
       return;
     }
 
     try {
       setSaving(true);
+      const updatedRules = [...rules];
+      updatedRules[selectedRuleIndex] = editedRule;
+
       const updateData: EligibilityRuleUpdateRequest = {
-        rules,
-        logic: "AND", // Fixed to AND
+        rules: updatedRules,
+        logic: "AND",
       };
 
       const response = await candidateApi.updateEligibilityRules(updateData);
       if (response.success) {
-        showToast("Eligibility rules updated successfully", "success");
-        setOriginalData(response.data);
-        setEditMode(false);
-        fetchEligibilityRules();
+        showToast("Eligibility rule updated successfully", "success");
+        setRules(updatedRules);
+        handleCloseDialog();
         
-        // Sync updated eligibility rules to sessionStorage filters
         syncEligibilityFiltersToSession().catch((err: unknown) => 
           console.warn("Failed to sync eligibility filters after update:", err)
         );
       } else {
-        showToast(response.message || "Failed to update eligibility rules", "error");
+        showToast(response.message || "Failed to update eligibility rule", "error");
       }
     } catch (error: unknown) {
-      console.error("Error updating eligibility rules:", error);
-      let errorMessage = "Failed to update eligibility rules";
+      console.error("Error updating eligibility rule:", error);
+      let errorMessage = "Failed to update eligibility rule";
       
-      // Extract error message from API response
       if (error && typeof error === 'object') {
         if ('message' in error && typeof error.message === 'string') {
           errorMessage = error.message;
@@ -255,39 +229,31 @@ const EligibilityManagement: React.FC = () => {
     }
   };
 
-  const handleRuleChange = (index: number, field: keyof EligibilityRuleDTO, value: string | number | string[] | null | undefined) => {
-    const updatedRules = [...rules];
-    updatedRules[index] = {
-      ...updatedRules[index],
+  const handleFieldChange = (field: keyof EligibilityRuleDTO, value: string | number | string[] | null | undefined) => {
+    if (!editedRule) return;
+    
+    const updatedRule = {
+      ...editedRule,
       [field]: value,
     };
-    setRules(updatedRules);
+    setEditedRule(updatedRule);
     
-    // Validate the rule and update errors
-    const error = validateRule(updatedRules[index]);
-    setErrors(prev => {
-      const newErrors = { ...prev };
-      if (error) {
-        newErrors[index] = error;
-      } else {
-        delete newErrors[index];
-      }
-      return newErrors;
-    });
+    const validationError = validateRule(updatedRule);
+    setError(validationError);
   };
 
-  const handleSelectAll = (index: number, field: "degree" | "department") => {
+  const handleSelectAll = (field: "degree" | "department") => {
     const allValues = field === "degree" ? DEGREE_OPTIONS : DEPARTMENT_OPTIONS;
-    handleRuleChange(index, "allowedValues", allValues);
+    handleFieldChange("allowedValues", allValues);
   };
 
-  const handleDeselectAll = (index: number) => {
-    handleRuleChange(index, "allowedValues", []);
+  const handleDeselectAll = () => {
+    handleFieldChange("allowedValues", []);
   };
 
-  const handleCheckboxChange = (index: number, value: string, checked: boolean) => {
-    const rule = rules[index];
-    const currentValues = rule.allowedValues || [];
+  const handleCheckboxChange = (value: string, checked: boolean) => {
+    if (!editedRule) return;
+    const currentValues = editedRule.allowedValues || [];
     
     let newValues: string[];
     if (checked) {
@@ -296,7 +262,7 @@ const EligibilityManagement: React.FC = () => {
       newValues = currentValues.filter(v => v !== value);
     }
     
-    handleRuleChange(index, "allowedValues", newValues);
+    handleFieldChange("allowedValues", newValues);
   };
 
   const formatFieldName = (field: string): string => {
@@ -304,242 +270,273 @@ const EligibilityManagement: React.FC = () => {
     return option ? option.label : field;
   };
 
+  const formatRuleValue = (rule: EligibilityRuleDTO): string => {
+    if (rule.operator === "BETWEEN") {
+      return `${rule.min} to ${rule.max}`;
+    } else if (rule.operator === "IN") {
+      const count = rule.allowedValues?.length || 0;
+      return count === 0 ? "All eligible" : `${count} selected`;
+    } else {
+      return String(rule.value || "");
+    }
+  };
+
   if (loading) {
     return (
-      <Container maxWidth="lg" className="eligibility-loading-container">
+      <Box className="eligibility-loading-container">
         <CircularProgress />
         <Typography className="eligibility-loading-text">Loading eligibility rules...</Typography>
-      </Container>
+      </Box>
     );
   }
 
   return (
-    <Container maxWidth="lg" className="eligibility-management-container">
-      {/* Header with Back Navigation */}
-      <Box className="eligibility-header">
-        <BackButton inline />
+    <Box className="eligibility-management-container">
+      {/* Centered Header */}
+      <Card className="eligibility-header-card">
         <Box className="eligibility-header-content">
-          <Typography variant="h4" component="h1" gutterBottom>
-            Eligibility Management
-          </Typography>
-          <Typography variant="body1" color="text.secondary">
-            Configure candidate eligibility criteria
-          </Typography>
+          <Box className="eligibility-header-left">
+            <BackButton inline />
+          </Box>
+          
+          <Box className="eligibility-header-center">
+            <Typography variant="h5" component="h1">
+              Eligibility Management
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              Configure candidate eligibility criteria
+            </Typography>
+          </Box>
+
+          <Box className="eligibility-header-right"></Box>
         </Box>
-      </Box>
+      </Card>
 
-      <Card className="eligibility-card">
-        <CardContent>
-          <Box className="rules-simple-container">
-            {rules.length === 0 ? (
-              <Alert severity="info">No eligibility rules configured.</Alert>
-            ) : (
-              <>
-                {rules.map((rule, index) => (
-                  <Box key={index} className="rule-simple-item">
-                    <Grid container spacing={3} alignItems="center">
-                      <Grid size={{ xs: 12, md: 3 }}>
-                        <Typography variant="body1" fontWeight="600">
-                          {formatFieldName(rule.field)}
-                        </Typography>
-                      </Grid>
-
-                      <Grid size={{ xs: 12, md: 2 }}>
-                        <Typography variant="body1" fontWeight="600">
-                          {rule.operator}
-                        </Typography>
-                      </Grid>
-
-                      <Grid size={{ xs: 12, md: 7 }}>
-                        {editMode ? (
+      {/* Scrollable Content */}
+      <Box className="eligibility-content-wrapper">
+        {rules.length === 0 ? (
+          <Alert severity="info">No eligibility rules configured.</Alert>
+        ) : (
+          <Grid container spacing={3}>
+            {rules.map((rule, index) => (
+              <Grid size={{ xs: 12, sm: 6, md: 4 }} key={index}>
+                <Card className="eligibility-rule-card">
+                  <CardContent className="eligibility-rule-card-content">
+                    <Box className="eligibility-rule-header">
+                      <Typography variant="h6" className="eligibility-rule-title">
+                        {formatFieldName(rule.field)}
+                      </Typography>
+                      <IconButton
+                        className="eligibility-edit-icon"
+                        size="small"
+                        onClick={() => handleOpenDialog(index)}
+                      >
+                        <EditIcon />
+                      </IconButton>
+                    </Box>
+                    
+                    <Box className="eligibility-rule-details">
+                      <Typography variant="body2" className="eligibility-rule-operator">
+                        Operator: <span>{rule.operator}</span>
+                      </Typography>
+                      <Typography variant="body2" className="eligibility-rule-value">
+                        Value: <span>{formatRuleValue(rule)}</span>
+                      </Typography>
+                    </Box>
+                    
+                    {rule.operator === "IN" && (
+                      <Box className="eligibility-chips-preview">
+                        {(!rule.allowedValues || rule.allowedValues.length === 0) ? (
+                          <Chip 
+                            label="All Eligible" 
+                            size="small" 
+                            className="eligibility-chip-all" 
+                          />
+                        ) : (
                           <>
-                            {rule.operator === "BETWEEN" ? (
-                              <Box>
-                                <Box className="eligibility-input-group-horizontal">
-                                  <TextField
-                                    size="small"
-                                    type="number"
-                                    placeholder="Min"
-                                    value={rule.min ?? ""}
-                                    onChange={(e) =>
-                                      handleRuleChange(
-                                        index,
-                                        "min",
-                                        e.target.value ? Number(e.target.value) : undefined
-                                      )
-                                    }
-                                    error={!!errors[index]}
-                                    className="eligibility-input-flex"
-                                    inputProps={{
-                                      min: 0,
-                                      step: rule.field === "cgpa" ? 0.01 : 1
-                                    }}
-                                  />
-                                  <Typography>to</Typography>
-                                  <TextField
-                                    size="small"
-                                    type="number"
-                                    placeholder="Max"
-                                    value={rule.max ?? ""}
-                                    onChange={(e) =>
-                                      handleRuleChange(
-                                        index,
-                                        "max",
-                                        e.target.value ? Number(e.target.value) : undefined
-                                      )
-                                    }
-                                    error={!!errors[index]}
-                                    className="eligibility-input-flex"
-                                    inputProps={{
-                                      min: 0,
-                                      step: rule.field === "cgpa" ? 0.01 : 1
-                                    }}
-                                  />
-                                </Box>
-                                <Box className="eligibility-error-space">
-                                  {errors[index] && (
-                                    <FormHelperText error>
-                                      {errors[index]}
-                                    </FormHelperText>
-                                  )}
-                                </Box>
-                              </Box>
-                            ) : rule.operator === "IN" ? (
-                              <FormControl error={!!errors[index]} fullWidth>
-                                <Box className="eligibility-select-all-container">
-                                  <Button
-                                    size="small"
-                                    variant="outlined"
-                                    onClick={() => handleSelectAll(index, rule.field === "degree" ? "degree" : "department")}
-                                  >
-                                    Select All
-                                  </Button>
-                                  <Button
-                                    size="small"
-                                    variant="outlined"
-                                    color="secondary"
-                                    onClick={() => handleDeselectAll(index)}
-                                  >
-                                    Deselect All
-                                  </Button>
-                                </Box>
-                                <FormGroup>
-                                  <Box className="eligibility-checkbox-grid">
-                                    {(rule.field === "degree" ? DEGREE_OPTIONS : DEPARTMENT_OPTIONS).map((option) => (
-                                      <FormControlLabel
-                                        key={option}
-                                        control={
-                                          <Checkbox
-                                            checked={rule.allowedValues?.includes(option) || false}
-                                            onChange={(e) => handleCheckboxChange(index, option, e.target.checked)}
-                                            size="small"
-                                          />
-                                        }
-                                        label={option}
-                                      />
-                                    ))}
-                                  </Box>
-                                </FormGroup>
-                                <Box className="eligibility-error-space">
-                                  {errors[index] && (
-                                    <FormHelperText error>
-                                      {errors[index]}
-                                    </FormHelperText>
-                                  )}
-                                </Box>
-                              </FormControl>
-                            ) : (
-                              <Box>
-                                <TextField
-                                  size="small"
-                                  type="number"
-                                  fullWidth
-                                  value={rule.value ?? ""}
-                                  onChange={(e) =>
-                                    handleRuleChange(
-                                      index,
-                                      "value",
-                                      e.target.value ? Number(e.target.value) : undefined
-                                    )
-                                  }
-                                  error={!!errors[index]}
-                                  inputProps={{
-                                    min: 0,
-                                    step: rule.field === "cgpa" ? 0.01 : 1
-                                  }}
-                                />
-                                <Box className="eligibility-error-space">
-                                  {errors[index] && (
-                                    <FormHelperText error>
-                                      {errors[index]}
-                                    </FormHelperText>
-                                  )}
-                                </Box>
-                              </Box>
+                            {rule.allowedValues.slice(0, 3).map((val, idx) => (
+                              <Chip key={idx} label={val} size="small" className="eligibility-chip" />
+                            ))}
+                            {rule.allowedValues.length > 3 && (
+                              <Chip 
+                                label={`+${rule.allowedValues.length - 3} more`} 
+                                size="small" 
+                                className="eligibility-chip-more"
+                              />
                             )}
                           </>
-                        ) : (
-                          <Typography variant="body1" fontWeight="600">
-                            {rule.operator === "BETWEEN"
-                              ? `${rule.min} to ${rule.max}`
-                              : rule.operator === "IN"
-                              ? (
-                                <Box className="eligibility-chips-container">
-                                  {rule.allowedValues?.map((val, idx) => (
-                                    <Chip key={idx} label={val} size="small" color="primary" variant="outlined" />
-                                  ))}
-                                </Box>
-                              )
-                              : rule.value}
-                          </Typography>
                         )}
-                      </Grid>
-                    </Grid>
-                  </Box>
-                ))}
-              </>
-            )}
-          </Box>
+                      </Box>
+                    )}
+                  </CardContent>
+                </Card>
+              </Grid>
+            ))}
+          </Grid>
+        )}
+      </Box>
 
-          {/* Action Buttons at Bottom */}
-          <Box className="rules-actions">
-            {!editMode ? (
-              <Button
-                variant="contained"
-                startIcon={<EditIcon />}
-                onClick={handleEdit}
-                color="primary"
-                fullWidth
-              >
-                Edit Values
-              </Button>
-            ) : (
-              <Box className="eligibility-actions-row">
-                <Button
-                  variant="outlined"
-                  startIcon={<CancelIcon />}
-                  onClick={handleCancel}
-                  disabled={saving}
-                  fullWidth
-                >
-                  Cancel
-                </Button>
-                <Button
-                  variant="contained"
-                  startIcon={<SaveIcon />}
-                  onClick={handleSave}
-                  disabled={saving}
-                  color="success"
-                  fullWidth
-                >
-                  {saving ? "Saving..." : "Save Changes"}
-                </Button>
-              </Box>
-            )}
+      {/* Edit Dialog */}
+      <Dialog 
+        open={dialogOpen} 
+        onClose={handleCloseDialog}
+        maxWidth={editedRule?.operator === "IN" ? "md" : "xs"}
+        fullWidth
+        className="eligibility-dialog"
+      >
+        <DialogTitle className="eligibility-dialog-title">
+          <Box className="dialog-title-container">
+            <Typography variant="h6">
+              Edit {editedRule ? formatFieldName(editedRule.field) : "Rule"}
+            </Typography>
+            <IconButton onClick={handleCloseDialog} size="small" className="dialog-close-btn">
+              <CloseIcon />
+            </IconButton>
           </Box>
-        </CardContent>
-      </Card>
-    </Container>
+        </DialogTitle>
+        
+        <DialogContent className="eligibility-dialog-content">
+          {editedRule && (
+            <Box className="eligibility-dialog-form">
+              {editedRule.operator === "BETWEEN" ? (
+                <Box className="eligibility-compact-form">
+                  <Typography variant="body2" className="eligibility-compact-label">
+                    {formatFieldName(editedRule.field)} Range
+                  </Typography>
+                  <Box className="eligibility-between-inputs">
+                    <TextField
+                      label="Min"
+                      type="number"
+                      fullWidth
+                      size="small"
+                      value={editedRule.min ?? ""}
+                      onChange={(e) =>
+                        handleFieldChange("min", e.target.value ? Number(e.target.value) : undefined)
+                      }
+                      error={!!error}
+                      inputProps={{
+                        min: 0,
+                        step: editedRule.field === "cgpa" ? 0.01 : 1
+                      }}
+                    />
+                    <Typography className="eligibility-range-separator">to</Typography>
+                    <TextField
+                      label="Max"
+                      type="number"
+                      fullWidth
+                      size="small"
+                      value={editedRule.max ?? ""}
+                      onChange={(e) =>
+                        handleFieldChange("max", e.target.value ? Number(e.target.value) : undefined)
+                      }
+                      error={!!error}
+                      inputProps={{
+                        min: 0,
+                        step: editedRule.field === "cgpa" ? 0.01 : 1
+                      }}
+                    />
+                  </Box>
+                  <Box className="eligibility-error-space">
+                    {error && (
+                      <Typography className="eligibility-error-text">
+                        {error}
+                      </Typography>
+                    )}
+                  </Box>
+                </Box>
+              ) : editedRule.operator === "IN" ? (
+                <FormControl error={!!error} fullWidth>
+                  <Typography variant="body2" className="eligibility-field-label">
+                    Select {formatFieldName(editedRule.field)}
+                  </Typography>
+                  <Box className="eligibility-select-buttons">
+                    <Button
+                      size="small"
+                      variant="outlined"
+                      onClick={() => handleSelectAll(editedRule.field === "degree" ? "degree" : "department")}
+                    >
+                      Select All
+                    </Button>
+                    <Button
+                      size="small"
+                      variant="outlined"
+                      onClick={handleDeselectAll}
+                    >
+                      Deselect All
+                    </Button>
+                  </Box>
+                  <FormGroup>
+                    <Box className="eligibility-checkbox-container">
+                      {(editedRule.field === "degree" ? DEGREE_OPTIONS : DEPARTMENT_OPTIONS).map((option) => (
+                        <FormControlLabel
+                          key={option}
+                          control={
+                            <Checkbox
+                              checked={editedRule.allowedValues?.includes(option) || false}
+                              onChange={(e) => handleCheckboxChange(option, e.target.checked)}
+                              size="small"
+                            />
+                          }
+                          label={option}
+                        />
+                      ))}
+                    </Box>
+                  </FormGroup>
+                  <FormHelperText className="eligibility-helper-text">
+                    {(!editedRule.allowedValues || editedRule.allowedValues.length === 0) 
+                      ? "No selection = All values are eligible" 
+                      : `${editedRule.allowedValues.length} selected`}
+                  </FormHelperText>
+                </FormControl>
+              ) : (
+                <Box className="eligibility-compact-form">
+                  <Typography variant="body2" className="eligibility-compact-label">
+                    {formatFieldName(editedRule.field)} ({editedRule.operator})
+                  </Typography>
+                  <TextField
+                    label="Value"
+                    type="number"
+                    fullWidth
+                    size="small"
+                    value={editedRule.value ?? ""}
+                    onChange={(e) =>
+                      handleFieldChange("value", e.target.value ? Number(e.target.value) : undefined)
+                    }
+                    error={!!error}
+                    inputProps={{
+                      min: 0,
+                      step: editedRule.field === "cgpa" ? 0.01 : 1
+                    }}
+                  />
+                  <Box className="eligibility-error-space">
+                    {error && (
+                      <Typography className="eligibility-error-text">
+                        {error}
+                      </Typography>
+                    )}
+                  </Box>
+                </Box>
+              )}
+            </Box>
+          )}
+        </DialogContent>
+        
+        <DialogActions className="eligibility-dialog-actions">
+          <Button onClick={handleCloseDialog} variant="outlined" disabled={saving} size="small">
+            Cancel
+          </Button>
+          <Button 
+            onClick={handleSave} 
+            variant="contained"
+            size="small" 
+            disabled={saving || !!error}
+            className="eligibility-save-button"
+          >
+            {saving ? "Saving..." : "Save Changes"}
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </Box>
   );
 };
 

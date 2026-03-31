@@ -18,7 +18,7 @@ import com.kanini.springer.entity.enums.Enums.AssignmentStatus;
     indexes = {
         @Index(name = "idx_assignment_drive_id", columnList = "drive_id"),
         @Index(name = "idx_assignment_application_id", columnList = "application_id"),
-  
+        @Index(name = "idx_assignment_round_config_id", columnList = "round_config_id")
     }
 )
 @Data
@@ -41,6 +41,10 @@ public class DriveAssignment {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "application_id")
     private Application application;
+    
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "round_config_id")
+    private RoundTemplate roundConfig; // which round this assignment is for
     
     @Enumerated(EnumType.STRING)
     private AssignmentStatus status; // PLANNED, DRAFT, SELECTED, REJECTED, CANCELLED

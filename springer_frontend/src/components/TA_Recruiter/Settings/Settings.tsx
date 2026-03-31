@@ -30,30 +30,30 @@ const Settings: React.FC = () => {
     {
       title: "Skills Management",
       description: "Manage and configure technical and soft skills for assessment",
-      icon: <SchoolIcon sx={{ fontSize: 50 }} />,
+      icon: <SchoolIcon />,
       path: "/ta-recruiter/settings/skills",
-      color: "#1976d2",
+      color: "skills",
     },
     {
       title: "Eligibility Management",
       description: "Define and manage candidate eligibility criteria",
-      icon: <CheckCircleIcon sx={{ fontSize: 50 }} />,
+      icon: <CheckCircleIcon />,
       path: "/ta-recruiter/settings/eligibility",
-      color: "#2e7d32",
+      color: "eligibility",
     },
     {
       title: "Round Template Management",
       description: "Create and manage interview round templates",
-      icon: <ViewListIcon sx={{ fontSize: 50 }} />,
+      icon: <ViewListIcon />,
       path: "/ta-recruiter/settings/round-templates",
-      color: "#ed6c02",
+      color: "rounds",
     },
     {
       title: "Documents Management",
       description: "Manage required documents and verification settings",
-      icon: <DescriptionIcon sx={{ fontSize: 50 }} />,
+      icon: <DescriptionIcon />,
       path: "/ta-recruiter/settings/documents",
-      color: "#9c27b0",
+      color: "documents",
     },
   ];
 
@@ -73,25 +73,14 @@ const Settings: React.FC = () => {
       </Box>
 
       <Grid container spacing={3} className="settings-grid">
-        {settingsCards.map((card,index) => (
-         <Grid size={{ xs: 12, sm: 6, md: 6 }} key={index}>
+        {settingsCards.map((card, index) => (
+          <Grid size={{ xs: 12, sm: 6, md: 6 }} key={index}>
             <Card
-              className="settings-card"
+              className={`settings-card settings-card-${card.color}`}
               onClick={() => handleCardClick(card.path)}
-              sx={{
-                cursor: "pointer",
-                transition: "all 0.3s ease",
-                "&:hover": {
-                  transform: "translateY(-8px)",
-                  boxShadow: 6,
-                },
-              }}
             >
               <CardContent className="settings-card-content">
-                <Box
-                  className="settings-card-icon"
-                  sx={{ color: card.color }}
-                >
+                <Box className="settings-card-icon">
                   {card.icon}
                 </Box>
                 <Typography

@@ -264,7 +264,7 @@ const CandidateDetails: React.FC = () => {
       </Card>
 
       {/* Candidate Info Cards */}
-      <Grid container spacing={3}>
+      <Grid className="candidate-info-cards" container spacing={3}>
         {/* Personal Information */}
         <Grid size={{ xs: 12, md: 6 }}>
           <Card className="details-info-card">

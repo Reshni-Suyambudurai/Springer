@@ -1,7 +1,7 @@
 import { candidateApi } from "../services/drive.api";
 import { tokenstore } from "../auth/tokenstore";
 import type { CandidateFilters } from "../types/TA_Recruiter/Drive/candidate.types";
-import type { EligibilityRuleDTO } from "../types/TA_Recruiter/Drive/driveSchedule.types";
+import type { EligibilityRuleDTO } from "../types/TA_Recruiter/Drive/eligibility.types";
 
 /**
  * Syncs eligibility rules from the backend to sessionStorage candidate filters.

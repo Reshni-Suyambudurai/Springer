@@ -226,36 +226,40 @@ const SkillsManagement: React.FC = () => {
   }
 
   return (
-    <Container maxWidth="lg" className="skills-management-container">
-      {/* Header with Back Navigation */}
-      <Box className="skills-header">
-        <BackButton inline />
+    <Box className="skills-management-container">
+      {/* Unified Header */}
+      <Card className="skills-header-card">
         <Box className="skills-header-content">
-          <Typography variant="h4" component="h1" gutterBottom>
-            Skills Management
-          </Typography>
-          <Typography variant="body1" color="text.secondary">
-            Manage technical and soft skills
-          </Typography>
+          <Box className="skills-header-left">
+            <BackButton inline />
+          </Box>
+          
+          <Box className="skills-header-center">
+            <Typography variant="h5" component="h1">
+              Skills Management
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              Manage technical and soft skills
+            </Typography>
+          </Box>
+
+          <Box className="skills-header-right">
+            <TextField
+              placeholder="Filter by skill name..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              InputProps={{
+                startAdornment: <SearchIcon className="skills-search-icon" />,
+              }}
+              size="small"
+              className="skills-search-field"
+            />
+          </Box>
         </Box>
-      </Box>
+      </Card>
 
-      {/* Filter Section */}
-      <Box className="filter-section">
-        <TextField
-          fullWidth
-          placeholder="Filter by skill name..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          InputProps={{
-            startAdornment: <SearchIcon className="skills-search-icon" />,
-          }}
-          size="small"
-        />
-      </Box>
-
-      {/* Skills by Category */}
-      <Box className="skills-grid">
+      {/* Scrollable Skills Content */}
+      <Box className="skills-content-wrapper">
         {filteredSkills.length === 0 ? (
           <Alert severity="info">
             {searchTerm
@@ -276,13 +280,11 @@ const SkillsManagement: React.FC = () => {
                 <Box key={category} className="skills-category-section">
                   {/* Category Header */}
                   <Box className="skills-category-header">
-                    <Typography variant="h5" component="h2" color="primary" fontWeight="bold">
+                    <Typography variant="h5" component="h2" className="category-title">
                       {getCategoryDisplayName(category)}
                     </Typography>
                     <IconButton
-                      color="primary"
                       onClick={() => handleAddClick(category)}
-                      size="large"
                       className="skills-category-add-button"
                     >
                       <AddIcon />
@@ -305,12 +307,10 @@ const SkillsManagement: React.FC = () => {
                                   {skill.skillName}
                                 </Typography>
                                 <IconButton
-                                  size="small"
                                   onClick={() => handleEditClick(skill)}
                                   className="edit-icon"
-                                  color="primary"
                                 >
-                                  <EditIcon fontSize="small" />
+                                  <EditIcon />
                                 </IconButton>
                               </Box>
                             </CardContent>
@@ -334,13 +334,14 @@ const SkillsManagement: React.FC = () => {
         onClose={handleDialogClose}
         maxWidth="sm"
         fullWidth
+        className="skills-dialog"
       >
         <DialogTitle>
-          <Box display="flex" justifyContent="space-between" alignItems="center">
+          <Box className="dialog-title-container">
             <Typography variant="h6">
               {editMode ? "Edit Skill" : `Add New ${selectedCategory ? getCategoryDisplayName(selectedCategory).slice(0, -1) : "Skill"}`}
             </Typography>
-            <IconButton onClick={handleDialogClose} size="small">
+            <IconButton onClick={handleDialogClose} className="dialog-close-btn">
               <CloseIcon />
             </IconButton>
           </Box>
@@ -401,7 +402,7 @@ const SkillsManagement: React.FC = () => {
           </Button>
         </DialogActions>
       </Dialog>
-    </Container>
+    </Box>
   );
 };
 

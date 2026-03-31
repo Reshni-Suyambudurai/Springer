@@ -210,47 +210,42 @@ const AddInstitute: React.FC = () => {
 
   return (
     <Box className="add-institute-container">
-      {/* Header */}
-      <Box className="add-institute-header">
-        <IconButton onClick={() => navigate("/ta-recruiter/institutes")} className="back-btn">
-          <ArrowBackIcon />
-        </IconButton>
-        <Typography variant="h4">Add Institutes</Typography>
-      </Box>
+      {/* Unified Header */}
+      <Card className="add-institute-header">
+        <Box className="add-institute-header-left">
+          <IconButton onClick={() => navigate("/ta-recruiter/institutes")} className="add-institute-back-btn">
+            <ArrowBackIcon />
+          </IconButton>
+          
+          <Typography variant="h6" className="add-institute-title">
+            Institute Management
+          </Typography>
 
-      {/* Action Buttons */}
-      <Card className="add-institute-action-card">
-        <CardContent>
-          <Box className="add-institute-actions-container">
-            <Button
-              variant="contained"
-              startIcon={<AddIcon />}
-              onClick={() => setAddDialog(true)}
-              className="add-institute-action-btn add-institute-add-btn"
-            >
-              Add Institute
-            </Button>
+          <Button
+            startIcon={<AddIcon />}
+            onClick={() => setAddDialog(true)}
+            className="add-institute-header-btn add-institute-add-btn"
+          >
+            Add Institute
+          </Button>
 
-            <Button
-              variant="contained"
-              component="label"
-              startIcon={<UploadIcon />}
-              className="add-institute-action-btn add-institute-upload-btn"
-            >
-              Upload Institutes
-              <input type="file" hidden accept=".xlsx,.xls" onChange={handleFileUpload} />
-            </Button>
+          <Button
+            component="label"
+            startIcon={<UploadIcon />}
+            className="add-institute-header-btn add-institute-upload-btn"
+          >
+            Upload Institutes
+            <input type="file" hidden accept=".xlsx,.xls" onChange={handleFileUpload} />
+          </Button>
 
-            <Button
-              variant="outlined"
-              startIcon={<DownloadIcon />}
-              onClick={handleDownloadFormat}
-              className="add-institute-action-btn add-institute-download-btn"
-            >
-              Download Format
-            </Button>
-          </Box>
-        </CardContent>
+          <Button
+            startIcon={<DownloadIcon />}
+            onClick={handleDownloadFormat}
+            className="add-institute-header-btn add-institute-download-btn"
+          >
+            Download Format
+          </Button>
+        </Box>
       </Card>
 
       {/* Bulk Data Table */}

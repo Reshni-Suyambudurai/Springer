@@ -1,0 +1,137 @@
+/* Drive Cycle Container */
+.drive-cycle-container {
+  padding: 24px;
+  background-color: var(--color-bg);
+  min-height: 100vh;
+}
+
+/* Title */
+.drive-cycle-title {
+  font-size: 28px;
+  font-weight: 600;
+  color: var(--color-text);
+  margin-bottom: 24px;
+}
+
+/* Loading and Empty States */
+.drive-cycle-loading,
+.drive-cycle-empty {
+  text-align: center;
+  padding: 48px 24px;
+  color: var(--color-text-muted);
+  font-size: 16px;
+}
+
+/* Grid Layout */
+.drive-cycle-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
+}
+
+/* Card Styling */
+.drive-cycle-card {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: 20px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  cursor: pointer;
+}
+
+.drive-cycle-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Card Header */
+.drive-cycle-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 16px;
+  gap: 12px;
+}
+
+.drive-cycle-card-name {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--color-text);
+  margin: 0;
+  flex: 1;
+  word-break: break-word;
+}
+
+/* Status Badge */
+.drive-cycle-card-status {
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.drive-cycle-status-open {
+  background-color: var(--color-success);
+  color: var(--color-surface);
+}
+
+.drive-cycle-status-closed {
+  background-color: var(--color-danger);
+  color: var(--color-surface);
+}
+
+.drive-cycle-status-pending {
+  background-color: var(--color-warning);
+  color: var(--color-text);
+}
+
+/* Card Body */
+.drive-cycle-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.drive-cycle-card-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.drive-cycle-card-label {
+  font-size: 14px;
+  color: var(--color-text-muted);
+  font-weight: 500;
+}
+
+.drive-cycle-card-value {
+  font-size: 16px;
+  color: var(--color-text);
+  font-weight: 600;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .drive-cycle-container {
+    padding: 16px;
+  }
+
+  .drive-cycle-title {
+    font-size: 24px;
+  }
+
+  .drive-cycle-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .drive-cycle-card {
+    padding: 16px;
+  }
+
+  .drive-cycle-card-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}

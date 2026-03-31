@@ -82,9 +82,9 @@ public class ApplicationServiceImpl implements IApplicationService {
                 String candidateName = candidate.getFirstName() + 
                         (candidate.getLastName() != null ? " " + candidate.getLastName() : "");
                 
-                // Validate: applicationStage must be SHORTLISTED
-                if (candidate.getApplicationStage() != ApplicationStage.SHORTLISTED) {
-                    response.getErrorMessages().add(candidateName + " (ID: " + candidateId + ") is not SHORTLISTED. Current status: " + 
+                // Validate: applicationStage must be SHORTLISTED or INVITED
+                if (candidate.getApplicationStage() != ApplicationStage.SHORTLISTED && candidate.getApplicationStage() != ApplicationStage.INVITED) {
+                    response.getErrorMessages().add(candidateName + " (ID: " + candidateId + ") is not SHORTLISTED or INVITED. Current status: " + 
                             (candidate.getApplicationStage() != null ? candidate.getApplicationStage() : "null"));
                     failureCount++;
                     continue;

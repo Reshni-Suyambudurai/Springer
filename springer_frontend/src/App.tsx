@@ -23,6 +23,9 @@ import SkillsManagement from './components/TA_Recruiter/Settings/SkillsManagemen
 import TrainingCoordinatorDashboard from './components/Academy/TrainingCoordinator/TrainingCoordinatorDashboard'
 import DriveCalendar from './components/TA_Recruiter/DriveSchedule/DriveCalendar'
 import AddSchedule from './components/TA_Recruiter/DriveSchedule/AddSchedule'
+import DriveCycle from './components/TA_Recruiter/DriveProcess/DriveCycle'
+import DriveList from './components/TA_Recruiter/DriveProcess/DriveList'
+import DriveCandidates from './components/TA_Recruiter/DriveProcess/DriveCandidates'
 import './App.css'
 
 function App() {
@@ -56,6 +59,9 @@ function App() {
         <Route path="/ta-recruiter/settings/skills" element={<SkillsManagement />} />
         <Route path="/ta-recruiter/drive-calendar" element={<DriveCalendar />} />
         <Route path="/ta-recruiter/drive-schedules/add" element={<AddSchedule />} />
+        <Route path="/drive-process/drive-cycle" element={<DriveCycle />} />
+        <Route path="/drive-process/drive-list/:cycleId" element={<DriveList />} />
+        <Route path="/drive-process/drive-candidates/:driveId" element={<DriveCandidates />} />
       </Route>
       
       {/* Protected routes for HIRING_MANAGER */}

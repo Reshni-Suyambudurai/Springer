@@ -7,6 +7,7 @@ import { DriveLocation } from "../../../types/TA_Recruiter/DriveSchedule/driveSc
 import type { HiringCycleSummaryResponse } from "../../../types/TA_Recruiter/Hiring/hiringCycle.types";
 import type { InstituteResponse } from "../../../types/TA_Recruiter/Hiring/institute.types";
 import { showToast } from "../../../utils/toast";
+import { tokenstore } from "../../../auth/tokenstore";
 import {
   Box,
   Button,
@@ -43,7 +44,7 @@ const AddSchedule: React.FC = () => {
     location: "",
     eligibilityLocked: false,
     driveStatus: "PLANNED",
-    createdBy: 1, // TODO: Get from auth context
+    createdBy: 0, // Will be set from tokenstore on submit
     roundConfigIds: [],
   });
 
@@ -149,9 +150,19 @@ const AddSchedule: React.FC = () => {
       return;
     }
 
+    const user = tokenstore.getUser();
+    if (!user) {
+      showToast("Unable to get user information", "error");
+      return;
+    }
+
     setLoading(true);
     try {
-      const response = await driveScheduleApi.createDrive(formData);
+      const driveData = {
+        ...formData,
+        createdBy: user.userId,
+      };
+      const response = await driveScheduleApi.createDrive(driveData);
       if (response.data?.success) {
         showToast("Drive schedule created successfully", "success");
         navigate("/ta-recruiter/drive-calendar");

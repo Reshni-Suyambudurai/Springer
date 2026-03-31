@@ -118,12 +118,20 @@
 
 .send-invite-btn {
   color: var(--color-primary) !important;
+  border: 1px solid var(--color-border) !important;
+  background: var(--color-surface) !important;
   transition: all 0.3s ease !important;
 }
 
-.send-invite-btn:hover {
+.send-invite-btn:hover:not(:disabled) {
   transform: scale(1.1);
-  background-color: rgba(3, 47, 142, 0.08) !important;
+  background-color: var(--color-primary) !important;
+  color: var(--color-surface) !important;
+}
+
+.send-invite-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .add-candidate-icon-btn {
@@ -196,6 +204,77 @@
   background: var(--color-surface) !important;
   
   max-height: 800px;
+}
+
+/* Fixed table layout to prevent column width changes */
+.candidates-table-container table {
+  table-layout: fixed !important;
+  width: 100% !important;
+}
+
+/* Fixed column widths */
+.candidates-table-container .table-header:nth-child(1),
+.candidates-table-container tbody td:nth-child(1) {
+  width: 25% !important; /* College Name */
+  min-width: 200px !important;
+}
+
+.candidates-table-container .table-header:nth-child(2),
+.candidates-table-container tbody td:nth-child(2) {
+  width: 20% !important; /* Candidate Name */
+  min-width: 150px !important;
+}
+
+.candidates-table-container .table-header:nth-child(3),
+.candidates-table-container tbody td:nth-child(3) {
+  width: 10% !important; /* CGPA */
+  min-width: 80px !important;
+}
+
+.candidates-table-container .table-header:nth-child(4),
+.candidates-table-container tbody td:nth-child(4) {
+  width: 12% !important; /* No.of Arrears */
+  min-width: 100px !important;
+}
+
+.candidates-table-container .table-header:nth-child(5),
+.candidates-table-container tbody td:nth-child(5) {
+  width: 10% !important; /* Passout */
+  min-width: 80px !important;
+}
+
+.candidates-table-container .table-header:nth-child(6),
+.candidates-table-container tbody td:nth-child(6) {
+  width: 13% !important; /* Status */
+  min-width: 110px !important;
+}
+
+.candidates-table-container .table-header:nth-child(7),
+.candidates-table-container tbody td:nth-child(7) {
+  width: 10% !important; /* Category */
+  min-width: 90px !important;
+}
+
+/* Ensure text overflow handling for long content */
+.candidates-table-container td,
+.candidates-table-container th {
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+/* Allow institute name cell to wrap since it has icon + text */
+.institute-name-cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow: hidden;
+}
+
+.institute-name-cell .MuiTypography-root {
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
 }
 
 .candidates-table-container::-webkit-scrollbar {
@@ -416,4 +495,22 @@
   .candidates-table-container {
     overflow-x: auto;
   }
+}
+
+/* Additional Table Styles */
+.candidates-table-container {
+  max-height: calc(100vh - 190px);
+  overflow-y: auto;
+}
+
+.institute-icon-small.selectable {
+  cursor: pointer;
+}
+
+.loading-more-cell {
+  padding: 20px !important;
+}
+
+.loading-more-text {
+  margin-top: 8px !important;
 }

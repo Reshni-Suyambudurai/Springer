@@ -4,6 +4,7 @@ import com.kanini.springer.dto.Drive.*;
 import com.kanini.springer.entity.Drive.Application;
 import com.kanini.springer.entity.Drive.Drive;
 import com.kanini.springer.entity.Drive.DriveAssignment;
+import com.kanini.springer.entity.Drive.RoundTemplate;
 import com.kanini.springer.entity.HiringReq.User;
 import com.kanini.springer.entity.enums.Enums.AssignmentStatus;
 import com.kanini.springer.exception.ResourceNotFoundException;
@@ -12,6 +13,7 @@ import com.kanini.springer.mapper.Drive.DriveAssignmentMapper;
 import com.kanini.springer.repository.Drive.ApplicationRepository;
 import com.kanini.springer.repository.Drive.DriveAssignmentRepository;
 import com.kanini.springer.repository.Drive.DriveRepository;
+import com.kanini.springer.repository.Drive.RoundTemplateRepository;
 import com.kanini.springer.repository.Hiring.UserRepository;
 import com.kanini.springer.service.Drive.IDriveAssignmentService;
 import lombok.RequiredArgsConstructor;
@@ -29,6 +31,7 @@ public class DriveAssignmentServiceImpl implements IDriveAssignmentService {
     private final DriveRepository driveRepository;
     private final UserRepository userRepository;
     private final ApplicationRepository applicationRepository;
+    private final RoundTemplateRepository roundTemplateRepository;
     private final DriveAssignmentMapper mapper;
     
     @Override
@@ -70,6 +73,13 @@ public class DriveAssignmentServiceImpl implements IDriveAssignmentService {
         assignment.setUser(user);
         assignment.setApplication(application);
         assignment.setCreatedByUser(createdByUser);
+        
+        // Set round config if provided
+        if (request.getRoundConfigId() != null) {
+            RoundTemplate roundConfig = roundTemplateRepository.findById(request.getRoundConfigId())
+                .orElseThrow(() -> new ResourceNotFoundException("RoundTemplate", "ID", request.getRoundConfigId()));
+            assignment.setRoundConfig(roundConfig);
+        }
         
         // Set status (default PLANNED)
         if (request.getStatus() != null && !request.getStatus().isBlank()) {
@@ -160,6 +170,13 @@ public class DriveAssignmentServiceImpl implements IDriveAssignmentService {
                 assignment.setStatus(status);
                 assignment.setIsActive(isActive);
                 assignment.setCreatedByUser(createdByUser);
+                
+                // Set round config if provided
+                if (request.getRoundConfigId() != null) {
+                    RoundTemplate roundConfig = roundTemplateRepository.findById(request.getRoundConfigId())
+                        .orElseThrow(() -> new ResourceNotFoundException("RoundTemplate", "ID", request.getRoundConfigId()));
+                    assignment.setRoundConfig(roundConfig);
+                }
                 
                 // Save assignment
                 DriveAssignment savedAssignment = driveAssignmentRepository.save(assignment);

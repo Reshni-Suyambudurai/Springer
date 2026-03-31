@@ -81,13 +81,13 @@ public class CandidateSpecification {
                 predicates.add(root.get("department").in(filterRequest.getDepartments()));
             }
 
-            // Eligibility filter (TRUE/FALSE)
+            // Eligibility filter (eligible/ineligible)
             if (filterRequest.getEligibility() != null && !filterRequest.getEligibility().isEmpty()) {
                 List<Predicate> eligibilityPredicates = new ArrayList<>();
                 for (String elig : filterRequest.getEligibility()) {
-                    if ("true".equalsIgnoreCase(elig)) {
+                    if ("eligible".equalsIgnoreCase(elig)) {
                         eligibilityPredicates.add(criteriaBuilder.isTrue(root.get("isEligible")));
-                    } else if ("false".equalsIgnoreCase(elig)) {
+                    } else if ("ineligible".equalsIgnoreCase(elig)) {
                         eligibilityPredicates.add(criteriaBuilder.isFalse(root.get("isEligible")));
                     }
                 }

@@ -3,8 +3,8 @@ package com.kanini.springer.service.Drive.impl;
 import com.kanini.springer.dto.Drive.DriveRequest;
 import com.kanini.springer.dto.Drive.DriveResponse;
 import com.kanini.springer.dto.Drive.DriveUpdateRequest;
+import com.kanini.springer.dto.Drive.UpcomingDriveSummaryResponse;
 import com.kanini.springer.entity.Drive.Drive;
-import com.kanini.springer.entity.Drive.DriveRound;
 import com.kanini.springer.entity.Drive.RoundTemplate;
 import com.kanini.springer.entity.HiringReq.Institute;
 import com.kanini.springer.entity.HiringReq.User;
@@ -14,7 +14,6 @@ import com.kanini.springer.exception.ResourceNotFoundException;
 import com.kanini.springer.exception.ValidationException;
 import com.kanini.springer.mapper.Drive.DriveMapper;
 import com.kanini.springer.repository.Drive.DriveRepository;
-import com.kanini.springer.repository.Drive.DriveRoundRepository;
 import com.kanini.springer.repository.Drive.RoundTemplateRepository;
 import com.kanini.springer.repository.Hiring.InstituteRepository;
 import com.kanini.springer.repository.Hiring.UserRepository;
@@ -23,7 +22,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -32,7 +30,6 @@ import java.util.stream.Collectors;
 public class DriveScheduleServiceImpl implements IDriveScheduleService {
     
     private final DriveRepository driveRepository;
-    private final DriveRoundRepository driveRoundRepository;
     private final RoundTemplateRepository roundTemplateRepository;
     private final InstituteRepository instituteRepository;
     private final UserRepository userRepository;
@@ -67,17 +64,12 @@ public class DriveScheduleServiceImpl implements IDriveScheduleService {
         // Save drive
         Drive savedDrive = driveRepository.save(drive);
         
-        // Map drive rounds if roundConfigIds are provided
-        if (request.getRoundConfigIds() != null && !request.getRoundConfigIds().isEmpty()) {
-            mapDriveRounds(savedDrive, request.getRoundConfigIds());
-        }
-        
-        // Reload drive with rounds to return
+        // Reload drive to return
         Long driveId = savedDrive.getDriveId();
         Drive reloadedDrive = driveRepository.findById(driveId)
             .orElseThrow(() -> new ResourceNotFoundException("Drive", "ID", driveId));
         
-        return mapper.toResponse(reloadedDrive, true);
+        return mapper.toResponse(reloadedDrive);
     }
     
     @Override
@@ -91,7 +83,7 @@ public class DriveScheduleServiceImpl implements IDriveScheduleService {
             .orElseThrow(() -> new ResourceNotFoundException("Drive", "ID", driveId));
         
         // Include rounds in response
-        return mapper.toResponse(drive, true);
+        return mapper.toResponse(drive);
     }
     
     @Override
@@ -101,7 +93,7 @@ public class DriveScheduleServiceImpl implements IDriveScheduleService {
         
         // Don't include rounds in list response
         return drives.stream()
-            .map(drive -> mapper.toResponse(drive, false))
+            .map(mapper::toResponse)
             .collect(Collectors.toList());
     }
     
@@ -166,17 +158,6 @@ public class DriveScheduleServiceImpl implements IDriveScheduleService {
             drive.setUpdatedByUser(updatedBy);
         }
         
-        // Update drive rounds if roundConfigIds are provided
-        if (request.getRoundConfigIds() != null) {
-            // Delete existing rounds and create new ones
-            driveRoundRepository.deleteByDriveDriveId(driveId);
-            driveRoundRepository.flush(); // Ensure deletions are committed
-            
-            if (!request.getRoundConfigIds().isEmpty()) {
-                mapDriveRounds(drive, request.getRoundConfigIds());
-            }
-        }
-        
         // Save updated drive
         Drive updatedDrive = driveRepository.save(drive);
         
@@ -185,29 +166,46 @@ public class DriveScheduleServiceImpl implements IDriveScheduleService {
         Drive reloadedDrive = driveRepository.findById(savedDriveId)
             .orElseThrow(() -> new ResourceNotFoundException("Drive", "ID", savedDriveId));
         
-        return mapper.toResponse(reloadedDrive, true);
+        return mapper.toResponse(reloadedDrive);
     }
     
-    /**
-     * Helper method to map drive rounds
-     */
-    private void mapDriveRounds(Drive drive, List<Long> roundConfigIds) {
-        List<DriveRound> driveRounds = new ArrayList<>();
-        
-        for (Long roundConfigId : roundConfigIds) {
-            RoundTemplate roundTemplate = roundTemplateRepository.findById(roundConfigId)
-                .orElseThrow(() -> new ResourceNotFoundException("Round template", "ID", roundConfigId));
-            
-            DriveRound driveRound = new DriveRound();
-            driveRound.setDrive(drive);
-            driveRound.setRoundConfig(roundTemplate);
-            
-            driveRounds.add(driveRound);
+    @Override
+    @Transactional(readOnly = true)
+    public List<UpcomingDriveSummaryResponse> getUpcomingDrivesByCycle(Long cycleId) {
+        if (cycleId == null) {
+            throw new ValidationException("Cycle ID is required");
         }
         
-        if (!driveRounds.isEmpty()) {
-            driveRoundRepository.saveAll(driveRounds);
+        // Get upcoming drives (start date >= today)
+        List<Drive> upcomingDrives = driveRepository.findUpcomingDrivesByCycleId(
+            cycleId, 
+            java.time.LocalDate.now()
+        );
+        
+        // Map to summary response DTOs
+        return upcomingDrives.stream()
+            .map(drive -> new UpcomingDriveSummaryResponse(
+                drive.getDriveId(),
+                drive.getDriveName(),
+                drive.getDriveMode()
+            ))
+            .collect(Collectors.toList());
+    }
+    
+    @Override
+    @Transactional(readOnly = true)
+    public List<DriveResponse> getDrivesByCycleId(Long cycleId) {
+        if (cycleId == null) {
+            throw new ValidationException("Cycle ID is required");
         }
+        
+        // Get all drives for the cycle
+        List<Drive> drives = driveRepository.findByCycleCycleId(cycleId);
+        
+        // Map to DriveResponse DTOs
+        return drives.stream()
+            .map(mapper::toResponse)
+            .collect(Collectors.toList());
     }
 }
 

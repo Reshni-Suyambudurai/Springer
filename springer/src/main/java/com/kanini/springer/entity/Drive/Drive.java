@@ -82,9 +82,6 @@ public class Drive {
     @OneToMany(mappedBy = "drive", cascade = CascadeType.ALL)
     private List<Application> applications;
     
-    @OneToMany(mappedBy = "drive", cascade = CascadeType.ALL)
-    private List<DriveRound> driveRounds;
-    
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();

@@ -1,5 +1,5 @@
-import { useState, useMemo } from "react";
-import type { CandidateResponse } from "../types/TA_Recruiter/Drive/candidate.types";
+import { useState } from "react";
+import { ApplicationType, ApplicationStage } from "../types/TA_Recruiter/Drive/candidate.types";
 
 interface Filters {
   candidateName: string;
@@ -23,10 +23,10 @@ interface Filters {
  * Filtering is handled by the backend /filter endpoint - the 'filters' object
  * is passed to fetchCandidates() which sends it to the backend.
  * 
- * This hook only manages filter state and extracts unique applicationStages/Types
- * (which are not available in FilterOptionsContext).
+ * This hook only manages filter state. All filter options (including applicationTypes
+ * and applicationStages) are either static or come from FilterOptionsContext.
  */
-export const useCandidateFilters = (allCandidates: CandidateResponse[]) => {
+export const useCandidateFilters = () => {
   const [filters, setFilters] = useState<Filters>({
     candidateName: "",
     instituteName: "",
@@ -41,18 +41,6 @@ export const useCandidateFilters = (allCandidates: CandidateResponse[]) => {
     sortBy: "candidateId",
     sortDirection: "DESC",
   });
-
-  // Extract unique application stages and types from backend-filtered results
-  // (These are not available in FilterOptionsContext)
-  const uniqueApplicationStages = useMemo(
-    () => Array.from(new Set(allCandidates.map((cand) => cand.applicationStage).filter(Boolean))).sort(),
-    [allCandidates]
-  );
-
-  const uniqueApplicationTypes = useMemo(
-    () => Array.from(new Set(allCandidates.map((cand) => cand.applicationType).filter(Boolean))).sort(),
-    [allCandidates]
-  );
 
   const handleFilterChange = (field: keyof Filters, value: string) => {
     setFilters((prev) => ({
@@ -113,8 +101,8 @@ export const useCandidateFilters = (allCandidates: CandidateResponse[]) => {
     handleCheckboxToggle,
     clearFilters,
     setFilters,
-    uniqueApplicationStages,
-    uniqueApplicationTypes,
+    uniqueApplicationStages: Object.values(ApplicationStage),
+    uniqueApplicationTypes: Object.values(ApplicationType),
     hasActiveFilters,
   };
 };

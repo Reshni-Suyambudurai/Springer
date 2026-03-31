@@ -1,49 +1,63 @@
 .add-institute-container {
-  padding: 24px;
-  max-width: 1400px;
-  margin: 0 auto;
+  padding: 10px;
+  max-width: 100%;
+  height: 100vh;
+  overflow-y: auto;
+  background-color: var(--color-bg);
 }
 
-/* Header */
+/* Single Unified Header */
 .add-institute-header {
   display: flex;
+  justify-content: space-between;
   align-items: center;
+  padding: 16px 20px !important;
+  margin-bottom: 20px !important;
+  border-radius: 12px !important;
+  border: 1px solid var(--color-border) !important;
+  background: var(--color-surface) !important;
+  box-shadow: var(--shadow-card) !important;
   gap: 16px;
-  margin-bottom: 24px;
 }
 
-.add-institute-header .back-btn {
-  color: var(--color-primary);
+.add-institute-header-left {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 16px;
+  flex: 1;
 }
 
-.add-institute-header .back-btn:hover {
-  background-color: color-mix(in srgb, var(--color-primary) 10%, transparent);
+.add-institute-back-btn {
+  color: var(--color-primary) !important;
+  border: 1px solid var(--color-border) !important;
+  background: var(--color-surface) !important;
+  transition: all 0.3s ease !important;
 }
 
-/* Action Buttons Card */
-.add-institute-action-card {
-  margin-bottom: 24px;
-  border-radius: 12px;
-  box-shadow: var(--shadow-card);
-  background: var(--color-surface);
+.add-institute-back-btn:hover {
+  background: var(--color-primary) !important;
+  color: var(--color-bg) !important;
+  transform: scale(1.1);
+}
+
+.add-institute-title {
+  font-weight: 600 !important;
+  color: var(--color-text) !important;
+  white-space: nowrap;
+  padding: 8px 16px;
+  background: var(--color-bg);
+  border-radius: 8px;
   border: 1px solid var(--color-border);
 }
 
-.add-institute-actions-container {
-  display: flex;
-  justify-content: space-around;
-  gap: 16px;
-  flex-wrap: wrap;
-}
-
-.add-institute-action-btn {
-  flex: 1;
-  min-width: 180px;
-  padding: 12px 24px;
-  border-radius: 8px;
-  text-transform: none;
-  font-weight: 600;
-  transition: all 0.3s ease;
+.add-institute-header-btn {
+  text-transform: none !important;
+  font-weight: 600 !important;
+  padding: 8px 20px !important;
+  border-radius: 8px !important;
+  white-space: nowrap;
+  transition: all 0.3s ease !important;
 }
 
 .add-institute-add-btn {
@@ -53,31 +67,28 @@
 
 .add-institute-add-btn:hover {
   background: var(--color-primary-hover) !important;
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-card);
+  box-shadow: 0 2px 8px rgba(126, 163, 226, 0.3) !important;
 }
 
 .add-institute-upload-btn {
-  background: var(--color-primary) !important;
+  background: var(--color-success) !important;
   color: white !important;
 }
 
 .add-institute-upload-btn:hover {
-  background: var(--color-primary-hover) !important;
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-card);
+  background: #15803d !important;
+  box-shadow: 0 2px 8px rgba(34, 197, 94, 0.3) !important;
 }
 
 .add-institute-download-btn {
-  border: 2px solid var(--color-accent);
-  color: var(--color-accent);
-  background: transparent;
+  border: 2px solid var(--color-primary) !important;
+  color: var(--color-primary) !important;
+  background: transparent !important;
 }
 
 .add-institute-download-btn:hover {
-  background: var(--color-accent);
-  color: var(--color-bg);
-  transform: translateY(-2px);
+  background: var(--color-primary) !important;
+  color: white !important;
 }
 
 /* Bulk Data Card */
@@ -213,17 +224,39 @@
 }
 
 /* Responsive */
+@media (max-width: 1024px) {
+  .add-institute-header-left {
+    flex-wrap: wrap;
+  }
+
+  .add-institute-title {
+    flex: 1 0 100%;
+    text-align: center;
+  }
+}
+
 @media (max-width: 768px) {
   .add-institute-container {
-    padding: 16px;
+    padding: 12px;
   }
 
-  .add-institute-actions-container {
+  .add-institute-header {
+    padding: 12px 16px !important;
     flex-direction: column;
+    align-items: stretch;
   }
 
-  .add-institute-action-btn {
-    min-width: 100%;
+  .add-institute-header-left {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .add-institute-title {
+    text-align: center;
+  }
+
+  .add-institute-header-btn {
+    width: 100%;
   }
 
   .add-institute-bulk-header {

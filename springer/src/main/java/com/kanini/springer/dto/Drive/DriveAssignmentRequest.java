@@ -12,10 +12,11 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class DriveAssignmentRequest {
     
-    private Long driveId; // required
-    private Long userId; // required - panel member user ID
-    private Long applicationId; // required
-    private String status; // optional - default PLANNED
-    private Boolean isActive; // optional - default true
-    private Long createdBy; // required - userId
+    private Long driveId;        // required
+    private Long userId;         // required - panel member user ID
+    private Long applicationId;  // required
+    private Long roundConfigId;  // required - which round template this assignment is for
+    private String status;       // optional - default PLANNED
+    private Boolean isActive;    // optional - default true
+    private Long createdBy;      // required - userId
 }

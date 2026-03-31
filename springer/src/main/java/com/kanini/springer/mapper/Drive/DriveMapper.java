@@ -2,9 +2,7 @@ package com.kanini.springer.mapper.Drive;
 
 import com.kanini.springer.dto.Drive.DriveRequest;
 import com.kanini.springer.dto.Drive.DriveResponse;
-import com.kanini.springer.dto.Drive.DriveRoundResponse;
 import com.kanini.springer.entity.Drive.Drive;
-import com.kanini.springer.entity.Drive.DriveRound;
 import com.kanini.springer.entity.HiringReq.HiringCycle;
 import com.kanini.springer.entity.HiringReq.Institute;
 import com.kanini.springer.entity.HiringReq.User;
@@ -16,9 +14,7 @@ import com.kanini.springer.repository.Hiring.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Component
 @RequiredArgsConstructor
@@ -30,10 +26,8 @@ public class DriveMapper {
     
     /**
      * Convert Drive entity to DriveResponse DTO
-     * @param drive Drive entity
-     * @param includeRounds whether to include drive rounds in response
      */
-    public DriveResponse toResponse(Drive drive, boolean includeRounds) {
+    public DriveResponse toResponse(Drive drive) {
         if (drive == null) {
             return null;
         }
@@ -80,34 +74,6 @@ public class DriveMapper {
         if (drive.getUpdatedByUser() != null) {
             response.setUpdatedBy(drive.getUpdatedByUser().getUserId());
             response.setUpdatedByName(drive.getUpdatedByUser().getUsername());
-        }
-        
-        // Include drive rounds only if requested (for getById)
-        if (includeRounds && drive.getDriveRounds() != null) {
-            List<DriveRoundResponse> roundResponses = drive.getDriveRounds().stream()
-                .map(this::toDriveRoundResponse)
-                .collect(Collectors.toList());
-            response.setDriveRounds(roundResponses);
-        }
-        
-        return response;
-    }
-    
-    /**
-     * Convert DriveRound entity to DriveRoundResponse DTO
-     */
-    private DriveRoundResponse toDriveRoundResponse(DriveRound driveRound) {
-        if (driveRound == null) {
-            return null;
-        }
-        
-        DriveRoundResponse response = new DriveRoundResponse();
-        response.setRoundId(driveRound.getRoundId());
-        
-        if (driveRound.getRoundConfig() != null) {
-            response.setRoundConfigId(driveRound.getRoundConfig().getRoundConfigId());
-            response.setRoundName(driveRound.getRoundConfig().getRoundName());
-            response.setRoundNo(driveRound.getRoundConfig().getRoundNo());
         }
         
         return response;

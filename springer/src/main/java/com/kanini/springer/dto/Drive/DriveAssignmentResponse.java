@@ -22,6 +22,8 @@ public class DriveAssignmentResponse {
     private Long applicationId;
     private Long candidateId;
     private String candidateName;
+    private Long roundConfigId;
+    private String roundName;
     private String status;
     private Boolean isActive;
     private LocalDateTime createdAt;

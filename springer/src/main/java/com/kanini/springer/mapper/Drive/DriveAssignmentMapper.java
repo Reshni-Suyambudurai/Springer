@@ -47,6 +47,12 @@ public class DriveAssignmentMapper {
             response.setStatus(assignment.getStatus().toString());
         }
         
+        // Round config info
+        if (assignment.getRoundConfig() != null) {
+            response.setRoundConfigId(assignment.getRoundConfig().getRoundConfigId());
+            response.setRoundName(assignment.getRoundConfig().getRoundName());
+        }
+        
         response.setIsActive(assignment.getIsActive());
         response.setCreatedAt(assignment.getCreatedAt());
         

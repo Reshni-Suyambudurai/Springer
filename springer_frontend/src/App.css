@@ -33,6 +33,7 @@
   --color-purple: #8b5cf6;
   --color-green: #22c55e;
   --color-blue: #2ddef9;
+  --color-yellow:#f9ea16;
 }
 
 [data-theme="dark"] {
@@ -65,4 +66,10 @@
 
   /* Shadows */
   --shadow-card: 0 4px 6px rgba(0,0,0,0.5);
+
+   --color-orange: #f97316;
+  --color-purple: #8b5cf6;
+  --color-green: #22c55e;
+  --color-blue: #2ddef9;
+  --color-yellow:#f9ea16;
 }

@@ -56,16 +56,6 @@ export interface DriveUpdateRequest {
 }
 
 /**
- * Drive Round information in drive response
- */
-export interface DriveRoundResponse {
-  roundId: number;
-  roundConfigId: number;
-  roundName: string;
-  roundNo: number;
-}
-
-/**
  * Response DTO for Drive schedule
  */
 export interface DriveResponse {
@@ -88,7 +78,6 @@ export interface DriveResponse {
   updatedAt?: string; // ISO-8601 format from LocalDateTime
   updatedBy?: number;
   updatedByName?: string;
-  driveRounds?: DriveRoundResponse[]; // included only for getById
 }
 
 /**
@@ -106,4 +95,20 @@ export interface DriveSummaryResponse {
   location: string;
   status: DriveStatus;
   eligibilityLocked: boolean;
+}
+
+/**
+ * Request DTO for fetching drives by cycle ID
+ */
+export interface CycleIdRequest {
+  cycleId: number;
+}
+
+/**
+ * Upcoming drive summary response with minimal fields
+ */
+export interface UpcomingDriveSummaryResponse {
+  driveId: number;
+  driveName: string;
+  driveMode: DriveMode;
 }
