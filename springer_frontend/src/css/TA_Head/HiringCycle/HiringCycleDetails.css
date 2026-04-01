@@ -1,0 +1,433 @@
+.tah-hcd-page {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 4px;
+  background-color: var(--color-bg-secondary);
+}
+
+.tah-hcd-card {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 0;
+  border-radius: 12px !important;
+  border: 1px solid var(--color-card-border) !important;
+  box-shadow: 0 1px 3px 0 var(--opacity-shadow-light), 0 6px 16px -2px var(--opacity-shadow-dark) !important;
+  background-color: var(--color-surface) !important;
+}
+
+/* ── Header ─────────────────────────────────────────────── */
+
+.tah-hcd-header {
+  flex-shrink: 0;
+  padding: 12px 20px;
+  background-color: var(--color-surface);
+}
+
+.tah-hcd-back-btn {
+  color: var(--color-text-secondary) !important;
+  border: 1px solid var(--color-border) !important;
+  border-radius: 8px !important;
+  padding: 4px !important;
+}
+
+.tah-hcd-back-btn:hover {
+  background-color: var(--color-hover-bg) !important;
+  color: var(--color-primary) !important;
+}
+
+.tah-hcd-icon-box {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background-color: var(--color-icon-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.tah-hcd-title {
+  font-size: 1.1rem !important;
+  font-weight: 700 !important;
+  color: var(--color-text-primary) !important;
+}
+
+.tah-hcd-subtitle {
+  font-size: 0.875rem !important;
+  color: var(--color-text-secondary) !important;
+}
+
+.tah-hcd-separator {
+  border-top: 1px solid var(--color-border-light);
+}
+
+/* ── Cycle Status Chips ──────────────────────────────────── */
+
+.tah-hcd-cycle-status--open {
+  background-color: var(--color-success-light) !important;
+  color: var(--color-success-dark) !important;
+  font-size: 0.75rem !important;
+  font-weight: 600 !important;
+  height: 22px !important;
+  border-radius: 6px !important;
+}
+
+.tah-hcd-cycle-status--closed {
+  background-color: var(--color-inactive-bg) !important;
+  color: var(--color-text-secondary) !important;
+  font-size: 0.75rem !important;
+  font-weight: 600 !important;
+  height: 22px !important;
+  border-radius: 6px !important;
+  border: 1px solid var(--color-inactive-border) !important;
+}
+
+/* ── Loading / Error ─────────────────────────────────────── */
+
+.tah-hcd-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 64px 0;
+}
+
+.tah-hcd-loading-text {
+  font-size: 0.9rem !important;
+  color: var(--color-text-secondary) !important;
+}
+
+.tah-hcd-alert-wrap {
+  padding: 24px;
+}
+
+/* ── Body ────────────────────────────────────────────────── */
+
+.tah-hcd-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px 24px;
+}
+
+/* ── Section ─────────────────────────────────────────────── */
+
+.tah-hcd-section-header {
+  margin-bottom: 16px;
+}
+
+.tah-hcd-section-label {
+  font-size: 0.875rem !important;
+  font-weight: 700 !important;
+  color: var(--color-text-primary) !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.06em !important;
+}
+
+.tah-hcd-section-rule {
+  height: 1px;
+  background-color: var(--color-border-light);
+  margin-top: 8px;
+}
+
+/* ── Info Grid ───────────────────────────────────────────── */
+
+.tah-hcd-info-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  column-gap: 32px;
+  row-gap: 16px;
+}
+
+.tah-hcd-info-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.tah-hcd-info-label {
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  color: var(--color-text-disabled) !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.08em !important;
+}
+
+.tah-hcd-info-value {
+  font-size: 0.9375rem !important;
+  font-weight: 600 !important;
+  color: var(--color-text-primary) !important;
+}
+
+/* ── Summary Strip ───────────────────────────────────────── */
+
+.tah-hcd-summary-strip {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  margin-top: 20px;
+  padding: 16px 20px;
+  background-color: var(--color-bg-secondary);
+  border-radius: 10px;
+  border: 1px solid var(--color-border-light);
+}
+
+.tah-hcd-summary-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.tah-hcd-summary-divider {
+  width: 1px;
+  height: 36px;
+  background-color: var(--color-border-table);
+}
+
+.tah-hcd-summary-count {
+  font-size: 1.5rem !important;
+  font-weight: 700 !important;
+  color: var(--color-text-primary) !important;
+  line-height: 1 !important;
+}
+
+.tah-hcd-summary-count--submitted {
+  color: var(--color-primary) !important;
+}
+
+.tah-hcd-summary-count--approved {
+  color: var(--color-success-dark) !important;
+}
+
+.tah-hcd-summary-count--rejected {
+  color: var(--color-error-dark) !important;
+}
+
+.tah-hcd-summary-count--draft {
+  color: var(--color-text-secondary) !important;
+}
+
+.tah-hcd-summary-label {
+  font-size: 0.75rem !important;
+  color: var(--color-text-secondary) !important;
+  font-weight: 500 !important;
+}
+
+/* ── Count Chip ──────────────────────────────────────────── */
+
+.tah-hcd-count-chip {
+  background-color: var(--color-chip-count-bg) !important;
+  color: var(--color-chip-count-text) !important;
+  font-size: 0.72rem !important;
+  font-weight: 600 !important;
+  height: 20px !important;
+  border-radius: 5px !important;
+}
+
+/* ── Demand Table ────────────────────────────────────────── */
+
+.tah-hcd-table-container {
+  border: 1px solid var(--color-border-table);
+  border-radius: 8px;
+  overflow-y: scroll;
+  max-height: 400px;
+}
+
+.tah-hcd-table-container::-webkit-scrollbar {
+  width: 8px;
+}
+
+.tah-hcd-table-container::-webkit-scrollbar-track {
+  background: var(--color-primary-light);
+  border-radius: 3px;
+}
+
+.tah-hcd-table-container::-webkit-scrollbar-thumb {
+  background: var(--color-primary);
+  border-radius: 3px;
+}
+
+.tah-hcd-table-container::-webkit-scrollbar-thumb:hover {
+  background: var(--color-primary-dark);
+}
+
+.tah-hcd-head-row {
+  background-color: var(--color-bg-table-header);
+}
+
+.tah-hcd-head-cell {
+  font-size: 0.75rem !important;
+  font-weight: 700 !important;
+  color: var(--color-grey-600) !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.75px !important;
+  background-color: var(--color-bg-table-header) !important;
+  padding: 10px 14px !important;
+  border-bottom-color: var(--color-border-table) !important;
+}
+
+.tah-hcd-head-cell--actions {
+  text-align: right !important;
+}
+
+.tah-hcd-row {
+  height: 60px;
+  transition: background-color 0.2s ease;
+}
+
+.tah-hcd-row--even { background-color: var(--color-surface); }
+.tah-hcd-row--odd  { background-color: var(--color-surface-alt); }
+
+.tah-hcd-row td {
+  border-bottom: 1px solid var(--color-border-table);
+}
+
+.tah-hcd-row:hover {
+  background-color: var(--color-hover-bg) !important;
+}
+
+.tah-hcd-cell {
+  padding: 10px 14px !important;
+  vertical-align: middle !important;
+}
+
+.tah-hcd-cell--actions {
+  text-align: right !important;
+}
+
+.tah-hcd-cell-primary {
+  font-size: 0.9rem !important;
+  font-weight: 600 !important;
+  color: var(--color-text-primary) !important;
+}
+
+.tah-hcd-cell-secondary {
+  font-size: 0.875rem !important;
+  font-weight: 500 !important;
+  color: var(--color-grey-550) !important;
+}
+
+/* ── Demand Status Chips ─────────────────────────────────── */
+
+.tah-hcd-status-chip {
+  font-size: 0.72rem !important;
+  font-weight: 600 !important;
+  height: 22px !important;
+  border-radius: 6px !important;
+  padding: 0 8px !important;
+}
+
+.tah-hcd-status--draft {
+  background-color: var(--color-chip-count-bg) !important;
+  color: var(--color-chip-count-text) !important;
+}
+
+.tah-hcd-status--submitted {
+  background-color: var(--color-primary-light) !important;
+  color: var(--color-primary) !important;
+}
+
+.tah-hcd-status--approved {
+  background-color: var(--color-success-light) !important;
+  color: var(--color-success-dark) !important;
+}
+
+.tah-hcd-status--rejected {
+  background-color: var(--color-error-light) !important;
+  color: var(--color-error-dark) !important;
+}
+
+/* ── Skill Chips ─────────────────────────────────────────── */
+
+.tah-hcd-skill-chip {
+  background-color: var(--color-primary-light) !important;
+  color: var(--color-primary) !important;
+  font-size: 0.72rem !important;
+  font-weight: 500 !important;
+  height: 20px !important;
+  border-radius: 4px !important;
+}
+
+/* ── Action Buttons ──────────────────────────────────────── */
+
+.tah-hcd-view-btn {
+  color: var(--color-action-btn) !important;
+  padding: 4px !important;
+}
+
+.tah-hcd-view-btn:hover {
+  color: var(--color-primary) !important;
+  background-color: var(--color-primary-hover-14) !important;
+}
+
+.tah-hcd-approve-btn {
+  color: var(--color-success-dark) !important;
+  padding: 4px !important;
+}
+
+.tah-hcd-approve-btn:hover {
+  background-color: var(--color-success-light) !important;
+}
+
+.tah-hcd-reject-btn {
+  color: var(--color-error-dark) !important;
+  padding: 4px !important;
+}
+
+.tah-hcd-reject-btn:hover {
+  background-color: var(--color-error-light) !important;
+}
+
+/* ── Dialog Buttons ──────────────────────────────────────── */
+
+.tah-hcd-dialog-cancel-btn {
+  text-transform: none !important;
+  font-size: 0.875rem !important;
+  font-weight: 500 !important;
+  border-radius: 8px !important;
+  color: var(--color-text-secondary) !important;
+  border-color: var(--color-border) !important;
+}
+
+.tah-hcd-dialog-approve-btn {
+  text-transform: none !important;
+  font-size: 0.875rem !important;
+  font-weight: 600 !important;
+  border-radius: 8px !important;
+  background-color: var(--color-primary) !important;
+  color: var(--color-white) !important;
+}
+
+.tah-hcd-dialog-approve-btn:hover {
+  background-color: var(--color-primary-dark) !important;
+}
+
+.tah-hcd-dialog-reject-btn {
+  text-transform: none !important;
+  font-size: 0.875rem !important;
+  font-weight: 600 !important;
+  border-radius: 8px !important;
+  background-color: var(--color-error-darker) !important;
+  color: var(--color-white) !important;
+}
+
+.tah-hcd-dialog-reject-btn:hover {
+  background-color: var(--color-error-dark) !important;
+}
+
+/* ── Empty ───────────────────────────────────────────────── */
+
+.tah-hcd-empty {
+  padding: 32px 0;
+  text-align: center;
+}
+
+.tah-hcd-empty-text {
+  font-size: 0.9rem !important;
+  font-weight: 500 !important;
+  color: var(--color-empty-text) !important;
+}

@@ -1,0 +1,377 @@
+/* ===== OFFERS TAB — prefix: oft- ===== */
+
+.oft-page {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  gap: 4px;
+  background-color: var(--color-bg-secondary);
+  padding: 4px;
+}
+
+.oft-card {
+  border-radius: 12px !important;
+  border: 1px solid var(--color-card-border) !important;
+  box-shadow: 0 1px 3px 0 var(--opacity-shadow-light), 0 6px 16px -2px var(--opacity-shadow-dark) !important;
+  background-color: var(--color-surface) !important;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 0;
+}
+
+/* ── Header ── */
+.oft-header {
+  flex-shrink: 0;
+  padding: 20px 24px 12px 24px;
+  background-color: var(--color-surface);
+}
+
+.oft-header-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.oft-title {
+  font-size: var(--text-xl) !important;
+  font-weight: 700 !important;
+  color: var(--color-text-primary) !important;
+  line-height: 1.2 !important;
+  letter-spacing: -0.4px !important;
+  margin-bottom: 3px !important;
+}
+
+.oft-subtitle {
+  font-size: var(--text-sm) !important;
+  font-weight: 400 !important;
+  color: var(--color-text-secondary) !important;
+  line-height: 1.5 !important;
+}
+
+.oft-record-button {
+  text-transform: none !important;
+  font-size: var(--text-sm) !important;
+  font-weight: 600 !important;
+  padding: 8px 20px !important;
+  background-color: var(--color-primary) !important;
+  color: var(--color-white) !important;
+  box-shadow: 0 2px 8px var(--color-primary-shadow-18) !important;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.oft-record-button:hover {
+  background-color: var(--color-primary-dark) !important;
+  box-shadow: 0 4px 12px var(--color-primary-shadow-28) !important;
+}
+
+.oft-refresh-btn { color: var(--color-text-secondary) !important; }
+
+.oft-accept-button {
+  text-transform: none !important;
+  font-size: var(--text-sm) !important;
+  font-weight: 600 !important;
+  padding: 8px 20px !important;
+  background-color: var(--color-success-dark) !important;
+  color: var(--color-white) !important;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.oft-accept-button:hover { background-color: var(--color-success-dark) !important; opacity: 0.9; }
+
+.oft-decline-button {
+  text-transform: none !important;
+  font-size: var(--text-sm) !important;
+  font-weight: 600 !important;
+  padding: 8px 20px !important;
+  border-color: var(--color-error) !important;
+  color: var(--color-error) !important;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* ── Toggle ── */
+.oft-toggle {
+  display: flex;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.oft-toggle-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 16px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  font-family: inherit;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.oft-toggle-btn:hover { background-color: var(--color-primary-hover-4); color: var(--color-primary); }
+
+.oft-toggle-btn--active {
+  background-color: var(--color-primary);
+  color: var(--color-white);
+}
+
+.oft-toggle-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  border-radius: 10px;
+  font-size: var(--text-xs);
+  font-weight: 700;
+  background-color: rgba(255,255,255,0.25);
+  color: inherit;
+}
+
+.oft-toggle-btn:not(.oft-toggle-btn--active) .oft-toggle-badge {
+  background-color: var(--color-primary-light);
+  color: var(--color-primary);
+}
+
+.oft-stat-inline--selected { color: var(--color-primary) !important; }
+
+.oft-table-row--clickable { cursor: pointer; }
+
+.oft-name-icon { font-size: 18px !important; color: var(--color-primary) !important; }
+
+/* ── Separator ── */
+.oft-separator { border-top: 1px solid var(--color-grey-200); }
+
+/* ── Filter Section ── */
+.oft-filter-section {
+  flex-shrink: 0;
+  padding: 10px 24px;
+  background-color: var(--color-surface);
+}
+
+.oft-filter-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.oft-filter-spacer { flex-grow: 1; }
+
+.oft-stats-inline { display: flex; align-items: center; gap: 12px; }
+
+.oft-stat-inline {
+  font-size: var(--text-xs) !important;
+  font-weight: 700 !important;
+  white-space: nowrap;
+}
+
+.oft-stat-inline--pending  { color: var(--color-warning-text) !important; }
+.oft-stat-inline--accepted { color: var(--color-success-dark) !important; }
+.oft-stat-inline--declined { color: var(--color-error) !important; }
+.oft-stat-inline--rate     { color: var(--color-primary) !important; }
+
+/* ── Table Section ── */
+.oft-table-section {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background-color: var(--color-surface);
+  min-height: 0;
+}
+
+.oft-loading-state {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  padding: 64px 0;
+}
+
+.oft-table-container { flex: 1; overflow: auto !important; min-height: 0; }
+
+/* ── Table Head ── */
+.oft-table-head-row { background-color: var(--color-bg-table-header); height: 48px; }
+
+.oft-table-head-cell {
+  font-size: var(--text-xs) !important;
+  font-weight: 700 !important;
+  color: var(--color-grey-600) !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.75px !important;
+  background-color: var(--color-bg-table-header) !important;
+  padding: 8px 16px !important;
+  border-bottom-color: var(--color-border-table) !important;
+}
+
+.oft-table-head-cell--actions { text-align: right !important; }
+
+/* ── Table Rows ── */
+.oft-table-row { height: 68px; transition: all 0.2s ease; }
+.oft-table-row--even { background-color: var(--color-surface); }
+.oft-table-row--odd  { background-color: var(--color-surface-alt); }
+.oft-table-row td { border-bottom: 1px solid var(--color-border-table); }
+.oft-table-row:hover { background-color: var(--color-hover-bg) !important; }
+
+.oft-table-cell { padding: 12px 16px !important; vertical-align: middle !important; }
+.oft-table-cell--actions { text-align: right !important; }
+
+/* ── Name Cell ── */
+.oft-name-cell { display: flex; align-items: center; gap: 12px; }
+
+.oft-name-icon-box {
+  width: 36px; height: 36px; border-radius: 50%;
+  background-color: var(--color-primary-light);
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+
+.oft-name-avatar {
+  font-size: var(--text-sm) !important;
+  font-weight: 700 !important;
+  color: var(--color-primary) !important;
+}
+
+.oft-row-primary {
+  font-size: var(--text-sm) !important;
+  font-weight: 700 !important;
+  color: var(--color-text-primary) !important;
+  line-height: 1.4 !important;
+}
+
+.oft-row-secondary {
+  font-size: var(--text-xs) !important;
+  font-weight: 500 !important;
+  color: var(--color-text-secondary) !important;
+  line-height: 1.4 !important;
+}
+
+.oft-decline-reason {
+  font-size: var(--text-xs) !important;
+  color: var(--color-error) !important;
+  font-style: italic !important;
+  margin-top: 2px !important;
+}
+
+/* ── Response Chips ── */
+.oft-chip { font-weight: 600 !important; font-size: var(--text-xs) !important; }
+.oft-chip--pending  { color: var(--color-warning-text) !important; border-color: var(--color-warning) !important; }
+.oft-chip--accepted { color: var(--color-success-dark) !important; border-color: var(--color-success-border) !important; }
+.oft-chip--declined { color: var(--color-error) !important; border-color: var(--color-error) !important; }
+
+/* ── Action Buttons ── */
+.oft-action-accept { color: var(--color-success-dark) !important; }
+.oft-action-accept:hover { background-color: var(--color-success-light) !important; }
+.oft-action-decline { color: var(--color-error) !important; }
+.oft-action-decline:hover { background-color: var(--color-error-light) !important; }
+
+/* ── Empty State ── */
+.oft-empty-cell { padding-top: 48px !important; padding-bottom: 48px !important; text-align: center !important; }
+.oft-empty-icon { font-size: 40px !important; color: var(--color-empty-icon) !important; margin-bottom: 12px !important; }
+.oft-empty-text { font-size: var(--text-sm) !important; font-weight: 500 !important; color: var(--color-empty-text) !important; }
+.oft-empty-sub  { font-size: var(--text-xs) !important; color: var(--color-text-muted) !important; margin-top: 4px !important; }
+
+/* ── Pagination ── */
+.oft-pagination {
+  border-top: 1px solid var(--color-border-dark) !important;
+  background-color: var(--color-surface) !important;
+  padding: 4px 10px !important;
+  flex-shrink: 0;
+}
+
+.oft-pagination .MuiTablePagination-selectLabel,
+.oft-pagination .MuiTablePagination-displayedRows {
+  font-size: 0.8125rem !important;
+  font-weight: 500 !important;
+  color: var(--color-grey-450) !important;
+  margin: 0 !important;
+}
+
+/* ── Dialog ── */
+.oft-dialog-title { font-size: var(--text-lg) !important; font-weight: 700 !important; color: var(--color-text-primary) !important; }
+
+.oft-dialog-field .MuiOutlinedInput-root.Mui-focused fieldset { border-color: var(--color-primary) !important; }
+.oft-dialog-field .MuiInputLabel-root.Mui-focused { color: var(--color-primary) !important; }
+
+.oft-dialog-cancel-btn { text-transform: none !important; color: var(--color-text-secondary) !important; font-weight: 600 !important; }
+
+.oft-dialog-submit-btn {
+  text-transform: none !important;
+  background-color: var(--color-primary) !important;
+  color: var(--color-white) !important;
+  font-weight: 600 !important;
+}
+
+.oft-dialog-accept-btn {
+  text-transform: none !important;
+  background-color: var(--color-success-dark) !important;
+  color: var(--color-white) !important;
+  font-weight: 600 !important;
+}
+
+.oft-dialog-decline-btn {
+  text-transform: none !important;
+  background-color: var(--color-error) !important;
+  color: var(--color-white) !important;
+  font-weight: 600 !important;
+}
+
+/* ── Generate Offer Button ── */
+.oft-generate-btn {
+  text-transform: none !important;
+  font-size: var(--text-sm) !important;
+  font-weight: 600 !important;
+  padding: 8px 20px !important;
+  background-color: var(--color-primary) !important;
+  color: var(--color-white) !important;
+  box-shadow: 0 2px 8px var(--color-primary-shadow-18) !important;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.oft-generate-btn:hover { background-color: var(--color-primary-dark) !important; }
+
+/* ── Record Response Button ── */
+.oft-record-btn {
+  text-transform: none !important;
+  font-size: var(--text-xs) !important;
+  font-weight: 600 !important;
+  border-color: var(--color-primary) !important;
+  color: var(--color-primary) !important;
+}
+
+/* ── Bulk Date Row ── */
+.oft-bulk-date-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  background-color: var(--color-primary-hover-4);
+  border-radius: 8px;
+  border: 1px solid var(--color-primary-light);
+}
+
+.oft-apply-btn {
+  text-transform: none !important;
+  font-size: var(--text-xs) !important;
+  font-weight: 600 !important;
+  border-color: var(--color-primary) !important;
+  color: var(--color-primary) !important;
+  white-space: nowrap;
+}
+
+/* ── Dialog Table ── */
+.oft-dialog-table-container {
+  max-height: 380px;
+  overflow: auto;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+}
+
+.oft-dialog-row { height: 56px; }
+.oft-dialog-row td { border-bottom: 1px solid var(--color-border-table); }

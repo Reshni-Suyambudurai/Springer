@@ -1,0 +1,403 @@
+/* ===== BATCH COURSES LIST — prefix: bc- ===== */
+
+.bc-page {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  gap: 4px;
+  background-color: var(--color-bg-secondary);
+  padding: 4px;
+}
+
+.bc-card {
+  border-radius: 12px !important;
+  border: 1px solid var(--color-card-border) !important;
+  box-shadow: 0 1px 3px 0 var(--opacity-shadow-light), 0 6px 16px -2px var(--opacity-shadow-dark) !important;
+  background-color: var(--color-surface) !important;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 0;
+}
+
+/* ── Header ── */
+.bc-header {
+  flex-shrink: 0;
+  padding: 20px 24px 12px 24px;
+  background-color: var(--color-surface);
+}
+
+.bc-header-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.bc-title {
+  font-size: var(--text-xl) !important;
+  font-weight: 700 !important;
+  color: var(--color-text-primary) !important;
+  line-height: 1.2 !important;
+  letter-spacing: -0.4px !important;
+  margin-bottom: 3px !important;
+}
+
+.bc-subtitle {
+  font-size: var(--text-sm) !important;
+  font-weight: 400 !important;
+  color: var(--color-text-secondary) !important;
+  line-height: 1.5 !important;
+}
+
+.bc-add-button {
+  text-transform: none !important;
+  font-size: var(--text-sm) !important;
+  font-weight: 600 !important;
+  padding: 8px 20px !important;
+  background-color: var(--color-primary) !important;
+  color: var(--color-white) !important;
+  box-shadow: 0 2px 8px var(--color-primary-shadow-18) !important;
+  transition: all 0.2s ease !important;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.bc-add-button:hover {
+  background-color: var(--color-primary-dark) !important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px var(--color-primary-shadow-28) !important;
+}
+
+/* ── Separator ── */
+.bc-separator { border-top: 1px solid var(--color-grey-200); }
+
+/* ── Filter Section ── */
+.bc-filter-section {
+  flex-shrink: 0;
+  padding: 10px 24px;
+  background-color: var(--color-surface);
+}
+
+.bc-filter-row {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.bc-filter-spacer { flex-grow: 1; }
+
+/* ── Table Section ── */
+.bc-table-section {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background-color: var(--color-surface);
+  min-height: 0;
+}
+
+.bc-loading-state {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  padding: 64px 0;
+}
+
+.bc-table-container {
+  flex: 1;
+  overflow: auto !important;
+  min-height: 0;
+}
+
+/* ── Table Head ── */
+.bc-table-head-row { background-color: var(--color-bg-table-header); height: 48px; }
+
+.bc-table-head-cell {
+  font-size: var(--text-xs) !important;
+  font-weight: 700 !important;
+  color: var(--color-grey-600) !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.75px !important;
+  background-color: var(--color-bg-table-header) !important;
+  padding: 8px 16px !important;
+  border-bottom-color: var(--color-border-table) !important;
+}
+
+.bc-table-head-cell--actions { text-align: right !important; }
+
+/* ── Table Rows ── */
+.bc-table-row { height: 64px; transition: all 0.2s ease; }
+.bc-table-row--even { background-color: var(--color-surface); }
+.bc-table-row--odd  { background-color: var(--color-surface-alt); }
+.bc-table-row td { border-bottom: 1px solid var(--color-border-table); }
+.bc-table-row:hover {
+  background-color: var(--color-hover-bg) !important;
+  box-shadow: inset 0 2px 4px var(--color-primary-shadow-8);
+}
+
+.bc-table-cell { padding: 12px 16px !important; vertical-align: middle !important; }
+.bc-table-cell--actions { text-align: right !important; }
+
+/* ── Name Cell ── */
+.bc-name-cell { display: flex; align-items: center; gap: 12px; }
+
+.bc-name-icon-box {
+  width: 36px; height: 36px; border-radius: 8px;
+  background-color: var(--color-icon-bg);
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+
+.bc-name-icon { font-size: 18px !important; color: var(--color-primary) !important; }
+
+.bc-row-primary {
+  font-size: var(--text-sm) !important;
+  font-weight: 700 !important;
+  color: var(--color-text-primary) !important;
+  line-height: 1.4 !important;
+  margin: 0 !important;
+}
+
+.bc-row-secondary {
+  font-size: var(--text-xs) !important;
+  font-weight: 500 !important;
+  color: var(--color-text-secondary) !important;
+  line-height: 1.4 !important;
+  margin: 0 !important;
+}
+
+/* ── Batch Chip ── */
+.bc-batch-chip {
+  background-color: var(--color-primary-light) !important;
+  color: var(--color-primary) !important;
+  border-color: var(--color-blue-100) !important;
+  font-weight: 600 !important;
+  font-size: var(--text-xs) !important;
+  height: 24px !important;
+}
+
+/* ── Action Buttons ── */
+.bc-action-button {
+  color: var(--color-action-btn) !important;
+  padding: 5px !important;
+  transition: all 0.2s ease !important;
+}
+
+.bc-action-button--remove:hover {
+  color: var(--color-error) !important;
+  background-color: var(--color-error-light) !important;
+}
+
+.bc-action-icon--remove { font-size: 18px !important; color: var(--color-error) !important; }
+
+/* ── Empty State ── */
+.bc-empty-cell { padding-top: 48px !important; padding-bottom: 48px !important; text-align: center !important; }
+.bc-empty-icon { font-size: 40px !important; color: var(--color-empty-icon) !important; margin-bottom: 12px !important; }
+.bc-empty-text { font-size: var(--text-sm) !important; font-weight: 500 !important; color: var(--color-empty-text) !important; }
+
+/* ── Pagination ── */
+.bc-pagination {
+  border-top: 1px solid var(--color-border-dark) !important;
+  background-color: var(--color-surface) !important;
+  padding: 4px 10px !important;
+  flex-shrink: 0;
+}
+
+.bc-pagination .MuiTablePagination-selectLabel,
+.bc-pagination .MuiTablePagination-displayedRows {
+  font-size: 0.8125rem !important;
+  font-weight: 500 !important;
+  color: var(--color-grey-450) !important;
+  margin: 0 !important;
+}
+
+.bc-pagination .MuiInputBase-root { margin-right: 32px !important; }
+.bc-pagination .MuiIconButton-root { padding: 4px !important; color: var(--color-text-secondary) !important; }
+.bc-pagination .MuiIconButton-root:hover { background-color: var(--opacity-shadow-very-light) !important; color: var(--color-grey-550) !important; }
+.bc-pagination .MuiIconButton-root.Mui-disabled { color: var(--color-grey-350) !important; }
+
+/* ── Dialog Panel UI ── */
+.bc-dlg-filters {
+  display: flex;
+  gap: 12px;
+  padding: 16px 24px 12px;
+  flex-wrap: wrap;
+}
+
+.bc-dlg-filter-field { min-width: 200px; }
+.bc-dlg-filter-field .MuiOutlinedInput-root.Mui-focused fieldset { border-color: var(--color-primary); }
+
+.bc-dlg-panels {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+  min-height: 360px;
+  max-height: 460px;
+}
+
+.bc-dlg-panel {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 16px 20px;
+}
+
+.bc-dlg-panel--left {
+  border-right: 1px solid var(--color-grey-200);
+}
+
+.bc-dlg-panel-title {
+  font-size: var(--text-md) !important;
+  font-weight: 700 !important;
+  color: var(--color-text-primary) !important;
+  margin-bottom: 2px !important;
+}
+
+.bc-dlg-panel-sub {
+  font-size: var(--text-xs) !important;
+  color: var(--color-text-secondary) !important;
+}
+
+.bc-dlg-course-list {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-top: 4px;
+}
+
+.bc-dlg-course-list::-webkit-scrollbar { width: 4px; }
+.bc-dlg-course-list::-webkit-scrollbar-thumb { background: var(--color-grey-300); border-radius: 4px; }
+
+.bc-dlg-batch-scroll {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-top: 4px;
+}
+
+.bc-dlg-batch-scroll::-webkit-scrollbar { width: 4px; }
+.bc-dlg-batch-scroll::-webkit-scrollbar-thumb { background: var(--color-grey-300); border-radius: 4px; }
+
+/* ── Course Cards (in dialog) ── */
+.bc-course-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--color-border-light);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  background-color: var(--color-surface);
+}
+
+.bc-course-card:hover {
+  border-color: var(--color-primary);
+  background-color: var(--color-primary-hover-4);
+}
+
+.bc-course-card--selected {
+  border-color: var(--color-primary) !important;
+  background-color: var(--color-primary-light) !important;
+  box-shadow: 0 0 0 2px var(--color-primary-hover-14);
+}
+
+.bc-course-card-icon-box {
+  width: 32px; height: 32px; border-radius: 6px;
+  background-color: var(--color-icon-bg);
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+
+.bc-course-card-icon { font-size: 16px !important; color: var(--color-primary) !important; }
+.bc-course-card-info { flex: 1; min-width: 0; }
+
+.bc-course-card-name {
+  font-size: var(--text-sm) !important;
+  font-weight: 600 !important;
+  color: var(--color-text-primary) !important;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.bc-course-card-meta {
+  font-size: var(--text-xs) !important;
+  color: var(--color-text-secondary) !important;
+}
+
+.bc-status-chip { font-size: var(--text-xs) !important; font-weight: 600 !important; border-radius: 6px !important; flex-shrink: 0; }
+.bc-status-chip--planned { color: var(--color-info-dark) !important; border-color: var(--color-blue-100) !important; background-color: var(--color-info-light) !important; }
+.bc-status-chip--active  { color: var(--color-success-dark) !important; border-color: var(--color-success-border) !important; background-color: var(--color-success-light) !important; }
+
+/* ── Batch Tiles (in dialog) ── */
+.bc-program-group { display: flex; flex-direction: column; gap: 6px; }
+
+.bc-program-group-name {
+  font-size: var(--text-xs) !important;
+  font-weight: 700 !important;
+  color: var(--color-text-secondary) !important;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.bc-batch-row { display: flex; flex-wrap: wrap; gap: 8px; }
+
+.bc-batch-tile {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 4px; width: 80px; height: 72px;
+  border-radius: 10px; border: 2px solid var(--color-border-light);
+  cursor: pointer; transition: all 0.15s ease;
+  background-color: var(--color-surface);
+}
+
+.bc-batch-tile:hover { border-color: var(--color-primary); background-color: var(--color-primary-hover-4); transform: translateY(-1px); }
+.bc-batch-tile--linked { border-color: var(--color-success) !important; background-color: var(--color-success-light) !important; }
+.bc-batch-tile--linked:hover { border-color: var(--color-error) !important; background-color: var(--color-error-light) !important; }
+.bc-batch-tile--loading { opacity: 0.6; cursor: not-allowed; }
+
+.bc-batch-tile-icon { font-size: 18px !important; color: var(--color-text-secondary) !important; }
+.bc-batch-tile-icon--linked { color: var(--color-success) !important; }
+.bc-batch-tile-label { font-size: var(--text-xs) !important; font-weight: 600 !important; color: var(--color-text-primary) !important; }
+.bc-batch-tile-status { font-size: 10px !important; color: var(--color-success-dark) !important; font-weight: 600 !important; }
+
+.bc-panel-empty {
+  display: flex; flex-direction: column; align-items: center;
+  justify-content: center; gap: 8px; flex: 1; padding: 32px; text-align: center;
+}
+
+@media (max-width: 700px) {
+  .bc-dlg-panels { grid-template-columns: 1fr; }
+  .bc-dlg-panel--left { border-right: none; border-bottom: 1px solid var(--color-grey-200); }
+}
+.bc-dialog-title {
+  font-size: var(--text-lg) !important;
+  font-weight: 700 !important;
+  color: var(--color-text-primary) !important;
+}
+
+.bc-dialog-field .MuiOutlinedInput-root.Mui-focused fieldset { border-color: var(--color-primary) !important; }
+.bc-dialog-field .MuiInputLabel-root.Mui-focused { color: var(--color-primary) !important; }
+
+.bc-dialog-cancel-btn {
+  text-transform: none !important;
+  color: var(--color-text-secondary) !important;
+  font-weight: 600 !important;
+}
+
+.bc-dialog-submit-btn {
+  text-transform: none !important;
+  background-color: var(--color-primary) !important;
+  color: var(--color-white) !important;
+  font-weight: 600 !important;
+}
+
+.bc-dialog-submit-btn:hover { background-color: var(--color-primary-dark) !important; }

@@ -49,7 +49,7 @@ function Sidebar() {
       },
       {
         name: "Academy Dashboard",
-        path: "/academy-dashboard",
+        path: "/ta-head/academy",
         icon: (
           <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <path d="M22 10L12 5 2 10l10 5 10-5z" />
@@ -59,7 +59,7 @@ function Sidebar() {
       },
       {
         name: "Request",
-        path: "/requests",
+        path: "/ta-head/settings",
         icon: (
           <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <rect x="8" y="2" width="8" height="4" />
@@ -82,7 +82,16 @@ function Sidebar() {
           </svg>
         )
       },  
-      
+    {
+        name: "Academy",
+        path: "/training-coordinator/academy",
+        icon: (
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M22 10L12 5 2 10l10 5 10-5z" />
+            <path d="M6 12v5c3 2 9 2 12 0v-5" />
+          </svg>
+        )
+      },
     ],
 
     TA_RECRUITER: [
@@ -100,7 +109,7 @@ function Sidebar() {
         },
       {
         name: "Hiring Cycle",
-        path: "/hiring-cycle",
+        path: "/ta-recruiter/hiring-cycles",
         icon: (
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <polyline points="23 4 23 10 17 10" />
@@ -154,7 +163,7 @@ function Sidebar() {
       },
       {
         name: "Documents Processing",
-        path: "/documents-processing",
+        path: "/ta-recruiter/documents",
         icon: (
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
@@ -164,25 +173,14 @@ function Sidebar() {
       },
       {
         name: "Academy",
-        path: "/academy",
+        path: "/ta-recruiter/academy",
         icon: (
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <path d="M22 10L12 5 2 10l10 5 10-5z" />
           </svg>
         )
       },
-      {
-        name: "Academy Courses",
-        path: "/academy-courses",
-        icon: (
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M4 19.5V5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v14.5" />
-            <line x1="8" y1="7" x2="16" y2="7" />
-            <line x1="8" y1="11" x2="16" y2="11" />
-            <line x1="8" y1="15" x2="13" y2="15" />
-          </svg>
-        )
-      },
+    
       {
         name: "Manage",
         path: "/ta-recruiter/settings",
@@ -210,7 +208,7 @@ function Sidebar() {
       },
       {
         name: "Hiring Cycle",
-        path: "/hiring-cycle",
+        path: "/hiring-manager/hiring-cycles",
         icon: (
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <polyline points="23 4 23 10 17 10" />

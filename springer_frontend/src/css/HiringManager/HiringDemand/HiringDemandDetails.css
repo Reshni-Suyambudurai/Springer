@@ -1,0 +1,323 @@
+.hdd-page {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 4px;
+  background-color: var(--color-bg-secondary);
+}
+
+.hdd-card {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 0;
+  border-radius: 12px !important;
+  border: 1px solid var(--color-card-border) !important;
+  box-shadow: 0 1px 3px 0 var(--opacity-shadow-light), 0 6px 16px -2px var(--opacity-shadow-dark) !important;
+  background-color: var(--color-surface) !important;
+}
+
+/* ── Header ─────────────────────────────────────────────── */
+
+.hdd-header {
+  flex-shrink: 0;
+  padding: 12px 20px;
+  background-color: var(--color-surface);
+}
+
+.hdd-back-btn {
+  color: var(--color-text-secondary) !important;
+  border: 1px solid var(--color-border) !important;
+  border-radius: 8px !important;
+  padding: 4px !important;
+}
+
+.hdd-back-btn:hover {
+  background-color: var(--color-hover-bg) !important;
+  color: var(--color-primary) !important;
+}
+
+.hdd-icon-box {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background-color: var(--color-icon-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.hdd-title {
+  font-size: 1.1rem !important;
+  font-weight: 700 !important;
+  color: var(--color-text-primary) !important;
+}
+
+.hdd-subtitle {
+  font-size: 0.875rem !important;
+  color: var(--color-text-secondary) !important;
+}
+
+.hdd-separator {
+  border-top: 1px solid var(--color-border-light);
+}
+
+/* ── Header Buttons ──────────────────────────────────────── */
+
+.hdd-edit-btn {
+  text-transform: none !important;
+  font-size: 0.875rem !important;
+  font-weight: 500 !important;
+  border-radius: 8px !important;
+  color: var(--color-primary) !important;
+  border-color: var(--color-primary) !important;
+  padding: 5px 14px !important;
+}
+
+.hdd-delete-btn {
+  text-transform: none !important;
+  font-size: 0.875rem !important;
+  font-weight: 500 !important;
+  border-radius: 8px !important;
+  color: var(--color-error-dark) !important;
+  border-color: var(--color-error-border) !important;
+  padding: 5px 14px !important;
+}
+
+.hdd-delete-btn:hover {
+  background-color: var(--color-error-light) !important;
+}
+
+.hdd-cancel-btn {
+  text-transform: none !important;
+  font-size: 0.875rem !important;
+  font-weight: 500 !important;
+  border-radius: 8px !important;
+  color: var(--color-text-secondary) !important;
+  border-color: var(--color-border) !important;
+}
+
+.hdd-save-draft-btn {
+  text-transform: none !important;
+  font-size: 0.875rem !important;
+  font-weight: 500 !important;
+  border-radius: 8px !important;
+  color: var(--color-primary) !important;
+  border-color: var(--color-primary) !important;
+}
+
+.hdd-submit-btn {
+  text-transform: none !important;
+  font-size: 0.875rem !important;
+  font-weight: 600 !important;
+  border-radius: 8px !important;
+  background-color: var(--color-primary) !important;
+  color: var(--color-white) !important;
+  box-shadow: 0 2px 8px var(--color-primary-shadow-18) !important;
+}
+
+.hdd-submit-btn:hover {
+  background-color: var(--color-primary-dark) !important;
+}
+
+.hdd-delete-solid-btn {
+  text-transform: none !important;
+  font-size: 0.875rem !important;
+  font-weight: 600 !important;
+  border-radius: 8px !important;
+  background-color: var(--color-error-darker) !important;
+  color: var(--color-white) !important;
+}
+
+.hdd-delete-solid-btn:hover {
+  background-color: var(--color-error-dark) !important;
+}
+
+.hdd-back-link-btn {
+  text-transform: none !important;
+  font-size: 0.875rem !important;
+  font-weight: 500 !important;
+  border-radius: 8px !important;
+  color: var(--color-text-secondary) !important;
+  border-color: var(--color-border) !important;
+}
+
+/* ── Loading / Error ─────────────────────────────────────── */
+
+.hdd-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 64px 0;
+}
+
+.hdd-loading-text {
+  font-size: 0.9rem !important;
+  color: var(--color-text-secondary) !important;
+}
+
+.hdd-alert-wrap {
+  padding: 24px;
+}
+
+/* ── Body ────────────────────────────────────────────────── */
+
+.hdd-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px 24px;
+}
+
+/* ── Section ─────────────────────────────────────────────── */
+
+.hdd-section-header {
+  margin-bottom: 16px;
+}
+
+.hdd-section-label {
+  font-size: 0.875rem !important;
+  font-weight: 700 !important;
+  color: var(--color-text-primary) !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.06em !important;
+}
+
+.hdd-section-rule {
+  height: 1px;
+  background-color: var(--color-border-light);
+  margin-top: 8px;
+}
+
+/* ── Info Grid (read mode) ───────────────────────────────── */
+
+.hdd-info-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  column-gap: 32px;
+  row-gap: 20px;
+}
+
+.hdd-info-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.hdd-info-label {
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  color: var(--color-text-disabled) !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.08em !important;
+}
+
+.hdd-info-value {
+  font-size: 0.9375rem !important;
+  font-weight: 600 !important;
+  color: var(--color-text-primary) !important;
+}
+
+/* ── Form Grid (edit mode) ───────────────────────────────── */
+
+.hdd-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+
+.hdd-error {
+  font-size: 0.75rem !important;
+  color: var(--color-error-dark) !important;
+  margin-top: 4px !important;
+}
+
+/* ── Status Chips ────────────────────────────────────────── */
+
+.hdd-status-chip {
+  font-size: 0.72rem !important;
+  font-weight: 600 !important;
+  height: 22px !important;
+  border-radius: 6px !important;
+  padding: 0 8px !important;
+}
+
+.hdd-status--draft {
+  background-color: var(--color-chip-count-bg) !important;
+  color: var(--color-chip-count-text) !important;
+}
+
+.hdd-status--submitted {
+  background-color: var(--color-primary-light) !important;
+  color: var(--color-primary) !important;
+}
+
+.hdd-status--approved {
+  background-color: var(--color-success-light) !important;
+  color: var(--color-success-dark) !important;
+}
+
+.hdd-status--rejected {
+  background-color: var(--color-error-light) !important;
+  color: var(--color-error-dark) !important;
+}
+
+/* ── Count Chip ──────────────────────────────────────────── */
+
+.hdd-count-chip {
+  background-color: var(--color-chip-count-bg) !important;
+  color: var(--color-chip-count-text) !important;
+  font-size: 0.72rem !important;
+  font-weight: 600 !important;
+  height: 20px !important;
+  border-radius: 5px !important;
+}
+
+/* ── Skill Chips (read mode) ─────────────────────────────── */
+
+.hdd-skill-chip {
+  background-color: var(--color-primary-light) !important;
+  color: var(--color-primary) !important;
+  font-size: 0.8rem !important;
+  font-weight: 500 !important;
+  height: 24px !important;
+  border-radius: 6px !important;
+}
+
+/* ── Skills Grid (edit mode) ─────────────────────────────── */
+
+.hdd-skills-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 4px;
+  padding: 12px;
+  background-color: var(--color-bg-secondary);
+  border-radius: 8px;
+  border: 1px solid var(--color-border-light);
+}
+
+.hdd-skill-label {
+  margin: 0 !important;
+}
+
+.hdd-skill-label .MuiFormControlLabel-label {
+  font-size: 0.85rem !important;
+  color: var(--color-text-primary) !important;
+}
+
+/* ── Empty ───────────────────────────────────────────────── */
+
+.hdd-empty-text {
+  font-size: 0.875rem !important;
+  color: var(--color-text-disabled) !important;
+}
+
+/* ── Footer ──────────────────────────────────────────────── */
+
+.hdd-footer {
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid var(--color-border-light);
+}

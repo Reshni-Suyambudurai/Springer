@@ -40,11 +40,8 @@ public class OfferLetter {
     private HiringCycle cycle;
     
     private LocalDate issueDate;
-    
-    private LocalDate expiryDate; // to not allow response after this expiry date
-    
-    @Lob
-    private byte[] offerLetter; // PDF or path/base64
+
+    private LocalDate respondedDate;
     
     @Enumerated(EnumType.STRING)
     private OfferResponse response;

@@ -1,0 +1,324 @@
+.tah-hcl-page {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 4px;
+  background-color: var(--color-bg-secondary);
+}
+
+.tah-hcl-card {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 0;
+  border-radius: 12px !important;
+  border: 1px solid var(--color-card-border) !important;
+  box-shadow: 0 1px 3px 0 var(--opacity-shadow-light), 0 6px 16px -2px var(--opacity-shadow-dark) !important;
+  background-color: var(--color-surface) !important;
+}
+
+/* ── Header ─────────────────────────────────────────────── */
+
+.tah-hcl-header {
+  flex-shrink: 0;
+  padding: 16px 20px;
+  background-color: var(--color-surface);
+}
+
+.tah-hcl-icon-box {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background-color: var(--color-icon-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.tah-hcl-title {
+  font-size: 1.25rem !important;
+  font-weight: 700 !important;
+  color: var(--color-text-primary) !important;
+}
+
+.tah-hcl-subtitle {
+  font-size: 0.875rem !important;
+  color: var(--color-text-secondary) !important;
+}
+
+.tah-hcl-separator {
+  border-top: 1px solid var(--color-border-light);
+}
+
+/* ── Buttons ─────────────────────────────────────────────── */
+
+.tah-hcl-add-btn {
+  text-transform: none !important;
+  font-size: 0.95rem !important;
+  font-weight: 600 !important;
+  border-radius: 8px !important;
+  background-color: var(--color-primary) !important;
+  color: var(--color-white) !important;
+  box-shadow: 0 2px 8px var(--color-primary-shadow-18) !important;
+  transition: all 0.2s ease !important;
+  padding-left: 20px !important;
+  padding-right: 20px !important;
+}
+
+.tah-hcl-add-btn:hover {
+  background-color: var(--color-primary-dark) !important;
+  box-shadow: 0 4px 12px var(--color-primary-shadow-28) !important;
+}
+
+.tah-hcl-cancel-btn {
+  text-transform: none !important;
+  font-size: 0.875rem !important;
+  font-weight: 500 !important;
+  border-radius: 8px !important;
+  color: var(--color-text-secondary) !important;
+  border-color: var(--color-border) !important;
+}
+
+.tah-hcl-close-btn {
+  text-transform: none !important;
+  font-size: 0.875rem !important;
+  font-weight: 600 !important;
+  border-radius: 8px !important;
+  background-color: var(--color-error-darker) !important;
+  color: var(--color-white) !important;
+}
+
+.tah-hcl-close-btn:hover {
+  background-color: var(--color-error-dark) !important;
+}
+
+.tah-hcl-open-btn {
+  text-transform: none !important;
+  font-size: 0.875rem !important;
+  font-weight: 600 !important;
+  border-radius: 8px !important;
+  background-color: var(--color-primary) !important;
+  color: var(--color-white) !important;
+}
+
+/* ── Table Section ───────────────────────────────────────── */
+
+.tah-hcl-table-section {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 0;
+}
+
+.tah-hcl-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 64px 0;
+}
+
+.tah-hcl-loading-text {
+  font-size: 0.9rem !important;
+  color: var(--color-text-secondary) !important;
+}
+
+.tah-hcl-alert-wrap {
+  padding: 24px;
+}
+
+.tah-hcl-table-container {
+  flex: 1;
+  overflow: auto !important;
+  min-height: 0;
+}
+
+/* ── Table Head ──────────────────────────────────────────── */
+
+.tah-hcl-head-row {
+  background-color: var(--color-bg-table-header);
+}
+
+.tah-hcl-head-cell {
+  font-size: 0.75rem !important;
+  font-weight: 700 !important;
+  color: var(--color-grey-600) !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.75px !important;
+  background-color: var(--color-bg-table-header) !important;
+  padding: 10px 14px !important;
+  border-bottom-color: var(--color-border-table) !important;
+}
+
+.tah-hcl-head-cell--actions {
+  text-align: right !important;
+}
+
+/* ── Table Rows ──────────────────────────────────────────── */
+
+.tah-hcl-row {
+  cursor: pointer;
+  height: 64px;
+  transition: background-color 0.2s ease;
+}
+
+.tah-hcl-row--even { background-color: var(--color-surface); }
+.tah-hcl-row--odd  { background-color: var(--color-surface-alt); }
+
+.tah-hcl-row td {
+  border-bottom: 1px solid var(--color-border-table);
+}
+
+.tah-hcl-row:hover {
+  background-color: var(--color-hover-bg) !important;
+}
+
+/* ── Table Cells ─────────────────────────────────────────── */
+
+.tah-hcl-cell {
+  padding: 12px 14px !important;
+  vertical-align: middle !important;
+}
+
+.tah-hcl-cell--actions {
+  text-align: right !important;
+}
+
+.tah-hcl-name-icon-box {
+  width: 30px;
+  height: 30px;
+  border-radius: 6px;
+  background-color: var(--color-icon-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.tah-hcl-cell-primary {
+  font-size: 0.9375rem !important;
+  font-weight: 700 !important;
+  color: var(--color-text-primary) !important;
+}
+
+.tah-hcl-cell-secondary {
+  font-size: 0.875rem !important;
+  font-weight: 500 !important;
+  color: var(--color-grey-550) !important;
+}
+
+/* ── Status Chips ────────────────────────────────────────── */
+
+.tah-hcl-status--open {
+  background-color: var(--color-success-light) !important;
+  color: var(--color-success-dark) !important;
+  font-size: 0.75rem !important;
+  font-weight: 600 !important;
+  height: 22px !important;
+  border-radius: 6px !important;
+}
+
+.tah-hcl-status--closed {
+  background-color: var(--color-inactive-bg) !important;
+  color: var(--color-text-secondary) !important;
+  font-size: 0.75rem !important;
+  font-weight: 600 !important;
+  height: 22px !important;
+  border-radius: 6px !important;
+  border: 1px solid var(--color-inactive-border) !important;
+}
+
+/* ── Action Buttons ──────────────────────────────────────── */
+
+.tah-hcl-action-btn {
+  color: var(--color-action-btn) !important;
+  padding: 5px !important;
+  transition: all 0.2s ease !important;
+}
+
+.tah-hcl-action-btn:hover {
+  color: var(--color-primary) !important;
+  background-color: var(--color-primary-hover-14) !important;
+}
+
+.tah-hcl-action-icon {
+  font-size: 18px !important;
+  color: var(--color-primary) !important;
+}
+
+.tah-hcl-deactivate-btn {
+  padding: 5px !important;
+  transition: all 0.2s ease !important;
+}
+
+.tah-hcl-deactivate-btn:hover {
+  background-color: var(--color-error-light) !important;
+}
+
+.tah-hcl-deactivate-btn .tah-hcl-action-icon {
+  color: var(--color-error-dark) !important;
+}
+
+.tah-hcl-activate-btn {
+  padding: 5px !important;
+  transition: all 0.2s ease !important;
+}
+
+.tah-hcl-activate-btn:hover {
+  background-color: var(--color-success-light) !important;
+}
+
+.tah-hcl-activate-btn .tah-hcl-action-icon {
+  color: var(--color-success-dark) !important;
+}
+
+/* ── Empty State ─────────────────────────────────────────── */
+
+.tah-hcl-empty-cell {
+  padding-top: 48px !important;
+  padding-bottom: 48px !important;
+}
+
+.tah-hcl-empty-icon {
+  font-size: 40px !important;
+  color: var(--color-empty-icon) !important;
+  margin-bottom: 12px !important;
+}
+
+.tah-hcl-empty-text {
+  font-size: 0.9375rem !important;
+  font-weight: 500 !important;
+  color: var(--color-empty-text) !important;
+}
+
+/* ── Pagination ──────────────────────────────────────────── */
+
+.tah-hcl-pagination {
+  border-top: 1px solid var(--color-border-dark) !important;
+  background-color: var(--color-surface) !important;
+  flex-shrink: 0;
+}
+
+.tah-hcl-pagination .MuiTablePagination-selectLabel,
+.tah-hcl-pagination .MuiTablePagination-displayedRows {
+  font-size: 0.8125rem !important;
+  font-weight: 500 !important;
+  color: var(--color-grey-450) !important;
+  margin: 0 !important;
+}
+
+.tah-hcl-pagination .MuiIconButton-root {
+  padding: 4px !important;
+  color: var(--color-text-secondary) !important;
+}
+
+.tah-hcl-pagination .MuiIconButton-root:hover {
+  background-color: var(--opacity-shadow-very-light) !important;
+}
+
+.tah-hcl-pagination .MuiIconButton-root.Mui-disabled {
+  color: var(--color-grey-350) !important;
+}

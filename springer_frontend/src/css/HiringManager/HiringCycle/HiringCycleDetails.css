@@ -1,0 +1,352 @@
+.hcd-page {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 4px;
+  background-color: var(--color-bg-secondary);
+}
+
+.hcd-card {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 0;
+  border-radius: 12px !important;
+  border: 1px solid var(--color-card-border) !important;
+  box-shadow: 0 1px 3px 0 var(--opacity-shadow-light), 0 6px 16px -2px var(--opacity-shadow-dark) !important;
+  background-color: var(--color-surface) !important;
+}
+
+/* ── Header ─────────────────────────────────────────────── */
+
+.hcd-header {
+  flex-shrink: 0;
+  padding: 12px 20px;
+  background-color: var(--color-surface);
+}
+
+.hcd-back-btn {
+  color: var(--color-text-secondary) !important;
+  border: 1px solid var(--color-border) !important;
+  border-radius: 8px !important;
+  padding: 4px !important;
+}
+
+.hcd-back-btn:hover {
+  background-color: var(--color-hover-bg) !important;
+  color: var(--color-primary) !important;
+}
+
+.hcd-icon-box {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background-color: var(--color-icon-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.hcd-title {
+  font-size: 1.1rem !important;
+  font-weight: 700 !important;
+  color: var(--color-text-primary) !important;
+}
+
+.hcd-subtitle {
+  font-size: 0.875rem !important;
+  color: var(--color-text-secondary) !important;
+}
+
+.hcd-separator {
+  border-top: 1px solid var(--color-border-light);
+}
+
+/* ── Buttons ─────────────────────────────────────────────── */
+
+.hcd-download-btn {
+  text-transform: none !important;
+  font-size: 0.875rem !important;
+  font-weight: 500 !important;
+  border-radius: 8px !important;
+  color: var(--color-primary) !important;
+  border-color: var(--color-primary) !important;
+  padding: 5px 14px !important;
+}
+
+.hcd-add-btn {
+  text-transform: none !important;
+  font-size: 0.875rem !important;
+  font-weight: 600 !important;
+  border-radius: 8px !important;
+  background-color: var(--color-primary) !important;
+  color: var(--color-white) !important;
+  padding: 5px 14px !important;
+  box-shadow: 0 2px 8px var(--color-primary-shadow-18) !important;
+}
+
+.hcd-add-btn:hover {
+  background-color: var(--color-primary-dark) !important;
+}
+
+.hcd-back-link-btn {
+  text-transform: none !important;
+  font-size: 0.875rem !important;
+  font-weight: 500 !important;
+  border-radius: 8px !important;
+  color: var(--color-text-secondary) !important;
+  border-color: var(--color-border) !important;
+}
+
+/* ── Loading / Error ─────────────────────────────────────── */
+
+.hcd-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 64px 0;
+}
+
+.hcd-loading-text {
+  font-size: 0.9rem !important;
+  color: var(--color-text-secondary) !important;
+}
+
+.hcd-alert-wrap {
+  padding: 24px;
+}
+
+/* ── Body ────────────────────────────────────────────────── */
+
+.hcd-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px 24px;
+}
+
+/* ── Section ─────────────────────────────────────────────── */
+
+.hcd-section-header {
+  margin-bottom: 16px;
+}
+
+.hcd-section-label {
+  font-size: 0.875rem !important;
+  font-weight: 700 !important;
+  color: var(--color-text-primary) !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.06em !important;
+}
+
+.hcd-section-rule {
+  height: 1px;
+  background-color: var(--color-border-light);
+  margin-top: 8px;
+}
+
+/* ── Info Grid ───────────────────────────────────────────── */
+
+.hcd-info-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  column-gap: 32px;
+  row-gap: 20px;
+}
+
+.hcd-info-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.hcd-info-label {
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  color: var(--color-text-disabled) !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.08em !important;
+}
+
+.hcd-info-value {
+  font-size: 0.9375rem !important;
+  font-weight: 600 !important;
+  color: var(--color-text-primary) !important;
+}
+
+/* ── Cycle Status Chips ──────────────────────────────────── */
+
+.hcd-cycle-status--open {
+  background-color: var(--color-success-light) !important;
+  color: var(--color-success-dark) !important;
+  font-size: 0.75rem !important;
+  font-weight: 600 !important;
+  height: 22px !important;
+  border-radius: 6px !important;
+}
+
+.hcd-cycle-status--closed {
+  background-color: var(--color-inactive-bg) !important;
+  color: var(--color-text-secondary) !important;
+  font-size: 0.75rem !important;
+  font-weight: 600 !important;
+  height: 22px !important;
+  border-radius: 6px !important;
+  border: 1px solid var(--color-inactive-border) !important;
+}
+
+/* ── Count Chip ──────────────────────────────────────────── */
+
+.hcd-count-chip {
+  background-color: var(--color-chip-count-bg) !important;
+  color: var(--color-chip-count-text) !important;
+  font-size: 0.75rem !important;
+  font-weight: 600 !important;
+  height: 20px !important;
+  border-radius: 5px !important;
+}
+
+/* ── Demand Table ────────────────────────────────────────── */
+
+.hcd-table-container {
+  border: 1px solid var(--color-border-table);
+  border-radius: 8px;
+  overflow-y: scroll;
+  max-height: 400px;
+}
+
+.hcd-table-container::-webkit-scrollbar {
+  width: 8px;
+}
+
+.hcd-table-container::-webkit-scrollbar-track {
+  background: var(--color-primary-dark);
+  border-radius: 3px;
+}
+
+.hcd-table-container::-webkit-scrollbar-thumb {
+  background: var(--color-primary);
+  border-radius: 3px;
+}
+
+.hcd-table-container::-webkit-scrollbar-thumb:hover {
+  background: var(--color-primary-dark);
+}
+
+.hcd-head-row {
+  background-color: var(--color-bg-table-header);
+}
+
+.hcd-head-cell {
+  font-size: 0.75rem !important;
+  font-weight: 700 !important;
+  color: var(--color-grey-600) !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.75px !important;
+  background-color: var(--color-bg-table-header) !important;
+  padding: 10px 14px !important;
+  border-bottom-color: var(--color-border-table) !important;
+}
+
+.hcd-row {
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.hcd-row--even { background-color: var(--color-surface); }
+.hcd-row--odd  { background-color: var(--color-surface-alt); }
+
+.hcd-row td {
+  border-bottom: 1px solid var(--color-border-table);
+}
+
+.hcd-row:hover {
+  background-color: var(--color-hover-bg) !important;
+}
+
+.hcd-cell {
+  padding: 12px 14px !important;
+  vertical-align: middle !important;
+}
+
+.hcd-cell-primary {
+  font-size: 0.9rem !important;
+  font-weight: 600 !important;
+  color: var(--color-text-primary) !important;
+}
+
+.hcd-cell-secondary {
+  font-size: 0.875rem !important;
+  font-weight: 500 !important;
+  color: var(--color-grey-550) !important;
+}
+
+/* ── Approval Status Chips ───────────────────────────────── */
+
+.hcd-status-chip {
+  font-size: 0.72rem !important;
+  font-weight: 600 !important;
+  height: 22px !important;
+  border-radius: 6px !important;
+  padding: 0 8px !important;
+}
+
+.hcd-status--draft {
+  background-color: var(--color-chip-count-bg) !important;
+  color: var(--color-chip-count-text) !important;
+}
+
+.hcd-status--submitted {
+  background-color: var(--color-primary-light) !important;
+  color: var(--color-primary) !important;
+}
+
+.hcd-status--approved {
+  background-color: var(--color-success-light) !important;
+  color: var(--color-success-dark) !important;
+}
+
+.hcd-status--rejected {
+  background-color: var(--color-error-light) !important;
+  color: var(--color-error-dark) !important;
+}
+
+/* ── Skill Chips ─────────────────────────────────────────── */
+
+.hcd-skill-chip {
+  background-color: var(--color-primary-light) !important;
+  color: var(--color-primary) !important;
+  font-size: 0.72rem !important;
+  font-weight: 500 !important;
+  height: 20px !important;
+  border-radius: 4px !important;
+}
+
+/* ── Empty State ─────────────────────────────────────────── */
+
+.hcd-empty {
+  padding: 32px 0;
+  text-align: center;
+}
+
+.hcd-empty-text {
+  font-size: 0.9rem !important;
+  font-weight: 500 !important;
+  color: var(--color-empty-text) !important;
+}
+
+.hcd-empty-hint {
+  font-size: 0.8rem !important;
+  color: var(--color-text-disabled) !important;
+  margin-top: 4px !important;
+}
+
+/* ── Footer ──────────────────────────────────────────────── */
+
+.hcd-footer {
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid var(--color-border-light);
+}

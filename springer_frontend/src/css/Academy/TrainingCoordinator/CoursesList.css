@@ -1,0 +1,379 @@
+/* ===== COURSES LIST — prefix: crs- ===== */
+
+.crs-page {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  gap: 4px;
+  background-color: var(--color-bg-secondary);
+  padding: 4px;
+}
+
+.crs-card {
+  border-radius: 12px !important;
+  border: 1px solid var(--color-card-border) !important;
+  box-shadow: 0 1px 3px 0 var(--opacity-shadow-light), 0 6px 16px -2px var(--opacity-shadow-dark) !important;
+  background-color: var(--color-surface) !important;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 0;
+}
+
+/* ── Header ── */
+.crs-header {
+  flex-shrink: 0;
+  padding: 20px 24px 12px 24px;
+  background-color: var(--color-surface);
+}
+
+.crs-header-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.crs-title {
+  font-size: var(--text-xl) !important;
+  font-weight: 700 !important;
+  color: var(--color-text-primary) !important;
+  line-height: 1.2 !important;
+  letter-spacing: -0.4px !important;
+  margin-bottom: 3px !important;
+}
+
+.crs-subtitle {
+  font-size: var(--text-sm) !important;
+  font-weight: 400 !important;
+  color: var(--color-text-secondary) !important;
+  line-height: 1.5 !important;
+}
+
+.crs-add-button {
+  text-transform: none !important;
+  font-size: var(--text-sm) !important;
+  font-weight: 600 !important;
+  padding: 8px 20px !important;
+  background-color: var(--color-primary) !important;
+  color: var(--color-white) !important;
+  box-shadow: 0 2px 8px var(--color-primary-shadow-18) !important;
+  transition: all 0.2s ease !important;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.crs-add-button:hover {
+  background-color: var(--color-primary-dark) !important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px var(--color-primary-shadow-28) !important;
+}
+
+/* ── Separator ── */
+.crs-separator {
+  border-top: 1px solid var(--color-grey-200);
+}
+
+/* ── Filter Section ── */
+.crs-filter-section {
+  flex-shrink: 0;
+  padding: 10px 24px;
+  background-color: var(--color-surface);
+}
+
+.crs-filter-row {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.crs-search-field {
+  width: 280px;
+}
+
+.crs-search-field .MuiOutlinedInput-root:hover {
+  background-color: var(--color-primary-hover-6);
+}
+
+.crs-search-field .MuiOutlinedInput-root.Mui-focused {
+  background-color: var(--color-primary-hover-4);
+}
+
+.crs-search-field .MuiOutlinedInput-root.Mui-focused fieldset {
+  border-color: var(--color-primary);
+}
+
+.crs-search-icon {
+  color: var(--color-primary) !important;
+}
+
+.crs-filter-spacer {
+  flex-grow: 1;
+}
+
+/* ── Table Section ── */
+.crs-table-section {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background-color: var(--color-surface);
+  min-height: 0;
+}
+
+.crs-loading-state {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  padding: 64px 0;
+}
+
+.crs-table-container {
+  flex: 1;
+  overflow: auto !important;
+  min-height: 0;
+}
+
+/* ── Table Head ── */
+.crs-table-head-row {
+  background-color: var(--color-bg-table-header);
+  height: 48px;
+}
+
+.crs-table-head-cell {
+  font-size: var(--text-xs) !important;
+  font-weight: 700 !important;
+  color: var(--color-grey-600) !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.75px !important;
+  background-color: var(--color-bg-table-header) !important;
+  padding: 8px 16px !important;
+  border-bottom-color: var(--color-border-table) !important;
+}
+
+.crs-table-head-cell--actions {
+  text-align: right !important;
+}
+
+/* ── Table Rows ── */
+.crs-table-row {
+  height: 68px;
+  transition: all 0.2s ease;
+}
+
+.crs-table-row--even { background-color: var(--color-surface); }
+.crs-table-row--odd  { background-color: var(--color-surface-alt); }
+
+.crs-table-row td {
+  border-bottom: 1px solid var(--color-border-table);
+}
+
+.crs-table-row:hover {
+  background-color: var(--color-hover-bg) !important;
+  box-shadow: inset 0 2px 4px var(--color-primary-shadow-8);
+}
+
+.crs-table-cell {
+  padding: 12px 16px !important;
+  vertical-align: middle !important;
+}
+
+.crs-table-cell--actions {
+  text-align: right !important;
+}
+
+/* ── Name Cell ── */
+.crs-name-cell {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.crs-name-icon-box {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background-color: var(--color-icon-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.crs-name-icon {
+  font-size: 18px !important;
+  color: var(--color-primary) !important;
+}
+
+.crs-row-primary {
+  font-size: var(--text-sm) !important;
+  font-weight: 700 !important;
+  color: var(--color-text-primary) !important;
+  line-height: 1.4 !important;
+  margin: 0 !important;
+}
+
+.crs-row-secondary {
+  font-size: var(--text-xs) !important;
+  font-weight: 500 !important;
+  color: var(--color-text-secondary) !important;
+  line-height: 1.4 !important;
+  margin: 0 !important;
+}
+
+/* ── Status Chips ── */
+.crs-status-chip {
+  font-weight: 600 !important;
+  font-size: var(--text-xs) !important;
+  height: 24px !important;
+}
+
+.crs-status-chip--planned {
+  background-color: var(--color-info-light) !important;
+  color: var(--color-info-dark) !important;
+  border-color: var(--color-info-dark) !important;
+}
+
+.crs-status-chip--active {
+  background-color: var(--color-success-light) !important;
+  color: var(--color-success-dark) !important;
+  border-color: var(--color-success-border) !important;
+}
+
+.crs-status-chip--completed {
+  background-color: var(--color-primary-light) !important;
+  color: var(--color-primary) !important;
+  border-color: var(--color-blue-100) !important;
+}
+
+.crs-status-chip--cancelled {
+  background-color: var(--color-error-light) !important;
+  color: var(--color-error-dark) !important;
+  border-color: var(--color-error-border) !important;
+}
+
+/* ── Action Buttons ── */
+.crs-action-button {
+  color: var(--color-action-btn) !important;
+  padding: 5px !important;
+  transition: all 0.2s ease !important;
+}
+
+.crs-action-button:hover {
+  color: var(--color-primary) !important;
+  background-color: var(--color-primary-hover-14) !important;
+}
+
+.crs-action-button--remove:hover {
+  color: var(--color-error) !important;
+  background-color: var(--color-error-light) !important;
+}
+
+.crs-action-icon {
+  font-size: 18px !important;
+  color: var(--color-primary) !important;
+}
+
+.crs-action-icon--remove {
+  font-size: 18px !important;
+  color: var(--color-error) !important;
+}
+
+/* ── Empty State ── */
+.crs-empty-cell {
+  padding-top: 48px !important;
+  padding-bottom: 48px !important;
+  text-align: center !important;
+}
+
+.crs-empty-icon {
+  font-size: 40px !important;
+  color: var(--color-empty-icon) !important;
+  margin-bottom: 12px !important;
+}
+
+.crs-empty-text {
+  font-size: var(--text-sm) !important;
+  font-weight: 500 !important;
+  color: var(--color-empty-text) !important;
+}
+
+/* ── Pagination ── */
+.crs-pagination {
+  border-top: 1px solid var(--color-border-dark) !important;
+  background-color: var(--color-surface) !important;
+  padding: 4px 10px !important;
+  flex-shrink: 0;
+}
+
+.crs-pagination .MuiTablePagination-selectLabel,
+.crs-pagination .MuiTablePagination-displayedRows {
+  font-size: 0.8125rem !important;
+  font-weight: 500 !important;
+  color: var(--color-grey-450) !important;
+  margin: 0 !important;
+}
+
+.crs-pagination .MuiInputBase-root { margin-right: 32px !important; }
+
+.crs-pagination .MuiIconButton-root {
+  padding: 4px !important;
+  color: var(--color-text-secondary) !important;
+}
+
+.crs-pagination .MuiIconButton-root:hover {
+  background-color: var(--opacity-shadow-very-light) !important;
+  color: var(--color-grey-550) !important;
+}
+
+.crs-pagination .MuiIconButton-root.Mui-disabled {
+  color: var(--color-grey-350) !important;
+}
+
+/* ── Dialog ── */
+.crs-dialog-title {
+  font-size: var(--text-lg) !important;
+  font-weight: 700 !important;
+  color: var(--color-text-primary) !important;
+}
+
+.crs-dialog-field .MuiOutlinedInput-root.Mui-focused fieldset {
+  border-color: var(--color-primary) !important;
+}
+
+.crs-dialog-field .MuiInputLabel-root.Mui-focused {
+  color: var(--color-primary) !important;
+}
+
+/* hide number input spinners */
+.crs-dialog-field input[type='number']::-webkit-inner-spin-button,
+.crs-dialog-field input[type='number']::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.crs-dialog-field input[type='number'] {
+  -moz-appearance: textfield;
+}
+
+.crs-dialog-cancel-btn {
+  text-transform: none !important;
+  color: var(--color-text-secondary) !important;
+  font-weight: 600 !important;
+}
+
+.crs-dialog-submit-btn {
+  text-transform: none !important;
+  background-color: var(--color-primary) !important;
+  color: var(--color-white) !important;
+  font-weight: 600 !important;
+}
+
+.crs-dialog-submit-btn:hover {
+  background-color: var(--color-primary-dark) !important;
+}
