@@ -1,0 +1,217 @@
+.ahd-page {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 4px;
+  background-color: var(--color-bg-secondary);
+}
+
+.ahd-card {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 0;
+  border-radius: 12px !important;
+  border: 1px solid var(--color-card-border) !important;
+  box-shadow: 0 1px 3px 0 var(--opacity-shadow-light), 0 6px 16px -2px var(--opacity-shadow-dark) !important;
+  background-color: var(--color-surface) !important;
+}
+
+/* ── Header ─────────────────────────────────────────────── */
+
+.ahd-header {
+  flex-shrink: 0;
+  padding: 12px 20px;
+  background-color: var(--color-surface);
+}
+
+.ahd-back-btn {
+  color: var(--color-text-secondary) !important;
+  border: 1px solid var(--color-border) !important;
+  border-radius: 8px !important;
+  padding: 4px !important;
+}
+
+.ahd-back-btn:hover {
+  background-color: var(--color-hover-bg) !important;
+  color: var(--color-primary) !important;
+}
+
+.ahd-icon-box {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background-color: var(--color-icon-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.ahd-title {
+  font-size: 1.1rem !important;
+  font-weight: 700 !important;
+  color: var(--color-text-primary) !important;
+}
+
+.ahd-subtitle {
+  font-size: 0.875rem !important;
+  color: var(--color-text-secondary) !important;
+}
+
+.ahd-separator {
+  border-top: 1px solid var(--color-border-light);
+}
+
+/* ── Loading / Error ─────────────────────────────────────── */
+
+.ahd-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 64px 0;
+}
+
+.ahd-loading-text {
+  font-size: 0.9rem !important;
+  color: var(--color-text-secondary) !important;
+}
+
+.ahd-alert-wrap {
+  padding: 24px;
+}
+
+/* ── Body ────────────────────────────────────────────────── */
+
+.ahd-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px 24px;
+}
+
+/* ── Section ─────────────────────────────────────────────── */
+
+.ahd-section-header {
+  margin-bottom: 16px;
+}
+
+.ahd-section-label {
+  font-size: 0.875rem !important;
+  font-weight: 700 !important;
+  color: var(--color-text-primary) !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.06em !important;
+}
+
+.ahd-section-rule {
+  height: 1px;
+  background-color: var(--color-border-light);
+  margin-top: 8px;
+}
+
+/* ── Form Grid ───────────────────────────────────────────── */
+
+.ahd-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+
+.ahd-field .MuiOutlinedInput-root:hover fieldset {
+  border-color: var(--color-primary) !important;
+}
+
+.ahd-field .MuiOutlinedInput-root.Mui-focused fieldset {
+  border-color: var(--color-primary) !important;
+}
+
+.ahd-select .MuiOutlinedInput-root:hover fieldset {
+  border-color: var(--color-primary) !important;
+}
+
+.ahd-error {
+  font-size: 0.75rem !important;
+  color: var(--color-error-dark) !important;
+  margin-top: 4px !important;
+}
+
+/* ── Skills Grid ─────────────────────────────────────────── */
+
+.ahd-skills-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 4px;
+  padding: 12px;
+  background-color: var(--color-bg-secondary);
+  border-radius: 8px;
+  border: 1px solid var(--color-border-light);
+}
+
+.ahd-skill-label {
+  margin: 0 !important;
+}
+
+.ahd-skill-label .MuiFormControlLabel-label {
+  font-size: 0.85rem !important;
+  color: var(--color-text-primary) !important;
+}
+
+/* ── Count Chip ──────────────────────────────────────────── */
+
+.ahd-count-chip {
+  background-color: var(--color-primary-light) !important;
+  color: var(--color-primary) !important;
+  font-size: 0.72rem !important;
+  font-weight: 600 !important;
+  height: 20px !important;
+  border-radius: 5px !important;
+}
+
+/* ── Footer ──────────────────────────────────────────────── */
+
+.ahd-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid var(--color-border-light);
+}
+
+.ahd-cancel-btn {
+  text-transform: none !important;
+  font-size: 0.875rem !important;
+  font-weight: 500 !important;
+  border-radius: 8px !important;
+  color: var(--color-text-secondary) !important;
+  border-color: var(--color-border) !important;
+}
+
+.ahd-draft-btn {
+  text-transform: none !important;
+  font-size: 0.875rem !important;
+  font-weight: 500 !important;
+  border-radius: 8px !important;
+  color: var(--color-primary) !important;
+  border-color: var(--color-primary) !important;
+}
+
+.ahd-draft-btn:hover {
+  background-color: var(--color-primary-hover-6) !important;
+}
+
+.ahd-submit-btn {
+  text-transform: none !important;
+  font-size: 0.875rem !important;
+  font-weight: 600 !important;
+  border-radius: 8px !important;
+  background-color: var(--color-primary) !important;
+  color: var(--color-white) !important;
+  box-shadow: 0 2px 8px var(--color-primary-shadow-18) !important;
+}
+
+.ahd-submit-btn:hover {
+  background-color: var(--color-primary-dark) !important;
+}

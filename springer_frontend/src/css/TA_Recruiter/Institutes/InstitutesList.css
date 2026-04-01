@@ -1,0 +1,657 @@
+/* Container */
+.institutes-container {
+ padding:10px;
+  max-width: 100%;
+  margin: 0 auto;
+
+  height: 100vh;        /* take full screen */
+  overflow-y: hidden;   /* hide vertical scroll */
+}
+
+/* Main Layout - Flexbox for sidebar and content */
+.institutes-main-layout {
+  display: flex;
+  gap: 0;
+  height: calc(100vh - 48px);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Sidebar */
+.institutes-sidebar {
+  width: 300px;
+  min-width: 300px;
+  background: var(--color-bg);
+  border-right: 1px solid var(--color-primary);
+  display: flex;
+  flex-direction: column;
+  transition: all 0.3s ease;
+  position: sticky;
+  height: 90vh;        /* take full screen */
+  overflow-y: hidden;
+
+}
+
+.institutes-sidebar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-surface);
+}
+
+.institutes-sidebar-title {
+  color: var(--color-text);
+  font-weight: 600 !important;
+  margin: 0 !important;
+}
+
+.institutes-sidebar-close-btn {
+  color: var(--color-primary) !important;
+}
+
+.institutes-sidebar-content {
+  padding: 24px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
+}
+
+/* Custom scrollbar for sidebar content */
+.institutes-sidebar-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.institutes-sidebar-content::-webkit-scrollbar-track {
+  background: var(--color-bg);
+  border-radius: 3px;
+}
+
+.institutes-sidebar-content::-webkit-scrollbar-thumb {
+  background: var(--color-primary);
+  border-radius: 3px;
+}
+
+.institutes-sidebar-content::-webkit-scrollbar-thumb:hover {
+  background: var(--color-primary-hover);
+}
+
+.institutes-sidebar-footer {
+  padding: 16px 20px;
+  border-top: 1px solid var(--color-border);
+  background: var(--color-surface);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.institutes-sidebar-field {
+  margin: 0 !important;
+}
+
+.institutes-sidebar-cities {
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: 12px;
+  background: var(--color-surface);
+}
+
+.institutes-sidebar-cities-label {
+  color: var(--color-text);
+  font-weight: 600 !important;
+  margin-bottom: 8px !important;
+}
+
+.institutes-sidebar-cities-group {
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+/* Custom scrollbar for cities group */
+.institutes-sidebar-cities-group::-webkit-scrollbar {
+  width: 6px;
+}
+
+.institutes-sidebar-cities-group::-webkit-scrollbar-track {
+  background: var(--color-bg);
+  border-radius: 3px;
+}
+
+.institutes-sidebar-cities-group::-webkit-scrollbar-thumb {
+  background: var(--color-primary);
+  border-radius: 3px;
+}
+
+.institutes-sidebar-cities-group::-webkit-scrollbar-thumb:hover {
+  background: var(--color-primary-hover);
+}
+
+.institutes-sidebar-city-checkbox {
+  margin: 0 !important;
+}
+
+.institutes-sidebar-city-checkbox .MuiTypography-root {
+  font-size: 0.875rem;
+  color: var(--color-text);
+}
+
+.institutes-sidebar-results-count {
+  color: var(--color-text);
+  opacity: 0.7;
+  text-align: center;
+  padding: 0;
+  margin: 0 !important;
+  font-size: 0.875rem !important;
+}
+
+.institutes-sidebar-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.institutes-sidebar-save-btn {
+  color: var(--color-success) !important;
+  border: 1px solid var(--color-success) !important;
+  text-transform: none !important;
+  font-weight: 600 !important;
+}
+
+.institutes-sidebar-save-btn:hover {
+  background-color: rgba(76, 175, 80, 0.08) !important;
+  border-color: var(--color-success) !important;
+}
+
+.institutes-sidebar-clear-btn {
+  color: var(--color-danger) !important;
+  border: 1px solid var(--color-danger) !important;
+  text-transform: none !important;
+  font-weight: 600 !important;
+}
+
+.institutes-sidebar-clear-btn:hover {
+  background-color: rgba(246, 92, 92, 0.08) !important;
+  border-color: var(--color-danger) !important;
+}
+
+/* Content Area - Flex grows */
+.institutes-content {
+  flex: 1;
+  min-width: 0;
+  transition: all 0.3s ease;
+  padding-left: 24px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  height: 100%;
+}
+
+.institutes-content.sidebar-open {
+  flex: 1;
+}
+
+/* Header */
+.institutes-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  gap: 16px;
+  background: var(--color-surface);
+  padding: 16px 20px;
+  border-radius: 12px;
+  border: 1px solid var(--color-border);
+  position: relative;
+  flex-shrink: 0;
+}
+
+.institutes-hamburger-btn {
+  color: var(--color-primary) !important;
+  border: 1px solid var(--color-border) !important;
+  background: var(--color-surface) !important;
+  transition: all 0.3s ease !important;
+}
+
+.institutes-hamburger-btn:hover {
+  background: var(--color-primary) !important;
+  color: var(--color-bg) !important;
+  transform: scale(1.1);
+}
+
+.institutes-header-center {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.institutes-header-text {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.institutes-title {
+  color: var(--color-text);
+  font-weight: 600 !important;
+  margin: 0 !important;
+}
+
+.institutes-subtitle {
+  color: var(--color-text);
+  opacity: 0.7;
+  margin: 0 !important;
+}
+
+.add-institute-icon-btn {
+  background: var(--btn-bg) !important;
+  color: white !important;
+  transition: all 0.3s ease !important;
+  z-index: 1;
+}
+
+.add-institute-icon-btn:hover {
+  background: var(--btn-hover) !important;
+  transform: scale(1.1);
+}
+
+
+/* Table Styles */
+.institutes-table-container {
+  border-radius: 12px !important;
+  box-shadow: var(--shadow-card) !important;
+  border: 1px solid var(--color-border) !important;
+  background: var(--color-surface) !important;
+  
+  max-height: calc(100vh - 200px);
+  flex: 1;
+  /* min-height: 0; */
+  display: flex;
+  flex-direction: column;
+}
+
+.institutes-table-container table {
+  background: transparent !important;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.institutes-table-container thead {
+  flex-shrink: 0;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.institutes-table-container tbody {
+  overflow-y: auto;
+  flex: 1;
+  display: block;
+}
+
+/* Custom scrollbar for tbody */
+.institutes-table-container tbody::-webkit-scrollbar {
+  width: 8px;
+}
+
+.institutes-table-container tbody::-webkit-scrollbar-track {
+  background: var(--color-bg);
+  border-radius: 4px;
+}
+
+.institutes-table-container tbody::-webkit-scrollbar-thumb {
+  background: var(--color-primary);
+  border-radius: 4px;
+}
+
+.institutes-table-container tbody::-webkit-scrollbar-thumb:hover {
+  background: var(--color-primary-hover);
+}
+
+.institutes-table-container thead tr,
+.institutes-table-container tbody tr {
+  display: table;
+  width: 100%;
+  table-layout: fixed;
+}
+
+.table-header {
+  background: var(--color-primary) !important;
+  color: var(--color-bg) !important;
+  font-weight: 600 !important;
+  padding: 16px !important;
+  border-bottom: 2px solid var(--color-border) !important;
+}
+
+.institute-row {
+  transition: all 0.3s ease;
+  border-bottom: 1px solid var(--color-border) !important;
+  cursor: pointer;
+}
+
+.institute-row:hover {
+  background-color: var(--color-primary-hover) !important;
+  color: var(--color-text) !important;
+}
+
+.institute-row:hover td {
+  color: var(--color-text) !important;
+}
+
+.institute-row:hover .institute-table-icon,
+.institute-row:hover .location-table-icon {
+  color: var(--color-text) !important;
+}
+
+.institute-row:hover .institute-table-name,
+.institute-row:hover .institute-table-date {
+  color: var(--color-text) !important;
+}
+
+.institute-row:hover .location-cell .MuiTypography-root {
+  color: var(--color-text) !important;
+}
+
+.institute-row td {
+  padding: 16px !important;
+  color: var(--color-text) !important;
+  border-bottom: 1px solid var(--color-border) !important;
+}
+
+/* Institute Name Cell */
+.institute-name-cell {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.institute-table-icon {
+  color: var(--color-primary);
+  font-size: 20px;
+}
+
+.institute-table-name {
+  color: var(--color-text) !important;
+  font-weight: 600 !important;
+  margin-bottom: 4px !important;
+}
+
+.institute-table-date {
+  color: var(--color-text) !important;
+  opacity: 0.6;
+}
+
+/* Location Cell */
+.location-cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.location-table-icon {
+  color: var(--color-accent);
+  font-size: 18px;
+}
+
+.location-cell .MuiTypography-root {
+  color: var(--color-text) !important;
+}
+
+/* Chips */
+.tier-chip-table,
+.status-chip-table {
+  font-weight: 600 !important;
+  cursor: pointer;
+}
+
+/* Tier Chips */
+.tier-chip-tier1 {
+  background-color: var(--color-success) !important;
+  color: white !important;
+}
+
+.tier-chip-tier2 {
+  background-color: var(--color-primary) !important;
+  color: white !important;
+}
+
+.tier-chip-tier3 {
+  background-color: var(--color-warning) !important;
+  color: white !important;
+}
+
+/* Status Chips */
+.status-chip-table {
+  transition: all 0.2s ease;
+}
+
+.status-chip-active {
+  background-color: var(--color-success) !important;
+  color: white !important;
+}
+
+.status-chip-inactive {
+  background-color: var(--color-danger) !important;
+  color: white !important;
+}
+
+.status-chip-table:hover {
+  transform: scale(1.05);
+  opacity: 0.9;
+}
+
+/* Action Buttons */
+.action-buttons {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  align-items: center;
+}
+
+.action-btn {
+  border: 1px solid var(--color-border) !important;
+  transition: all 0.2s ease !important;
+  background: var(--color-surface) !important;
+}
+
+.edit-action-btn {
+  color: var(--color-warning) !important;
+}
+
+.edit-action-btn:hover {
+  background: var(--color-warning) !important;
+  color: white !important;
+  transform: scale(1.1);
+}
+
+.invite-action-btn {
+  color: var(--color-accent) !important;
+}
+
+.invite-action-btn:hover {
+  background: var(--color-accent) !important;
+  color: white !important;
+  transform: scale(1.1);
+}
+
+/* Make sure action buttons stay visible on row hover */
+.institute-row:hover .action-btn {
+  border-color: var(--color-text) !important;
+}
+
+/* Loading State */
+.institutes-loading {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-height: 400px;
+  gap: 16px;
+  color: var(--color-text);
+}
+
+/* No Results */
+.no-results-card {
+  border-radius: 12px !important;
+  box-shadow: var(--shadow-card) !important;
+  background: var(--color-surface) !important;
+  border: 1px solid var(--color-border) !important;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.no-results-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px !important;
+  text-align: center;
+}
+
+.no-results-icon {
+  font-size: 64px;
+  color: var(--color-primary);
+  opacity: 0.3;
+  margin-bottom: 16px;
+}
+
+.no-results-content .MuiTypography-root {
+  color: var(--color-text) !important;
+}
+
+/* Edit Dialog */
+.institutes-edit-dialog-content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding-top: 16px;
+}
+
+/* Override MUI Sidebar Field colors */
+.institutes-sidebar-field .MuiInputBase-root {
+  background: var(--color-surface) !important;
+  color: var(--color-text) !important;
+}
+
+.institutes-sidebar-field .MuiInputLabel-root {
+  color: var(--color-text) !important;
+  opacity: 0.7;
+}
+
+.institutes-sidebar-field .MuiOutlinedInput-notchedOutline {
+  border-color: var(--color-border) !important;
+}
+
+.institutes-sidebar-field .MuiInputBase-input {
+  color: var(--color-text) !important;
+}
+
+.institutes-sidebar-field .MuiSelect-select {
+  color: var(--color-text) !important;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .institutes-container {
+    padding: 16px;
+    height: 100vh;
+  }
+
+  .institutes-main-layout {
+    flex-direction: column;
+    height: calc(100vh - 32px);
+  }
+
+  .institutes-sidebar {
+    width: 100%;
+    max-width: 100%;
+    min-width: 100%;
+    position: relative;
+    border-right: none;
+    border-bottom: 1px solid var(--color-primary);
+    height: auto;
+    max-height: 40vh;
+  }
+
+  .institutes-content {
+    padding-left: 0;
+    padding-top: 16px;
+    flex: 1;
+    overflow: hidden;
+  }
+
+  .institutes-header {
+    padding: 16px;
+  }
+
+  .institutes-header-center {
+    position: static;
+    transform: none;
+    margin: 16px 0;
+  }
+
+  .add-institute-btn {
+    width: 100%;
+  }
+
+  .institutes-table-container {
+    max-height: calc(100vh - 350px);
+  }
+
+  .institutes-subtitle {
+    margin-left: 0;
+  }
+
+  .institutes-table-container {
+    overflow-x: auto;
+  }
+
+  .action-buttons {
+    flex-direction: column;
+    gap: 4px;
+  }
+}
+
+@media (max-width: 480px) {
+  .institutes-title {
+    font-size: 1.5rem;
+  }
+
+  .table-header {
+    font-size: 0.875rem;
+    padding: 12px 8px !important;
+  }
+
+  .institute-row td {
+    padding: 12px 8px !important;
+  }
+
+  .institute-name-cell {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .institutes-sidebar {
+    width: 100%;
+    max-height: 35vh;
+  }
+
+  .institutes-sidebar-content {
+    padding: 16px;
+  }
+
+  .institutes-table-container {
+    max-height: calc(100vh - 400px);
+  }
+}

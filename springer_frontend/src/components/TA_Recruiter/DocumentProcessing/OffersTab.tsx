@@ -1,0 +1,623 @@
+import { useState, useEffect } from 'react';
+import {
+  Box, Card, Typography, Button, CircularProgress, Chip,
+  Table, TableBody, TableCell, TableContainer, TableHead,
+  TableRow, TablePagination, Stack, IconButton, Checkbox,
+  Dialog, DialogTitle, DialogContent, DialogActions,
+  TextField, MenuItem,
+} from '@mui/material';
+import {
+  Refresh as RefreshIcon, EmojiEvents as OfferIcon,
+  Person as PersonIcon, Add as AddIcon,
+} from '@mui/icons-material';
+import { offerApi } from '../../../services/document.api';
+import { showToast } from '../../../utils/toast';
+import FilterSelect from '../../Common/FilterSelect';
+import type {
+  OfferLetterResponse, BulkOfferResponseRequest,
+  DocProcessingContextProps,
+} from '../../../types/DocumentCollection/document.types';
+import '../../../css/TA_Recruiter/DocumentProcessing/OffersTab.css';
+
+type ViewMode = 'eligible' | 'recorded';
+
+interface CandidateOfferRow {
+  candidateId: number;
+  candidateName: string;
+  selected: boolean;
+  issueDate: string;
+  response: 'PENDING' | 'ACCEPTED' | 'DECLINED';
+  respondedDate: string;
+  declineReason: string;
+}
+
+const today = () => new Date().toISOString().split('T')[0];
+
+const OffersTab = ({ context }: { context: DocProcessingContextProps }) => {
+  const { cycleId, cycleName } = context;
+
+  const [eligible, setEligible] = useState<OfferLetterResponse[]>([]);
+  const [offers, setOffers] = useState<OfferLetterResponse[]>([]);
+  const [loadingEligible, setLoadingEligible] = useState(true);
+  const [loadingOffers, setLoadingOffers] = useState(true);
+
+  const [viewMode, setViewMode] = useState<ViewMode>('eligible');
+  const [filterResponse, setFilterResponse] = useState('all');
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+
+  // Generate Offer dialog
+  const [offerDialog, setOfferDialog] = useState(false);
+  const [rows, setRows] = useState<CandidateOfferRow[]>([]);
+  const [bulkIssueDate, setBulkIssueDate] = useState(today());
+  const [submitting, setSubmitting] = useState(false);
+
+  // Single edit dialog (recorded offers)
+  const [singleDialog, setSingleDialog] = useState<{ open: boolean; offer: OfferLetterResponse | null }>({ open: false, offer: null });
+  const [singleResponse, setSingleResponse] = useState<'ACCEPTED' | 'DECLINED'>('ACCEPTED');
+  const [singleDate, setSingleDate] = useState(today());
+  const [singleReason, setSingleReason] = useState('');
+  const [singleSubmitting, setSingleSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (cycleId) { fetchEligible(); fetchOffers(); }
+    setPage(0);
+  }, [cycleId]);
+
+  const fetchEligible = async () => {
+    try {
+      setLoadingEligible(true);
+      const res = await offerApi.getOfferReadyCandidates(cycleId);
+      setEligible((res.success && res.data) ? res.data : []);
+    } catch { setEligible([]); }
+    finally { setLoadingEligible(false); }
+  };
+
+  const fetchOffers = async () => {
+    try {
+      setLoadingOffers(true);
+      const res = await offerApi.getAllOffers({ cycleId, size: 200 });
+      if (res.success && res.data) setOffers(res.data);
+    } catch (err: any) {
+      showToast(err.message || 'Failed to load offers', 'error');
+    } finally { setLoadingOffers(false); }
+  };
+
+  const refresh = () => { fetchEligible(); fetchOffers(); };
+
+  // Open generate offer dialog — init rows from eligible list
+  const openOfferDialog = () => {
+    setRows(eligible.map(c => ({
+      candidateId: c.candidateId,
+      candidateName: c.candidateName || `Candidate #${c.candidateId}`,
+      selected: true,
+      issueDate: today(),
+      response: 'PENDING',
+      respondedDate: '',
+      declineReason: '',
+    })));
+    setBulkIssueDate(today());
+    setOfferDialog(true);
+  };
+
+  const updateRow = (candidateId: number, field: keyof CandidateOfferRow, value: any) => {
+    setRows(prev => prev.map(r => r.candidateId === candidateId ? { ...r, [field]: value } : r));
+  };
+
+  const toggleRowSelect = (candidateId: number) => {
+    updateRow(candidateId, 'selected', !rows.find(r => r.candidateId === candidateId)?.selected);
+  };
+
+  const toggleAllRows = () => {
+    const allSelected = rows.every(r => r.selected);
+    setRows(prev => prev.map(r => ({ ...r, selected: !allSelected })));
+  };
+
+  const applyBulkIssueDateToAll = () => {
+    setRows(prev => prev.map(r => r.selected ? { ...r, issueDate: bulkIssueDate } : r));
+  };
+
+  const handleGenerateOffers = async () => {
+    const selected = rows.filter(r => r.selected);
+    if (selected.length === 0) { showToast('Select at least one candidate', 'error'); return; }
+
+    const invalid = selected.find(r => !r.issueDate);
+    if (invalid) { showToast(`Set issue date for ${invalid.candidateName}`, 'error'); return; }
+
+    const declinedMissingReason = selected.find(r => r.response === 'DECLINED' && !r.declineReason.trim());
+    if (declinedMissingReason) { showToast(`Enter decline reason for ${declinedMissingReason.candidateName}`, 'error'); return; }
+
+    const respondedMissingDate = selected.find(r => r.response !== 'PENDING' && !r.respondedDate);
+    if (respondedMissingDate) { showToast(`Enter response date for ${respondedMissingDate.candidateName}`, 'error'); return; }
+
+    try {
+      setSubmitting(true);
+
+      // Step 1: generate offer records
+      const genRes = await offerApi.bulkGenerateOffers({
+        candidateIds: selected.map(r => r.candidateId),
+        cycleId,
+      });
+      if (!genRes.success) { showToast('Failed to create offer records', 'error'); return; }
+
+      // Step 2: fetch new offer IDs
+      const offersRes = await offerApi.getAllOffers({ cycleId, size: 500 });
+      const allOffers = (offersRes.success && offersRes.data) ? offersRes.data : [];
+
+      // Step 3: record responses for non-PENDING
+      const toRespond = selected.filter(r => r.response !== 'PENDING');
+      if (toRespond.length > 0) {
+        const bulkReqs: BulkOfferResponseRequest[] = toRespond.map(r => {
+          const offer = allOffers.find(o => o.candidateId === r.candidateId && o.response === 'PENDING');
+          return {
+            offerId: offer?.offerId ?? 0,
+            response: r.response,
+            respondedDate: r.respondedDate,
+            declineReason: r.response === 'DECLINED' ? r.declineReason : undefined,
+          };
+        }).filter(r => r.offerId !== 0);
+
+        if (bulkReqs.length > 0) await offerApi.bulkRecordResponse(bulkReqs);
+      }
+
+      showToast(`Offers generated for ${selected.length} candidate(s)`, 'success');
+      setOfferDialog(false);
+      setViewMode('recorded');
+      refresh();
+    } catch (err: any) {
+      showToast(err.message || 'Failed to generate offers', 'error');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleSingleSave = async () => {
+    if (!singleDialog.offer) return;
+    if (!singleDate) { showToast('Enter response date', 'error'); return; }
+    if (singleResponse === 'DECLINED' && !singleReason.trim()) { showToast('Enter decline reason', 'error'); return; }
+    try {
+      setSingleSubmitting(true);
+      const res = await offerApi.recordOfferResponse(singleDialog.offer.offerId, {
+        response: singleResponse,
+        respondedDate: singleDate,
+        declineReason: singleResponse === 'DECLINED' ? singleReason.trim() : undefined,
+      });
+      if (res.success) {
+        showToast('Response recorded', 'success');
+        setSingleDialog({ open: false, offer: null });
+        refresh();
+      }
+    } catch (err: any) {
+      showToast(err.message || 'Failed to record response', 'error');
+    } finally { setSingleSubmitting(false); }
+  };
+
+  const filteredOffers = offers.filter(o => filterResponse === 'all' || o.response === filterResponse);
+  const paginatedOffers = filteredOffers.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
+
+  const accepted = offers.filter(o => o.response === 'ACCEPTED').length;
+  const declined = offers.filter(o => o.response === 'DECLINED').length;
+  const pending  = offers.filter(o => o.response === 'PENDING').length;
+
+  const formatDate = (d: string | null) =>
+    d ? new Date(d).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : '—';
+
+  const RESPONSE_CLASS: Record<string, string> = {
+    PENDING:  'oft-chip oft-chip--pending',
+    ACCEPTED: 'oft-chip oft-chip--accepted',
+    DECLINED: 'oft-chip oft-chip--declined',
+  };
+
+  const loading = loadingEligible || loadingOffers;
+  const selectedRows = rows.filter(r => r.selected);
+
+  return (
+    <Box className="oft-page">
+      <Card className="oft-card">
+
+        {/* Header */}
+        <Box className="oft-header">
+          <Box className="oft-header-row">
+            <Box>
+              <Typography className="oft-title">Offer Tracking</Typography>
+              <Typography className="oft-subtitle">
+                {cycleName} · Only candidates with all documents approved appear here
+              </Typography>
+            </Box>
+            <Stack direction="row" spacing={1} alignItems="center">
+              <IconButton size="small" onClick={refresh} title="Refresh" className="oft-refresh-btn">
+                <RefreshIcon fontSize="small" />
+              </IconButton>
+              {viewMode === 'eligible' && eligible.length > 0 && (
+                <Button
+                  variant="contained"
+                  startIcon={<AddIcon />}
+                  onClick={openOfferDialog}
+                  className="oft-generate-btn"
+                >
+                  Generate Offer
+                </Button>
+              )}
+            </Stack>
+          </Box>
+        </Box>
+
+        <Box className="oft-separator" />
+
+        {/* View Toggle + Stats */}
+        <Box className="oft-filter-section">
+          <Box className="oft-filter-row">
+            <Box className="oft-toggle">
+              <button
+                className={`oft-toggle-btn ${viewMode === 'eligible' ? 'oft-toggle-btn--active' : ''}`}
+                onClick={() => { setViewMode('eligible'); setPage(0); }}
+              >
+                Eligible to Offer
+                <span className="oft-toggle-badge">{eligible.length}</span>
+              </button>
+              <button
+                className={`oft-toggle-btn ${viewMode === 'recorded' ? 'oft-toggle-btn--active' : ''}`}
+                onClick={() => { setViewMode('recorded'); setPage(0); }}
+              >
+                Recorded Offers
+                <span className="oft-toggle-badge">{offers.length}</span>
+              </button>
+            </Box>
+
+            <Box className="oft-filter-spacer" />
+
+            {viewMode === 'recorded' && (
+              <>
+                <FilterSelect label="Status" value={filterResponse} onChange={v => { setFilterResponse(v); setPage(0); }}>
+                  <MenuItem value="all">All</MenuItem>
+                  <MenuItem value="PENDING">Awaiting Response</MenuItem>
+                  <MenuItem value="ACCEPTED">Accepted</MenuItem>
+                  <MenuItem value="DECLINED">Declined</MenuItem>
+                </FilterSelect>
+                <Box className="oft-stats-inline">
+                  <Typography className="oft-stat-inline oft-stat-inline--pending">{pending} pending</Typography>
+                  <Typography className="oft-stat-inline oft-stat-inline--accepted">{accepted} accepted</Typography>
+                  <Typography className="oft-stat-inline oft-stat-inline--declined">{declined} declined</Typography>
+                  {offers.length > 0 && (
+                    <Typography className="oft-stat-inline oft-stat-inline--rate">
+                      {Math.round((accepted / offers.length) * 100)}% acceptance
+                    </Typography>
+                  )}
+                </Box>
+              </>
+            )}
+          </Box>
+        </Box>
+
+        <Box className="oft-separator" />
+
+        {/* Table */}
+        <Box className="oft-table-section">
+          {loading ? (
+            <Box className="oft-loading-state">
+              <CircularProgress size={32} sx={{ color: 'var(--color-primary)' }} />
+              <Typography className="oft-empty-text">Loading...</Typography>
+            </Box>
+          ) : viewMode === 'eligible' ? (
+
+            /* ── ELIGIBLE TABLE ── */
+            <TableContainer className="oft-table-container">
+              <Table stickyHeader>
+                <TableHead>
+                  <TableRow className="oft-table-head-row">
+                    <TableCell className="oft-table-head-cell">Candidate</TableCell>
+                    <TableCell className="oft-table-head-cell">Docs Status</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {eligible.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={2} className="oft-empty-cell">
+                        <OfferIcon className="oft-empty-icon" />
+                        <Typography className="oft-empty-text">No candidates with fully approved documents</Typography>
+                        <Typography className="oft-empty-sub">Go to ③ Verify Docs and approve all documents first</Typography>
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    eligible.map((c, idx) => (
+                      <TableRow key={c.candidateId} hover className={`oft-table-row ${idx % 2 === 0 ? 'oft-table-row--even' : 'oft-table-row--odd'}`}>
+                        <TableCell className="oft-table-cell">
+                          <Box className="oft-name-cell">
+                            <Box className="oft-name-icon-box"><PersonIcon className="oft-name-icon" /></Box>
+                            <Box>
+                              <Typography className="oft-row-primary">{c.candidateName || `Candidate #${c.candidateId}`}</Typography>
+                              <Typography className="oft-row-secondary">ID: {c.candidateId}</Typography>
+                            </Box>
+                          </Box>
+                        </TableCell>
+                        <TableCell className="oft-table-cell">
+                          <Chip label="All Docs Approved ✓" size="small" className="oft-chip oft-chip--accepted" />
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </TableContainer>
+
+          ) : (
+
+            /* ── RECORDED OFFERS TABLE ── */
+            <>
+              <TableContainer className="oft-table-container">
+                <Table stickyHeader>
+                  <TableHead>
+                    <TableRow className="oft-table-head-row">
+                      <TableCell className="oft-table-head-cell">Candidate</TableCell>
+                      <TableCell className="oft-table-head-cell">Issue Date</TableCell>
+                      <TableCell className="oft-table-head-cell">Response Status</TableCell>
+                      <TableCell className="oft-table-head-cell">Response Date</TableCell>
+                      <TableCell className="oft-table-head-cell">Decline Reason</TableCell>
+                      <TableCell className="oft-table-head-cell oft-table-head-cell--actions">Action</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {paginatedOffers.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={6} className="oft-empty-cell">
+                          <OfferIcon className="oft-empty-icon" />
+                          <Typography className="oft-empty-text">No offer records yet</Typography>
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      paginatedOffers.map((offer, idx) => (
+                        <TableRow key={offer.offerId} hover className={`oft-table-row ${idx % 2 === 0 ? 'oft-table-row--even' : 'oft-table-row--odd'}`}>
+                          <TableCell className="oft-table-cell">
+                            <Box className="oft-name-cell">
+                              <Box className="oft-name-icon-box"><PersonIcon className="oft-name-icon" /></Box>
+                              <Box>
+                                <Typography className="oft-row-primary">{offer.candidateName || `Candidate #${offer.candidateId}`}</Typography>
+                                <Typography className="oft-row-secondary">ID: {offer.candidateId}</Typography>
+                              </Box>
+                            </Box>
+                          </TableCell>
+                          <TableCell className="oft-table-cell">
+                            <Typography className="oft-row-secondary">{formatDate(offer.issueDate)}</Typography>
+                          </TableCell>
+                          <TableCell className="oft-table-cell">
+                            <Chip
+                              label={offer.response === 'PENDING' ? 'Awaiting Response' : offer.response === 'ACCEPTED' ? 'Accepted' : 'Declined'}
+                              size="small"
+                              variant="outlined"
+                              className={RESPONSE_CLASS[offer.response] ?? 'oft-chip'}
+                            />
+                          </TableCell>
+                          <TableCell className="oft-table-cell">
+                            <Typography className="oft-row-secondary">{formatDate(offer.respondedDate)}</Typography>
+                          </TableCell>
+                          <TableCell className="oft-table-cell">
+                            <Typography className="oft-decline-reason">{offer.declineReason || '—'}</Typography>
+                          </TableCell>
+                          <TableCell className="oft-table-cell oft-table-cell--actions">
+                            {offer.response === 'PENDING' && (
+                              <Button
+                                size="small"
+                                variant="outlined"
+                                className="oft-record-btn"
+                                onClick={() => {
+                                  setSingleResponse('ACCEPTED');
+                                  setSingleDate(today());
+                                  setSingleReason('');
+                                  setSingleDialog({ open: true, offer });
+                                }}
+                              >
+                                Record Response
+                              </Button>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+              <TablePagination
+                component="div"
+                count={filteredOffers.length}
+                page={page}
+                onPageChange={(_, p) => setPage(p)}
+                rowsPerPage={rowsPerPage}
+                onRowsPerPageChange={e => { setRowsPerPage(parseInt(e.target.value, 10)); setPage(0); }}
+                rowsPerPageOptions={[10, 25, 50]}
+                className="oft-pagination"
+              />
+            </>
+          )}
+        </Box>
+      </Card>
+
+      {/* ── Generate Offer Dialog ── */}
+      <Dialog open={offerDialog} onClose={() => setOfferDialog(false)} maxWidth="md" fullWidth>
+        <DialogTitle className="oft-dialog-title">
+          Generate Offers — {eligible.length} Eligible Candidate(s)
+        </DialogTitle>
+        <DialogContent>
+          <Stack spacing={2} sx={{ mt: 1 }}>
+
+            {/* Bulk issue date applicator */}
+            <Box className="oft-bulk-date-row">
+              <TextField
+                label="Apply Issue Date to All Selected"
+                type="date"
+                size="small"
+                value={bulkIssueDate}
+                onChange={e => setBulkIssueDate(e.target.value)}
+                InputLabelProps={{ shrink: true }}
+                className="oft-dialog-field"
+                sx={{ width: 240 }}
+              />
+              <Button size="small" variant="outlined" className="oft-apply-btn" onClick={applyBulkIssueDateToAll}>
+                Apply to Selected
+              </Button>
+            </Box>
+
+            {/* Per-candidate table */}
+            <TableContainer className="oft-dialog-table-container">
+              <Table size="small" stickyHeader>
+                <TableHead>
+                  <TableRow className="oft-table-head-row">
+                    <TableCell padding="checkbox" className="oft-table-head-cell">
+                      <Checkbox
+                        checked={rows.length > 0 && rows.every(r => r.selected)}
+                        indeterminate={rows.some(r => r.selected) && !rows.every(r => r.selected)}
+                        onChange={toggleAllRows}
+                        size="small"
+                        sx={{ color: 'var(--color-primary)', '&.Mui-checked': { color: 'var(--color-primary)' } }}
+                      />
+                    </TableCell>
+                    <TableCell className="oft-table-head-cell">Candidate</TableCell>
+                    <TableCell className="oft-table-head-cell">Issue Date *</TableCell>
+                    <TableCell className="oft-table-head-cell">Response</TableCell>
+                    <TableCell className="oft-table-head-cell">Response Date</TableCell>
+                    <TableCell className="oft-table-head-cell">Decline Reason</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {rows.map(row => (
+                    <TableRow key={row.candidateId} selected={row.selected} className="oft-dialog-row">
+                      <TableCell padding="checkbox">
+                        <Checkbox
+                          checked={row.selected}
+                          size="small"
+                          onChange={() => toggleRowSelect(row.candidateId)}
+                          sx={{ color: 'var(--color-primary)', '&.Mui-checked': { color: 'var(--color-primary)' } }}
+                        />
+                      </TableCell>
+                      <TableCell className="oft-table-cell">
+                        <Typography className="oft-row-primary" sx={{ fontSize: 'var(--text-sm)' }}>{row.candidateName}</Typography>
+                      </TableCell>
+                      <TableCell className="oft-table-cell">
+                        <TextField
+                          type="date"
+                          size="small"
+                          value={row.issueDate}
+                          onChange={e => updateRow(row.candidateId, 'issueDate', e.target.value)}
+                          disabled={!row.selected}
+                          InputLabelProps={{ shrink: true }}
+                          sx={{ width: 150 }}
+                        />
+                      </TableCell>
+                      <TableCell className="oft-table-cell">
+                        <TextField
+                          select
+                          size="small"
+                          value={row.response}
+                          onChange={e => updateRow(row.candidateId, 'response', e.target.value)}
+                          disabled={!row.selected}
+                          sx={{ width: 140 }}
+                        >
+                          <MenuItem value="PENDING">Pending</MenuItem>
+                          <MenuItem value="ACCEPTED">Accepted</MenuItem>
+                          <MenuItem value="DECLINED">Declined</MenuItem>
+                        </TextField>
+                      </TableCell>
+                      <TableCell className="oft-table-cell">
+                        <TextField
+                          type="date"
+                          size="small"
+                          value={row.respondedDate}
+                          onChange={e => updateRow(row.candidateId, 'respondedDate', e.target.value)}
+                          disabled={!row.selected || row.response === 'PENDING'}
+                          InputLabelProps={{ shrink: true }}
+                          sx={{ width: 150 }}
+                        />
+                      </TableCell>
+                      <TableCell className="oft-table-cell">
+                        <TextField
+                          size="small"
+                          placeholder="Reason..."
+                          value={row.declineReason}
+                          onChange={e => updateRow(row.candidateId, 'declineReason', e.target.value)}
+                          disabled={!row.selected || row.response !== 'DECLINED'}
+                          sx={{ width: 180 }}
+                        />
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+
+            <Typography sx={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-secondary)' }}>
+              {selectedRows.length} of {rows.length} candidates selected
+            </Typography>
+          </Stack>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button onClick={() => setOfferDialog(false)} className="oft-dialog-cancel-btn">Cancel</Button>
+          <Button
+            variant="contained"
+            onClick={handleGenerateOffers}
+            disabled={submitting || selectedRows.length === 0}
+            className="oft-dialog-accept-btn"
+          >
+            {submitting ? 'Generating...' : `Generate for ${selectedRows.length} Candidate(s)`}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* ── Single Record Response Dialog ── */}
+      <Dialog open={singleDialog.open} onClose={() => setSingleDialog({ open: false, offer: null })} maxWidth="xs" fullWidth>
+        <DialogTitle className="oft-dialog-title">
+          Record Response — {singleDialog.offer?.candidateName}
+        </DialogTitle>
+        <DialogContent>
+          <Stack spacing={2} sx={{ mt: 1 }}>
+            <TextField
+              select
+              label="Response *"
+              size="small"
+              fullWidth
+              value={singleResponse}
+              onChange={e => setSingleResponse(e.target.value as 'ACCEPTED' | 'DECLINED')}
+              className="oft-dialog-field"
+            >
+              <MenuItem value="ACCEPTED">Accepted</MenuItem>
+              <MenuItem value="DECLINED">Declined</MenuItem>
+            </TextField>
+            <TextField
+              label="Response Date *"
+              type="date"
+              size="small"
+              fullWidth
+              value={singleDate}
+              onChange={e => setSingleDate(e.target.value)}
+              InputLabelProps={{ shrink: true }}
+              className="oft-dialog-field"
+            />
+            {singleResponse === 'DECLINED' && (
+              <TextField
+                label="Decline Reason *"
+                size="small"
+                fullWidth
+                multiline
+                rows={3}
+                value={singleReason}
+                onChange={e => setSingleReason(e.target.value)}
+                className="oft-dialog-field"
+              />
+            )}
+          </Stack>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button onClick={() => setSingleDialog({ open: false, offer: null })} className="oft-dialog-cancel-btn">Cancel</Button>
+          <Button
+            variant="contained"
+            onClick={handleSingleSave}
+            disabled={singleSubmitting}
+            className={singleResponse === 'ACCEPTED' ? 'oft-dialog-accept-btn' : 'oft-dialog-decline-btn'}
+          >
+            {singleSubmitting ? 'Saving...' : 'Confirm'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </Box>
+  );
+};
+
+export default OffersTab;

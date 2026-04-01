@@ -1,0 +1,371 @@
+/* ===== PROGRAMS LIST — prefix: prog- ===== */
+
+.prog-page {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  gap: 4px;
+  background-color: var(--color-bg-secondary);
+  padding: 4px;
+}
+
+.prog-card {
+  border-radius: 12px !important;
+  border: 1px solid var(--color-card-border) !important;
+  box-shadow: 0 1px 3px 0 var(--opacity-shadow-light), 0 6px 16px -2px var(--opacity-shadow-dark) !important;
+  background-color: var(--color-surface) !important;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 0;
+}
+
+/* ── Header ── */
+.prog-header {
+  flex-shrink: 0;
+  padding: 20px 24px 12px 24px;
+  background-color: var(--color-surface);
+}
+
+.prog-header-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.prog-title {
+  font-size: var(--text-xl) !important;
+  font-weight: 700 !important;
+  color: var(--color-text-primary) !important;
+  line-height: 1.2 !important;
+  letter-spacing: -0.4px !important;
+  margin-bottom: 3px !important;
+}
+
+.prog-subtitle {
+  font-size: var(--text-sm) !important;
+  font-weight: 400 !important;
+  color: var(--color-text-secondary) !important;
+  line-height: 1.5 !important;
+}
+
+.prog-add-button {
+  text-transform: none !important;
+  font-size: var(--text-sm) !important;
+  font-weight: 600 !important;
+  padding: 8px 20px !important;
+  background-color: var(--color-primary) !important;
+  color: var(--color-white) !important;
+  box-shadow: 0 2px 8px var(--color-primary-shadow-18) !important;
+  transition: all 0.2s ease !important;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.prog-add-button:hover {
+  background-color: var(--color-primary-dark) !important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px var(--color-primary-shadow-28) !important;
+}
+
+/* ── Separator ── */
+.prog-separator {
+  border-top: 1px solid var(--color-grey-200);
+}
+
+/* ── Filter Section ── */
+.prog-filter-section {
+  flex-shrink: 0;
+  padding: 10px 24px;
+  background-color: var(--color-surface);
+}
+
+.prog-filter-row {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.prog-search-field {
+  width: 280px;
+}
+
+.prog-search-field .MuiOutlinedInput-root:hover {
+  background-color: var(--color-primary-hover-6);
+}
+
+.prog-search-field .MuiOutlinedInput-root.Mui-focused {
+  background-color: var(--color-primary-hover-4);
+}
+
+.prog-search-field .MuiOutlinedInput-root.Mui-focused fieldset {
+  border-color: var(--color-primary);
+}
+
+.prog-search-icon {
+  color: var(--color-primary) !important;
+}
+
+.prog-filter-spacer {
+  flex-grow: 1;
+}
+
+/* ── Table Section ── */
+.prog-table-section {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background-color: var(--color-surface);
+  min-height: 0;
+}
+
+.prog-loading-state {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  padding: 64px 0;
+}
+
+.prog-alert-wrapper {
+  padding: 24px;
+}
+
+.prog-table-container {
+  flex: 1;
+  overflow: auto !important;
+  min-height: 0;
+}
+
+/* ── Table Head ── */
+.prog-table-head-row {
+  background-color: var(--color-bg-table-header);
+  height: 48px;
+}
+
+.prog-table-head-cell {
+  font-size: var(--text-xs) !important;
+  font-weight: 700 !important;
+  color: var(--color-grey-600) !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.75px !important;
+  background-color: var(--color-bg-table-header) !important;
+  padding: 8px 16px !important;
+  border-bottom-color: var(--color-border-table) !important;
+}
+
+.prog-table-head-cell--actions {
+  text-align: right !important;
+}
+
+/* ── Table Rows ── */
+.prog-table-row {
+  cursor: pointer;
+  height: 68px;
+  transition: all 0.2s ease;
+}
+
+.prog-table-row--even {
+  background-color: var(--color-surface);
+}
+
+.prog-table-row--odd {
+  background-color: var(--color-surface-alt);
+}
+
+.prog-table-row td {
+  border-bottom: 1px solid var(--color-border-table);
+}
+
+.prog-table-row:hover {
+  background-color: var(--color-hover-bg) !important;
+  box-shadow: inset 0 2px 4px var(--color-primary-shadow-8);
+}
+
+.prog-table-cell {
+  padding: 12px 16px !important;
+  vertical-align: middle !important;
+}
+
+.prog-table-cell--actions {
+  text-align: right !important;
+}
+
+/* ── Name Cell ── */
+.prog-name-cell {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.prog-name-icon-box {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background-color: var(--color-icon-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.prog-name-icon {
+  font-size: 18px !important;
+  color: var(--color-primary) !important;
+}
+
+.prog-row-primary {
+  font-size: var(--text-sm) !important;
+  font-weight: 700 !important;
+  color: var(--color-text-primary) !important;
+  line-height: 1.4 !important;
+  margin: 0 !important;
+}
+
+.prog-row-secondary {
+  font-size: var(--text-xs) !important;
+  font-weight: 500 !important;
+  color: var(--color-text-secondary) !important;
+  line-height: 1.4 !important;
+  margin: 0 !important;
+}
+
+/* ── Status Chip ── */
+.prog-status-chip--active {
+  background-color: var(--color-success-light) !important;
+  color: var(--color-success-dark) !important;
+  border-color: var(--color-success-border) !important;
+  font-weight: 600 !important;
+  font-size: var(--text-xs) !important;
+}
+
+.prog-status-chip--inactive {
+  background-color: var(--color-inactive-bg) !important;
+  color: var(--color-text-secondary) !important;
+  border-color: var(--color-inactive-border) !important;
+  font-weight: 600 !important;
+  font-size: var(--text-xs) !important;
+}
+
+/* ── Action Buttons ── */
+.prog-action-button {
+  color: var(--color-action-btn) !important;
+  padding: 5px !important;
+  transition: all 0.2s ease !important;
+}
+
+.prog-action-button:hover {
+  color: var(--color-primary) !important;
+  background-color: var(--color-primary-hover-14) !important;
+}
+
+.prog-action-icon {
+  font-size: 18px !important;
+  color: var(--color-primary) !important;
+}
+
+/* ── Empty State ── */
+.prog-empty-cell {
+  padding-top: 48px !important;
+  padding-bottom: 48px !important;
+  text-align: center !important;
+}
+
+.prog-empty-icon {
+  font-size: 40px !important;
+  color: var(--color-empty-icon) !important;
+  margin-bottom: 12px !important;
+}
+
+.prog-empty-text {
+  font-size: var(--text-sm) !important;
+  font-weight: 500 !important;
+  color: var(--color-empty-text) !important;
+}
+
+/* ── Pagination ── */
+.prog-pagination {
+  border-top: 1px solid var(--color-border-dark) !important;
+  background-color: var(--color-surface) !important;
+  padding: 4px 10px !important;
+  flex-shrink: 0;
+}
+
+.prog-pagination .MuiTablePagination-selectLabel,
+.prog-pagination .MuiTablePagination-displayedRows {
+  font-size: 0.8125rem !important;
+  font-weight: 500 !important;
+  color: var(--color-grey-450) !important;
+  margin: 0 !important;
+}
+
+.prog-pagination .MuiInputBase-root {
+  margin-right: 32px !important;
+}
+
+.prog-pagination .MuiIconButton-root {
+  padding: 4px !important;
+  color: var(--color-text-secondary) !important;
+}
+
+.prog-pagination .MuiIconButton-root:hover {
+  background-color: var(--opacity-shadow-very-light) !important;
+  color: var(--color-grey-550) !important;
+}
+
+.prog-pagination .MuiIconButton-root.Mui-disabled {
+  color: var(--color-grey-350) !important;
+}
+
+/* ── Dialog ── */
+.prog-dialog-title {
+  font-size: var(--text-lg) !important;
+  font-weight: 700 !important;
+  color: var(--color-text-primary) !important;
+}
+
+.prog-dialog-field {
+  margin-bottom: 4px !important;
+}
+
+.prog-dialog-field .MuiOutlinedInput-root.Mui-focused fieldset {
+  border-color: var(--color-primary) !important;
+}
+
+.prog-dialog-field .MuiInputLabel-root.Mui-focused {
+  color: var(--color-primary) !important;
+}
+
+/* hide number input spinners */
+.prog-dialog-field input[type='number']::-webkit-inner-spin-button,
+.prog-dialog-field input[type='number']::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.prog-dialog-field input[type='number'] {
+  -moz-appearance: textfield;
+}
+
+.prog-dialog-cancel-btn {
+  text-transform: none !important;
+  color: var(--color-text-secondary) !important;
+  font-weight: 600 !important;
+}
+
+.prog-dialog-submit-btn {
+  text-transform: none !important;
+  background-color: var(--color-primary) !important;
+  color: var(--color-white) !important;
+  font-weight: 600 !important;
+}
+
+.prog-dialog-submit-btn:hover {
+  background-color: var(--color-primary-dark) !important;
+}

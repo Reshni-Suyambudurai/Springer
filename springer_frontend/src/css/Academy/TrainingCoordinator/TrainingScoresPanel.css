@@ -1,0 +1,277 @@
+/* ===== TRAINING SCORES PANEL — prefix: sc- ===== */
+
+.sc-page {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  gap: 4px;
+  background-color: var(--color-bg-secondary);
+  padding: 4px;
+}
+
+.sc-card {
+  border-radius: 12px !important;
+  border: 1px solid var(--color-card-border) !important;
+  box-shadow: 0 1px 3px 0 var(--opacity-shadow-light), 0 6px 16px -2px var(--opacity-shadow-dark) !important;
+  background-color: var(--color-surface) !important;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 0;
+}
+
+/* ── Loading ── */
+.sc-loading-wrap {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  padding: 80px 0;
+}
+
+/* ── Header ── */
+.sc-header {
+  flex-shrink: 0;
+  padding: 20px 24px 12px 24px;
+  background-color: var(--color-surface);
+}
+
+.sc-header-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.sc-title {
+  font-size: var(--text-xl) !important;
+  font-weight: 700 !important;
+  color: var(--color-text-primary) !important;
+  line-height: 1.2 !important;
+  letter-spacing: -0.4px !important;
+  margin-bottom: 3px !important;
+}
+
+.sc-subtitle {
+  font-size: var(--text-sm) !important;
+  font-weight: 400 !important;
+  color: var(--color-text-secondary) !important;
+  line-height: 1.5 !important;
+}
+
+.sc-add-button {
+  text-transform: none !important;
+  font-size: var(--text-sm) !important;
+  font-weight: 600 !important;
+  padding: 8px 20px !important;
+  background-color: var(--color-primary) !important;
+  color: var(--color-white) !important;
+  box-shadow: 0 2px 8px var(--color-primary-shadow-18) !important;
+  transition: all 0.2s ease !important;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.sc-add-button:hover {
+  background-color: var(--color-primary-dark) !important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px var(--color-primary-shadow-28) !important;
+}
+
+/* ── Separator ── */
+.sc-separator { border-top: 1px solid var(--color-grey-200); }
+
+/* ── Filter Section ── */
+.sc-filter-section {
+  flex-shrink: 0;
+  padding: 10px 24px;
+  background-color: var(--color-surface);
+}
+
+.sc-filter-row {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.sc-filter-spacer { flex-grow: 1; }
+
+.sc-course-pill {
+  font-size: var(--text-xs) !important;
+  font-weight: 600 !important;
+  color: var(--color-primary) !important;
+  background-color: var(--color-primary-light);
+  border: 1px solid var(--color-blue-100);
+  border-radius: 20px;
+  padding: 4px 12px;
+  white-space: nowrap;
+}
+
+/* ── Table Section ── */
+.sc-table-section {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background-color: var(--color-surface);
+  min-height: 0;
+}
+
+.sc-table-container { flex: 1; overflow: auto !important; min-height: 0; }
+
+.sc-table-head-row { background-color: var(--color-bg-table-header); height: 48px; }
+
+.sc-table-head-cell {
+  font-size: var(--text-xs) !important;
+  font-weight: 700 !important;
+  color: var(--color-grey-600) !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.75px !important;
+  background-color: var(--color-bg-table-header) !important;
+  padding: 8px 16px !important;
+  border-bottom-color: var(--color-border-table) !important;
+}
+
+.sc-table-row { height: 64px; transition: all 0.15s ease; }
+.sc-table-row--even { background-color: var(--color-surface); }
+.sc-table-row--odd  { background-color: var(--color-surface-alt); }
+.sc-table-row td { border-bottom: 1px solid var(--color-border-table); }
+.sc-table-row:hover { background-color: var(--color-hover-bg) !important; }
+
+.sc-table-cell { padding: 12px 16px !important; vertical-align: middle !important; }
+
+.sc-row-primary {
+  font-size: var(--text-sm) !important;
+  font-weight: 700 !important;
+  color: var(--color-text-primary) !important;
+  line-height: 1.4 !important;
+}
+
+.sc-row-secondary {
+  font-size: var(--text-xs) !important;
+  color: var(--color-text-secondary) !important;
+}
+
+.sc-score-filled {
+  font-size: var(--text-md) !important;
+  font-weight: 700 !important;
+  color: var(--color-text-primary) !important;
+}
+
+.sc-score-empty {
+  font-size: var(--text-sm) !important;
+  color: var(--color-text-disabled) !important;
+}
+
+.sc-review {
+  font-size: var(--text-sm) !important;
+  color: var(--color-text-secondary) !important;
+}
+
+/* ── Status chips ── */
+.sc-status-chip { font-size: var(--text-xs) !important; font-weight: 600 !important; border-radius: 6px !important; }
+.sc-status-chip--excellent { color: var(--color-success-dark) !important; border-color: var(--color-success-border) !important; background-color: var(--color-success-light) !important; }
+.sc-status-chip--good      { color: var(--color-primary) !important; border-color: var(--color-blue-100) !important; background-color: var(--color-primary-light) !important; }
+.sc-status-chip--average   { color: var(--color-warning) !important; border-color: var(--color-warning-border) !important; background-color: var(--color-warning-bg) !important; }
+.sc-status-chip--below     { color: var(--color-error-dark) !important; border-color: var(--color-error-border) !important; background-color: var(--color-error-light) !important; }
+
+/* ── Pagination ── */
+.sc-pagination {
+  border-top: 1px solid var(--color-border-dark) !important;
+  background-color: var(--color-surface) !important;
+  padding: 4px 10px !important;
+  flex-shrink: 0;
+}
+
+.sc-pagination .MuiTablePagination-selectLabel,
+.sc-pagination .MuiTablePagination-displayedRows {
+  font-size: 0.8125rem !important;
+  font-weight: 500 !important;
+  color: var(--color-grey-450) !important;
+  margin: 0 !important;
+}
+
+/* ── Empty State ── */
+.sc-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 64px 24px;
+}
+
+.sc-empty-icon { font-size: 40px !important; color: var(--color-empty-icon) !important; margin-bottom: 8px !important; }
+.sc-empty-text { font-size: var(--text-sm) !important; font-weight: 500 !important; color: var(--color-empty-text) !important; }
+
+/* ── Dialog ── */
+.sc-dialog-title {
+  font-size: var(--text-lg) !important;
+  font-weight: 700 !important;
+  color: var(--color-text-primary) !important;
+}
+
+.sc-dialog-field .MuiOutlinedInput-root.Mui-focused fieldset { border-color: var(--color-primary) !important; }
+.sc-dialog-field .MuiInputLabel-root.Mui-focused { color: var(--color-primary) !important; }
+
+.sc-dialog-cancel-btn { text-transform: none !important; color: var(--color-text-secondary) !important; font-weight: 600 !important; }
+
+.sc-dialog-submit-btn {
+  text-transform: none !important;
+  background-color: var(--color-primary) !important;
+  color: var(--color-white) !important;
+  font-weight: 600 !important;
+}
+
+.sc-dialog-submit-btn:hover { background-color: var(--color-primary-dark) !important; }
+
+/* ── Dialog student table ── */
+.sc-dlg-table-wrap {
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.sc-dlg-row {
+  display: grid;
+  grid-template-columns: 2fr 120px 2fr 140px;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--color-border-table);
+  transition: background-color 0.15s ease;
+}
+
+.sc-dlg-row:last-child { border-bottom: none; }
+
+.sc-dlg-row--header {
+  background-color: var(--color-bg-table-header);
+  padding: 8px 16px;
+}
+
+.sc-dlg-row--scored { background-color: var(--color-surface); }
+.sc-dlg-row:not(.sc-dlg-row--header):hover { background-color: var(--color-hover-bg); }
+
+.sc-dlg-col-label {
+  font-size: var(--text-xs) !important;
+  font-weight: 700 !important;
+  color: var(--color-grey-600) !important;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.sc-dlg-col--student { min-width: 0; }
+.sc-dlg-col--score   { display: flex; align-items: center; }
+.sc-dlg-col--review  { min-width: 0; }
+.sc-dlg-col--status  { display: flex; align-items: center; }
+
+/* ── Score input in dialog ── */
+.sc-score-input { width: 90px !important; }
+.sc-score-input .MuiOutlinedInput-root.Mui-focused fieldset { border-color: var(--color-primary) !important; }
+.sc-score-input input { text-align: center; font-weight: 700 !important; padding: 6px 8px !important; }
+
+.sc-review-input .MuiOutlinedInput-root.Mui-focused fieldset { border-color: var(--color-primary) !important; }
+.sc-review-input input { padding: 6px 10px !important; font-size: var(--text-sm) !important; }

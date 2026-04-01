@@ -1,0 +1,396 @@
+/* ===== DOCUMENT SUBMIT PAGE — prefix: dsub- ===== */
+
+/* ── Full Page Layout ── */
+.dsub-page {
+  min-height: 100vh;
+  background-color: var(--color-bg-secondary);
+  display: flex;
+  flex-direction: column;
+}
+
+.dsub-fullpage {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--color-bg-secondary);
+}
+
+.dsub-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  text-align: center;
+  padding: 40px;
+  max-width: 400px;
+}
+
+/* ── Header ── */
+.dsub-header {
+  background-color: var(--color-primary);
+  padding: 16px 24px;
+  display: flex;
+  align-items: center;
+}
+
+.dsub-logo {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.dsub-logo-text {
+  font-size: var(--text-lg) !important;
+  font-weight: 700 !important;
+  color: var(--color-white) !important;
+  line-height: 1.1 !important;
+}
+
+.dsub-logo-sub {
+  font-size: var(--text-xs) !important;
+  color: rgba(255,255,255,0.7) !important;
+}
+
+/* ── Content ── */
+.dsub-content {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  padding: 32px 16px;
+}
+
+.dsub-card {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  padding: 32px;
+  width: 100%;
+  max-width: 600px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  box-shadow: 0 4px 16px var(--opacity-shadow-medium);
+}
+
+/* ── Loading / Error ── */
+.dsub-spinner { color: var(--color-primary) !important; }
+
+.dsub-loading-text {
+  font-size: var(--text-sm) !important;
+  color: var(--color-text-secondary) !important;
+}
+
+.dsub-error-icon {
+  font-size: 56px !important;
+  color: var(--color-error) !important;
+}
+
+.dsub-error-title {
+  font-size: var(--text-lg) !important;
+  font-weight: 700 !important;
+  color: var(--color-text-primary) !important;
+}
+
+.dsub-error-desc {
+  font-size: var(--text-sm) !important;
+  color: var(--color-text-secondary) !important;
+  line-height: 1.5 !important;
+}
+
+.dsub-error-hint {
+  font-size: var(--text-xs) !important;
+  color: var(--color-text-muted) !important;
+}
+
+/* ── Welcome ── */
+.dsub-welcome {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.dsub-avatar {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background-color: var(--color-primary);
+  color: var(--color-white);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--text-lg);
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.dsub-welcome-title {
+  font-size: var(--text-lg) !important;
+  font-weight: 700 !important;
+  color: var(--color-text-primary) !important;
+  margin-bottom: 4px !important;
+}
+
+.dsub-welcome-sub {
+  font-size: var(--text-sm) !important;
+  color: var(--color-text-secondary) !important;
+  line-height: 1.5 !important;
+}
+
+/* ── Progress ── */
+.dsub-progress-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.dsub-progress-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.dsub-progress-label {
+  font-size: var(--text-sm) !important;
+  font-weight: 600 !important;
+  color: var(--color-text-primary) !important;
+}
+
+.dsub-progress-pct {
+  font-size: var(--text-sm) !important;
+  font-weight: 700 !important;
+  color: var(--color-primary) !important;
+}
+
+.dsub-progress-bar {
+  height: 8px !important;
+  border-radius: 4px !important;
+  background-color: var(--color-grey-225) !important;
+}
+
+.dsub-progress-bar .MuiLinearProgress-bar {
+  background-color: var(--color-primary) !important;
+  border-radius: 4px !important;
+}
+
+.dsub-progress-bar--complete .MuiLinearProgress-bar {
+  background-color: var(--color-success) !important;
+}
+
+/* ── Done Banner ── */
+.dsub-done-banner {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 20px;
+  background-color: var(--color-success-light);
+  border: 1px solid var(--color-success-border);
+  border-radius: 10px;
+}
+
+.dsub-done-icon {
+  font-size: 28px !important;
+  color: var(--color-success) !important;
+  flex-shrink: 0;
+}
+
+.dsub-done-title {
+  font-size: var(--text-md) !important;
+  font-weight: 700 !important;
+  color: var(--color-success-dark) !important;
+  margin-bottom: 2px !important;
+}
+
+.dsub-done-sub {
+  font-size: var(--text-sm) !important;
+  color: var(--color-success-dark) !important;
+}
+
+/* ── Document List ── */
+.dsub-doc-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.dsub-doc-list-title {
+  font-size: var(--text-md) !important;
+  font-weight: 700 !important;
+  color: var(--color-text-primary) !important;
+  margin-bottom: 4px !important;
+}
+
+.dsub-doc-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  background-color: var(--color-bg-primary);
+  transition: border-color 0.15s ease;
+}
+
+.dsub-doc-item--rejected {
+  border-color: var(--color-error-border);
+  background-color: var(--color-error-light);
+}
+
+.dsub-doc-item--approved {
+  border-color: var(--color-success-border);
+  background-color: var(--color-success-light);
+}
+
+.dsub-doc-left {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  flex: 1;
+  min-width: 0;
+}
+
+.dsub-doc-icon {
+  font-size: 24px !important;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.dsub-doc-icon--approved { color: var(--color-success) !important; }
+.dsub-doc-icon--rejected { color: var(--color-error) !important; }
+.dsub-doc-icon--pending  { color: var(--color-warning) !important; }
+.dsub-doc-icon--default  { color: var(--color-text-secondary) !important; }
+
+.dsub-doc-name {
+  font-size: var(--text-sm) !important;
+  font-weight: 600 !important;
+  color: var(--color-text-primary) !important;
+  margin-bottom: 2px !important;
+}
+
+.dsub-doc-rejection {
+  font-size: var(--text-xs) !important;
+  color: var(--color-error) !important;
+  line-height: 1.4 !important;
+}
+
+.dsub-doc-hint {
+  font-size: var(--text-xs) !important;
+  color: var(--color-warning) !important;
+}
+
+.dsub-doc-approved-text {
+  font-size: var(--text-xs) !important;
+  color: var(--color-success-dark) !important;
+  font-weight: 600 !important;
+}
+
+.dsub-doc-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+/* ── Status Chips ── */
+.dsub-chip {
+  font-size: var(--text-xs) !important;
+  font-weight: 600 !important;
+  border-radius: 6px !important;
+}
+
+.dsub-chip--approved {
+  color: var(--color-success-dark) !important;
+  background-color: var(--color-success-light) !important;
+  border-color: var(--color-success-border) !important;
+}
+
+.dsub-chip--rejected {
+  color: var(--color-error-dark) !important;
+  background-color: var(--color-error-light) !important;
+  border-color: var(--color-error-border) !important;
+}
+
+.dsub-chip--review {
+  color: var(--color-warning) !important;
+  background-color: var(--color-warning-bg) !important;
+  border-color: var(--color-warning-border) !important;
+}
+
+.dsub-chip--pending {
+  color: var(--color-primary) !important;
+  background-color: var(--color-primary-light) !important;
+  border-color: var(--color-blue-100) !important;
+}
+
+/* ── Upload Button ── */
+.dsub-upload-btn {
+  background-color: var(--color-primary) !important;
+  color: var(--color-white) !important;
+  font-weight: 600 !important;
+  text-transform: none !important;
+  border-radius: 8px !important;
+  font-size: var(--text-xs) !important;
+  white-space: nowrap;
+}
+
+.dsub-upload-btn:hover { background-color: var(--color-primary-dark) !important; }
+.dsub-upload-btn:disabled { background-color: var(--color-grey-300) !important; }
+
+.dsub-upload-btn--reupload {
+  background-color: var(--color-error) !important;
+}
+
+.dsub-upload-btn--reupload:hover {
+  background-color: var(--color-error-dark) !important;
+}
+
+.dsub-upload-spinner { color: var(--color-white) !important; }
+
+/* ── Expiry ── */
+.dsub-expiry {
+  padding: 10px 14px;
+  background-color: var(--color-warning-bg);
+  border: 1px solid var(--color-warning-border);
+  border-radius: 8px;
+}
+
+.dsub-expiry-text {
+  font-size: var(--text-xs) !important;
+  color: var(--color-warning-text) !important;
+}
+
+/* ── Instructions ── */
+.dsub-instructions {
+  padding: 16px;
+  background-color: var(--color-bg-secondary);
+  border-radius: 8px;
+  border: 1px solid var(--color-border-light);
+}
+
+.dsub-instructions-title {
+  font-size: var(--text-sm) !important;
+  font-weight: 700 !important;
+  color: var(--color-text-primary) !important;
+  margin-bottom: 8px !important;
+}
+
+.dsub-instructions-list {
+  margin: 0;
+  padding-left: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.dsub-instructions-list li {
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+  line-height: 1.5;
+}
+
+@media (max-width: 640px) {
+  .dsub-card { padding: 20px 16px; }
+  .dsub-doc-item { flex-direction: column; align-items: flex-start; }
+  .dsub-doc-right { width: 100%; justify-content: space-between; }
+}

@@ -1,0 +1,435 @@
+/* ========== App-layout pattern ========== */
+.dd-container {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+  background-color: var(--color-bg);
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+/* ========== Header — fixed, never scrolls ========== */
+.dd-header {
+  flex-shrink: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 16px !important;
+  background: var(--color-surface) !important;
+  padding: 16px 20px !important;
+  border-radius: 12px !important;
+  border: 1px solid var(--color-border) !important;
+  box-shadow: none !important;
+  position: relative;
+}
+
+.dd-back-btn {
+  color: var(--color-primary) !important;
+  border: 1px solid var(--color-border) !important;
+  background: var(--color-surface) !important;
+  transition: all 0.3s ease !important;
+  z-index: 1;
+}
+
+.dd-back-btn:hover {
+  background: var(--color-primary) !important;
+  color: var(--color-surface) !important;
+  transform: scale(1.1);
+}
+
+.dd-header-center {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  pointer-events: none;
+}
+
+.dd-header-title {
+  color: var(--color-text) !important;
+  font-weight: 700 !important;
+  margin: 0 !important;
+}
+
+.dd-header-sub {
+  color: var(--color-text-muted) !important;
+  font-size: 0.85rem !important;
+  margin: 0 !important;
+}
+
+.dd-header-spacer {
+  width: 40px;
+  flex-shrink: 0;
+}
+
+/* ========== Loading / Not Found ========== */
+.dd-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 80px 24px;
+}
+
+.dd-loading-spinner {
+  color: var(--color-primary) !important;
+}
+
+.dd-loading-text {
+  color: var(--color-text-muted) !important;
+}
+
+.dd-not-found {
+  color: var(--color-text-muted) !important;
+  text-align: center;
+  padding: 60px;
+}
+
+/* ========== Scrollable content ========== */
+.dd-content {
+  flex: 1;
+  overflow-y: auto;
+  padding-bottom: 6%;
+}
+
+.dd-content > * + * {
+  margin-top: 16px;
+}
+
+.dd-content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.dd-content::-webkit-scrollbar-track {
+  background: var(--color-bg);
+  border-radius: 4px;
+}
+
+.dd-content::-webkit-scrollbar-thumb {
+  background: var(--color-primary);
+  border-radius: 4px;
+}
+
+.dd-content::-webkit-scrollbar-thumb:hover {
+  background: var(--color-primary-hover);
+}
+
+/* ========== Side-by-side row ========== */
+.dd-cards-row {
+  display: flex;
+  gap: 16px;
+  align-items: stretch;
+}
+
+.dd-card-left {
+  flex: 2;
+}
+
+.dd-card-right {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+/* ========== Cards ========== */
+.dd-card {
+  background-color: var(--color-surface) !important;
+  border: 1px solid var(--color-border) !important;
+  border-radius: 12px !important;
+  padding: 20px 24px !important;
+  box-shadow: none !important;
+}
+
+.dd-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.dd-card-heading {
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  color: var(--color-text-muted) !important;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  margin-bottom: 16px !important;
+}
+
+/* ========== Badges ========== */
+.dd-badges {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.dd-badge {
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+  background-color: transparent;
+}
+
+.dd-mode-on-campus {
+  border: 1.5px solid var(--color-blue);
+  color: var(--color-text);
+}
+
+.dd-mode-off-campus {
+  border: 1.5px solid var(--color-purple);
+  color: var(--color-text);
+}
+
+.dd-status-planned {
+  border: 1.5px solid var(--color-yellow);
+  color: var(--color-text);
+}
+
+.dd-status-scheduled {
+  border: 1.5px solid var(--color-blue);
+  color: var(--color-text);
+}
+
+.dd-status-ongoing {
+  border: 1.5px solid var(--color-orange);
+  color: var(--color-text);
+}
+
+.dd-status-completed {
+  border: 1.5px solid var(--color-success);
+  color: var(--color-text);
+}
+
+.dd-status-cancelled {
+  border: 1.5px solid var(--color-danger);
+  color: var(--color-text);
+}
+
+/* ========== Fields (left card) ========== */
+.dd-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.dd-field:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.dd-field-label {
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  color: var(--color-text-muted) !important;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.dd-field-value {
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  color: var(--color-text) !important;
+  line-height: 1.5;
+}
+
+/* ========== Date Card (right) ========== */
+.dd-date-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20px 0;
+  gap: 6px;
+  flex: 1;
+}
+
+.dd-date-label {
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  color: var(--color-text-muted) !important;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.dd-date-value {
+  font-size: 20px !important;
+  font-weight: 700 !important;
+  color: var(--color-primary) !important;
+}
+
+.dd-date-divider {
+  height: 1px;
+  background-color: var(--color-border);
+  width: 100%;
+}
+
+/* ========== Meta Footer (created / updated) ========== */
+.dd-meta-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.dd-meta-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.dd-meta-item--right {
+  text-align: right;
+  align-items: flex-end;
+}
+
+.dd-meta-label {
+  font-size: 11px !important;
+  color: var(--color-text-muted) !important;
+  font-weight: 600 !important;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.dd-meta-name {
+  font-size: 14px !important;
+  color: var(--color-text) !important;
+  font-weight: 600 !important;
+}
+
+.dd-meta-time {
+  font-size: 11px !important;
+  color: var(--color-text-muted) !important;
+}
+
+/* ========== Analytics Stats ========== */
+.dd-stats-row {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+.dd-stat-box {
+  flex: 1;
+  min-width: 140px;
+  background-color: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.dd-stat-value {
+  font-size: 32px !important;
+  font-weight: 700 !important;
+  color: var(--color-primary) !important;
+  line-height: 1 !important;
+}
+
+.dd-stat-label {
+  font-size: 12px !important;
+  color: var(--color-text-muted) !important;
+  font-weight: 500 !important;
+  text-align: center;
+}
+
+/* ========== Batch Time Table ========== */
+.dd-batch-table {
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.dd-batch-table-head {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 18px;
+  background-color: var(--color-bg);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.dd-batch-th {
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  color: var(--color-text-muted) !important;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.dd-batch-th--right {
+  text-align: right;
+}
+
+.dd-batch-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 18px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.dd-batch-row:last-child {
+  border-bottom: none;
+}
+
+.dd-batch-row:hover {
+  background-color: var(--color-bg);
+}
+
+.dd-batch-td {
+  font-size: 13px !important;
+  color: var(--color-text) !important;
+  font-weight: 500 !important;
+}
+
+.dd-batch-td--right {
+  text-align: right;
+}
+
+.dd-count-badge {
+  display: inline-block;
+  padding: 2px 12px;
+  border-radius: 12px;
+  border: 1.5px solid var(--color-primary);
+  color: var(--color-text);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+/* ========== Responsive ========== */
+@media (max-width: 768px) {
+  .dd-cards-row {
+    flex-direction: column;
+  }
+
+  .dd-header-center {
+    position: static;
+    transform: none;
+    flex: 1;
+    align-items: flex-start;
+    pointer-events: auto;
+  }
+
+  .dd-header-spacer {
+    display: none;
+  }
+}

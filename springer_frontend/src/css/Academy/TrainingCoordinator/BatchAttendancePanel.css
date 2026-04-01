@@ -1,0 +1,381 @@
+/* ===== BATCH ATTENDANCE PANEL — prefix: atp- ===== */
+
+.atp-page {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  gap: 4px;
+  background-color: var(--color-bg-secondary);
+  padding: 4px;
+}
+
+.atp-card {
+  border-radius: 12px !important;
+  border: 1px solid var(--color-card-border) !important;
+  box-shadow: 0 1px 3px 0 var(--opacity-shadow-light), 0 6px 16px -2px var(--opacity-shadow-dark) !important;
+  background-color: var(--color-surface) !important;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 0;
+}
+
+/* ── Loading ── */
+.atp-loading-wrap {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  padding: 80px 0;
+}
+
+/* ── Header ── */
+.atp-header {
+  flex-shrink: 0;
+  padding: 20px 24px 12px 24px;
+  background-color: var(--color-surface);
+}
+
+.atp-header-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.atp-title {
+  font-size: var(--text-xl) !important;
+  font-weight: 700 !important;
+  color: var(--color-text-primary) !important;
+  line-height: 1.2 !important;
+  letter-spacing: -0.4px !important;
+  margin-bottom: 3px !important;
+}
+
+.atp-subtitle {
+  font-size: var(--text-sm) !important;
+  font-weight: 400 !important;
+  color: var(--color-text-secondary) !important;
+  line-height: 1.5 !important;
+}
+
+.atp-add-button {
+  text-transform: none !important;
+  font-size: var(--text-sm) !important;
+  font-weight: 600 !important;
+  padding: 8px 20px !important;
+  background-color: var(--color-primary) !important;
+  color: var(--color-white) !important;
+  box-shadow: 0 2px 8px var(--color-primary-shadow-18) !important;
+  transition: all 0.2s ease !important;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.atp-add-button:hover {
+  background-color: var(--color-primary-dark) !important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px var(--color-primary-shadow-28) !important;
+}
+
+/* ── Separator ── */
+.atp-separator { border-top: 1px solid var(--color-grey-200); }
+
+/* ── Filter Section ── */
+.atp-filter-section {
+  flex-shrink: 0;
+  padding: 10px 24px;
+  background-color: var(--color-surface);
+}
+
+.atp-filter-row {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.atp-filter-spacer { flex-grow: 1; }
+
+.atp-filter-count {
+  font-size: var(--text-xs) !important;
+  font-weight: 600 !important;
+  color: var(--color-text-secondary) !important;
+  white-space: nowrap;
+}
+
+/* ── Table Section ── */
+.atp-table-section {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background-color: var(--color-surface);
+  min-height: 0;
+}
+
+.atp-table-container { flex: 1; overflow: auto !important; min-height: 0; }
+
+.atp-table-head-row { background-color: var(--color-bg-table-header); height: 48px; }
+
+.atp-table-head-cell {
+  font-size: var(--text-xs) !important;
+  font-weight: 700 !important;
+  color: var(--color-grey-600) !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.75px !important;
+  background-color: var(--color-bg-table-header) !important;
+  padding: 8px 16px !important;
+  border-bottom-color: var(--color-border-table) !important;
+}
+
+.atp-table-row { height: 68px; transition: all 0.2s ease; }
+.atp-table-row--even { background-color: var(--color-surface); }
+.atp-table-row--odd  { background-color: var(--color-surface-alt); }
+.atp-table-row td { border-bottom: 1px solid var(--color-border-table); }
+.atp-table-row:hover { background-color: var(--color-hover-bg) !important; box-shadow: inset 0 2px 4px var(--color-primary-shadow-8); }
+
+.atp-table-cell { padding: 12px 16px !important; vertical-align: middle !important; }
+
+/* ── Name Cell ── */
+.atp-name-cell { display: flex; align-items: center; gap: 12px; }
+
+.atp-name-icon-box {
+  width: 36px; height: 36px; border-radius: 8px;
+  background-color: var(--color-icon-bg);
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+
+.atp-name-icon { font-size: 18px !important; color: var(--color-primary) !important; }
+
+.atp-row-primary {
+  font-size: var(--text-sm) !important;
+  font-weight: 700 !important;
+  color: var(--color-text-primary) !important;
+  line-height: 1.4 !important;
+  margin: 0 !important;
+}
+
+.atp-row-secondary {
+  font-size: var(--text-xs) !important;
+  font-weight: 500 !important;
+  color: var(--color-text-secondary) !important;
+  line-height: 1.4 !important;
+  margin: 0 !important;
+}
+
+/* ── Batch Chip ── */
+.atp-batch-chip {
+  background-color: var(--color-primary-light) !important;
+  color: var(--color-primary) !important;
+  border-color: var(--color-blue-100) !important;
+  font-weight: 600 !important;
+  font-size: var(--text-xs) !important;
+}
+
+.atp-present-days {
+  font-size: var(--text-sm) !important;
+  font-weight: 700 !important;
+  color: var(--color-success-dark) !important;
+}
+
+.atp-absent-days {
+  font-size: var(--text-sm) !important;
+  font-weight: 700 !important;
+  color: var(--color-error) !important;
+}
+
+/* ── Attendance % Cell ── */
+.atp-pct-cell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 140px;
+}
+
+.atp-progress-bar {
+  flex: 1;
+  height: 6px !important;
+  border-radius: 3px !important;
+  background-color: var(--color-grey-225) !important;
+}
+
+.atp-progress-bar--excellent .MuiLinearProgress-bar { background-color: var(--color-success) !important; }
+.atp-progress-bar--acceptable .MuiLinearProgress-bar { background-color: var(--color-warning) !important; }
+.atp-progress-bar--low .MuiLinearProgress-bar { background-color: var(--color-error) !important; }
+
+.atp-pct-text {
+  font-size: var(--text-sm) !important;
+  font-weight: 700 !important;
+  white-space: nowrap;
+  min-width: 44px;
+}
+
+.atp-pct-text--excellent  { color: var(--color-success-dark) !important; }
+.atp-pct-text--acceptable { color: var(--color-warning-text) !important; }
+.atp-pct-text--low        { color: var(--color-error) !important; }
+
+/* ── Empty State ── */
+.atp-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 64px 24px;
+}
+
+.atp-empty-icon { font-size: 40px !important; color: var(--color-empty-icon) !important; margin-bottom: 8px !important; }
+.atp-empty-title { font-size: var(--text-sm) !important; font-weight: 600 !important; color: var(--color-empty-text) !important; }
+.atp-empty-subtitle { font-size: var(--text-xs) !important; color: var(--color-text-muted) !important; }
+
+/* ── Pagination ── */
+.atp-pagination {
+  border-top: 1px solid var(--color-border-dark) !important;
+  background-color: var(--color-surface) !important;
+  padding: 4px 10px !important;
+  flex-shrink: 0;
+}
+
+.atp-pagination .MuiTablePagination-selectLabel,
+.atp-pagination .MuiTablePagination-displayedRows {
+  font-size: 0.8125rem !important;
+  font-weight: 500 !important;
+  color: var(--color-grey-450) !important;
+  margin: 0 !important;
+}
+
+/* ── Dialog ── */
+.atp-dialog-title {
+  font-size: var(--text-lg) !important;
+  font-weight: 700 !important;
+  color: var(--color-text-primary) !important;
+}
+
+.atp-dlg-selectors {
+  display: flex;
+  gap: 12px;
+  padding: 16px 24px 12px;
+  flex-wrap: wrap;
+}
+
+.atp-dlg-field { min-width: 180px; flex: 1; }
+.atp-dlg-field .MuiOutlinedInput-root.Mui-focused fieldset { border-color: var(--color-primary) !important; }
+.atp-dlg-field .MuiInputLabel-root.Mui-focused { color: var(--color-primary) !important; }
+
+/* ── Dialog Stats Row ── */
+.atp-dlg-stats-row {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding: 12px 24px;
+  background-color: var(--color-bg-primary);
+  flex-wrap: wrap;
+}
+
+.atp-dlg-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-width: 60px;
+}
+
+.atp-dlg-stat-label {
+  font-size: var(--text-xs) !important;
+  font-weight: 600 !important;
+  color: var(--color-text-secondary) !important;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.atp-dlg-stat-value {
+  font-size: var(--text-xl) !important;
+  font-weight: 700 !important;
+  color: var(--color-text-primary) !important;
+  line-height: 1 !important;
+}
+
+.atp-dlg-stat-value--present { color: var(--color-success-dark) !important; }
+.atp-dlg-stat-value--absent  { color: var(--color-error) !important; }
+
+.atp-dlg-bulk-actions {
+  display: flex;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.atp-bulk-present-btn {
+  background-color: var(--color-success) !important;
+  color: var(--color-white) !important;
+  font-size: var(--text-xs) !important;
+  font-weight: 600 !important;
+  text-transform: none !important;
+  border-radius: 8px !important;
+}
+
+.atp-bulk-absent-btn {
+  color: var(--color-error) !important;
+  border-color: var(--color-error) !important;
+  font-size: var(--text-xs) !important;
+  font-weight: 600 !important;
+  text-transform: none !important;
+  border-radius: 8px !important;
+}
+
+/* ── Dialog Student List ── */
+.atp-dlg-student-list {
+  max-height: 360px;
+  overflow-y: auto;
+  padding: 8px 24px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.atp-dlg-student-list::-webkit-scrollbar { width: 4px; }
+.atp-dlg-student-list::-webkit-scrollbar-thumb { background: var(--color-grey-300); border-radius: 4px; }
+
+.atp-dlg-student-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--color-border-light);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  background-color: var(--color-surface);
+}
+
+.atp-dlg-student-row:hover { border-color: var(--color-primary); background-color: var(--color-primary-hover-4); }
+.atp-dlg-student-row--present { border-left: 3px solid var(--color-success); }
+.atp-dlg-student-row--absent  { border-left: 3px solid var(--color-error); background-color: var(--color-error-light); }
+
+.atp-dlg-student-info { flex: 1; min-width: 0; }
+
+.atp-student-checkbox {
+  width: 16px; height: 16px;
+  cursor: pointer;
+  accent-color: var(--color-primary);
+  flex-shrink: 0;
+}
+
+/* ── Attendance chips ── */
+.atp-attendance-chip { font-size: var(--text-xs) !important; font-weight: 600 !important; border-radius: 6px !important; }
+.atp-attendance-chip--present { color: var(--color-success-dark) !important; border-color: var(--color-success-border) !important; background-color: var(--color-success-light) !important; }
+.atp-attendance-chip--absent  { color: var(--color-error-dark) !important; border-color: var(--color-error-border) !important; background-color: var(--color-error-light) !important; }
+
+/* ── Dialog buttons ── */
+.atp-dialog-cancel-btn { text-transform: none !important; color: var(--color-text-secondary) !important; font-weight: 600 !important; }
+
+.atp-dialog-submit-btn {
+  text-transform: none !important;
+  background-color: var(--color-primary) !important;
+  color: var(--color-white) !important;
+  font-weight: 600 !important;
+}
+
+.atp-dialog-submit-btn:hover { background-color: var(--color-primary-dark) !important; }

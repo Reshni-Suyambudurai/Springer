@@ -1,0 +1,545 @@
+/* Drive Calendar Container */
+.drive-calendar-container {
+  width: calc(100vw - 120px) !important;
+  height: calc(100vh - 100px) !important;
+  max-width: 1800px;
+  display: grid;
+  grid-template-rows: auto 1fr;
+  background-color: var(--color-bg);
+  padding: 20px;
+  margin: 20px auto;
+  gap: 16px;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+/* Header Section - Consolidated Single Header */
+.drive-calendar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: relative;
+  padding: 16px 24px;
+  margin: 0;
+  background: var(--color-surface);
+  box-shadow: var(--shadow-card);
+  border-radius: 12px;
+  gap: 20px;
+  border: 1px solid var(--color-border);
+}
+
+.drive-calendar-header-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  z-index: 1;
+}
+
+.drive-calendar-year-select {
+  min-width: 100px;
+}
+
+.drive-calendar-year-dropdown {
+  background-color: var(--color-primary) !important;
+  color: var(--color-surface) !important;
+  border: 1px solid var(--color-primary) !important;
+  border-radius: 6px !important;
+  padding: 6px 12px !important;
+  font-weight: 700 !important;
+  font-size: 16px !important;
+}
+
+.drive-calendar-year-dropdown .MuiSelect-select {
+  padding: 6px 12px !important;
+  text-align: center !important;
+}
+
+.drive-calendar-year-dropdown:hover {
+  border-color: var(--color-primary) !important;
+}
+
+.drive-calendar-year-dropdown .MuiOutlinedInput-notchedOutline {
+  border: none !important;
+}
+
+.drive-calendar-year-dropdown .MuiSelect-icon {
+  color: var(--color-surface) !important;
+}
+
+.drive-calendar-nav-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.drive-calendar-nav-buttons {
+  display: flex;
+  gap: 4px;
+}
+
+.drive-calendar-nav-btn {
+  color: var(--color-text) !important;
+  border: 1px solid var(--color-border) !important;
+  border-radius: 6px !important;
+}
+
+.drive-calendar-nav-btn:hover {
+  background-color: var(--color-bg) !important;
+}
+
+.drive-calendar-today-btn {
+  color: var(--color-primary) !important;
+  border-color: var(--color-primary) !important;
+  text-transform: none !important;
+  font-weight: 500 !important;
+  padding: 6px 16px !important;
+  border-radius: 6px !important;
+}
+
+.drive-calendar-today-btn:hover {
+  background-color: var(--color-primary) !important;
+  color: var(--color-surface) !important;
+}
+
+.drive-calendar-month-year {
+  font-weight: 600 !important;
+  color: var(--color-text) !important;
+  min-width: 180px;
+}
+
+/* Center Title (Absolutely Positioned) */
+.drive-calendar-header-center {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  text-align: center;
+}
+
+.drive-calendar-title {
+  font-weight: 600 !important;
+  color: var(--color-text) !important;
+}
+
+/* Right Side */
+.drive-calendar-header-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  z-index: 1;
+}
+
+/* Add Drive Button (Circular) */
+.drive-calendar-add-btn {
+  background-color: var(--color-primary) !important;
+  color: var(--color-surface) !important;
+  transition: all 0.3s ease !important;
+  z-index: 1;
+}
+
+.drive-calendar-add-btn:hover {
+  background-color: var(--color-primary-hover) !important;
+  transform: scale(1.1);
+}
+
+/* Legend */
+.drive-calendar-legend {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+}
+
+.drive-calendar-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.drive-calendar-legend-color {
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+}
+
+.drive-legend-oncampus {
+  background-color: var(--color-orange);
+}
+
+.drive-legend-offcampus {
+  background-color: var(--color-purple);
+}
+
+.drive-calendar-legend-item Typography {
+  font-size: 14px !important;
+  color: var(--color-text-muted) !important;
+}
+
+/* Loading State */
+.drive-calendar-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 60px 20px;
+  background: var(--color-surface);
+  border-radius: 8px;
+}
+
+.drive-calendar-loading Typography {
+  color: var(--color-text-muted) !important;
+}
+
+/* Calendar Grid Container */
+.drive-calendar-grid-container {
+  display: grid;
+  grid-template-rows: auto 1fr;
+  background: var(--color-surface);
+  box-shadow: var(--shadow-card);
+  border-radius: 12px;
+  padding: 0;
+  margin: 0;
+  overflow: hidden;
+  min-height: 0;
+  border: 1px solid var(--color-border);
+}
+
+/* Weekday Header */
+.drive-calendar-weekday-header {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 0;
+  background-color: var(--color-bg);
+  border-bottom: 2px solid var(--color-primary);
+  margin: 0;
+}
+
+.drive-calendar-weekday-cell {
+  background-color: var(--color-bg);
+  padding: 12px 8px;
+  text-align: center;
+  border-right: 1px solid var(--color-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+}
+
+.drive-calendar-weekday-cell:last-child {
+  border-right: none;
+}
+
+.drive-calendar-weekday-cell Typography {
+  font-weight: 700 !important;
+  color: var(--color-text) !important;
+  font-size: 13px !important;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Calendar Grid */
+.drive-calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  grid-auto-rows: minmax(90px, 1fr);
+  gap: 0;
+  background-color: var(--color-surface);
+  border: none;
+  overflow: auto;
+  height: 100%;
+}
+
+/* Day Cell */
+.drive-calendar-day-cell {
+  background-color: var(--color-surface);
+  padding: 8px;
+  min-height: 90px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  transition: all 0.2s ease;
+  border-right: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--color-border);
+  box-sizing: border-box;
+}
+
+.drive-calendar-day-cell:nth-child(7n) {
+  border-right: none;
+}
+
+.drive-calendar-day-cell:hover {
+  border: 2px solid var(--color-primary) !important;
+  z-index: 10;
+  background-color: rgba(126, 163, 226, 0.03);
+}
+
+/* Highlight cell border when hovering over events inside */
+.drive-calendar-day-cell:has(.drive-calendar-event:hover) {
+  border: 2px solid var(--color-primary) !important;
+  z-index: 10;
+  background-color: rgba(126, 163, 226, 0.03);
+}
+
+.drive-calendar-empty-cell {
+  background-color: var(--color-bg);
+  opacity: 0.4;
+}
+
+.drive-calendar-today-cell {
+  background-color: rgba(126, 163, 226, 0.08) !important;
+  border: 2px solid var(--color-primary) !important;
+  box-shadow: inset 0 0 0 1px rgba(126, 163, 226, 0.2);
+}
+
+.drive-calendar-day-number {
+  font-weight: 600 !important;
+  color: var(--color-text) !important;
+  margin-bottom: 6px !important;
+  font-size: 14px !important;
+  text-align: left;
+  padding: 2px 4px;
+  border-radius: 4px;
+  align-self: flex-start;
+}
+
+.drive-calendar-today-cell .drive-calendar-day-number {
+  color: var(--color-surface) !important;
+  background-color: var(--color-primary) !important;
+  font-weight: 700 !important;
+  padding: 4px 8px;
+}
+
+/* Events Container */
+.drive-calendar-events {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  overflow-y: auto;
+  flex: 1;
+  padding-right: 2px;
+  /* Hide scrollbar but keep functionality */
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+}
+
+.drive-calendar-events::-webkit-scrollbar {
+  width: 4px;
+}
+
+.drive-calendar-events::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.drive-calendar-events::-webkit-scrollbar-thumb {
+  background: rgba(126, 163, 226, 0.2);
+  border-radius: 4px;
+}
+
+/* Hide scrollbar completely on hover */
+.drive-calendar-day-cell:hover .drive-calendar-events {
+  scrollbar-width: none;
+}
+
+.drive-calendar-day-cell:hover .drive-calendar-events::-webkit-scrollbar {
+  display: none;
+}
+
+/* Individual Event */
+.drive-calendar-event {
+  padding: 6px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: 2px;
+  position: relative;
+  min-height: 32px;
+}
+
+.drive-calendar-event:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Visual indicator for multi-day events */
+.drive-calendar-event::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: currentColor;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.drive-calendar-event:hover::after {
+  opacity: 0.4;
+}
+
+/* Event Colors Based on Drive Mode */
+.drive-event-oncampus {
+  background-color: rgba(249, 115, 22, 0.12);
+  border: 1px solid rgba(249, 115, 22, 0.4);
+  border-left: 4px solid var(--color-orange);
+  transition: all 0.2s ease;
+  color: var(--color-orange);
+}
+
+.drive-event-oncampus:hover {
+  background-color: rgba(249, 115, 22, 0.2);
+  border-color: var(--color-orange);
+  box-shadow: 0 0 0 1px rgba(249, 115, 22, 0.3);
+}
+
+.drive-event-offcampus {
+  background-color: rgba(139, 92, 246, 0.12);
+  border: 1px solid rgba(139, 92, 246, 0.4);
+  border-left: 4px solid var(--color-purple);
+  transition: all 0.2s ease;
+  color: var(--color-purple);
+}
+
+.drive-event-offcampus:hover {
+  background-color: rgba(139, 92, 246, 0.2);
+  border-color: var(--color-purple);
+  box-shadow: 0 0 0 1px rgba(139, 92, 246, 0.3);
+}
+
+.drive-event-name {
+  font-weight: 600 !important;
+  color: var(--color-text) !important;
+  font-size: 12px !important;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.4;
+}
+
+.drive-event-status {
+  font-weight: 600 !important;
+  color: var(--color-text-muted) !important;
+  font-size: 10px !important;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+/* More Events Indicator */
+.drive-calendar-more {
+  color: var(--color-primary) !important;
+  font-weight: 600 !important;
+  font-size: 11px !important;
+  padding: 4px 8px;
+  text-align: center;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: background-color 0.2s ease;
+}
+
+.drive-calendar-more:hover {
+  background-color: var(--color-bg);
+}
+
+/* Responsive Design */
+@media (max-width: 1280px) {
+  .drive-calendar-container {
+    width: calc(100vw - 80px) !important;
+    height: calc(100vh - 80px) !important;
+    padding: 16px;
+  }
+
+  .drive-calendar-grid {
+    grid-auto-rows: minmax(80px, 1fr);
+  }
+  
+  .drive-calendar-day-cell {
+    min-height: 80px;
+    padding: 6px;
+  }
+
+  .drive-calendar-grid-container {
+    padding: 0;
+  }
+
+  .drive-calendar-header {
+    padding: 12px 16px;
+  }
+
+  .drive-calendar-header-left {
+    gap: 12px;
+  }
+
+  .drive-calendar-nav-controls {
+    gap: 8px;
+  }
+}
+
+@media (max-width: 768px) {
+  .drive-calendar-container {
+    width: calc(100vw - 40px) !important;
+    height: calc(100vh - 40px) !important;
+    padding: 12px;
+    gap: 12px;
+  }
+
+  .drive-calendar-header {
+    flex-direction: column;
+    gap: 12px;
+    align-items: flex-start;
+    padding: 12px 16px;
+  }
+
+  .drive-calendar-grid-container {
+    padding: 0;
+  }
+
+  .drive-calendar-grid {
+    grid-auto-rows: minmax(70px, 1fr);
+  }
+
+  .drive-calendar-day-cell {
+    min-height: 70px;
+    padding: 4px;
+  }
+
+  .drive-calendar-weekday-cell {
+    padding: 8px 4px;
+  }
+
+  .drive-calendar-weekday-cell Typography {
+    font-size: 11px !important;
+  }
+
+  .drive-calendar-day-number {
+    font-size: 12px !important;
+  }
+
+  .drive-event-name {
+    font-size: 10px !important;
+  }
+
+  .drive-event-status {
+    font-size: 8px !important;
+  }
+
+  .drive-calendar-header-center {
+    position: static;
+    transform: none;
+    width: 100%;
+  }
+
+  .drive-calendar-header-right {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .drive-calendar-legend {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+}

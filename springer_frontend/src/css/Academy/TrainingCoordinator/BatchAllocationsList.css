@@ -1,0 +1,649 @@
+/* ===== BATCH ALLOCATIONS — prefix: ba- ===== */
+
+.ba-page {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  gap: 4px;
+  background-color: var(--color-bg-secondary);
+  padding: 4px;
+}
+
+.ba-card {
+  border-radius: 12px !important;
+  border: 1px solid var(--color-card-border) !important;
+  box-shadow: 0 1px 3px 0 var(--opacity-shadow-light), 0 6px 16px -2px var(--opacity-shadow-dark) !important;
+  background-color: var(--color-surface) !important;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 0;
+}
+
+/* ── Header ── */
+.ba-header {
+  flex-shrink: 0;
+  padding: 20px 24px 12px 24px;
+  background-color: var(--color-surface);
+}
+
+.ba-header-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.ba-title {
+  font-size: var(--text-xl) !important;
+  font-weight: 700 !important;
+  color: var(--color-text-primary) !important;
+  line-height: 1.2 !important;
+  letter-spacing: -0.4px !important;
+  margin-bottom: 3px !important;
+}
+
+.ba-subtitle {
+  font-size: var(--text-sm) !important;
+  font-weight: 400 !important;
+  color: var(--color-text-secondary) !important;
+  line-height: 1.5 !important;
+}
+
+.ba-add-button {
+  text-transform: none !important;
+  font-size: var(--text-sm) !important;
+  font-weight: 600 !important;
+  padding: 8px 20px !important;
+  background-color: var(--color-primary) !important;
+  color: var(--color-white) !important;
+  box-shadow: 0 2px 8px var(--color-primary-shadow-18) !important;
+  transition: all 0.2s ease !important;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.ba-add-button:hover {
+  background-color: var(--color-primary-dark) !important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px var(--color-primary-shadow-28) !important;
+}
+
+/* ── Separator ── */
+.ba-separator {
+  border-top: 1px solid var(--color-grey-200);
+}
+
+/* ── Filter Section ── */
+.ba-filter-section {
+  flex-shrink: 0;
+  padding: 10px 24px;
+  background-color: var(--color-surface);
+}
+
+.ba-filter-row {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.ba-filter-spacer {
+  flex-grow: 1;
+}
+
+/* ── Table Section ── */
+.ba-table-section {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background-color: var(--color-surface);
+  min-height: 0;
+}
+
+.ba-loading-state {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  padding: 64px 0;
+}
+
+.ba-table-container {
+  flex: 1;
+  overflow: auto !important;
+  min-height: 0;
+}
+
+/* ── Table Head ── */
+.ba-table-head-row {
+  background-color: var(--color-bg-table-header);
+  height: 48px;
+}
+
+.ba-table-head-cell {
+  font-size: var(--text-xs) !important;
+  font-weight: 700 !important;
+  color: var(--color-grey-600) !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.75px !important;
+  background-color: var(--color-bg-table-header) !important;
+  padding: 8px 16px !important;
+  border-bottom-color: var(--color-border-table) !important;
+}
+
+.ba-table-head-cell--actions {
+  text-align: right !important;
+}
+
+/* ── Table Rows ── */
+.ba-table-row {
+  height: 68px;
+  transition: all 0.2s ease;
+}
+
+.ba-table-row--even { background-color: var(--color-surface); }
+.ba-table-row--odd  { background-color: var(--color-surface-alt); }
+
+.ba-table-row td {
+  border-bottom: 1px solid var(--color-border-table);
+}
+
+.ba-table-row:hover {
+  background-color: var(--color-hover-bg) !important;
+  box-shadow: inset 0 2px 4px var(--color-primary-shadow-8);
+}
+
+.ba-table-cell {
+  padding: 12px 16px !important;
+  vertical-align: middle !important;
+}
+
+.ba-table-cell--actions {
+  text-align: right !important;
+}
+
+/* ── Name Cell ── */
+.ba-name-cell {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.ba-name-icon-box {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background-color: var(--color-icon-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.ba-name-icon {
+  font-size: 18px !important;
+  color: var(--color-primary) !important;
+}
+
+.ba-row-primary {
+  font-size: var(--text-sm) !important;
+  font-weight: 700 !important;
+  color: var(--color-text-primary) !important;
+  line-height: 1.4 !important;
+  margin: 0 !important;
+}
+
+.ba-row-secondary {
+  font-size: var(--text-xs) !important;
+  font-weight: 500 !important;
+  color: var(--color-text-secondary) !important;
+  line-height: 1.4 !important;
+  margin: 0 !important;
+}
+
+/* ── Chips ── */
+.ba-batch-chip {
+  background-color: var(--color-primary-light) !important;
+  color: var(--color-primary) !important;
+  border-color: var(--color-blue-100) !important;
+  font-weight: 600 !important;
+  font-size: var(--text-xs) !important;
+  height: 24px !important;
+}
+
+.ba-status-chip--active {
+  background-color: var(--color-success-light) !important;
+  color: var(--color-success-dark) !important;
+  border-color: var(--color-success-border) !important;
+  font-weight: 600 !important;
+  font-size: var(--text-xs) !important;
+  height: 24px !important;
+}
+
+.ba-status-chip--inactive {
+  background-color: var(--color-inactive-bg) !important;
+  color: var(--color-text-secondary) !important;
+  border-color: var(--color-inactive-border) !important;
+  font-weight: 600 !important;
+  font-size: var(--text-xs) !important;
+  height: 24px !important;
+}
+
+.ba-performance-chip {
+  font-weight: 600 !important;
+  font-size: var(--text-xs) !important;
+  height: 24px !important;
+}
+
+.ba-performance-chip--excellent {
+  background-color: var(--color-success-light) !important;
+  color: var(--color-success-dark) !important;
+  border-color: var(--color-success-border) !important;
+}
+
+.ba-performance-chip--good {
+  background-color: var(--color-primary-light) !important;
+  color: var(--color-primary) !important;
+  border-color: var(--color-blue-100) !important;
+}
+
+.ba-performance-chip--need {
+  background-color: var(--color-warning-bg) !important;
+  color: var(--color-warning-text) !important;
+  border-color: var(--color-warning-border) !important;
+}
+
+.ba-performance-chip--ready {
+  background-color: var(--color-secondary-light) !important;
+  color: var(--color-secondary-dark) !important;
+  border-color: var(--color-green-100) !important;
+}
+
+/* ── Attendance Bar ── */
+.ba-attendance-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ba-attendance-bar-bg {
+  width: 80px;
+  height: 6px;
+  border-radius: 3px;
+  background-color: var(--color-grey-225);
+  overflow: hidden;
+}
+
+.ba-attendance-bar-fill {
+  height: 100%;
+  border-radius: 3px;
+  background-color: var(--color-primary);
+  transition: width 0.3s ease;
+}
+
+.ba-attendance-bar-fill--low {
+  background-color: var(--color-error);
+}
+
+.ba-attendance-bar-fill--mid {
+  background-color: var(--color-warning);
+}
+
+/* ── Action Buttons ── */
+.ba-action-button {
+  color: var(--color-action-btn) !important;
+  padding: 5px !important;
+  transition: all 0.2s ease !important;
+}
+
+.ba-action-button:hover {
+  color: var(--color-primary) !important;
+  background-color: var(--color-primary-hover-14) !important;
+}
+
+.ba-action-icon {
+  font-size: 18px !important;
+  color: var(--color-primary) !important;
+}
+
+/* ── Empty State ── */
+.ba-empty-cell {
+  padding-top: 48px !important;
+  padding-bottom: 48px !important;
+  text-align: center !important;
+}
+
+.ba-empty-icon {
+  font-size: 40px !important;
+  color: var(--color-empty-icon) !important;
+  margin-bottom: 12px !important;
+}
+
+.ba-empty-text {
+  font-size: var(--text-sm) !important;
+  font-weight: 500 !important;
+  color: var(--color-empty-text) !important;
+}
+
+/* ── Pagination ── */
+.ba-pagination {
+  border-top: 1px solid var(--color-border-dark) !important;
+  background-color: var(--color-surface) !important;
+  padding: 4px 10px !important;
+  flex-shrink: 0;
+}
+
+.ba-pagination .MuiTablePagination-selectLabel,
+.ba-pagination .MuiTablePagination-displayedRows {
+  font-size: 0.8125rem !important;
+  font-weight: 500 !important;
+  color: var(--color-grey-450) !important;
+  margin: 0 !important;
+}
+
+.ba-pagination .MuiInputBase-root { margin-right: 32px !important; }
+
+.ba-pagination .MuiIconButton-root {
+  padding: 4px !important;
+  color: var(--color-text-secondary) !important;
+}
+
+.ba-pagination .MuiIconButton-root:hover {
+  background-color: var(--opacity-shadow-very-light) !important;
+  color: var(--color-grey-550) !important;
+}
+
+.ba-pagination .MuiIconButton-root.Mui-disabled {
+  color: var(--color-grey-350) !important;
+}
+
+/* ── Dialog ── */
+.ba-dialog-title {
+  font-size: var(--text-lg) !important;
+  font-weight: 700 !important;
+  color: var(--color-text-primary) !important;
+}
+
+.ba-dialog-field .MuiOutlinedInput-root.Mui-focused fieldset { border-color: var(--color-primary) !important; }
+.ba-dialog-field .MuiInputLabel-root.Mui-focused { color: var(--color-primary) !important; }
+
+/* hide number input spinners */
+.ba-dialog-field input[type='number']::-webkit-inner-spin-button,
+.ba-dialog-field input[type='number']::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.ba-dialog-field input[type='number'] { -moz-appearance: textfield; }
+
+.ba-dialog-cancel-btn {
+  text-transform: none !important;
+  color: var(--color-text-secondary) !important;
+  font-weight: 600 !important;
+}
+
+.ba-dialog-submit-btn {
+  text-transform: none !important;
+  background-color: var(--color-primary) !important;
+  color: var(--color-white) !important;
+  font-weight: 600 !important;
+}
+
+.ba-dialog-submit-btn:hover {
+  background-color: var(--color-primary-dark) !important;
+}
+
+/* ── Count Badge ── */
+.ba-count-badge {
+  font-size: var(--text-xs) !important;
+  font-weight: 600 !important;
+  color: var(--color-primary) !important;
+  background-color: var(--color-primary-light) !important;
+  padding: 4px 10px;
+  border-radius: 12px;
+  white-space: nowrap;
+}
+
+/* ── Candidate Section in Dialog ── */
+.ba-candidate-section {
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.ba-candidate-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background-color: var(--color-bg-table-header);
+  border-bottom: 1px solid var(--color-border);
+  gap: 12px;
+}
+
+.ba-candidate-section-title {
+  font-size: var(--text-sm) !important;
+  font-weight: 700 !important;
+  color: var(--color-text-primary) !important;
+}
+
+.ba-selected-count {
+  color: var(--color-primary);
+  font-weight: 700;
+}
+
+.ba-candidate-search {
+  width: 260px;
+}
+
+.ba-candidate-search .MuiOutlinedInput-root.Mui-focused fieldset {
+  border-color: var(--color-primary);
+}
+
+.ba-no-candidates {
+  padding: 32px;
+  text-align: center;
+}
+
+.ba-candidate-list {
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.ba-candidate-list-header {
+  padding: 6px 14px;
+  border-bottom: 1px solid var(--color-border-light);
+  background-color: var(--color-surface);
+}
+
+.ba-select-all-label {
+  font-size: var(--text-sm) !important;
+  font-weight: 600 !important;
+  color: var(--color-text-primary) !important;
+}
+
+.ba-candidate-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 8px;
+  padding: 10px 14px;
+}
+
+.ba-candidate-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 10px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  cursor: pointer;
+  background-color: var(--color-surface);
+  transition: all 0.15s ease;
+}
+
+.ba-candidate-card:hover {
+  border-color: var(--color-primary);
+  background-color: var(--color-primary-hover-4);
+}
+
+.ba-candidate-card--selected {
+  border-color: var(--color-primary);
+  background-color: var(--color-primary-hover-6);
+}
+
+.ba-candidate-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.ba-candidate-name {
+  font-size: var(--text-sm) !important;
+  font-weight: 700 !important;
+  color: var(--color-text-primary) !important;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ba-candidate-meta {
+  font-size: var(--text-xs) !important;
+  font-weight: 500 !important;
+  color: var(--color-text-secondary) !important;
+}
+
+.ba-candidate-email {
+  font-size: var(--text-xs) !important;
+  color: var(--color-text-secondary) !important;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ── Candidate Table in Dialog ── */
+.ba-loading-candidates {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 24px;
+  justify-content: center;
+}
+
+.ba-select-all-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background-color: var(--color-bg-table-header);
+  border-radius: 8px;
+  border: 1px solid var(--color-border-light);
+}
+
+.ba-select-all-label {
+  font-size: var(--text-sm) !important;
+  font-weight: 600 !important;
+  color: var(--color-text-primary) !important;
+  flex: 1;
+}
+
+.ba-bulk-batch {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.ba-bulk-batch-label {
+  font-size: var(--text-xs) !important;
+  color: var(--color-text-secondary) !important;
+  white-space: nowrap;
+}
+
+.ba-bulk-batch-select {
+  min-width: 100px !important;
+}
+
+.ba-candidate-table {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 360px;
+  overflow-y: auto;
+  padding: 4px 0;
+}
+
+.ba-candidate-table::-webkit-scrollbar { width: 6px; }
+.ba-candidate-table::-webkit-scrollbar-thumb { background: var(--color-grey-300); border-radius: 4px; }
+
+.ba-candidate-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--color-border-light);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  background-color: var(--color-bg-primary);
+}
+
+.ba-candidate-row:hover {
+  border-color: var(--color-primary);
+  background-color: var(--color-primary-hover-4);
+}
+
+.ba-candidate-row--selected {
+  border-color: var(--color-primary);
+  background-color: var(--color-primary-light);
+}
+
+.ba-candidate-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.ba-candidate-name {
+  font-size: var(--text-sm) !important;
+  font-weight: 600 !important;
+  color: var(--color-text-primary) !important;
+}
+
+.ba-candidate-meta {
+  font-size: var(--text-xs) !important;
+  color: var(--color-text-secondary) !important;
+}
+
+.ba-candidate-email {
+  font-size: var(--text-xs) !important;
+  color: var(--color-text-secondary) !important;
+}
+
+.ba-stage-chip--joined {
+  color: var(--color-success-dark) !important;
+  background-color: var(--color-success-light) !important;
+  border-color: var(--color-success-border) !important;
+  font-size: var(--text-xs) !important;
+  font-weight: 600 !important;
+}
+
+.ba-stage-chip--offered {
+  color: var(--color-info-dark) !important;
+  background-color: var(--color-info-light) !important;
+  border-color: var(--color-blue-100) !important;
+  font-size: var(--text-xs) !important;
+  font-weight: 600 !important;
+}
+
+.ba-batch-select {
+  min-width: 90px !important;
+  flex-shrink: 0;
+}
+
+.ba-batch-select .MuiOutlinedInput-root.Mui-focused fieldset {
+  border-color: var(--color-primary);
+}

@@ -1,0 +1,79 @@
+package com.kanini.springer.controller.Academy;
+
+import com.kanini.springer.dto.Academy.BatchCourseRequest;
+import com.kanini.springer.dto.Academy.BatchCourseResponse;
+import com.kanini.springer.dto.Authentication.ApiResponse;
+import com.kanini.springer.service.Academy.IBatchCourseService;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/academy/batch-courses")
+@RequiredArgsConstructor
+@Validated
+public class BatchCourseController {
+    
+    private final IBatchCourseService batchCourseService;
+    
+    @PostMapping
+    public ResponseEntity<ApiResponse<BatchCourseResponse>> linkCourseToBatch(
+            @Valid @RequestBody BatchCourseRequest request) {
+        BatchCourseResponse response = batchCourseService.linkCourseToBatch(request);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.success("Course linked to batch successfully", response));
+    }
+    
+    @GetMapping
+    public ResponseEntity<ApiResponse<List<BatchCourseResponse>>> getAllBatchCourses() {
+        List<BatchCourseResponse> response = batchCourseService.getAllBatchCourses();
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(ApiResponse.success("All batch-course links retrieved successfully", response));
+    }
+    
+    @GetMapping("/{batchCourseId}")
+    public ResponseEntity<ApiResponse<BatchCourseResponse>> getBatchCourseById(
+            @PathVariable Integer batchCourseId) {
+        BatchCourseResponse response = batchCourseService.getBatchCourseById(batchCourseId);
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(ApiResponse.success("Batch course retrieved successfully", response));
+    }
+    
+    @GetMapping("/program/{programId}")
+    public ResponseEntity<ApiResponse<List<BatchCourseResponse>>> getCoursesByProgram(
+            @PathVariable Integer programId) {
+        List<BatchCourseResponse> response = batchCourseService.getCoursesByProgram(programId);
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(ApiResponse.success("Courses for program " + programId + " retrieved successfully", response));
+    }
+    
+    @GetMapping("/program/{programId}/batch/{batchNumber}")
+    public ResponseEntity<ApiResponse<List<BatchCourseResponse>>> getCoursesByBatch(
+            @PathVariable Integer programId,
+            @PathVariable Integer batchNumber) {
+        List<BatchCourseResponse> response = batchCourseService.getCoursesByBatch(programId, batchNumber);
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(ApiResponse.success("Courses for batch " + batchNumber + " retrieved successfully", response));
+    }
+    
+    @GetMapping("/course/{courseId}")
+    public ResponseEntity<ApiResponse<List<BatchCourseResponse>>> getCoursesByTrainingCourse(
+            @PathVariable Integer courseId) {
+        List<BatchCourseResponse> response = batchCourseService.getCoursesByTrainingCourse(courseId);
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(ApiResponse.success("Batches linked to course " + courseId + " retrieved successfully", response));
+    }
+    
+    @DeleteMapping("/{batchCourseId}")
+    public ResponseEntity<ApiResponse<String>> removeCourseFromBatch(
+            @PathVariable Integer batchCourseId) {
+        batchCourseService.removeCourseFromBatch(batchCourseId);
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(ApiResponse.success("Course removed from batch successfully", null));
+    }
+}

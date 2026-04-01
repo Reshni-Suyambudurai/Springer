@@ -1,0 +1,44 @@
+{
+  "rules" : [ {
+    "field" : "cgpa",
+    "operator" : ">=",
+    "value" : 8.3,
+    "min" : null,
+    "max" : null,
+    "message" : "CGPA must be at least {value}",
+    "allowedValues" : null
+  }, {
+    "field" : "passoutYear",
+    "operator" : "BETWEEN",
+    "value" : null,
+    "min" : 2023,
+    "max" : 2026,
+    "message" : "Passout year must be between {min} and {max}",
+    "allowedValues" : null
+  }, {
+    "field" : "historyOfArrears",
+    "operator" : "<=",
+    "value" : 3.0,
+    "min" : null,
+    "max" : null,
+    "message" : "Number of arrears is <= {value}",
+    "allowedValues" : null
+  }, {
+    "field" : "degree",
+    "operator" : "IN",
+    "value" : null,
+    "min" : null,
+    "max" : null,
+    "message" : "Degree isn't eligible",
+    "allowedValues" : [ ]
+  }, {
+    "field" : "department",
+    "operator" : "IN",
+    "value" : null,
+    "min" : null,
+    "max" : null,
+    "message" : "Department isn't eligible",
+    "allowedValues" : [ ]
+  } ],
+  "logic" : "AND"
+}

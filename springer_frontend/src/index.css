@@ -1,0 +1,24 @@
+:root {
+  /* Typography Scale (only 5 sizes) */
+  --text-xs: 0.75rem;   /* 12px */
+  --text-sm: 0.875rem;  /* 14px */
+  --text-md: 1rem;      /* 16px (base) */
+  --text-lg: 1.25rem;   /* 20px */
+  --text-xl: 1.75rem;   /* 28px */
+}
+
+
+html, body {
+
+  overflow: hidden;   
+   
+}
+
+/* html, body {
+  height: 100%;
+  overflow: hidden;   
+}
+
+#root {
+  height: 100%;
+} */

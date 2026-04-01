@@ -1,0 +1,134 @@
+/* ===== ACADEMY DASHBOARD SHELL — prefix: acd- ===== */
+
+.acd-page {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background-color: var(--color-bg-secondary);
+  overflow: hidden;
+}
+
+/* ── Header ── */
+.acd-header {
+  flex-shrink: 0;
+  background-color: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+  box-shadow: 0 1px 4px var(--opacity-shadow-light);
+}
+
+.acd-header-inner {
+  padding: 20px 28px 0 28px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+/* ── Year Select ── */
+.acd-year-select {
+  min-width: 140px;
+}
+
+.acd-year-select .MuiOutlinedInput-root.Mui-focused fieldset {
+  border-color: var(--color-primary);
+}
+
+.acd-year-select .MuiInputLabel-root.Mui-focused {
+  color: var(--color-primary);
+}
+
+.acd-header-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.acd-title {
+  font-size: var(--text-xl) !important;
+  font-weight: 700 !important;
+  color: var(--color-text-primary) !important;
+  line-height: 1.2 !important;
+  letter-spacing: -0.4px !important;
+}
+
+.acd-subtitle {
+  font-size: var(--text-sm) !important;
+  font-weight: 400 !important;
+  color: var(--color-text-secondary) !important;
+  line-height: 1.5 !important;
+}
+
+/* ── Horizontal Tab Bar ── */
+.acd-tab-bar {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  padding: 12px 28px 0 28px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.acd-tab-bar::-webkit-scrollbar {
+  display: none;
+}
+
+.acd-tab-btn {
+  display: flex;
+  align-items: center;
+  padding: 10px 18px;
+  border: none;
+  border-bottom: 3px solid transparent;
+  background: transparent;
+  cursor: pointer;
+  border-radius: 8px 8px 0 0;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+  transition: color 0.18s ease, background-color 0.18s ease, border-color 0.18s ease;
+  font-family: inherit;
+  position: relative;
+  bottom: -1px;
+}
+
+.acd-tab-btn:hover {
+  color: var(--color-primary);
+  background-color: var(--color-primary-hover-6);
+}
+
+.acd-tab-btn--active {
+  color: var(--color-primary);
+  border-bottom-color: var(--color-primary);
+  background-color: var(--color-primary-hover-4);
+}
+
+.acd-tab-label {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  line-height: 1;
+}
+
+/* ── Content Area ── */
+.acd-content {
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+/* ── Year Filter Group ── */
+.acd-year-filter-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.acd-year-filter-label {
+  font-size: var(--text-xs) !important;
+  font-weight: 700 !important;
+  color: var(--color-text-secondary) !important;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
