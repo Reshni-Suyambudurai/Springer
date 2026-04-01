@@ -78,6 +78,85 @@
   color: var(--color-text-muted) !important;
 }
 
+/* Drive date + batch time rows */
+.schedule-drive-date-row,
+.schedule-drive-time-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--color-border);
+  gap: 12px;
+}
+
+.schedule-drive-field-label {
+  font-size: 0.875rem !important;
+  font-weight: 600 !important;
+  color: var(--color-text) !important;
+  white-space: nowrap;
+}
+
+.schedule-drive-optional {
+  font-weight: 400;
+  color: var(--color-text-muted);
+  font-size: 0.8rem;
+}
+
+.schedule-drive-field-value {
+  font-size: 0.875rem !important;
+  color: var(--color-text-muted) !important;
+}
+
+.schedule-drive-required {
+  color: var(--color-danger);
+  font-weight: 700;
+}
+
+.schedule-drive-field-label--error {
+  color: var(--color-danger) !important;
+}
+
+.schedule-drive-time-input-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+
+/* Native time input */
+.schedule-drive-time-input {
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 1rem;
+  font-family: inherit;
+  outline: none;
+  cursor: pointer;
+  min-width: 130px;
+  transition: border-color 0.2s ease;
+}
+
+.schedule-drive-time-input:focus {
+  border-color: var(--color-primary);
+}
+
+.schedule-drive-time-input--error {
+  border-color: var(--color-danger) !important;
+}
+
+.schedule-drive-time-error {
+  font-size: 0.75rem !important;
+  color: var(--color-danger) !important;
+}
+
+.schedule-drive-time-input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .schedule-drive-dialog-actions {
   padding: 16px 24px !important;
   background-color: var(--color-surface) !important;

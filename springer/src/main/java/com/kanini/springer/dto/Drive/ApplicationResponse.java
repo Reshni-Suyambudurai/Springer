@@ -20,6 +20,7 @@ public class ApplicationResponse {
     private Long candidateId;
     private String candidateName;
     private String candidateEmail;
+    private LocalDateTime batchTime;
     private String registrationCode;
     private String applicationStatus;
     private LocalDateTime createdAt;

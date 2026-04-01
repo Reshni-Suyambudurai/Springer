@@ -25,6 +25,7 @@ import DriveCalendar from './components/TA_Recruiter/DriveSchedule/DriveCalendar
 import AddSchedule from './components/TA_Recruiter/DriveSchedule/AddSchedule'
 import DriveCycle from './components/TA_Recruiter/DriveProcess/DriveCycle'
 import DriveList from './components/TA_Recruiter/DriveProcess/DriveList'
+import DriveDetails from './components/TA_Recruiter/DriveProcess/DriveDetails'
 import DriveCandidates from './components/TA_Recruiter/DriveProcess/DriveCandidates'
 import './App.css'
 
@@ -61,6 +62,7 @@ function App() {
         <Route path="/ta-recruiter/drive-schedules/add" element={<AddSchedule />} />
         <Route path="/drive-process/drive-cycle" element={<DriveCycle />} />
         <Route path="/drive-process/drive-list/:cycleId" element={<DriveList />} />
+        <Route path="/drive-process/drive-details/:driveId" element={<DriveDetails />} />
         <Route path="/drive-process/drive-candidates/:driveId" element={<DriveCandidates />} />
       </Route>
       

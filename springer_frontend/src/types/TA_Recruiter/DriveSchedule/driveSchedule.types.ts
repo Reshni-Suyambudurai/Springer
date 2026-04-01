@@ -111,4 +111,24 @@ export interface UpcomingDriveSummaryResponse {
   driveId: number;
   driveName: string;
   driveMode: DriveMode;
+  startDate: string; // YYYY-MM-DD
+}
+
+/**
+ * Request DTO for fetching drive analytics by drive ID
+ */
+export interface DriveIdRequest {
+  driveId: number;
+}
+
+/**
+ * Response DTO for drive analytics.
+ * Combines full drive schedule data with application-level analytics counts.
+ */
+export interface DriveAnalyticsResponse {
+  driveSchedule: DriveResponse;
+  totalApplications: number;
+  distinctBatchTimeCount: number;
+  /** Key = batch time ISO-8601 string (or "unscheduled"), Value = application count */
+  applicationsPerBatchTime: Record<string, number>;
 }

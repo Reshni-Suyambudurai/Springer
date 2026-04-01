@@ -41,6 +41,8 @@ const ScheduleDrive: React.FC<ScheduleDriveProps> = ({
   const [showConfirmDialog, setShowConfirmDialog] = useState<boolean>(false);
   const [loadingDrives, setLoadingDrives] = useState<boolean>(false);
   const [scheduling, setScheduling] = useState<boolean>(false);
+  const [batchTimeInput, setBatchTimeInput] = useState<string>("");
+  const [batchTimeError, setBatchTimeError] = useState<boolean>(false);
   const [errorMessages, setErrorMessages] = useState<string[]>([]);
   const [showErrorDialog, setShowErrorDialog] = useState<boolean>(false);
 
@@ -82,11 +84,18 @@ const ScheduleDrive: React.FC<ScheduleDriveProps> = ({
   const handleSelectDrive = (drive: UpcomingDriveSummaryResponse) => {
     setSelectedDrive(drive);
     setAnchorEl(null);
+    setBatchTimeInput("");
+    setBatchTimeError(false);
     setShowConfirmDialog(true);
   };
 
   const handleConfirm = async () => {
     if (!selectedDrive || !cycleId) return;
+
+    if (!batchTimeInput) {
+      setBatchTimeError(true);
+      return;
+    }
 
     const user = tokenstore.getUser();
     if (!user) {
@@ -96,9 +105,16 @@ const ScheduleDrive: React.FC<ScheduleDriveProps> = ({
 
     setScheduling(true);
     try {
+      // Build batchTime ISO string from drive's startDate + picked time
+      const batchTime =
+        selectedDrive.startDate && batchTimeInput
+          ? `${selectedDrive.startDate}T${batchTimeInput}:00`
+          : undefined;
+
       const response = await applicationApi.createApplications({
         driveId: selectedDrive.driveId,
         candidateIds: candidateIds,
+        batchTime,
         createdBy: user.userId,
       });
 
@@ -142,6 +158,8 @@ const ScheduleDrive: React.FC<ScheduleDriveProps> = ({
   const handleCloseDialog = () => {
     setShowConfirmDialog(false);
     setSelectedDrive(null);
+    setBatchTimeInput("");
+    setBatchTimeError(false);
   };
 
   const handleCloseMenu = () => {
@@ -210,6 +228,37 @@ const ScheduleDrive: React.FC<ScheduleDriveProps> = ({
           <Typography className="schedule-drive-count">
             {selectMode ? selectedCount : candidateIds.length} candidate(s) will be scheduled.
           </Typography>
+
+          {/* Drive date display */}
+          {selectedDrive?.startDate && (
+            <Box className="schedule-drive-date-row">
+              <Typography className="schedule-drive-field-label">Drive Date</Typography>
+              <Typography className="schedule-drive-field-value">
+                {new Date(selectedDrive.startDate).toLocaleDateString("en-IN", {
+                  day: "2-digit", month: "short", year: "numeric",
+                })}
+              </Typography>
+            </Box>
+          )}
+
+          {/* Batch time picker */}
+          <Box className="schedule-drive-time-row">
+            <Typography className={`schedule-drive-field-label${batchTimeError ? " schedule-drive-field-label--error" : ""}`}>
+              Batch Time <span className="schedule-drive-required">*</span>
+            </Typography>
+            <Box className="schedule-drive-time-input-wrap">
+              <input
+                type="time"
+                value={batchTimeInput}
+                onChange={(e) => { setBatchTimeInput(e.target.value); setBatchTimeError(false); }}
+                className={`schedule-drive-time-input${batchTimeError ? " schedule-drive-time-input--error" : ""}`}
+                disabled={scheduling}
+              />
+              {batchTimeError && (
+                <Typography className="schedule-drive-time-error">Batch time is required</Typography>
+              )}
+            </Box>
+          </Box>
         </DialogContent>
         <DialogActions className="schedule-drive-dialog-actions">
           <Button onClick={handleCloseDialog} disabled={scheduling} className="schedule-drive-cancel-btn">

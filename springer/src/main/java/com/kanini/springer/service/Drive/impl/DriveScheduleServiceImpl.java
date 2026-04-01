@@ -1,5 +1,6 @@
 package com.kanini.springer.service.Drive.impl;
 
+import com.kanini.springer.dto.Drive.DriveAnalyticsResponse;
 import com.kanini.springer.dto.Drive.DriveRequest;
 import com.kanini.springer.dto.Drive.DriveResponse;
 import com.kanini.springer.dto.Drive.DriveUpdateRequest;
@@ -13,6 +14,7 @@ import com.kanini.springer.entity.enums.Enums.DriveStatus;
 import com.kanini.springer.exception.ResourceNotFoundException;
 import com.kanini.springer.exception.ValidationException;
 import com.kanini.springer.mapper.Drive.DriveMapper;
+import com.kanini.springer.repository.Drive.ApplicationRepository;
 import com.kanini.springer.repository.Drive.DriveRepository;
 import com.kanini.springer.repository.Drive.RoundTemplateRepository;
 import com.kanini.springer.repository.Hiring.InstituteRepository;
@@ -22,7 +24,11 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -31,6 +37,7 @@ public class DriveScheduleServiceImpl implements IDriveScheduleService {
     
     private final DriveRepository driveRepository;
     private final RoundTemplateRepository roundTemplateRepository;
+    private final ApplicationRepository applicationRepository;
     private final InstituteRepository instituteRepository;
     private final UserRepository userRepository;
     private final DriveMapper mapper;
@@ -187,7 +194,8 @@ public class DriveScheduleServiceImpl implements IDriveScheduleService {
             .map(drive -> new UpcomingDriveSummaryResponse(
                 drive.getDriveId(),
                 drive.getDriveName(),
-                drive.getDriveMode()
+                drive.getDriveMode(),
+                drive.getStartDate()
             ))
             .collect(Collectors.toList());
     }
@@ -206,6 +214,40 @@ public class DriveScheduleServiceImpl implements IDriveScheduleService {
         return drives.stream()
             .map(mapper::toResponse)
             .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public DriveAnalyticsResponse getDriveAnalytics(Long driveId) {
+        if (driveId == null) {
+            throw new ValidationException("Drive ID is required");
+        }
+
+        // Fetch full drive schedule
+        Drive drive = driveRepository.findById(driveId)
+            .orElseThrow(() -> new ResourceNotFoundException("Drive", "ID", driveId));
+
+        DriveResponse driveResponse = mapper.toResponse(drive);
+
+        // Total applications
+        Long totalApplications = applicationRepository.countByDriveDriveId(driveId);
+
+        // Distinct batch time count
+        Long distinctBatchTimeCount = applicationRepository.countDistinctBatchTimeByDriveId(driveId);
+
+        // Applications per batch time
+        List<Object[]> grouped = applicationRepository.countApplicationsGroupedByBatchTime(driveId);
+        Map<String, Long> applicationsPerBatchTime = new LinkedHashMap<>();
+        DateTimeFormatter formatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
+        for (Object[] row : grouped) {
+            String key = row[0] != null
+                ? ((LocalDateTime) row[0]).format(formatter)
+                : "unscheduled";
+            Long count = ((Number) row[1]).longValue();
+            applicationsPerBatchTime.put(key, count);
+        }
+
+        return new DriveAnalyticsResponse(driveResponse, totalApplications, distinctBatchTimeCount, applicationsPerBatchTime);
     }
 }
 

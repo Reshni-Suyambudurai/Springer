@@ -1,5 +1,6 @@
 package com.kanini.springer.service.Drive;
 
+import com.kanini.springer.dto.Drive.DriveAnalyticsResponse;
 import com.kanini.springer.dto.Drive.DriveRequest;
 import com.kanini.springer.dto.Drive.DriveResponse;
 import com.kanini.springer.dto.Drive.DriveUpdateRequest;
@@ -55,5 +56,12 @@ public interface IDriveScheduleService {
      * @return List of DriveResponse with drive details
      */
     List<DriveResponse> getDrivesByCycleId(Long cycleId);
+
+    /**
+     * Get full drive details combined with application analytics for a drive
+     * @param driveId Drive ID
+     * @return DriveAnalyticsResponse with schedule + application counts per batch time
+     */
+    DriveAnalyticsResponse getDriveAnalytics(Long driveId);
 }
 

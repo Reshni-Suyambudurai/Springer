@@ -51,7 +51,6 @@ public class RoundTemplate {
     @JoinColumn(name = "created_by")
     private User createdBy;
     
-
     
     @OneToMany(mappedBy = "roundConfig", cascade = CascadeType.ALL)
     private List<CandidateEvaluation> candidateEvaluations;

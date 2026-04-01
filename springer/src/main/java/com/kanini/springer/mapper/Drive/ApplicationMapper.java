@@ -33,6 +33,7 @@ public class ApplicationMapper {
             response.setCandidateEmail(application.getCandidate().getEmail());
         }
         
+        response.setBatchTime(application.getBatchTime());
         response.setRegistrationCode(application.getRegistrationCode());
         
         if (application.getApplicationStatus() != null) {

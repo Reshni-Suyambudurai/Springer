@@ -25,6 +25,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -101,7 +102,8 @@ public class ApplicationServiceImpl implements IApplicationService {
                 Application application = new Application();
                 application.setDrive(drive);
                 application.setCandidate(candidate);
-                application.setApplicationStatus(ApplicationStatus.IN_DRIVE);
+                application.setBatchTime(request.getBatchTime());
+                application.setApplicationStatus(ApplicationStatus.ALLOTED);
                 application.setCreatedByUser(createdByUser);
                 
                 // Generate GUID for registration code
@@ -278,5 +280,21 @@ public class ApplicationServiceImpl implements IApplicationService {
         response.setFailureCount(failureCount);
         
         return response;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Map<String, List<ApplicationResponse>> getBatchCandidatesByDriveId(Long driveId) {
+        if (driveId == null) {
+            throw new ValidationException("Drive ID is required");
+        }
+
+        List<Application> applications = applicationRepository.findByDriveDriveId(driveId);
+
+        return applications.stream()
+                .collect(Collectors.groupingBy(
+                        a -> a.getBatchTime() != null ? a.getBatchTime().toString() : "UNSCHEDULED",
+                        Collectors.mapping(mapper::toResponse, Collectors.toList())
+                ));
     }
 }

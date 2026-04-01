@@ -8,6 +8,7 @@ import com.kanini.springer.dto.Drive.BulkApplicationStatusUpdateRequest;
 import com.kanini.springer.dto.Drive.BulkApplicationStatusUpdateResponse;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Service interface for Application operations
@@ -57,4 +58,13 @@ public interface IApplicationService {
      * @return BulkApplicationStatusUpdateResponse with successful updates and errors
      */
     BulkApplicationStatusUpdateResponse bulkUpdateApplicationStatus(BulkApplicationStatusUpdateRequest request);
+
+    /**
+     * Get all distinct batch times for a drive, each mapped to the list of applications in that batch.
+     * Null batchTime applications are grouped under the key "UNSCHEDULED".
+     *
+     * @param driveId Drive ID
+     * @return Map of batchTime string → list of ApplicationResponse
+     */
+    Map<String, List<ApplicationResponse>> getBatchCandidatesByDriveId(Long driveId);
 }

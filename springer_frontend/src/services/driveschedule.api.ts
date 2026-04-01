@@ -6,6 +6,8 @@ import type {
   DriveResponse,
   DriveUpdateRequest,
   CycleIdRequest,
+  DriveIdRequest,
+  DriveAnalyticsResponse,
   UpcomingDriveSummaryResponse,
 } from "../types/TA_Recruiter/DriveSchedule/driveSchedule.types";
 import type {
@@ -142,6 +144,25 @@ export const driveScheduleApi = {
     try {
       const response = await http.post<ApiResponse<DriveResponse[]>>(
         "/drive-schedules/by-cycle",
+        request
+      );
+      return response;
+    } catch (error) {
+      throw handleAxiosError(error);
+    }
+  },
+
+  /**
+   * Get drive analytics by drive ID
+   * Returns full drive schedule + application analytics (total count,
+   * distinct batch time count, per-batch-time application counts).
+   * @param request - Request with driveId
+   * @returns DriveAnalyticsResponse with schedule and application counts
+   */
+  async getDriveAnalytics(request: DriveIdRequest) {
+    try {
+      const response = await http.post<ApiResponse<DriveAnalyticsResponse>>(
+        "/drive-schedules/analytics",
         request
       );
       return response;

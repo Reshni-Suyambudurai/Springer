@@ -16,6 +16,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/applications")
@@ -64,7 +65,7 @@ public class ApplicationController {
     }
     
     @PatchMapping("/bulk/status")
-    @Operation(summary = "Bulk update application statuses", 
+    @Operation(summary = "Bulk update application statuses",
                description = "Updates the status of multiple applications and corresponding candidate statuses. " +
                              "Rules: " +
                              "- If application status = SELECTED → candidate status = SELECTED. " +
@@ -73,5 +74,15 @@ public class ApplicationController {
             @RequestBody BulkApplicationStatusUpdateRequest request) {
         BulkApplicationStatusUpdateResponse response = applicationService.bulkUpdateApplicationStatus(request);
         return ResponseEntity.ok(new ApiResponse<>(true, "Bulk application status update processed successfully", response));
+    }
+
+    @GetMapping("/drive/{driveId}/batches")
+    @Operation(summary = "Get batch-wise candidates for a drive",
+               description = "Returns a map of batchTime → list of applications for that batch. " +
+                             "Applications with no batchTime are grouped under the key 'UNSCHEDULED'.")
+    public ResponseEntity<ApiResponse<Map<String, List<ApplicationResponse>>>> getBatchCandidatesByDriveId(
+            @PathVariable Long driveId) {
+        Map<String, List<ApplicationResponse>> batchMap = applicationService.getBatchCandidatesByDriveId(driveId);
+        return ResponseEntity.ok(new ApiResponse<>(true, "Batch candidates retrieved successfully", batchMap));
     }
 }

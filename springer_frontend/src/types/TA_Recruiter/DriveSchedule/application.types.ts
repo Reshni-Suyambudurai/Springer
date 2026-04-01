@@ -5,16 +5,16 @@
  * Application Status enum matching backend
  */
 export type ApplicationStatus =
+  | 'ALLOTED'
   | 'IN_DRIVE'
   | 'DROPPED'
   | 'FAILED'
-  | 'PASSED'
-  | 'ON_HOLD'
   | 'SELECTED';
 
 export interface ApplicationRequest {
   driveId: number;
   candidateIds: number[];
+  batchTime?: string; // ISO-8601 format (LocalDateTime) - scheduled batch time
   createdBy: number;
 }
 
@@ -25,6 +25,7 @@ export interface ApplicationResponse {
   candidateId: number;
   candidateName: string;
   candidateEmail: string;
+  batchTime?: string; // ISO-8601 format (LocalDateTime)
   registrationCode: string;
   applicationStatus: ApplicationStatus;
   createdAt: string; // ISO-8601 format from LocalDateTime

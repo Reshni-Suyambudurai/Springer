@@ -121,12 +121,10 @@
   display: flex;
   flex-direction: column;
   gap: 16px;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .drive-list-card:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1) !important;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12) !important;
 }
 
 /* Card Header */
@@ -161,38 +159,45 @@
 }
 
 .drive-list-mode-on-campus {
-  background-color: var(--color-blue);
-  color: var(--color-surface);
+  border: 1.5px solid var(--color-blue);
+  color: var(--color-text);
+  background-color: transparent;
 }
 
 .drive-list-mode-off-campus {
-  background-color: var(--color-purple);
-  color: var(--color-surface);
+  border: 1.5px solid var(--color-purple);
+  color: var(--color-text);
+  background-color: transparent;
 }
 
 .drive-list-status-planned {
-  background-color: var(--color-yellow);
-  color: var(--color-text);
+  border: 1.5px solid var(--color-yellow);
+  color: var(--color-yellow);
+  background-color: transparent;
 }
 
 .drive-list-status-scheduled {
-  background-color: var(--color-blue);
-  color: var(--color-surface);
+  border: 1.5px solid var(--color-blue);
+  color: var(--color-blue);
+  background-color: transparent;
 }
 
 .drive-list-status-ongoing {
-  background-color: var(--color-orange);
-  color: var(--color-surface);
+  border: 1.5px solid var(--color-orange);
+  color: var(--color-orange);
+  background-color: transparent;
 }
 
 .drive-list-status-completed {
-  background-color: var(--color-success);
-  color: var(--color-surface);
+  border: 1.5px solid var(--color-success);
+  color: var(--color-success);
+  background-color: transparent;
 }
 
 .drive-list-status-cancelled {
-  background-color: var(--color-danger);
-  color: var(--color-surface);
+  border: 1.5px solid var(--color-danger);
+  color: var(--color-danger);
+  background-color: transparent;
 }
 
 /* ========== Card Body ========== */
@@ -229,6 +234,46 @@
   text-align: right;
 }
 
+/* ========== Card Footer ========== */
+.drive-list-card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  border-top: 1px solid var(--color-border);
+  padding-top: 10px;
+  gap: 8px;
+}
+
+.drive-list-card-footer-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.drive-list-card-footer-item--right {
+  text-align: right;
+  align-items: flex-end;
+}
+
+.drive-list-footer-label {
+  font-size: 11px !important;
+  color: var(--color-text-muted) !important;
+  font-weight: 500 !important;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.drive-list-footer-name {
+  font-size: 13px !important;
+  color: var(--color-text) !important;
+  font-weight: 600 !important;
+}
+
+.drive-list-footer-time {
+  font-size: 11px !important;
+  color: var(--color-text-muted) !important;
+}
+
 /* ========== Card Actions ========== */
 .drive-list-card-actions {
   display: flex;
@@ -247,13 +292,14 @@
 }
 
 .drive-list-btn-details {
-  background-color: var(--color-primary) !important;
-  color: var(--color-surface) !important;
-  border: none !important;
+  background-color: var(--color-surface) !important;
+  color: var(--color-primary) !important;
+  border: 1px solid var(--color-primary) !important;
 }
 
 .drive-list-btn-details:hover {
-  background-color: var(--color-primary-hover) !important;
+  background-color: var(--color-primary) !important;
+  color: var(--color-surface) !important;
 }
 
 .drive-list-btn-score {

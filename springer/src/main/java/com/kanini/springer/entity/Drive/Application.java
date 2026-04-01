@@ -19,11 +19,9 @@ import com.kanini.springer.entity.enums.Enums.ApplicationStatus;
 @Table(name = "applications",
     indexes = {
         @Index(name = "idx_app_drive_id", columnList = "drive_id"),
-     
-        @Index(name = "idx_app_status", columnList = "applicationStatus"),
-       
+        @Index(name = "idx_app_candidate_id", columnList = "candidate_id"),
+        @Index(name = "idx_app_status", columnList = "applicationStatus")
     }
-    
 )
 @Data
 @NoArgsConstructor
@@ -42,10 +40,13 @@ public class Application {
     @JoinColumn(name = "candidate_id")
     private Candidate candidate;
     
-    private String registrationCode; // unique if there is an entry, can be null for on-campus
+    private LocalDateTime batchTime; // scheduled batch time for the drive
+    
+    @Column(unique = true, nullable = true)
+    private String registrationCode; // unique when present, null allowed for on-campus
     
     @Enumerated(EnumType.STRING)
-    private ApplicationStatus applicationStatus; // IN_DRIVE, DROPPED, ROUND1 PASSED, ROUND2 PASSED, FAILED, SELECTED
+    private ApplicationStatus applicationStatus; // ALLOTED, IN_DRIVE, DROPPED, FAILED, SELECTED
     
     private LocalDateTime createdAt;
     

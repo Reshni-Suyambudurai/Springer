@@ -46,6 +46,15 @@ const DriveList: React.FC = () => {
     navigate("/drive-process/drive-cycle");
   };
 
+  const formatDateTime = (iso?: string) => {
+    if (!iso) return null;
+    const d = new Date(iso);
+    return d.toLocaleString("en-IN", {
+      day: "2-digit", month: "short", year: "numeric",
+      hour: "2-digit", minute: "2-digit", hour12: true,
+    });
+  };
+
   const handleDetails = (driveId: number) => {
     navigate(`/drive-process/drive-details/${driveId}`);
   };
@@ -77,9 +86,7 @@ const DriveList: React.FC = () => {
           <Typography variant="h4" className="drive-list-title">
             {cycleName ? `${cycleName} — Drives` : "Drive Schedules"}
           </Typography>
-          <Typography variant="body2" className="drive-list-subtitle">
-            {drives.length} drive{drives.length !== 1 ? "s" : ""} found
-          </Typography>
+        
         </Box>
 
         {/* Spacer to balance back button */}
@@ -119,16 +126,20 @@ const DriveList: React.FC = () => {
                   <Typography className="drive-list-card-label">Location</Typography>
                   <Typography className="drive-list-card-value">{drive.location}</Typography>
                 </Box>
+              </Box>
 
-                <Box className="drive-list-card-info-row">
-                  <Typography className="drive-list-card-label">Created by</Typography>
-                  <Typography className="drive-list-card-value">{drive.createdByName}</Typography>
+              {/* Card Footer — created left, updated right */}
+              <Box className="drive-list-card-footer">
+                <Box className="drive-list-card-footer-item">
+                  <Typography className="drive-list-footer-label">Created by</Typography>
+                  <Typography className="drive-list-footer-name">{drive.createdByName}</Typography>
+                  <Typography className="drive-list-footer-time">{formatDateTime(drive.createdAt)}</Typography>
                 </Box>
-
                 {drive.updatedByName && (
-                  <Box className="drive-list-card-info-row">
-                    <Typography className="drive-list-card-label">Updated by</Typography>
-                    <Typography className="drive-list-card-value">{drive.updatedByName}</Typography>
+                  <Box className="drive-list-card-footer-item drive-list-card-footer-item--right">
+                    <Typography className="drive-list-footer-label">Updated by</Typography>
+                    <Typography className="drive-list-footer-name">{drive.updatedByName}</Typography>
+                    <Typography className="drive-list-footer-time">{formatDateTime(drive.updatedAt)}</Typography>
                   </Box>
                 )}
               </Box>
@@ -136,7 +147,7 @@ const DriveList: React.FC = () => {
               {/* Card Actions */}
               <Box className="drive-list-card-actions">
                 <Button
-                  className="drive-list-btn drive-list-btn-details"
+                  className="drive-list-btn drive-list-btn-score"
                   onClick={() => handleDetails(drive.driveId)}
                 >
                   Details

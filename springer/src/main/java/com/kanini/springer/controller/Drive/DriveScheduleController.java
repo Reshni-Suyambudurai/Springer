@@ -3,6 +3,8 @@ package com.kanini.springer.controller.Drive;
 import com.kanini.springer.dto.Authentication.ApiResponse;
 import com.kanini.springer.dto.Drive.CandidateEvaluationSummaryResponse;
 import com.kanini.springer.dto.Drive.CycleIdRequest;
+import com.kanini.springer.dto.Drive.DriveAnalyticsResponse;
+import com.kanini.springer.dto.Drive.DriveIdRequest;
 import com.kanini.springer.dto.Drive.DriveRequest;
 import com.kanini.springer.dto.Drive.DriveResponse;
 import com.kanini.springer.dto.Drive.DriveUpdateRequest;
@@ -94,6 +96,16 @@ public class DriveScheduleController {
             @RequestBody CycleIdRequest request) {
         List<DriveResponse> responses = driveScheduleService.getDrivesByCycleId(request.getCycleId());
         return ResponseEntity.ok(new ApiResponse<>(true, "Drive schedules retrieved successfully", responses));
+    }
+
+    @PostMapping("/analytics")
+    @Operation(summary = "Get drive analytics by drive ID",
+               description = "Returns full drive schedule details combined with application analytics: " +
+                             "total applications, distinct batch time count, and per-batch-time application counts.")
+    public ResponseEntity<ApiResponse<DriveAnalyticsResponse>> getDriveAnalytics(
+            @RequestBody DriveIdRequest request) {
+        DriveAnalyticsResponse response = driveScheduleService.getDriveAnalytics(request.getDriveId());
+        return ResponseEntity.ok(new ApiResponse<>(true, "Drive analytics retrieved successfully", response));
     }
 }
 

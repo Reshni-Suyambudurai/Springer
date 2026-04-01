@@ -121,13 +121,11 @@ public class Enums {
 
     // Application status
     public enum ApplicationStatus {
+        ALLOTED,
         IN_DRIVE,
         DROPPED,
-        FAILED, 
-        PASSED,
-        ON_HOLD,
+        FAILED,
         SELECTED
-        
     }
 
     // Drive panel assignment status
