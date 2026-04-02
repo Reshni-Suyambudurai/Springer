@@ -63,3 +63,9 @@ export interface BulkApplicationStatusUpdateResponse {
   successfulUpdates: ApplicationResponse[];
   errorMessages: string[];
 }
+
+/**
+ * Map of batchTime → list of application IDs for that batch.
+ * Applications with no batchTime are grouped under 'UNSCHEDULED'.
+ */
+export type BatchCandidatesMap = Record<string, number[]>;

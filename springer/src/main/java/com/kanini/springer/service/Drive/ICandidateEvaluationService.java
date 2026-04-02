@@ -76,4 +76,15 @@ public interface ICandidateEvaluationService {
      * @return CandidateEvaluationResponse with updated evaluation
      */
     CandidateEvaluationResponse updateEvaluationStatus(Long scoreId, EvaluationStatusUpdateRequest request);
+
+    /**
+     * Get evaluations for a batch of applications in a specific round.
+     * Uses roundNo to find the RoundTemplate, then fetches all evaluations
+     * matching the applicationIds and that round's roundConfigId.
+     * Returns the full round template details and the evaluation records with candidate info.
+     *
+     * @param request RoundEvaluationRequest with roundNo and applicationIds
+     * @return RoundEvaluationResponse with round template + evaluation list
+     */
+    RoundEvaluationResponse getEvaluationsByRoundAndApplications(RoundEvaluationRequest request);
 }

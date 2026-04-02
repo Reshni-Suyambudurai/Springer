@@ -3,8 +3,8 @@ import { Routes, Route, Navigate } from 'react-router-dom'
 
 // TA Recruiter
 import DashboardTAR from './components/TA_Recruiter/DashboardTAR'
-import TARHiringCycleList from './components/TA_Head/HiringCycle/HiringCycleList'
-import TARHiringCycleDetails from './components/TA_Head/HiringCycle/HiringCycleDetails'
+import TARHiringCycleList from './components/TA_Recruiter/HiringCycle/HiringCycleList'
+import TARHiringCycleDetails from './components/TA_Recruiter/HiringCycle/HiringCycleDetails'
 import InstitutesList from './components/TA_Recruiter/Institutes/InstitutesList'
 import InstitutesDetails from './components/TA_Recruiter/Institutes/InstitutesDetails'
 import AddInstitute from './components/TA_Recruiter/Institutes/AddInstitute'
@@ -23,7 +23,7 @@ import SkillsManagement from './components/TA_Recruiter/Settings/SkillsManagemen
 import DriveCalendar from './components/TA_Recruiter/DriveSchedule/DriveCalendar'
 import AddSchedule from './components/TA_Recruiter/DriveSchedule/AddSchedule'
 
-// 🔥 Your existing Drive Process (kept)
+//  Your existing Drive Process (kept)
 import DriveCycle from './components/TA_Recruiter/DriveProcess/DriveCycle'
 import DriveList from './components/TA_Recruiter/DriveProcess/DriveList'
 import DriveDetails from './components/TA_Recruiter/DriveProcess/DriveDetails'

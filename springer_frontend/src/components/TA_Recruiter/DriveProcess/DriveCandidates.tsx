@@ -1,13 +1,21 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { applicationApi } from "../../../services/driveschedule.api";
-import type { ApplicationResponse } from "../../../types/TA_Recruiter/DriveSchedule/application.types";
+import { applicationApi, candidateEvaluationApi } from "../../../services/driveschedule.api";
+import type { ApplicationResponse, BatchCandidatesMap } from "../../../types/TA_Recruiter/DriveSchedule/application.types";
+import type { RoundEvaluationResponse } from "../../../types/TA_Recruiter/DriveSchedule/candidateEvaluation.types";
 import { showToast } from "../../../utils/toast";
 import { handleAxiosError } from "../../../services/api.error";
 import { Box, Card, Typography, CircularProgress, Select, MenuItem, Button,
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper } from "@mui/material";
 import BackButton from "../../Common/BackButton";
+import Round1 from "./Scores/Round1";
 import "../../../css/TA_Recruiter/DriveProcess/DriveCandidates.css";
+
+const ROUND_NO_MAP: Record<string, number> = {
+  APTITUDE: 1,
+  COMMUNICATION: 2,
+  TECHNICAL: 3,
+};
 
 const DriveCandidates: React.FC = () => {
   const { driveId } = useParams<{ driveId: string }>();
@@ -16,10 +24,15 @@ const DriveCandidates: React.FC = () => {
   const [driveName, setDriveName] = useState<string>("");
   const [selectedBatch, setSelectedBatch] = useState<string>("ALL");
   const [selectedRound, setSelectedRound] = useState<string>("ALL");
+  const [batchMap, setBatchMap] = useState<BatchCandidatesMap>({});
+  const [roundEvaluation, setRoundEvaluation] = useState<RoundEvaluationResponse | null>(null);
+  const [evaluationsLoading, setEvaluationsLoading] = useState<boolean>(false);
 
   useEffect(() => {
     if (driveId) {
-      fetchApplications(parseInt(driveId));
+      const id = parseInt(driveId);
+      fetchApplications(id);
+      fetchBatchCandidates(id);
     }
   }, [driveId]);
 
@@ -44,6 +57,54 @@ const DriveCandidates: React.FC = () => {
     }
   };
 
+  const fetchBatchCandidates = async (id: number) => {
+    try {
+      const response = await applicationApi.getBatchCandidatesByDriveId(id);
+      if (response.data.success && response.data.data) {
+        setBatchMap(response.data.data);
+      }
+    } catch (error: unknown) {
+      const appError = handleAxiosError(error);
+      showToast(appError.message, "error");
+    }
+  };
+
+  // Fetch evaluations when batch + round are both selected
+  useEffect(() => {
+    const roundNo = ROUND_NO_MAP[selectedRound];
+    if (!roundNo || selectedBatch === "ALL") {
+      setRoundEvaluation(null);
+      return;
+    }
+    const applicationIds = batchMap[selectedBatch];
+    if (!applicationIds || applicationIds.length === 0) {
+      setRoundEvaluation(null);
+      return;
+    }
+    fetchRoundEvaluations(roundNo, applicationIds);
+  }, [selectedRound, selectedBatch, batchMap]);
+
+  const fetchRoundEvaluations = async (roundNo: number, applicationIds: number[]) => {
+    try {
+      setEvaluationsLoading(true);
+      const response = await candidateEvaluationApi.getEvaluationsByRoundAndApplications({
+        roundNo,
+        applicationIds,
+      });
+      if (response.success && response.data) {
+        setRoundEvaluation(response.data);
+      } else {
+        setRoundEvaluation(null);
+      }
+    } catch (error: unknown) {
+      const appError = handleAxiosError(error);
+      showToast(appError.message, "error");
+      setRoundEvaluation(null);
+    } finally {
+      setEvaluationsLoading(false);
+    }
+  };
+
   const getStatusClass = (status: string) => {
     switch (status) {
       case "IN_DRIVE":     return "dc-status-badge dc-status-in-drive";
@@ -64,13 +125,13 @@ const DriveCandidates: React.FC = () => {
     });
   };
 
-  const batchOptions = Array.from(
-    new Set(applications.map((a) => a.batchTime ?? "Unscheduled"))
-  );
+  const batchOptions = Object.keys(batchMap);
 
-  const filteredApplications = applications.filter((app) =>
-    selectedBatch === "ALL" || (app.batchTime ?? "Unscheduled") === selectedBatch
-  );
+  const filteredApplications = applications.filter((app) => {
+    if (selectedBatch === "ALL") return true;
+    const appIds = batchMap[selectedBatch];
+    return appIds ? appIds.includes(app.applicationId) : false;
+  });
 
   if (loading) {
     return (
@@ -122,13 +183,22 @@ const DriveCandidates: React.FC = () => {
             <MenuItem value="TECHNICAL">Technical</MenuItem>
           </Select>
 
+          {evaluationsLoading && <CircularProgress size={20} />}
+
           <Button variant="outlined" className="dc-btn-action">Panel Assignment</Button>
           <Button variant="outlined" className="dc-btn-action">Add Score</Button>
         </Box>
       </Card>
 
-      {/* Empty state */}
-      {filteredApplications.length === 0 ? (
+      {/* Content area: Round scores view OR candidates table */}
+      {roundEvaluation && selectedRound !== "ALL" && selectedBatch !== "ALL" ? (
+        <Round1 data={roundEvaluation} />
+      ) : evaluationsLoading ? (
+        <Box className="dc-loading">
+          <CircularProgress size={30} className="dc-loading-spinner" />
+          <Typography className="dc-loading-text">Loading round data...</Typography>
+        </Box>
+      ) : filteredApplications.length === 0 ? (
         <Card className="dc-empty-card">
           <Typography variant="h6" className="dc-empty-title">
             No candidates found
@@ -142,10 +212,10 @@ const DriveCandidates: React.FC = () => {
           <Table className="dc-table">
             <TableHead>
               <TableRow className="dc-table-head-row">
-                <TableCell className="dc-th">#</TableCell>
+                <TableCell className="dc-th">Index</TableCell>
                 <TableCell className="dc-th">Candidate Name</TableCell>
                 <TableCell className="dc-th">Email</TableCell>
-                <TableCell className="dc-th">Reg. Code</TableCell>
+              
                 <TableCell className="dc-th">Status</TableCell>
                 <TableCell className="dc-th">Created By</TableCell>
               </TableRow>
@@ -156,12 +226,13 @@ const DriveCandidates: React.FC = () => {
                   <TableCell className="dc-td">{index + 1}</TableCell>
                   <TableCell className="dc-td dc-td-name">{app.candidateName}</TableCell>
                   <TableCell className="dc-td">{app.candidateEmail}</TableCell>
-                  <TableCell className="dc-td">{app.registrationCode}</TableCell>
+                 
                   <TableCell className="dc-td">
                     <span className={getStatusClass(app.applicationStatus)}>
                       {app.applicationStatus.replace("_", " ")}
                     </span>
                   </TableCell>
+
                   <TableCell className="dc-td">{app.createdByName}</TableCell>
                 </TableRow>
               ))}
