@@ -73,4 +73,16 @@ public class CandidateEvaluationController {
         CandidateEvaluationResponse response = evaluationService.updateEvaluationStatus(scoreId, request);
         return ResponseEntity.ok(new ApiResponse<>(true, "Evaluation status updated successfully", response));
     }
+
+    @PostMapping("/by-round")
+    @Operation(summary = "Get evaluations by round number and application IDs",
+               description = "Uses roundNo to find the matching RoundTemplate, then returns the full round template " +
+                             "details along with all evaluation records for the given application IDs in that round. " +
+                             "Each evaluation includes candidateId and candidateName. " +
+                             "Static round mapping: Aptitude=1, Communication=2, Technical=3.")
+    public ResponseEntity<ApiResponse<RoundEvaluationResponse>> getEvaluationsByRoundAndApplications(
+            @RequestBody RoundEvaluationRequest request) {
+        RoundEvaluationResponse response = evaluationService.getEvaluationsByRoundAndApplications(request);
+        return ResponseEntity.ok(new ApiResponse<>(true, "Round evaluations retrieved successfully", response));
+    }
 }
