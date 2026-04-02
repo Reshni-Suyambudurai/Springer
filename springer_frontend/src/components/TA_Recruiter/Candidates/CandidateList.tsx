@@ -33,7 +33,6 @@ import {
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import SchoolIcon from "@mui/icons-material/School";
-import EmailIcon from "@mui/icons-material/Email";
 import UpdateIcon from "@mui/icons-material/Update";
 import MenuIcon from "@mui/icons-material/Menu";
 import "../../../css/TA_Recruiter/Candidates/CandidateList.css";
@@ -45,7 +44,6 @@ const CandidateList: React.FC = () => {
   const [selectedCycle, setSelectedCycle] = useState<number | null>(null);
   const [bulkStatusUpdate, setBulkStatusUpdate] = useState<string>("");
   const [updatingBulkStatus, setUpdatingBulkStatus] = useState<boolean>(false);
-  const [sendingInvite, setSendingInvite] = useState<boolean>(false);
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(() => tokenstore.getSidebarOpen());
   const [selectMode, setSelectMode] = useState<boolean>(false);
   const [selectedCandidates, setSelectedCandidates] = useState<Set<number>>(new Set());
@@ -215,66 +213,7 @@ const CandidateList: React.FC = () => {
     });
   };
 
-  const handleSendInvite = async () => {
-    if (!selectedCycle) {
-      showToast("Please select a hiring cycle first", "error");
-      return;
-    }
-
-    const user = tokenstore.getUser();
-    if (!user) {
-      showToast("Unable to get user information", "error");
-      return;
-    }
-
-    // Determine which candidates to update based on select mode
-    const candidateIdsToUpdate = selectMode 
-      ? Array.from(selectedCandidates) 
-      : allCandidates.map((c) => c.candidateId);
-
-    if (candidateIdsToUpdate.length === 0) {
-      showToast(
-        selectMode 
-          ? "Please select candidates to invite" 
-          : "No candidates available to invite", 
-        "error"
-      );
-      return;
-    }
-
-    setSendingInvite(true);
-    try {
-      const response = await candidateApi.bulkUpdateCandidateStatus({
-        candidateIds: candidateIdsToUpdate,
-        status: "INVITED",
-        reason: `Bulk invite to ${candidateIdsToUpdate.length} candidate(s)`,
-        updatedBy: user.userId,
-      });
-
-      if (response.data) {
-        showToast(
-          `Invited ${response.data.successCount} candidates successfully. ${response.data.failureCount} failed.`,
-          response.data.failureCount > 0 ? "error" : "success"
-        );
-        
-        // Clear selections and exit select mode if active
-        if (selectMode) {
-          setSelectedCandidates(new Set());
-          setSelectMode(false);
-        }
-        
-        // Refresh candidates with current filters
-        if (selectedCycle) {
-          await fetchCandidates(selectedCycle, filters, false);
-        }
-      }
-    } catch (error) {
-      showToast("Failed to send invites to candidates", "error");
-      console.error("Error sending invites:", error);
-    } finally {
-      setSendingInvite(false);
-    }
-  };
+  
 
   // Toggle select mode
   const handleToggleSelectMode = () => {
@@ -481,20 +420,7 @@ const CandidateList: React.FC = () => {
                     onScheduleComplete={handleScheduleComplete}
                   />
 
-                  <Tooltip title={`Send invite to ${selectMode ? selectedCandidates.size : allCandidates.length} candidate(s)`}>
-                    <span>
-                      <IconButton
-                        onClick={handleSendInvite}
-                        disabled={
-                          (selectMode ? selectedCandidates.size === 0 : allCandidates.length === 0) ||
-                          sendingInvite
-                        }
-                        className="send-invite-btn"
-                      >
-                        <EmailIcon />
-                      </IconButton>
-                    </span>
-                  </Tooltip>
+                 
                 </>
               )}
             </Box>

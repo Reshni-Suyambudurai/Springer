@@ -284,17 +284,15 @@ public class ApplicationServiceImpl implements IApplicationService {
 
     @Override
     @Transactional(readOnly = true)
-    public Map<String, List<ApplicationResponse>> getBatchCandidatesByDriveId(Long driveId) {
+    public Map<String, List<Long>> getBatchCandidatesByDriveId(Long driveId) {
         if (driveId == null) {
             throw new ValidationException("Drive ID is required");
         }
-
         List<Application> applications = applicationRepository.findByDriveDriveId(driveId);
-
         return applications.stream()
                 .collect(Collectors.groupingBy(
                         a -> a.getBatchTime() != null ? a.getBatchTime().toString() : "UNSCHEDULED",
-                        Collectors.mapping(mapper::toResponse, Collectors.toList())
+                        Collectors.mapping(Application::getApplicationId, Collectors.toList())
                 ));
     }
 }

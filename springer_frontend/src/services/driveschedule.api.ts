@@ -17,6 +17,7 @@ import type {
   BulkApplicationResponse,
   BulkApplicationStatusUpdateRequest,
   BulkApplicationStatusUpdateResponse,
+  BatchCandidatesMap,
 } from "../types/TA_Recruiter/DriveSchedule/application.types";
 import type {
   DriveAssignmentRequest,
@@ -33,6 +34,8 @@ import type {
   EvaluationStatusUpdateRequest,
   BulkCandidateEvaluationRequest,
   BulkCandidateEvaluationResponse,
+  RoundEvaluationRequest,
+  RoundEvaluationResponse,
 } from "../types/TA_Recruiter/DriveSchedule/candidateEvaluation.types";
 
 /**
@@ -267,6 +270,24 @@ export const applicationApi = {
       throw handleAxiosError(error);
     }
   },
+
+  /**
+   * Get batch-wise application IDs for a drive
+   * Returns a map of batchTime → list of application IDs for that batch.
+   * Applications with no batchTime are grouped under 'UNSCHEDULED'.
+   * @param driveId - The drive schedule ID
+   * @returns Map of batch time to application ID list
+   */
+  async getBatchCandidatesByDriveId(driveId: number) {
+    try {
+      const response = await http.get<ApiResponse<BatchCandidatesMap>>(
+        `/applications/drive/${driveId}/batches`
+      );
+      return response;
+    } catch (error) {
+      throw handleAxiosError(error);
+    }
+  },
 };
 
 /**
@@ -445,6 +466,21 @@ export const candidateEvaluationApi = {
   async updateEvaluationStatus(scoreId: number, data: EvaluationStatusUpdateRequest): Promise<ApiResponse<CandidateEvaluationResponse>> {
     try {
       const response = await http.patch(`/candidate-evaluations/${scoreId}/status`, data);
+      return response.data;
+    } catch (error) {
+      throw handleAxiosError(error);
+    }
+  },
+
+  /**
+   * Get evaluations by round number and application IDs
+   * POST /api/candidate-evaluations/by-round
+   * @param data - RoundEvaluationRequest with roundNo and applicationIds
+   * @returns List of evaluations for matching applications in that round
+   */
+  async getEvaluationsByRoundAndApplications(data: RoundEvaluationRequest): Promise<ApiResponse<RoundEvaluationResponse>> {
+    try {
+      const response = await http.post('/candidate-evaluations/by-round', data);
       return response.data;
     } catch (error) {
       throw handleAxiosError(error);

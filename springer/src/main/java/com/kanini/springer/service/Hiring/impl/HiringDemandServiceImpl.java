@@ -97,6 +97,7 @@ public class HiringDemandServiceImpl implements IHiringDemandService {
     }
     
     @Override
+    @Transactional(readOnly = true)
     public HiringDemandResponse getDemandById(Long demandId) {
         HiringDemand demand = demandRepository.findById(demandId)
                 .orElseThrow(() -> new ResourceNotFoundException("Hiring demand", "ID", demandId));
@@ -104,6 +105,7 @@ public class HiringDemandServiceImpl implements IHiringDemandService {
     }
     
     @Override
+    @Transactional(readOnly = true)
     public List<HiringDemandResponse> getAllDemands() {
         return demandRepository.findAll().stream()
                 .map(mapper::toResponse)
@@ -111,6 +113,7 @@ public class HiringDemandServiceImpl implements IHiringDemandService {
     }
     
     @Override
+    @Transactional(readOnly = true)
     public List<HiringDemandResponse> getDemandsByCycle(Long cycleId) {
         // Validation: Check if cycle exists
         if (!cycleRepository.existsById(cycleId)) {
@@ -123,6 +126,7 @@ public class HiringDemandServiceImpl implements IHiringDemandService {
     }
     
     @Override
+    @Transactional(readOnly = true)
     public List<HiringDemandResponse> getDemandsByStatus(String status) {
         try {
             ApprovalStatus approvalStatus = ApprovalStatus.valueOf(status.toUpperCase());

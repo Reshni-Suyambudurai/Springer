@@ -1,0 +1,226 @@
+.tar-hcd-page {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 4px;
+  background-color: var(--color-bg-secondary);
+}
+
+.tar-hcd-card {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 0;
+  border-radius: 12px !important;
+  border: 1px solid var(--color-card-border) !important;
+  box-shadow: 0 1px 3px 0 var(--opacity-shadow-light), 0 6px 16px -2px var(--opacity-shadow-dark) !important;
+  background-color: var(--color-surface) !important;
+}
+
+.tar-hcd-header {
+  flex-shrink: 0;
+  padding: 12px 20px;
+  background-color: var(--color-surface);
+}
+
+.tar-hcd-back-btn {
+  color: var(--color-text-secondary) !important;
+  border: 1px solid var(--color-border) !important;
+  border-radius: 8px !important;
+  padding: 4px !important;
+}
+
+.tar-hcd-back-btn:hover {
+  background-color: var(--color-hover-bg) !important;
+  color: var(--color-primary) !important;
+}
+
+.tar-hcd-icon-box {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background-color: var(--color-icon-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.tar-hcd-title {
+  font-size: 1.1rem !important;
+  font-weight: 700 !important;
+  color: var(--color-text-primary) !important;
+}
+
+.tar-hcd-subtitle {
+  font-size: 0.875rem !important;
+  color: var(--color-text-secondary) !important;
+}
+
+.tar-hcd-separator { border-top: 1px solid var(--color-border-light); }
+
+.tar-hcd-cycle-status--open {
+  background-color: var(--color-success-light) !important;
+  color: var(--color-success-dark) !important;
+  font-size: 0.75rem !important;
+  font-weight: 600 !important;
+  height: 22px !important;
+  border-radius: 6px !important;
+}
+
+.tar-hcd-cycle-status--closed {
+  background-color: var(--color-inactive-bg) !important;
+  color: var(--color-text-secondary) !important;
+  font-size: 0.75rem !important;
+  font-weight: 600 !important;
+  height: 22px !important;
+  border-radius: 6px !important;
+  border: 1px solid var(--color-inactive-border) !important;
+}
+
+.tar-hcd-download-btn {
+  text-transform: none !important;
+  font-size: 0.875rem !important;
+  font-weight: 500 !important;
+  border-radius: 8px !important;
+  color: var(--color-primary) !important;
+  border-color: var(--color-primary) !important;
+  padding: 5px 14px !important;
+}
+
+.tar-hcd-upload-btn {
+  text-transform: none !important;
+  font-size: 0.875rem !important;
+  font-weight: 600 !important;
+  border-radius: 8px !important;
+  background-color: var(--color-primary) !important;
+  color: var(--color-white) !important;
+  box-shadow: 0 2px 8px var(--color-primary-shadow-18) !important;
+  padding: 5px 14px !important;
+}
+
+.tar-hcd-upload-btn:hover { background-color: var(--color-primary-dark) !important; }
+
+.tar-hcd-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 64px 0;
+}
+
+.tar-hcd-loading-text { font-size: 0.9rem !important; color: var(--color-text-secondary) !important; }
+.tar-hcd-alert-wrap { padding: 24px; }
+
+.tar-hcd-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px 24px;
+}
+
+.tar-hcd-section-header { margin-bottom: 16px; }
+
+.tar-hcd-section-label {
+  font-size: 0.875rem !important;
+  font-weight: 700 !important;
+  color: var(--color-text-primary) !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.06em !important;
+}
+
+.tar-hcd-section-rule {
+  height: 1px;
+  background-color: var(--color-border-light);
+  margin-top: 8px;
+}
+
+.tar-hcd-info-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  column-gap: 32px;
+  row-gap: 16px;
+}
+
+.tar-hcd-info-field { display: flex; flex-direction: column; gap: 4px; }
+
+.tar-hcd-info-label {
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  color: var(--color-text-disabled) !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.08em !important;
+}
+
+.tar-hcd-info-value {
+  font-size: 0.9375rem !important;
+  font-weight: 600 !important;
+  color: var(--color-text-primary) !important;
+}
+
+.tar-hcd-count-chip {
+  background-color: var(--color-chip-count-bg) !important;
+  color: var(--color-chip-count-text) !important;
+  font-size: 0.72rem !important;
+  font-weight: 600 !important;
+  height: 20px !important;
+  border-radius: 5px !important;
+}
+
+.tar-hcd-table-container {
+  border: 1px solid var(--color-border-table);
+  border-radius: 8px;
+  overflow-y: scroll;
+  max-height: 400px;
+}
+
+.tar-hcd-table-container::-webkit-scrollbar { width: 8px; }
+.tar-hcd-table-container::-webkit-scrollbar-track { background: var(--color-primary-light); border-radius: 3px; }
+.tar-hcd-table-container::-webkit-scrollbar-thumb { background: var(--color-primary); border-radius: 3px; }
+.tar-hcd-table-container::-webkit-scrollbar-thumb:hover { background: var(--color-primary-dark); }
+
+.tar-hcd-head-row { background-color: var(--color-bg-table-header); }
+
+.tar-hcd-head-cell {
+  font-size: 0.75rem !important;
+  font-weight: 700 !important;
+  color: var(--color-grey-600) !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.75px !important;
+  background-color: var(--color-bg-table-header) !important;
+  padding: 10px 14px !important;
+  border-bottom-color: var(--color-border-table) !important;
+}
+
+.tar-hcd-row { height: 60px; transition: background-color 0.2s ease; }
+.tar-hcd-row--even { background-color: var(--color-surface); }
+.tar-hcd-row--odd  { background-color: var(--color-surface-alt); }
+.tar-hcd-row td    { border-bottom: 1px solid var(--color-border-table); }
+.tar-hcd-row:hover { background-color: var(--color-hover-bg) !important; }
+
+.tar-hcd-cell { padding: 10px 14px !important; vertical-align: middle !important; }
+
+.tar-hcd-cell-primary {
+  font-size: 0.9rem !important;
+  font-weight: 600 !important;
+  color: var(--color-text-primary) !important;
+}
+
+.tar-hcd-cell-secondary {
+  font-size: 0.875rem !important;
+  font-weight: 500 !important;
+  color: var(--color-grey-550) !important;
+}
+
+.tar-hcd-skill-chip {
+  background-color: var(--color-primary-light) !important;
+  color: var(--color-primary) !important;
+  font-size: 0.72rem !important;
+  font-weight: 500 !important;
+  height: 20px !important;
+  border-radius: 4px !important;
+}
+
+.tar-hcd-empty { padding: 32px 0; text-align: center; }
+.tar-hcd-empty-text { font-size: 0.9rem !important; font-weight: 500 !important; color: var(--color-empty-text) !important; }
+.tar-hcd-empty-hint { font-size: 0.8rem !important; color: var(--color-text-disabled) !important; margin-top: 4px !important; }

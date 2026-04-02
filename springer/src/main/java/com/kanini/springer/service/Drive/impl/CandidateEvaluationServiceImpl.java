@@ -15,6 +15,7 @@ import com.kanini.springer.entity.enums.Enums.EvaluationStatus;
 import com.kanini.springer.exception.ResourceNotFoundException;
 import com.kanini.springer.exception.ValidationException;
 import com.kanini.springer.mapper.Drive.CandidateEvaluationMapper;
+import com.kanini.springer.mapper.Drive.RoundTemplateMapper;
 import com.kanini.springer.repository.Drive.ApplicationRepository;
 import com.kanini.springer.repository.Drive.CandidateEvaluationRepository;
 import com.kanini.springer.repository.Drive.CandidatesRepository;
@@ -42,6 +43,7 @@ public class CandidateEvaluationServiceImpl implements ICandidateEvaluationServi
     private final UserRepository userRepository;
     private final CandidatesRepository candidatesRepository;
     private final CandidateEvaluationMapper mapper;
+    private final RoundTemplateMapper roundTemplateMapper;
     private final ObjectMapper objectMapper;
     private final IOverrideService overrideService;
     
@@ -442,5 +444,33 @@ public class CandidateEvaluationServiceImpl implements ICandidateEvaluationServi
         } catch (Exception e) {
             System.err.println("Error logging manual override: " + e.getMessage());
         }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public RoundEvaluationResponse getEvaluationsByRoundAndApplications(RoundEvaluationRequest request) {
+        if (request.getRoundNo() == null) {
+            throw new ValidationException("Round number is required");
+        }
+        if (request.getApplicationIds() == null || request.getApplicationIds().isEmpty()) {
+            throw new ValidationException("Application IDs list cannot be empty");
+        }
+
+        // Find the RoundTemplate by roundNo
+        RoundTemplate roundTemplate = roundTemplateRepository.findByRoundNo(request.getRoundNo())
+                .orElseThrow(() -> new ResourceNotFoundException("Round template", "roundNo", request.getRoundNo()));
+
+        // Single query with JOIN FETCH to avoid N+1 — loads application, candidate, and reviewedBy
+        List<CandidateEvaluation> evaluations = evaluationRepository
+                .findByApplicationIdsAndRoundConfigIdFetched(
+                        request.getApplicationIds(), roundTemplate.getRoundConfigId());
+
+        RoundEvaluationResponse response = new RoundEvaluationResponse();
+        response.setRoundTemplate(roundTemplateMapper.toResponse(roundTemplate));
+        response.setEvaluations(evaluations.stream()
+                .map(mapper::toResponse)
+                .collect(Collectors.toList()));
+
+        return response;
     }
 }
