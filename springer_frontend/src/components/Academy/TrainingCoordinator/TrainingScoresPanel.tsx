@@ -264,25 +264,6 @@ const TrainingScoresPanel = ({ context, readOnly = false }: { context: AcademyCo
     <Box className="sc-page">
       <Card className="sc-card">
 
-        {/* Header */}
-        <Box className="sc-header">
-          <Box className="sc-header-row">
-            <Box>
-              <Typography className="sc-title">Training Scores</Typography>
-              <Typography className="sc-subtitle">
-                Filter by cycle → program → batch → course to view scores
-              </Typography>
-            </Box>
-            {canEdit && (
-              <Button variant="contained" startIcon={<AddIcon />} onClick={openDlg} className="sc-add-button">
-                Give Score
-              </Button>
-            )}
-          </Box>
-        </Box>
-
-        <Box className="sc-separator" />
-
         {/* Filters */}
         <Box className="sc-filter-section">
           <Box className="sc-filter-row">
@@ -330,6 +311,11 @@ const TrainingScoresPanel = ({ context, readOnly = false }: { context: AcademyCo
             </FilterSelect>
 
             <Box className="sc-filter-spacer" />
+            {canEdit && (
+              <Button variant="contained" startIcon={<AddIcon />} onClick={openDlg} className="sc-add-button">
+                Give Score
+              </Button>
+            )}
 
             {/* Course info pill */}
             {selectedCourse && (

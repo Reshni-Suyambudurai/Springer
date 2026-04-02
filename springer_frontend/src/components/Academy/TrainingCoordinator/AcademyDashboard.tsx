@@ -122,7 +122,9 @@ const AcademyDashboard = () => {
       <Box className="acd-header">
         <Box className="acd-header-inner">
           <Box className="acd-header-text">
-            <Typography className="acd-title">Academy</Typography>
+            <Typography className="acd-title">
+              {visibleTabs.find(t => t.key === activeTab)?.label || 'Academy'}
+            </Typography>
             <Typography className="acd-subtitle">
               {loadingPrograms
                 ? 'Loading...'

@@ -170,23 +170,6 @@ const BatchCoursesList = ({ context }: { context: AcademyContextProps }) => {
     <Box className="bc-page">
       <Card className="bc-card">
 
-        {/* Header */}
-        <Box className="bc-header">
-          <Box className="bc-header-row">
-            <Box>
-              <Typography className="bc-title">Batch Courses</Typography>
-              <Typography className="bc-subtitle">
-                Manage course assignments to program batches
-              </Typography>
-            </Box>
-            <Button variant="contained" startIcon={<AddIcon />} onClick={openDialog} className="bc-add-button">
-              Link Course to Batch
-            </Button>
-          </Box>
-        </Box>
-
-        <Box className="bc-separator" />
-
         {/* Filters */}
         <Box className="bc-filter-section">
           <Box className="bc-filter-row">
@@ -212,6 +195,9 @@ const BatchCoursesList = ({ context }: { context: AcademyContextProps }) => {
               ))}
             </FilterSelect>
             <Box className="bc-filter-spacer" />
+            <Button variant="contained" startIcon={<AddIcon />} onClick={openDialog} className="bc-add-button">
+              Link Course to Batch
+            </Button>
           </Box>
         </Box>
 

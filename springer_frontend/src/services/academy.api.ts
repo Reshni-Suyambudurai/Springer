@@ -35,7 +35,19 @@ export const programYearsApi = {
 export const userApi = {
   async getUsersByRole(role: string): Promise<ApiResponse<UserSummary[]>> {
     try {
-      const response = await http.get('/users/by-role', { params: { role } });
+      const rolesResponse = await http.get('/auth/roles');
+      const roles = rolesResponse.data?.data ?? [];
+      const matchedRole = roles.find((r: { roleId: number; roleName: string }) => r.roleName === role);
+
+      if (!matchedRole) {
+        return {
+          success: true,
+          message: `No users found for role ${role}`,
+          data: [],
+        } as ApiResponse<UserSummary[]>;
+      }
+
+      const response = await http.get('/auth/users/by-roles', { params: { roleIds: matchedRole.roleId } });
       return response.data;
     } catch (error) {
       throw handleAxiosError(error);

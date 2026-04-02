@@ -98,7 +98,13 @@
   flex: 1;
   overflow: auto !important;
   min-height: 0;
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-grey-350) var(--color-grey-150);
 }
+.dtt-table-container::-webkit-scrollbar { width: 6px; height: 6px; }
+.dtt-table-container::-webkit-scrollbar-track { background: var(--color-grey-150); border-radius: 4px; }
+.dtt-table-container::-webkit-scrollbar-thumb { background: var(--color-grey-350); border-radius: 4px; }
+.dtt-table-container::-webkit-scrollbar-thumb:hover { background: var(--color-grey-500); }
 
 /* ── Table Head ── */
 .dtt-table-head-row {

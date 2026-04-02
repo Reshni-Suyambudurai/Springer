@@ -1,7 +1,7 @@
 /* Sidebar container */
 .sidebar {
   position: fixed;
-  top: 74px; /* Below navbar */
+  top: 50px; /* Below navbar */
   left: 0;
   bottom: 0;
   width: 75px;

@@ -195,25 +195,6 @@ const BatchAttendancePanel = ({ context, readOnly = false }: { context: AcademyC
     <Box className="atp-page">
       <Card className="atp-card">
 
-        {/* Header */}
-        <Box className="atp-header">
-          <Box className="atp-header-row">
-            <Box>
-              <Typography className="atp-title">Attendance</Typography>
-              <Typography className="atp-subtitle">
-                View student attendance — sorted by attendance percentage
-              </Typography>
-            </Box>
-            {!readOnly && (
-              <Button variant="contained" startIcon={<AddIcon />} onClick={openDlg} className="atp-add-button">
-                Mark Attendance
-              </Button>
-            )}
-          </Box>
-        </Box>
-
-        <Box className="atp-separator" />
-
         {/* Filters */}
         <Box className="atp-filter-section">
           <Box className="atp-filter-row">
@@ -241,6 +222,11 @@ const BatchAttendancePanel = ({ context, readOnly = false }: { context: AcademyC
 
             <Box className="atp-filter-spacer" />
             <Typography className="atp-filter-count">{filteredAllocations.length} student(s)</Typography>
+            {!readOnly && (
+              <Button variant="contained" startIcon={<AddIcon />} onClick={openDlg} className="atp-add-button">
+                Mark Attendance
+              </Button>
+            )}
           </Box>
         </Box>
 

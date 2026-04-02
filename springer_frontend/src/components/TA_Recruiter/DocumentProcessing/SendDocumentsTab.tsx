@@ -151,37 +151,6 @@ const SendDocumentsTab = ({ context }: { context: DocProcessingContextProps }) =
     <Box className="sdt-page">
       <Card className="sdt-card">
 
-        {/* Header */}
-        <Box className="sdt-header">
-          <Box className="sdt-header-row">
-            <Box>
-              <Typography className="sdt-title">Send Document Links</Typography>
-              <Typography className="sdt-subtitle">
-                {cycleName} · Select candidates and send document submission links via email
-              </Typography>
-            </Box>
-            <Stack direction="row" spacing={1}>
-              <IconButton size="small" onClick={fetchData} title="Refresh" className="sdt-refresh-btn">
-                <RefreshIcon fontSize="small" />
-              </IconButton>
-              <Button
-                variant="contained"
-                startIcon={sending ? <CircularProgress size={14} sx={{ color: 'white' }} /> : <SendIcon />}
-                onClick={() => {
-                  if (selectedCandidateIds.size === 0) { showToast('Select at least one candidate', 'error'); return; }
-                  setSendDialog(true);
-                }}
-                disabled={sending || selectedCandidateIds.size === 0}
-                className="sdt-send-button"
-              >
-                {selectedCandidateIds.size > 0 ? `Send to ${selectedCandidateIds.size} Candidate(s)` : 'Send Links'}
-              </Button>
-            </Stack>
-          </Box>
-        </Box>
-
-        <Box className="sdt-separator" />
-
         {/* Filters */}
         <Box className="sdt-filter-section">
           <Box className="sdt-filter-row">
@@ -204,6 +173,21 @@ const SendDocumentsTab = ({ context }: { context: DocProcessingContextProps }) =
             <Typography className="sdt-filter-count">
               {submittedCount}/{candidates.length} submitted
             </Typography>
+            <IconButton size="small" onClick={fetchData} title="Refresh" className="sdt-refresh-btn">
+              <RefreshIcon fontSize="small" />
+            </IconButton>
+            <Button
+              variant="contained"
+              startIcon={sending ? <CircularProgress size={14} sx={{ color: 'white' }} /> : <SendIcon />}
+              onClick={() => {
+                if (selectedCandidateIds.size === 0) { showToast('Select at least one candidate', 'error'); return; }
+                setSendDialog(true);
+              }}
+              disabled={sending || selectedCandidateIds.size === 0}
+              className="sdt-send-button"
+            >
+              {selectedCandidateIds.size > 0 ? `Send to ${selectedCandidateIds.size} Candidate(s)` : 'Send Links'}
+            </Button>
           </Box>
         </Box>
 

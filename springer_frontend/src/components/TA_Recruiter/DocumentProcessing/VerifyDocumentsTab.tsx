@@ -151,23 +151,6 @@ const VerifyDocumentsTab = ({ context }: { context: DocProcessingContextProps })
     <Box className="vdt-page">
       <Card className="vdt-card">
 
-        {/* Header */}
-        <Box className="vdt-header">
-          <Box className="vdt-header-row">
-            <Box>
-              <Typography className="vdt-title">Verify Documents</Typography>
-              <Typography className="vdt-subtitle">
-                {cycleName} · Review and approve or reject submitted documents
-              </Typography>
-            </Box>
-            <IconButton size="small" onClick={fetchData} title="Refresh" className="vdt-refresh-btn">
-              <RefreshIcon fontSize="small" />
-            </IconButton>
-          </Box>
-        </Box>
-
-        <Box className="vdt-separator" />
-
         {/* Filters */}
         <Box className="vdt-filter-section">
           <Box className="vdt-filter-row">
@@ -192,6 +175,9 @@ const VerifyDocumentsTab = ({ context }: { context: DocProcessingContextProps })
               <Typography className="vdt-stat-inline vdt-stat-inline--approved">{totalApproved} approved</Typography>
               <Typography className="vdt-stat-inline vdt-stat-inline--rejected">{totalRejected} rejected</Typography>
             </Box>
+            <IconButton size="small" onClick={fetchData} title="Refresh" className="vdt-refresh-btn">
+              <RefreshIcon fontSize="small" />
+            </IconButton>
           </Box>
         </Box>
 

@@ -288,27 +288,6 @@ const BatchAllocationsList = ({ context }: { context: AcademyContextProps }) => 
     <Box className="ba-page">
       <Card className="ba-card">
 
-        <Box className="ba-header">
-          <Box className="ba-header-row">
-            <Box>
-              <Typography className="ba-title">Batch Allocations</Typography>
-              <Typography className="ba-subtitle">
-                Allocate JOINED candidates to training batches
-              </Typography>
-            </Box>
-            <Button
-              variant="contained"
-              startIcon={<GroupAddIcon />}
-              onClick={openBulkDialog}
-              className="ba-add-button"
-            >
-              Allocate Candidates
-            </Button>
-          </Box>
-        </Box>
-
-        <Box className="ba-separator" />
-
         <Box className="ba-filter-section">
           <Box className="ba-filter-row">
             <FilterSelect label="Program" value={filterProgram}
@@ -332,6 +311,14 @@ const BatchAllocationsList = ({ context }: { context: AcademyContextProps }) => 
               <MenuItem value="inactive">Inactive</MenuItem>
             </FilterSelect>
             <Box className="ba-filter-spacer" />
+            <Button
+              variant="contained"
+              startIcon={<GroupAddIcon />}
+              onClick={openBulkDialog}
+              className="ba-add-button"
+            >
+              Allocate Candidates
+            </Button>
           </Box>
         </Box>
 

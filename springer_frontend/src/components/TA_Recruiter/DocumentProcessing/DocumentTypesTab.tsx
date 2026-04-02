@@ -80,29 +80,6 @@ const DocumentTypesTab = () => {
     <Box className="dtt-page">
       <Card className="dtt-card">
 
-        {/* Header */}
-        <Box className="dtt-header">
-          <Box className="dtt-header-row">
-            <Box>
-              <Typography className="dtt-title">Document Types</Typography>
-              <Typography className="dtt-subtitle">
-                Configure which documents candidates must submit during onboarding
-              </Typography>
-            </Box>
-            <Button
-              variant="contained"
-              startIcon={<AddIcon />}
-              onClick={() => { setSelected(''); setDialogOpen(true); }}
-              className="dtt-add-button"
-              disabled={availableOptions.length === 0}
-            >
-              Add Document Type
-            </Button>
-          </Box>
-        </Box>
-
-        <Box className="dtt-separator" />
-
         {/* Table */}
         <Box className="dtt-table-section">
           {loading ? (
@@ -117,7 +94,19 @@ const DocumentTypesTab = () => {
                   <TableRow className="dtt-table-head-row">
                     <TableCell className="dtt-table-head-cell">Document Type</TableCell>
                     <TableCell className="dtt-table-head-cell">Created At</TableCell>
-                    <TableCell className="dtt-table-head-cell dtt-table-head-cell--actions">Actions</TableCell>
+                    <TableCell className="dtt-table-head-cell dtt-table-head-cell--actions">
+                      <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+                        <Button
+                          variant="contained"
+                          startIcon={<AddIcon />}
+                          onClick={() => { setSelected(''); setDialogOpen(true); }}
+                          className="dtt-add-button"
+                          disabled={availableOptions.length === 0}
+                        >
+                          Add Document Type
+                        </Button>
+                      </Box>
+                    </TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>

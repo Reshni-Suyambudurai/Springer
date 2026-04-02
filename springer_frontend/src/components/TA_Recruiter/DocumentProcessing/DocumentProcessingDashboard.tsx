@@ -63,7 +63,9 @@ const DocumentProcessingDashboard = () => {
       <Box className="dp-header">
         <Box className="dp-header-top">
           <Box>
-            <Typography className="dp-title">Document Processing</Typography>
+            <Typography className="dp-title">
+              {TABS.find(t => t.key === activeTab)?.label || 'Document Processing'}
+            </Typography>
             <Typography className="dp-subtitle">
               {selectedCycle
                 ? `${selectedCycle.cycleName} · ${selectedCycle.cycleYear}`

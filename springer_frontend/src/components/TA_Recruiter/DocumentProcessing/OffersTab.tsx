@@ -215,35 +215,6 @@ const OffersTab = ({ context }: { context: DocProcessingContextProps }) => {
     <Box className="oft-page">
       <Card className="oft-card">
 
-        {/* Header */}
-        <Box className="oft-header">
-          <Box className="oft-header-row">
-            <Box>
-              <Typography className="oft-title">Offer Tracking</Typography>
-              <Typography className="oft-subtitle">
-                {cycleName} · Only candidates with all documents approved appear here
-              </Typography>
-            </Box>
-            <Stack direction="row" spacing={1} alignItems="center">
-              <IconButton size="small" onClick={refresh} title="Refresh" className="oft-refresh-btn">
-                <RefreshIcon fontSize="small" />
-              </IconButton>
-              {viewMode === 'eligible' && eligible.length > 0 && (
-                <Button
-                  variant="contained"
-                  startIcon={<AddIcon />}
-                  onClick={openOfferDialog}
-                  className="oft-generate-btn"
-                >
-                  Generate Offer
-                </Button>
-              )}
-            </Stack>
-          </Box>
-        </Box>
-
-        <Box className="oft-separator" />
-
         {/* View Toggle + Stats */}
         <Box className="oft-filter-section">
           <Box className="oft-filter-row">
@@ -265,6 +236,20 @@ const OffersTab = ({ context }: { context: DocProcessingContextProps }) => {
             </Box>
 
             <Box className="oft-filter-spacer" />
+
+            <IconButton size="small" onClick={refresh} title="Refresh" className="oft-refresh-btn">
+              <RefreshIcon fontSize="small" />
+            </IconButton>
+            {viewMode === 'eligible' && eligible.length > 0 && (
+              <Button
+                variant="contained"
+                startIcon={<AddIcon />}
+                onClick={openOfferDialog}
+                className="oft-generate-btn"
+              >
+                Generate Offer
+              </Button>
+            )}
 
             {viewMode === 'recorded' && (
               <>
