@@ -3,7 +3,7 @@
 .acd-page {
   display: flex;
   flex-direction: column;
-  height: 100%;
+  height: calc(100vh - 50px);
   background-color: var(--color-bg-secondary);
   overflow: hidden;
 }

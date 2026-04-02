@@ -116,7 +116,17 @@
   min-height: 0;
 }
 
-.atp-table-container { flex: 1; overflow: auto !important; min-height: 0; }
+.atp-table-container {
+  flex: 1;
+  overflow: auto !important;
+  min-height: 0;
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-grey-350) var(--color-grey-150);
+}
+.atp-table-container::-webkit-scrollbar { width: 6px; height: 6px; }
+.atp-table-container::-webkit-scrollbar-track { background: var(--color-grey-150); border-radius: 4px; }
+.atp-table-container::-webkit-scrollbar-thumb { background: var(--color-grey-350); border-radius: 4px; }
+.atp-table-container::-webkit-scrollbar-thumb:hover { background: var(--color-grey-500); }
 
 .atp-table-head-row { background-color: var(--color-bg-table-header); height: 48px; }
 

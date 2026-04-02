@@ -211,22 +211,6 @@ const CoursesList = ({ context }: { context: AcademyContextProps }) => {
     <Box className="crs-page">
       <Card className="crs-card">
 
-        <Box className="crs-header">
-          <Box className="crs-header-row">
-            <Box>
-              <Typography className="crs-title">Training Courses</Typography>
-              <Typography className="crs-subtitle">
-                {programYear === 0 ? 'All courses' : `Courses for ${programYear}`} — select trainer from dropdown
-              </Typography>
-            </Box>
-            <Button variant="contained" startIcon={<AddIcon />} onClick={openCreate} className="crs-add-button">
-              Add Course
-            </Button>
-          </Box>
-        </Box>
-
-        <Box className="crs-separator" />
-
         <Box className="crs-filter-section">
           <Box className="crs-filter-row">
             <TextField
@@ -248,6 +232,9 @@ const CoursesList = ({ context }: { context: AcademyContextProps }) => {
               {COURSE_STATUSES.map((s) => <MenuItem key={s} value={s}>{s}</MenuItem>)}
             </FilterSelect>
             <Box className="crs-filter-spacer" />
+            <Button variant="contained" startIcon={<AddIcon />} onClick={openCreate} className="crs-add-button">
+              Add Course
+            </Button>
           </Box>
         </Box>
 

@@ -170,28 +170,6 @@ const ProgramsList = ({ context }: { context: AcademyContextProps }) => {
     <Box className="prog-page">
       <Card className="prog-card">
 
-        {/* Header */}
-        <Box className="prog-header">
-          <Box className="prog-header-row">
-            <Box>
-              <Typography className="prog-title">Training Programs</Typography>
-              <Typography className="prog-subtitle">
-                Manage training programs linked to hiring cycles
-              </Typography>
-            </Box>
-            <Button
-              variant="contained"
-              startIcon={<AddIcon />}
-              onClick={openCreate}
-              className="prog-add-button"
-            >
-              Add Program
-            </Button>
-          </Box>
-        </Box>
-
-        <Box className="prog-separator" />
-
         {/* Filters */}
         <Box className="prog-filter-section">
           <Box className="prog-filter-row">
@@ -234,6 +212,14 @@ const ProgramsList = ({ context }: { context: AcademyContextProps }) => {
             </FilterSelect>
 
             <Box className="prog-filter-spacer" />
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={openCreate}
+              className="prog-add-button"
+            >
+              Add Program
+            </Button>
           </Box>
         </Box>
 

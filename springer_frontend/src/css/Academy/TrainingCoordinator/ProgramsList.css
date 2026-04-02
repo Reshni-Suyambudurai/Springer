@@ -141,7 +141,13 @@
   flex: 1;
   overflow: auto !important;
   min-height: 0;
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-grey-350) var(--color-grey-150);
 }
+.prog-table-container::-webkit-scrollbar { width: 6px; height: 6px; }
+.prog-table-container::-webkit-scrollbar-track { background: var(--color-grey-150); border-radius: 4px; }
+.prog-table-container::-webkit-scrollbar-thumb { background: var(--color-grey-350); border-radius: 4px; }
+.prog-table-container::-webkit-scrollbar-thumb:hover { background: var(--color-grey-500); }
 
 /* ── Table Head ── */
 .prog-table-head-row {
