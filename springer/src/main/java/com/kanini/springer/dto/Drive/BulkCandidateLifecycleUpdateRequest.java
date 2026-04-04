@@ -14,7 +14,8 @@ import java.util.List;
 @AllArgsConstructor
 public class BulkCandidateLifecycleUpdateRequest {
     
-    private List<Long> candidateIds; // List of candidate IDs to update
+    private List<Long> candidateIds; // List of candidate IDs to update (used in select mode)
+    private CandidateFilterRequest filterRequest; // Filters to resolve all matching IDs (used in non-select mode)
     private String lifecycleStatus; // New lifecycle status (ACTIVE or CLOSED)
     private Long updatedBy; // User ID who is performing the update
 }

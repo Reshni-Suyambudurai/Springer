@@ -9,6 +9,7 @@ import com.kanini.springer.entity.HiringReq.Institute;
 import com.kanini.springer.entity.HiringReq.InstituteContact;
 import com.kanini.springer.entity.HiringReq.InstituteProgram;
 import com.kanini.springer.entity.HiringReq.Program;
+import com.kanini.springer.entity.enums.Enums.ContactStatus;
 import com.kanini.springer.entity.enums.Enums.InstituteTier;
 import com.kanini.springer.exception.ResourceNotFoundException;
 import com.kanini.springer.exception.ValidationException;
@@ -27,6 +28,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -60,6 +62,25 @@ public class InstituteServiceImpl implements IInstituteService {
         institute.setIsActive(request.getIsActive() != null ? request.getIsActive() : true);
         
         Institute savedInstitute = instituteRepository.save(institute);
+        
+        // If TPO contact data is provided, create the contact record
+        if (request.getTpoContact() != null) {
+            InstituteRequest.TPOContactRequest tpo = request.getTpoContact();
+            if (tpo.getTpoName() != null && !tpo.getTpoName().isBlank()
+                    && tpo.getTpoEmail() != null && !tpo.getTpoEmail().isBlank()
+                    && tpo.getTpoMobile() != null && !tpo.getTpoMobile().isBlank()) {
+                InstituteContact contact = new InstituteContact();
+                contact.setInstitute(savedInstitute);
+                contact.setTpoName(tpo.getTpoName());
+                contact.setTpoEmail(tpo.getTpoEmail());
+                contact.setTpoMobile(tpo.getTpoMobile());
+                contact.setTpoDesignation(tpo.getTpoDesignation());
+                contact.setTpoStatus(ContactStatus.ACTIVE);
+                contact.setIsPrimary(true);
+                contactRepository.save(contact);
+            }
+        }
+        
         return mapper.toResponse(savedInstitute);
     }
     
@@ -67,8 +88,18 @@ public class InstituteServiceImpl implements IInstituteService {
     @Transactional
     public BulkInsertResponse<InstituteResponse> bulkCreateInstitutes(List<InstituteRequest> requests) {
         List<Institute> institutesToInsert = new ArrayList<>();
+        List<InstituteRequest> validRequests = new ArrayList<>(); // Track requests that passed validation
         List<String> errorMessages = new ArrayList<>();
         int totalProcessed = requests.size();
+        
+        // Pre-fetch all existing institute names in ONE query
+        Set<String> allNames = requests.stream()
+                .map(InstituteRequest::getInstituteName)
+                .filter(name -> name != null && !name.isBlank())
+                .collect(Collectors.toSet());
+        Set<String> existingNames = instituteRepository.findByInstituteNameIn(allNames).stream()
+                .map(Institute::getInstituteName)
+                .collect(Collectors.toSet());
         
         // Phase 1: Validate ALL records first
         for (int i = 0; i < requests.size(); i++) {
@@ -82,8 +113,8 @@ public class InstituteServiceImpl implements IInstituteService {
                     continue;
                 }
                 
-                // Check if institute already exists
-                if (instituteRepository.findByInstituteName(request.getInstituteName()).isPresent()) {
+                // Check if institute already exists (using pre-fetched set)
+                if (existingNames.contains(request.getInstituteName())) {
                     errorMessages.add(identifier + ": Institute already exists with this name");
                     continue;
                 }
@@ -112,6 +143,7 @@ public class InstituteServiceImpl implements IInstituteService {
                 institute.setIsActive(request.getIsActive() != null ? request.getIsActive() : true);
                 
                 institutesToInsert.add(institute);
+                validRequests.add(request);
                 
             } catch (Exception e) {
                 errorMessages.add(identifier + ": Validation error: " + e.getMessage());
@@ -131,6 +163,32 @@ public class InstituteServiceImpl implements IInstituteService {
         
         // Phase 3: Insert all records (within transaction, will auto-rollback on exception)
         List<Institute> savedInstitutes = instituteRepository.saveAll(institutesToInsert);
+        
+        // Phase 4: Batch create TPO contacts for institutes that have TPO data
+        List<InstituteContact> contactsToSave = new ArrayList<>();
+        for (int i = 0; i < savedInstitutes.size(); i++) {
+            InstituteRequest req = validRequests.get(i);
+            if (req.getTpoContact() != null) {
+                InstituteRequest.TPOContactRequest tpo = req.getTpoContact();
+                if (tpo.getTpoName() != null && !tpo.getTpoName().isBlank()
+                        && tpo.getTpoEmail() != null && !tpo.getTpoEmail().isBlank()
+                        && tpo.getTpoMobile() != null && !tpo.getTpoMobile().isBlank()) {
+                    InstituteContact contact = new InstituteContact();
+                    contact.setInstitute(savedInstitutes.get(i));
+                    contact.setTpoName(tpo.getTpoName());
+                    contact.setTpoEmail(tpo.getTpoEmail());
+                    contact.setTpoMobile(tpo.getTpoMobile());
+                    contact.setTpoDesignation(tpo.getTpoDesignation());
+                    contact.setTpoStatus(ContactStatus.ACTIVE);
+                    contact.setIsPrimary(true);
+                    contactsToSave.add(contact);
+                }
+            }
+        }
+        if (!contactsToSave.isEmpty()) {
+            contactRepository.saveAll(contactsToSave);
+        }
+        
         List<InstituteResponse> responses = savedInstitutes.stream()
                 .map(mapper::toResponse)
                 .collect(Collectors.toList());

@@ -211,5 +211,7 @@ List<Candidate> findMatchingCandidates(
             @Param("lifecycleStatus") LifecycleStatus lifecycleStatus
     );
 
-}
+    @Query("SELECT DISTINCT c FROM Candidate c LEFT JOIN FETCH c.institute LEFT JOIN FETCH c.candidateSkills cs LEFT JOIN FETCH cs.skill WHERE c.candidateId IN :candidateIds")
+    List<Candidate> findByIdsWithInstitute(@Param("candidateIds") List<Long> candidateIds);
 
+}

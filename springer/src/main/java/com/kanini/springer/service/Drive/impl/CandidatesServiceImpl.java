@@ -37,6 +37,10 @@ import com.kanini.springer.service.Common.IOverrideService;
 import com.kanini.springer.service.Drive.ICandidatesService;
 import com.kanini.springer.service.Drive.IEligibilityRuleService;
 import com.kanini.springer.specification.CandidateSpecification;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.CriteriaQuery;
+import jakarta.persistence.criteria.Root;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -48,10 +52,13 @@ import org.springframework.transaction.annotation.Transactional;
 import com.kanini.springer.dto.Drive.FilterOptionsResponse;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -66,6 +73,7 @@ public class CandidatesServiceImpl implements ICandidatesService {
     private final SkillRepository skillRepository;
     private final CandidateSkillRepository candidateSkillRepository;
     private final UserRepository userRepository;
+    private final EntityManager entityManager;
     
     @Override
     @Transactional
@@ -129,12 +137,18 @@ public class CandidatesServiceImpl implements ICandidatesService {
                     .orElseThrow(() -> new ResourceNotFoundException("Hiring cycle", "ID", request.getCycleId()));
             existingCandidate.setCycle(newCycle);
             
-            // Update only mutable fields (identity fields like CGPA, DOB, passout year, institute are already verified)
+            // Update mutable fields with new values from the request
             existingCandidate.setFirstName(request.getFirstName());
             if (request.getLastName() != null) {
                 existingCandidate.setLastName(request.getLastName());
             }
+            if (request.getEmail() != null && !request.getEmail().isBlank()) {
+                existingCandidate.setEmail(request.getEmail());
+            }
             existingCandidate.setMobile(request.getMobile());
+            if (request.getCgpa() != null) {
+                existingCandidate.setCgpa(request.getCgpa());
+            }
             existingCandidate.setHistoryOfArrears(request.getHistoryOfArrears());
             if (request.getDegree() != null) {
                 existingCandidate.setDegree(request.getDegree());
@@ -143,9 +157,9 @@ public class CandidatesServiceImpl implements ICandidatesService {
                 existingCandidate.setDepartment(request.getDepartment());
             }
             
-            // Note: CGPA, DateOfBirth, PassoutYear, and Institute are NOT updated as they were used for identity verification
+            // Note: DateOfBirth, PassoutYear, and Institute are NOT updated as they were used for identity verification
             
-            // Re-check eligibility with new data
+            // Re-check eligibility with updated data (CGPA may have changed)
             EligibilityValidationResult eligibilityResult = eligibilityRuleService.checkEligibility(
                     existingCandidate.getCgpa(),
                     existingCandidate.getPassoutYear(),
@@ -267,57 +281,70 @@ public class CandidatesServiceImpl implements ICandidatesService {
             return response;
         }
         
+        // ===== PRE-FETCH: Batch load all lookup data in a few queries =====
+        
+        // 1) Batch fetch all existing emails (1 query instead of N)
+        List<String> allEmails = requests.stream()
+                .filter(r -> r.getEmail() != null && !r.getEmail().isBlank())
+                .map(r -> r.getEmail().toLowerCase())
+                .collect(Collectors.toList());
+        Map<String, Candidate> existingEmailMap = new HashMap<>();
+        if (!allEmails.isEmpty()) {
+            candidatesRepository.findByEmailIn(allEmails).forEach(c ->
+                    existingEmailMap.put(c.getEmail().toLowerCase(), c));
+        }
+        
+        // 2) Batch fetch all existing aadhaars (1 query instead of N)
+        List<String> allAadhaars = requests.stream()
+                .filter(r -> r.getAadhaarNumber() != null && !r.getAadhaarNumber().isBlank())
+                .map(CandidateRequest::getAadhaarNumber)
+                .collect(Collectors.toList());
+        Map<String, Candidate> existingAadhaarMap = new HashMap<>();
+        if (!allAadhaars.isEmpty()) {
+            candidatesRepository.findByAadhaarNumberIn(allAadhaars).forEach(c ->
+                    existingAadhaarMap.put(c.getAadhaarNumber(), c));
+        }
+        
+        // 3) Batch fetch all institutes (1 query instead of N)
+        Set<Long> allInstituteIds = requests.stream()
+                .filter(r -> r.getInstituteId() != null)
+                .map(CandidateRequest::getInstituteId)
+                .collect(Collectors.toSet());
+        Map<Long, Institute> instituteMap = new HashMap<>();
+        if (!allInstituteIds.isEmpty()) {
+            instituteRepository.findAllById(allInstituteIds).forEach(inst ->
+                    instituteMap.put(inst.getInstituteId(), inst));
+        }
+        
+        // 4) Cache cycle validation (1 query per unique cycleId instead of N)
+        Map<Long, HiringCycle> cycleCache = new HashMap<>();
+        Set<Long> uniqueCycleIds = requests.stream()
+                .filter(r -> r.getCycleId() != null)
+                .map(CandidateRequest::getCycleId)
+                .collect(Collectors.toSet());
+        for (Long cycleId : uniqueCycleIds) {
+            hiringCycleRepository.findById(cycleId).ifPresent(cycle -> cycleCache.put(cycleId, cycle));
+        }
+        
         // Phase 1: Validate all candidates before inserting any
         List<String> validationErrors = new ArrayList<>();
         Set<String> emailsInBatch = new HashSet<>();
         Set<String> aadhaarsInBatch = new HashSet<>();
         List<Candidate> candidatesToUpdate = new ArrayList<>();
-        List<Integer> updateIndices = new ArrayList<>();
+        Set<Integer> updateIndices = new HashSet<>();
         
         for (int i = 0; i < requests.size(); i++) {
             CandidateRequest request = requests.get(i);
             String candidateRef = "Candidate #" + (i + 1);
+            boolean isOldCandidate = false;
             
-            // Validate email uniqueness within batch
-            if (request.getEmail() == null || request.getEmail().isBlank()) {
-                validationErrors.add(candidateRef + ": Email is required");
-            } else {
-                if (emailsInBatch.contains(request.getEmail().toLowerCase())) {
-                    validationErrors.add(candidateRef + ": Duplicate email within batch - " + request.getEmail());
-                } else {
-                    emailsInBatch.add(request.getEmail().toLowerCase());
-                    
-                    // Check if email already exists in database
-                    Optional<Candidate> existingEmail = candidatesRepository.findByEmail(request.getEmail());
-                    if (existingEmail.isPresent()) {
-                        String existingName = existingEmail.get().getFirstName() + 
-                                              (existingEmail.get().getLastName() != null ? " " + existingEmail.get().getLastName() : "");
-                        validationErrors.add(candidateRef + ": Email already exists for candidate - " + existingName);
-                    }
-                }
-            }
-            
-            // Validate aadhaar uniqueness within batch (if provided)
-            if (request.getAadhaarNumber() != null && !request.getAadhaarNumber().isBlank()) {
-                if (aadhaarsInBatch.contains(request.getAadhaarNumber())) {
-                    validationErrors.add(candidateRef + ": Duplicate Aadhaar within batch - " + request.getAadhaarNumber());
-                } else {
-                    aadhaarsInBatch.add(request.getAadhaarNumber());
-                    
-                    // Check if aadhaar already exists in database
-                    Optional<Candidate> existingAadhaar = candidatesRepository.findByAadhaarNumber(request.getAadhaarNumber());
-                    if (existingAadhaar.isPresent()) {
-                        String existingName = existingAadhaar.get().getFirstName() + 
-                                              (existingAadhaar.get().getLastName() != null ? " " + existingAadhaar.get().getLastName() : "");
-                        validationErrors.add(candidateRef + ": Aadhaar number already exists for candidate - " + existingName);
-                    }
-                }
-            }
-            
-            // Check against database using comprehensive matching
+            // Check identity match FIRST to determine if this is an OLD candidate
             try {
-                Institute institute = instituteRepository.findById(request.getInstituteId())
-                        .orElseThrow(() -> new ResourceNotFoundException("Institute", "ID", request.getInstituteId()));
+                Institute institute = instituteMap.get(request.getInstituteId());
+                if (institute == null) {
+                    validationErrors.add(candidateRef + ": Institute not found with ID: " + request.getInstituteId());
+                    continue;
+                }
                 String instituteName = institute.getInstituteName();
                 
                 List<Candidate> matches = candidatesRepository.findMatchingCandidates(
@@ -340,7 +367,7 @@ public class CandidatesServiceImpl implements ICandidatesService {
                     // Check if same cycle
                     if (request.getCycleId() != null && existingCandidate.getCycle() != null && 
                         existingCandidate.getCycle().getCycleId().equals(request.getCycleId())) {
-                        // Same cycle - add error
+                        // Same cycle - DUPLICATE error
                         String errorMsg = String.format(
                                 "Duplicate: %s applied on %s with %s stage and %s lifecycle status",
                                 candidateName,
@@ -350,7 +377,8 @@ public class CandidatesServiceImpl implements ICandidatesService {
                         );
                         validationErrors.add(candidateRef + ": " + errorMsg);
                     } else {
-                        // Different cycle - mark for update
+                        // Different cycle - OLD candidate, reuse existing record
+                        isOldCandidate = true;
                         candidatesToUpdate.add(existingCandidate);
                         updateIndices.add(i);
                     }
@@ -359,19 +387,52 @@ public class CandidatesServiceImpl implements ICandidatesService {
                 validationErrors.add(candidateRef + ": Error checking for duplicates - " + e.getMessage());
             }
             
-            // Validate cycle if provided
-            if (request.getCycleId() != null) {
-                try {
-                    validateCycleIsOpen(request.getCycleId());
-                } catch (Exception e) {
-                    validationErrors.add(candidateRef + ": " + e.getMessage());
+            // Skip email/aadhaar uniqueness checks for OLD candidates (they reuse existing records)
+            if (!isOldCandidate) {
+                // Validate email uniqueness within batch
+                if (request.getEmail() == null || request.getEmail().isBlank()) {
+                    validationErrors.add(candidateRef + ": Email is required");
+                } else {
+                    if (emailsInBatch.contains(request.getEmail().toLowerCase())) {
+                        validationErrors.add(candidateRef + ": Duplicate email within batch - " + request.getEmail());
+                    } else {
+                        emailsInBatch.add(request.getEmail().toLowerCase());
+                        
+                        // Check if email already exists in database (from pre-fetched map)
+                        Candidate existingEmail = existingEmailMap.get(request.getEmail().toLowerCase());
+                        if (existingEmail != null) {
+                            String existingName = existingEmail.getFirstName() + 
+                                                  (existingEmail.getLastName() != null ? " " + existingEmail.getLastName() : "");
+                            validationErrors.add(candidateRef + ": Email already exists for candidate - " + existingName);
+                        }
+                    }
+                }
+                
+                // Validate aadhaar uniqueness within batch (if provided)
+                if (request.getAadhaarNumber() != null && !request.getAadhaarNumber().isBlank()) {
+                    if (aadhaarsInBatch.contains(request.getAadhaarNumber())) {
+                        validationErrors.add(candidateRef + ": Duplicate Aadhaar within batch - " + request.getAadhaarNumber());
+                    } else {
+                        aadhaarsInBatch.add(request.getAadhaarNumber());
+                        
+                        // Check if aadhaar already exists in database (from pre-fetched map)
+                        Candidate existingAadhaar = existingAadhaarMap.get(request.getAadhaarNumber());
+                        if (existingAadhaar != null) {
+                            String existingName = existingAadhaar.getFirstName() + 
+                                                  (existingAadhaar.getLastName() != null ? " " + existingAadhaar.getLastName() : "");
+                            validationErrors.add(candidateRef + ": Aadhaar number already exists for candidate - " + existingName);
+                        }
+                    }
                 }
             }
             
-            // Validate institute exists
-            if (request.getInstituteId() != null) {
-                if (!instituteRepository.existsById(request.getInstituteId())) {
-                    validationErrors.add(candidateRef + ": Institute not found with ID: " + request.getInstituteId());
+            // Validate cycle if provided (using cached cycle)
+            if (request.getCycleId() != null) {
+                HiringCycle cycle = cycleCache.get(request.getCycleId());
+                if (cycle == null) {
+                    validationErrors.add(candidateRef + ": Hiring cycle not found with ID: " + request.getCycleId());
+                } else if (cycle.getStatus() != CycleStatus.OPEN) {
+                    validationErrors.add(candidateRef + ": Cannot add candidates to cycle " + request.getCycleId() + ". Cycle status is " + cycle.getStatus() + ". Only OPEN cycles accept new candidates.");
                 }
             }
             
@@ -403,7 +464,7 @@ public class CandidatesServiceImpl implements ICandidatesService {
         for (int i = 0; i < requests.size(); i++) {
             CandidateRequest request = requests.get(i);
             
-            // Check if this is an update or insert
+            // Check if this is an update or insert (O(1) lookup with HashSet)
             if (updateIndices.contains(i)) {
                 updateRequests.add(request);
             } else {
@@ -442,24 +503,32 @@ public class CandidatesServiceImpl implements ICandidatesService {
             }
         }
         
-        // Update existing candidates
+        // Update existing candidates (use cached cycle instead of per-row lookup)
         for (int i = 0; i < candidatesToUpdate.size(); i++) {
             Candidate existingCandidate = candidatesToUpdate.get(i);
             CandidateRequest request = updateRequests.get(i);
             
-            // Update cycleId if provided
+            // Update cycleId if provided (using cached cycle)
             if (request.getCycleId() != null) {
-                HiringCycle newCycle = hiringCycleRepository.findById(request.getCycleId())
-                        .orElseThrow(() -> new ResourceNotFoundException("Hiring cycle", "ID", request.getCycleId()));
+                HiringCycle newCycle = cycleCache.get(request.getCycleId());
+                if (newCycle == null) {
+                    throw new ResourceNotFoundException("Hiring cycle", "ID", request.getCycleId());
+                }
                 existingCandidate.setCycle(newCycle);
             }
             
-            // Update only mutable fields (identity fields like CGPA, DOB, passout year, institute were verified)
+            // Update mutable fields with new values from the request
             existingCandidate.setFirstName(request.getFirstName());
             if (request.getLastName() != null) {
                 existingCandidate.setLastName(request.getLastName());
             }
+            if (request.getEmail() != null && !request.getEmail().isBlank()) {
+                existingCandidate.setEmail(request.getEmail());
+            }
             existingCandidate.setMobile(request.getMobile());
+            if (request.getCgpa() != null) {
+                existingCandidate.setCgpa(request.getCgpa());
+            }
             existingCandidate.setHistoryOfArrears(request.getHistoryOfArrears());
             if (request.getDegree() != null) {
                 existingCandidate.setDegree(request.getDegree());
@@ -468,9 +537,9 @@ public class CandidatesServiceImpl implements ICandidatesService {
                 existingCandidate.setDepartment(request.getDepartment());
             }
             
-            // Note: CGPA, DateOfBirth, PassoutYear, and Institute are NOT updated as they were used for identity verification
+            // Note: DateOfBirth, PassoutYear, and Institute are NOT updated as they were used for identity verification
             
-            // Re-check eligibility with existing CGPA (no change expected since verified)
+            // Re-check eligibility with updated data (CGPA may have changed)
             EligibilityValidationResult eligibilityResult = eligibilityRuleService.checkEligibility(
                     existingCandidate.getCgpa(),
                     existingCandidate.getPassoutYear(),
@@ -504,12 +573,18 @@ public class CandidatesServiceImpl implements ICandidatesService {
             
             // Update skills if provided
             if (request.getSkillIds() != null && !request.getSkillIds().isEmpty()) {
-                // Remove old skills
-                candidateSkillRepository.deleteAll(existingCandidate.getCandidateSkills());
+                // Remove old skills and clear the collection reference to avoid ObjectDeletedException
+                if (existingCandidate.getCandidateSkills() != null && !existingCandidate.getCandidateSkills().isEmpty()) {
+                    candidateSkillRepository.deleteAll(existingCandidate.getCandidateSkills());
+                    existingCandidate.getCandidateSkills().clear();
+                }
             }
         }
         
-        // Save all candidates (both new and updated)
+        // Flush deletes before saving to avoid Hibernate conflict with deleted entities
+        candidateSkillRepository.flush();
+        
+        // Save all candidates (both new and updated) - single batch save
         List<Candidate> allCandidatesToSave = new ArrayList<>();
         allCandidatesToSave.addAll(candidatesToUpdate);
         allCandidatesToSave.addAll(candidatesToInsert);
@@ -518,47 +593,55 @@ public class CandidatesServiceImpl implements ICandidatesService {
         // Flush to ensure all IDs are generated for new candidates
         candidatesRepository.flush();
         
-        // Map skills for each saved candidate
+        // ===== Batch skill mapping: pre-fetch all skills, collect all CandidateSkill entities, saveAll once =====
         List<CandidateRequest> allRequests = new ArrayList<>();
         allRequests.addAll(updateRequests);
         allRequests.addAll(insertRequests);
         
-        System.out.println("DEBUG: Total saved candidates: " + savedCandidates.size());
-        System.out.println("DEBUG: Total requests with potential skills: " + allRequests.size());
+        // Collect all unique skill IDs across all requests
+        Set<Long> allSkillIds = new HashSet<>();
+        for (CandidateRequest req : allRequests) {
+            if (req.getSkillIds() != null) {
+                allSkillIds.addAll(req.getSkillIds());
+            }
+        }
         
+        // Batch fetch all skills in 1 query
+        Map<Long, Skill> skillMap = new HashMap<>();
+        if (!allSkillIds.isEmpty()) {
+            skillRepository.findAllById(allSkillIds).forEach(skill ->
+                    skillMap.put(skill.getSkillId(), skill));
+        }
+        
+        // Build all CandidateSkill entities and saveAll in 1 batch
+        List<CandidateSkill> allCandidateSkills = new ArrayList<>();
         for (int i = 0; i < savedCandidates.size(); i++) {
             Candidate savedCandidate = savedCandidates.get(i);
             CandidateRequest request = allRequests.get(i);
             
-            System.out.println("DEBUG: Processing candidate " + (i+1) + "/" + savedCandidates.size() + 
-                             " - ID: " + savedCandidate.getCandidateId() + 
-                             ", Name: " + savedCandidate.getFirstName() +
-                             ", SkillIds in request: " + (request.getSkillIds() != null ? request.getSkillIds().size() : 0));
-            
             if (request.getSkillIds() != null && !request.getSkillIds().isEmpty()) {
-                try {
-                    System.out.println("DEBUG: Mapping " + request.getSkillIds().size() + " skills for candidate ID: " + savedCandidate.getCandidateId());
-                    mapCandidateSkills(savedCandidate, request.getSkillIds());
-                    System.out.println("DEBUG: Successfully mapped skills for candidate ID: " + savedCandidate.getCandidateId());
-                } catch (Exception e) {
-                    // Log but don't fail the entire batch
-                    System.err.println("ERROR: Failed to map skills for candidate " + savedCandidate.getCandidateId() + ": " + e.getMessage());
-                    e.printStackTrace();
+                for (Long skillId : request.getSkillIds()) {
+                    Skill skill = skillMap.get(skillId);
+                    if (skill == null) {
+                        throw new ResourceNotFoundException("Skill", "ID", skillId);
+                    }
+                    CandidateSkill candidateSkill = new CandidateSkill();
+                    candidateSkill.setCandidate(savedCandidate);
+                    candidateSkill.setSkill(skill);
+                    allCandidateSkills.add(candidateSkill);
                 }
-            } else {
-                System.out.println("DEBUG: No skills to map for candidate ID: " + savedCandidate.getCandidateId());
             }
         }
+        if (!allCandidateSkills.isEmpty()) {
+            candidateSkillRepository.saveAll(allCandidateSkills);
+        }
         
-        // Reload all candidates with skills and institute details
+        // Batch reload all candidates with institute and skills (1 query instead of N)
         List<Long> savedIds = savedCandidates.stream()
                 .map(Candidate::getCandidateId)
-                .collect(java.util.stream.Collectors.toList());
+                .collect(Collectors.toList());
         
-        List<Candidate> reloadedCandidates = savedIds.stream()
-                .map(id -> candidatesRepository.findByIdWithInstitute(id).orElse(null))
-                .filter(c -> c != null)
-                .collect(java.util.stream.Collectors.toList());
+        List<Candidate> reloadedCandidates = candidatesRepository.findByIdsWithInstitute(savedIds);
         
         // Build success response
         List<CandidateResponse> candidateResponses = mapper.toResponseList(reloadedCandidates);
@@ -668,13 +751,10 @@ public class CandidatesServiceImpl implements ICandidatesService {
         // Parse the new status
         ApplicationStage newStatus = ApplicationStage.valueOf(request.getStatus());
         
-        // Check if the candidate is eligible for status progression
-        // Only eligible candidates can be SHORTLISTED, SCHEDULED, SELECTED, REJECTED, OFFERED, or JOINED
+        // Ineligible candidates cannot be moved to progression statuses
         if (!candidate.getIsEligible() && 
             (newStatus == ApplicationStage.SHORTLISTED ||
-             newStatus == ApplicationStage.SCHEDULED ||
              newStatus == ApplicationStage.SELECTED ||
-             newStatus == ApplicationStage.REJECTED ||
              newStatus == ApplicationStage.OFFERED ||
              newStatus == ApplicationStage.JOINED)) {
             throw new ValidationException("Cannot update status to " + newStatus + ". Candidate is not eligible. Only eligible candidates can progress in recruitment.");
@@ -733,8 +813,26 @@ public class CandidatesServiceImpl implements ICandidatesService {
     public BulkCandidateStatusUpdateResponse bulkUpdateCandidateStatus(BulkCandidateStatusUpdateRequest request) {
         BulkCandidateStatusUpdateResponse response = new BulkCandidateStatusUpdateResponse();
         
-        if (request.getCandidateIds() == null || request.getCandidateIds().isEmpty()) {
-            throw new ValidationException("Candidate IDs list cannot be empty");
+        // Resolve candidate IDs: either from explicit list or from filters
+        List<Long> candidateIds = request.getCandidateIds();
+        if ((candidateIds == null || candidateIds.isEmpty()) && request.getFilterRequest() != null) {
+            // Lightweight ID-only query using CriteriaQuery — SELECT candidate_id only, no entity loading
+            Specification<Candidate> spec = CandidateSpecification.withFilters(request.getFilterRequest());
+            CriteriaBuilder cb = entityManager.getCriteriaBuilder();
+            CriteriaQuery<Long> idQuery = cb.createQuery(Long.class);
+            Root<Candidate> root = idQuery.from(Candidate.class);
+            idQuery.select(root.get("candidateId"));
+            
+            jakarta.persistence.criteria.Predicate predicate = spec.toPredicate(root, idQuery, cb);
+            if (predicate != null) {
+                idQuery.where(predicate);
+            }
+            
+            candidateIds = entityManager.createQuery(idQuery).getResultList();
+        }
+        
+        if (candidateIds == null || candidateIds.isEmpty()) {
+            throw new ValidationException("No candidates to update. Provide candidateIds or filterRequest.");
         }
         
         if (request.getStatus() == null || request.getStatus().isBlank()) {
@@ -758,16 +856,21 @@ public class CandidatesServiceImpl implements ICandidatesService {
             }
         }
         
+        // Batch fetch all candidates in 1 query instead of N
+        Map<Long, Candidate> candidateMap = new HashMap<>();
+        candidatesRepository.findAllById(candidateIds).forEach(c ->
+                candidateMap.put(c.getCandidateId(), c));
+        
         int totalProcessed = 0;
         int successCount = 0;
         int failureCount = 0;
+        List<Candidate> candidatesToSave = new ArrayList<>();
         
-        for (Long candidateId : request.getCandidateIds()) {
+        for (Long candidateId : candidateIds) {
             totalProcessed++;
             
             try {
-                // Find candidate
-                Candidate candidate = candidatesRepository.findById(candidateId).orElse(null);
+                Candidate candidate = candidateMap.get(candidateId);
                 
                 if (candidate == null) {
                     response.getErrorMessages().add("Candidate with ID " + candidateId + " not found");
@@ -775,12 +878,10 @@ public class CandidatesServiceImpl implements ICandidatesService {
                     continue;
                 }
                 
-                // Check eligibility for progression statuses
+                // Ineligible candidates cannot be moved to progression statuses
                 if (!candidate.getIsEligible() && 
                     (newStatus == ApplicationStage.SHORTLISTED ||
-                     newStatus == ApplicationStage.SCHEDULED ||
                      newStatus == ApplicationStage.SELECTED ||
-                     newStatus == ApplicationStage.REJECTED ||
                      newStatus == ApplicationStage.OFFERED ||
                      newStatus == ApplicationStage.JOINED)) {
                     
@@ -792,15 +893,12 @@ public class CandidatesServiceImpl implements ICandidatesService {
                 }
                 
                 // Update status
-                ApplicationStage oldStatus = candidate.getApplicationStage();
                 candidate.setApplicationStage(newStatus);
                 
                 // Append to statusHistory
                 appendStatusHistory(candidate, newStatus, userName);
                 
-                // Save candidate
-                candidatesRepository.save(candidate);
-            
+                candidatesToSave.add(candidate);
                 response.getSuccessfulCandidateIds().add(candidateId);
                 successCount++;
                 
@@ -808,6 +906,11 @@ public class CandidatesServiceImpl implements ICandidatesService {
                 response.getErrorMessages().add("Error updating candidate " + candidateId + ": " + e.getMessage());
                 failureCount++;
             }
+        }
+        
+        // Batch save all updated candidates in 1 query
+        if (!candidatesToSave.isEmpty()) {
+            candidatesRepository.saveAll(candidatesToSave);
         }
         
         response.setTotalProcessed(totalProcessed);
@@ -822,8 +925,25 @@ public class CandidatesServiceImpl implements ICandidatesService {
     public BulkCandidateLifecycleUpdateResponse bulkUpdateCandidateLifecycleStatus(BulkCandidateLifecycleUpdateRequest request) {
         BulkCandidateLifecycleUpdateResponse response = new BulkCandidateLifecycleUpdateResponse();
         
-        if (request.getCandidateIds() == null || request.getCandidateIds().isEmpty()) {
-            throw new ValidationException("Candidate IDs list cannot be empty");
+        // Resolve candidate IDs: either from explicit list or from filters
+        List<Long> candidateIds = request.getCandidateIds();
+        if ((candidateIds == null || candidateIds.isEmpty()) && request.getFilterRequest() != null) {
+            Specification<Candidate> spec = CandidateSpecification.withFilters(request.getFilterRequest());
+            CriteriaBuilder cb = entityManager.getCriteriaBuilder();
+            CriteriaQuery<Long> idQuery = cb.createQuery(Long.class);
+            Root<Candidate> root = idQuery.from(Candidate.class);
+            idQuery.select(root.get("candidateId"));
+            
+            jakarta.persistence.criteria.Predicate predicate = spec.toPredicate(root, idQuery, cb);
+            if (predicate != null) {
+                idQuery.where(predicate);
+            }
+            
+            candidateIds = entityManager.createQuery(idQuery).getResultList();
+        }
+        
+        if (candidateIds == null || candidateIds.isEmpty()) {
+            throw new ValidationException("No candidates to update. Provide candidateIds or filterRequest.");
         }
         
         if (request.getLifecycleStatus() == null || request.getLifecycleStatus().isBlank()) {
@@ -838,8 +958,8 @@ public class CandidatesServiceImpl implements ICandidatesService {
             throw new ValidationException("Invalid lifecycle status: " + request.getLifecycleStatus() + ". Must be ACTIVE or CLOSED");
         }
         
-        // Fetch username if updatedBy is provided
-        String userName = "System";
+        // Fetch username from updatedBy
+        String userName = "Unknown";
         if (request.getUpdatedBy() != null) {
             User user = userRepository.findById(request.getUpdatedBy()).orElse(null);
             if (user != null) {
@@ -847,16 +967,26 @@ public class CandidatesServiceImpl implements ICandidatesService {
             }
         }
         
+        // Batch fetch all candidates in 1 query instead of N
+        Map<Long, Candidate> candidateMap = new HashMap<>();
+        candidatesRepository.findAllById(candidateIds).forEach(c ->
+                candidateMap.put(c.getCandidateId(), c));
+        
+        // Pre-compute timestamp once (same update batch = same time)
+        java.time.LocalDateTime now = java.time.LocalDateTime.now();
+        java.time.format.DateTimeFormatter formatter = java.time.format.DateTimeFormatter.ofPattern("d/M/yy - h:mma");
+        String formattedDate = now.format(formatter).toLowerCase();
+        
         int totalProcessed = 0;
         int successCount = 0;
         int failureCount = 0;
+        List<Candidate> candidatesToSave = new ArrayList<>();
         
-        for (Long candidateId : request.getCandidateIds()) {
+        for (Long candidateId : candidateIds) {
             totalProcessed++;
             
             try {
-                // Find candidate
-                Candidate candidate = candidatesRepository.findById(candidateId).orElse(null);
+                Candidate candidate = candidateMap.get(candidateId);
                 
                 if (candidate == null) {
                     response.getErrorMessages().add("Candidate with ID " + candidateId + " not found");
@@ -865,15 +995,10 @@ public class CandidatesServiceImpl implements ICandidatesService {
                 }
                 
                 // Update lifecycle status
-                LifecycleStatus oldLifecycleStatus = candidate.getLifecycleStatus();
                 candidate.setLifecycleStatus(newLifecycleStatus);
                 
-                // Append to statusHistory (not using appendStatusHistory since this is lifecycleStatus, not applicationStage)
-                java.time.LocalDateTime now = java.time.LocalDateTime.now();
-                java.time.format.DateTimeFormatter formatter = java.time.format.DateTimeFormatter.ofPattern("d/M/yy - h:mma");
-                String formattedDate = now.format(formatter).toLowerCase();
-                
-                String historyEntry = "Lifecycle status updated to " + newLifecycleStatus + " by " + userName + " on " + formattedDate + ".";
+                // Append to statusHistory
+                String historyEntry = "Lifecycle updated to " + newLifecycleStatus + " by " + userName + " on " + formattedDate + ".";
                 
                 String currentHistory = candidate.getStatusHistory();
                 if (currentHistory == null || currentHistory.isEmpty()) {
@@ -882,9 +1007,7 @@ public class CandidatesServiceImpl implements ICandidatesService {
                     candidate.setStatusHistory(currentHistory + "\n" + historyEntry);
                 }
                 
-                // Save candidate
-                candidatesRepository.save(candidate);
-                
+                candidatesToSave.add(candidate);
                 response.getSuccessfulCandidateIds().add(candidateId);
                 successCount++;
                 
@@ -892,6 +1015,11 @@ public class CandidatesServiceImpl implements ICandidatesService {
                 response.getErrorMessages().add("Error updating candidate " + candidateId + ": " + e.getMessage());
                 failureCount++;
             }
+        }
+        
+        // Batch save all updated candidates in 1 query
+        if (!candidatesToSave.isEmpty()) {
+            candidatesRepository.saveAll(candidatesToSave);
         }
         
         response.setTotalProcessed(totalProcessed);

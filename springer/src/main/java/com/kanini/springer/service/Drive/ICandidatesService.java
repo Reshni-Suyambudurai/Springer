@@ -15,6 +15,7 @@ import com.kanini.springer.dto.Drive.CandidateValidationResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import java.util.List;
+import com.kanini.springer.dto.Drive.FilterOptionsResponse;
 
 /**
  * Service interface for candidate operations
@@ -123,6 +124,6 @@ public interface ICandidatesService {
      * @param cycleId Cycle ID to fetch filter options for
      * @return FilterOptionsResponse containing all distinct filter values
      */
-    com.kanini.springer.dto.Drive.FilterOptionsResponse getFilterOptionsByCycle(Long cycleId);
+  FilterOptionsResponse getFilterOptionsByCycle(Long cycleId);
 }
 

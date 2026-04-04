@@ -20,7 +20,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -145,16 +147,28 @@ public class DriveAssignmentServiceImpl implements IDriveAssignmentService {
         // Set isActive (default true)
         Boolean isActive = request.getIsActive() != null ? request.getIsActive() : true;
         
+        // Batch fetch all applications (1 query instead of N)
+        Map<Long, Application> applicationMap = applicationRepository.findAllById(request.getApplicationIds())
+            .stream().collect(Collectors.toMap(Application::getApplicationId, a -> a));
+        
+        // Fetch round config once outside loop (1 query instead of N)
+        RoundTemplate roundConfig = null;
+        if (request.getRoundConfigId() != null) {
+            roundConfig = roundTemplateRepository.findById(request.getRoundConfigId())
+                .orElseThrow(() -> new ResourceNotFoundException("RoundTemplate", "ID", request.getRoundConfigId()));
+        }
+        
         int totalProcessed = 0;
         int successCount = 0;
         int failureCount = 0;
+        List<DriveAssignment> assignmentsToSave = new ArrayList<>();
         
         for (Long applicationId : request.getApplicationIds()) {
             totalProcessed++;
             
             try {
-                // Fetch application
-                Application application = applicationRepository.findById(applicationId).orElse(null);
+                // Lookup from pre-fetched map
+                Application application = applicationMap.get(applicationId);
                 
                 if (application == null) {
                     response.getErrorMessages().add("Application with ID " + applicationId + " not found");
@@ -172,22 +186,23 @@ public class DriveAssignmentServiceImpl implements IDriveAssignmentService {
                 assignment.setCreatedByUser(createdByUser);
                 
                 // Set round config if provided
-                if (request.getRoundConfigId() != null) {
-                    RoundTemplate roundConfig = roundTemplateRepository.findById(request.getRoundConfigId())
-                        .orElseThrow(() -> new ResourceNotFoundException("RoundTemplate", "ID", request.getRoundConfigId()));
+                if (roundConfig != null) {
                     assignment.setRoundConfig(roundConfig);
                 }
                 
-                // Save assignment
-                DriveAssignment savedAssignment = driveAssignmentRepository.save(assignment);
-                
-                response.getSuccessfulAssignments().add(mapper.toResponse(savedAssignment));
+                assignmentsToSave.add(assignment);
                 successCount++;
                 
             } catch (Exception e) {
                 response.getErrorMessages().add("Error processing application " + applicationId + ": " + e.getMessage());
                 failureCount++;
             }
+        }
+        
+        // Batch save all assignments (1 query instead of N)
+        List<DriveAssignment> savedAssignments = driveAssignmentRepository.saveAll(assignmentsToSave);
+        for (DriveAssignment saved : savedAssignments) {
+            response.getSuccessfulAssignments().add(mapper.toResponse(saved));
         }
         
         response.setTotalProcessed(totalProcessed);
@@ -289,6 +304,10 @@ public class DriveAssignmentServiceImpl implements IDriveAssignmentService {
             throw new ValidationException("Assignment IDs list cannot be empty");
         }
         
+        // Batch fetch all assignments (1 query instead of N)
+        Map<Integer, DriveAssignment> assignmentMap = driveAssignmentRepository.findAllById(request.getAssignmentIds())
+            .stream().collect(Collectors.toMap(DriveAssignment::getAssignmentId, a -> a));
+        
         int totalProcessed = 0;
         int successCount = 0;
         int failureCount = 0;
@@ -297,8 +316,8 @@ public class DriveAssignmentServiceImpl implements IDriveAssignmentService {
             totalProcessed++;
             
             try {
-                // Find assignment
-                DriveAssignment assignment = driveAssignmentRepository.findById(assignmentId).orElse(null);
+                // Lookup from pre-fetched map
+                DriveAssignment assignment = assignmentMap.get(assignmentId);
                 
                 if (assignment == null) {
                     response.getErrorMessages().add("Assignment with ID " + assignmentId + " not found");
