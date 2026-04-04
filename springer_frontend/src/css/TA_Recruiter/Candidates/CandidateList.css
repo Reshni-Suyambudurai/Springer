@@ -247,12 +247,16 @@
 .candidates-table-container tbody td:nth-child(6) {
   width: 13% !important; /* Status */
   min-width: 110px !important;
+  overflow: visible !important;
+  text-overflow: unset !important;
 }
 
 .candidates-table-container .table-header:nth-child(7),
 .candidates-table-container tbody td:nth-child(7) {
-  width: 10% !important; /* Category */
-  min-width: 90px !important;
+  width: 12% !important; /* Category */
+  min-width: 120px !important;
+  overflow: visible !important;
+  text-overflow: unset !important;
 }
 
 /* Ensure text overflow handling for long content */
@@ -363,11 +367,6 @@
   cursor: help;
 }
 
-.status-text {
-  font-weight: 600;
-  color: var(--color-text);
-}
-
 .action-btn {
   color: var(--color-primary) !important;
   transition: all 0.2s ease !important;
@@ -434,10 +433,89 @@
   cursor: help;
 }
 
-/* Status Text */
-.status-text {
+/* Status Badge */
+.cl-status-badge {
+  display: inline-block;
+  padding: 4px 14px;
+  border-radius: 20px;
   font-weight: 500;
-  color: var(--color-text);
+  font-size: 12px !important;
+ 
+  border-width: 1px;
+  border-style: solid;
+}
+
+.cl-status-applied {
+  border-color: var(--color-yellow);
+  background-color: rgba(249, 234, 22, 0.12);
+  color: #a89400;
+}
+
+.cl-status-shortlisted {
+  border-color: var(--color-orange);
+  background-color: rgba(249, 115, 22, 0.12);
+  color: var(--color-orange);
+}
+
+.cl-status-invited {
+  border-color: var(--color-purple);
+  background-color: rgba(103, 43, 245, 0.12);
+  color: var(--color-purple);
+}
+
+.cl-status-scheduled {
+  border-color: var(--color-purple);
+  background-color: rgba(103, 43, 245, 0.12);
+  color: var(--color-purple);
+}
+
+.cl-status-selected {
+  border-color: var(--color-green);
+  background-color: rgba(34, 197, 94, 0.12);
+  color: var(--color-green);
+}
+
+.cl-status-offered {
+  border-color: var(--color-teal);
+  background-color: rgba(20, 184, 166, 0.12);
+  color: var(--color-teal);
+}
+
+.cl-status-joined {
+  border-color: var(--color-blue);
+  background-color: rgba(29, 57, 244, 0.12);
+  color: var(--color-blue);
+}
+
+.cl-status-rejected {
+  border-color: var(--color-red);
+  background-color: rgba(242, 31, 31, 0.12);
+  color: var(--color-red);
+}
+
+.cl-status-accepted {
+  border-color: var(--color-blue-light);
+  background-color: rgba(52, 243, 250, 0.12);
+  color: #0e9aa0;
+}
+
+.cl-status-dropped {
+  border-color: var(--color-pink);
+  background-color: rgba(248, 17, 186, 0.12);
+  color: var(--color-pink);
+}
+
+/* Application Type Badge */
+.cl-type-premium {
+  border-color: var(--color-gold);
+  background-color: rgba(212, 175, 55, 0.12);
+  color: var(--color-gold);
+}
+
+.cl-type-standard {
+  border-color: var(--color-silver);
+  background-color: rgba(163, 163, 163, 0.12);
+  color: var(--color-silver);
 }
 
 /* Action Buttons */
@@ -513,4 +591,101 @@
 
 .loading-more-text {
   margin-top: 8px !important;
+}
+
+/* Bulk Update Error Dialog */
+.cl-error-dialog .MuiPaper-root {
+  border-radius: 16px !important;
+  border: 1px solid var(--color-border) !important;
+  background: var(--color-surface) !important;
+}
+
+.cl-error-dialog-title {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  padding: 16px 24px !important;
+  border-bottom: 1px solid var(--color-border) !important;
+  background: var(--color-bg) !important;
+}
+
+.cl-error-dialog-heading {
+  font-weight: 600 !important;
+  font-size: var(--text-md) !important;
+  color: var(--color-red) !important;
+}
+
+.cl-error-dialog-close {
+  color: var(--color-text-muted) !important;
+}
+
+.cl-error-dialog-content {
+  padding: 16px 24px !important;
+  max-height: 400px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.cl-error-dialog-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.cl-error-dialog-content::-webkit-scrollbar-track {
+  background: var(--color-bg);
+  border-radius: 3px;
+}
+
+.cl-error-dialog-content::-webkit-scrollbar-thumb {
+  background: var(--color-red);
+  border-radius: 3px;
+}
+
+.cl-error-dialog-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  border: 1px solid rgba(242, 31, 31, 0.15);
+  background-color: rgba(242, 31, 31, 0.04);
+}
+
+.cl-error-dialog-index {
+  font-weight: 600 !important;
+  font-size: var(--text-xs) !important;
+  color: var(--color-red) !important;
+  min-width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  border: 1px solid var(--color-red);
+  flex-shrink: 0;
+}
+
+.cl-error-dialog-message {
+  font-size: var(--text-sm) !important;
+  color: var(--color-text) !important;
+  line-height: 1.5 !important;
+}
+
+.cl-error-dialog-actions {
+  padding: 12px 24px !important;
+  border-top: 1px solid var(--color-border) !important;
+}
+
+.cl-error-dialog-close-btn {
+  color: var(--color-text) !important;
+  border: 1px solid var(--color-border) !important;
+  text-transform: none !important;
+  font-weight: 600 !important;
+  border-radius: 8px !important;
+  padding: 6px 24px !important;
+}
+
+.cl-error-dialog-close-btn:hover {
+  background-color: var(--color-bg) !important;
 }

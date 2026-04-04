@@ -20,6 +20,8 @@ import type {
   CandidateStatusUpdateRequest,
   BulkCandidateStatusUpdateRequest,
   BulkCandidateStatusUpdateResponse,
+  BulkCandidateLifecycleUpdateRequest,
+  BulkCandidateLifecycleUpdateResponse,
   BulkCandidateCreateResponse,
   CandidateValidationRequest,
   CandidateValidationResponse,
@@ -271,6 +273,19 @@ export const candidateApi = {
   async bulkUpdateCandidateStatus(data: BulkCandidateStatusUpdateRequest): Promise<ApiResponse<BulkCandidateStatusUpdateResponse>> {
     try {
       const response = await http.patch('/candidates/status/bulk', data);
+      return response.data;
+    } catch (error) {
+      throw handleAxiosError(error);
+    }
+  },
+
+  /**
+   * Bulk update candidate lifecycle status
+   * PATCH /api/candidates/lifecycle-status/bulk
+   */
+  async bulkUpdateCandidateLifecycleStatus(data: BulkCandidateLifecycleUpdateRequest): Promise<ApiResponse<BulkCandidateLifecycleUpdateResponse>> {
+    try {
+      const response = await http.patch('/candidates/lifecycle-status/bulk', data);
       return response.data;
     } catch (error) {
       throw handleAxiosError(error);

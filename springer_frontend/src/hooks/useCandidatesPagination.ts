@@ -20,6 +20,7 @@ interface CandidateFilters {
 
 interface UseCandidatesPaginationReturn {
   allCandidates: CandidateResponse[];
+  totalElements: number;
   candidatesLoading: boolean;
   loadingMore: boolean;
   hasMorePages: boolean;
@@ -40,6 +41,7 @@ export const useCandidatesPagination = (
   lifecycleStatus: 'ACTIVE' | 'CLOSED' = 'ACTIVE'
 ): UseCandidatesPaginationReturn => {
   const [allCandidates, setAllCandidates] = useState<CandidateResponse[]>([]);
+  const [totalElements, setTotalElements] = useState<number>(0);
   const [candidatesLoading, setCandidatesLoading] = useState<boolean>(false);
   const [currentPage, setCurrentPage] = useState<number>(0);
   const [hasMorePages, setHasMorePages] = useState<boolean>(true);
@@ -102,6 +104,7 @@ export const useCandidatesPagination = (
         }
 
         setHasMorePages(!response.data.last);
+        setTotalElements(response.data.totalElements ?? 0);
       }
     } catch (error) {
       const statusLabel = lifecycleStatus.toLowerCase();
@@ -142,6 +145,7 @@ export const useCandidatesPagination = (
    */
   const resetPagination = useCallback(() => {
     setAllCandidates([]);
+    setTotalElements(0);
     setCurrentPage(0);
     setHasMorePages(true);
     setCandidatesLoading(false);
@@ -150,6 +154,7 @@ export const useCandidatesPagination = (
 
   return {
     allCandidates,
+    totalElements,
     candidatesLoading,
     loadingMore,
     hasMorePages,

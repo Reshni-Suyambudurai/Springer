@@ -228,6 +228,7 @@
   background: var(--color-surface) !important;
   box-shadow: none !important;
   overflow: auto;
+  max-height: calc(100vh - 300px);
 }
 
 .dc-table-head-row {
@@ -244,6 +245,9 @@
   background-color: var(--color-bg) !important;
   white-space: nowrap;
   padding: 14px 16px !important;
+  position: sticky;
+  top: 0;
+  z-index: 1;
 }
 
 .dc-table-row {

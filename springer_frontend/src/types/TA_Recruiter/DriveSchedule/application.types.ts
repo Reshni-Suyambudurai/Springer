@@ -13,7 +13,21 @@ export type ApplicationStatus =
 
 export interface ApplicationRequest {
   driveId: number;
-  candidateIds: number[];
+  candidateIds?: number[];
+  filterRequest?: {
+    cycleId: number;
+    lifecycleStatus?: string;
+    candidateName?: string;
+    instituteName?: string;
+    state?: string;
+    cities?: string[];
+    degrees?: string[];
+    departments?: string[];
+    eligibility?: string[];
+    applicationTypes?: string[];
+    applicationStages?: string[];
+    skills?: string[];
+  };
   batchTime?: string; // ISO-8601 format (LocalDateTime) - scheduled batch time
   createdBy: number;
 }

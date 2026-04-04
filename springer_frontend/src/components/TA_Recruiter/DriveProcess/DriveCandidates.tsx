@@ -184,7 +184,7 @@ const DriveCandidates: React.FC = () => {
           </Select>
 
           {evaluationsLoading && <CircularProgress size={20} />}
-
+ <Button variant="outlined" className="dc-btn-action">Start</Button>
           <Button variant="outlined" className="dc-btn-action">Panel Assignment</Button>
           <Button variant="outlined" className="dc-btn-action">Add Score</Button>
         </Box>

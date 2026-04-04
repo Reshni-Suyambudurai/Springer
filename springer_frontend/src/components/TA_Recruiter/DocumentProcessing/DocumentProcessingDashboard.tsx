@@ -15,7 +15,7 @@ const TABS = [
   { key: 'send-documents',   label: 'Send Links' },
   { key: 'verify-documents', label: 'Verify Docs' },
   { key: 'offers',           label: 'Offers' },
-];
+]; 
 
 const DocumentProcessingDashboard = () => {
   const [activeTab, setActiveTab] = useState('doc-types');
@@ -63,9 +63,7 @@ const DocumentProcessingDashboard = () => {
       <Box className="dp-header">
         <Box className="dp-header-top">
           <Box>
-            <Typography className="dp-title">
-              {TABS.find(t => t.key === activeTab)?.label || 'Document Processing'}
-            </Typography>
+            <Typography className="dp-title">Document Processing</Typography>
             <Typography className="dp-subtitle">
               {selectedCycle
                 ? `${selectedCycle.cycleName} · ${selectedCycle.cycleYear}`
