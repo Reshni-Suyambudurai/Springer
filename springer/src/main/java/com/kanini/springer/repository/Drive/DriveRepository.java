@@ -24,4 +24,13 @@ public interface DriveRepository extends JpaRepository<Drive, Long> {
      */
     @Query("SELECT d FROM Drive d WHERE d.cycle.cycleId = :cycleId AND d.startDate >= :currentDate ORDER BY d.startDate ASC")
     List<Drive> findUpcomingDrivesByCycleId(@Param("cycleId") Long cycleId, @Param("currentDate") LocalDate currentDate);
+
+    /**
+     * Count drives grouped by location for a cycle (1 query).
+     * Returns rows of [location, count].
+     */
+    @Query("SELECT d.location, COUNT(d) FROM Drive d " +
+           "WHERE d.cycle.cycleId = :cycleId " +
+           "GROUP BY d.location")
+    List<Object[]> countByLocationByCycle(@Param("cycleId") Long cycleId);
 }

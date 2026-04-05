@@ -27,6 +27,7 @@ import type {
   CandidateValidationResponse,
   FilterOptionsResponse
 } from "../types/TA_Recruiter/Drive/candidate.types";
+import type { DriveDashboardResponse } from "../types/TA_Recruiter/Drive/dashboard.types";
 
 // ==================== ROUND TEMPLATE APIs ====================
 export const roundTemplateApi = {
@@ -329,6 +330,22 @@ export const candidateApi = {
       const response = await http.get('/candidates/filter-options', {
         params: { cycleId }
       });
+      return response.data;
+    } catch (error) {
+      throw handleAxiosError(error);
+    }
+  }
+};
+
+// ==================== DRIVE DASHBOARD APIs ====================
+export const driveDashboardApi = {
+  /**
+   * Get drive summary for a cycle
+   * POST /api/dashboards/drive/summary
+   */
+  async getDriveSummary(cycleId: number): Promise<ApiResponse<DriveDashboardResponse>> {
+    try {
+      const response = await http.post('/dashboards/drive/summary', { cycleId });
       return response.data;
     } catch (error) {
       throw handleAxiosError(error);

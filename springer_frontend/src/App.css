@@ -43,6 +43,14 @@
   --color-gold: #d4af37;
   --color-silver: #a3a3a3;
 
+  /* Funnel Colors */
+  --color-funnel-applied: #1e3a8a;
+  --color-funnel-selected: #166534;
+  --color-funnel-accepted: #a16207;
+  --color-funnel-joined: #7e22ce;
+  --color-funnel-rejected: #991b1b;
+  --color-funnel-dropped: #115e59;
+
   /* ========== BASE COLORS ========== */
   
   /* Blue Palette */
