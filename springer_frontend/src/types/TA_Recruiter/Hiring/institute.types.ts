@@ -19,6 +19,12 @@ export interface InstituteRequest {
   city: string;
   isActive: boolean;
   programIds?: number[]; // Optional list of program IDs to map to this institute
+  tpoContact?: {
+    tpoName: string;
+    tpoEmail: string;
+    tpoMobile: string;
+    tpoDesignation?: string;
+  };
 }
 
 export interface InstituteResponse {

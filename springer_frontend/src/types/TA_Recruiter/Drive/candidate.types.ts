@@ -12,7 +12,6 @@ export type ApplicationType = typeof ApplicationType[keyof typeof ApplicationTyp
 export const ApplicationStage = {
   APPLIED: 'APPLIED',
   SHORTLISTED: 'SHORTLISTED',
-  INVITED: 'INVITED',
   SCHEDULED: 'SCHEDULED',
   SELECTED: 'SELECTED',
   OFFERED: 'OFFERED',
@@ -21,7 +20,7 @@ export const ApplicationStage = {
   ACCEPTED: 'ACCEPTED',
   DROPPED: 'DROPPED'
 } as const;
-
+  
 export type ApplicationStage = typeof ApplicationStage[keyof typeof ApplicationStage];
 
 export const LifecycleStatus = {
@@ -151,13 +150,55 @@ export interface CandidateStatusUpdateRequest {
 }
 
 export interface BulkCandidateStatusUpdateRequest {
-  candidateIds: number[];
+  candidateIds?: number[];
+  filterRequest?: {
+    cycleId: number;
+    lifecycleStatus?: string;
+    candidateName?: string;
+    instituteName?: string;
+    state?: string;
+    cities?: string[];
+    degrees?: string[];
+    departments?: string[];
+    eligibility?: string[];
+    applicationTypes?: string[];
+    applicationStages?: string[];
+    skills?: string[];
+  };
   status: string;
   reason: string;
   updatedBy: number;
 }
 
 export interface BulkCandidateStatusUpdateResponse {
+  successfulCandidateIds: number[];
+  errorMessages: string[];
+  totalProcessed: number;
+  successCount: number;
+  failureCount: number;
+}
+
+export interface BulkCandidateLifecycleUpdateRequest {
+  candidateIds?: number[];
+  filterRequest?: {
+    cycleId: number;
+    lifecycleStatus?: string;
+    candidateName?: string;
+    instituteName?: string;
+    state?: string;
+    cities?: string[];
+    degrees?: string[];
+    departments?: string[];
+    eligibility?: string[];
+    applicationTypes?: string[];
+    applicationStages?: string[];
+    skills?: string[];
+  };
+  lifecycleStatus: string;
+  updatedBy: number;
+}
+
+export interface BulkCandidateLifecycleUpdateResponse {
   successfulCandidateIds: number[];
   errorMessages: string[];
   totalProcessed: number;

@@ -338,27 +338,9 @@
 }
 
 .institute-row:hover {
-  background-color: var(--color-primary-hover) !important;
-  color: var(--color-text) !important;
+  background-color: var(--color-grey-50) !important;
 }
 
-.institute-row:hover td {
-  color: var(--color-text) !important;
-}
-
-.institute-row:hover .institute-table-icon,
-.institute-row:hover .location-table-icon {
-  color: var(--color-text) !important;
-}
-
-.institute-row:hover .institute-table-name,
-.institute-row:hover .institute-table-date {
-  color: var(--color-text) !important;
-}
-
-.institute-row:hover .location-cell .MuiTypography-root {
-  color: var(--color-text) !important;
-}
 
 .institute-row td {
   padding: 16px !important;
@@ -406,44 +388,58 @@
 }
 
 /* Chips */
-.tier-chip-table,
-.status-chip-table {
-  font-weight: 600 !important;
+.il-badge {
+  display: inline-block;
+  padding: 4px 14px;
+  border-radius: 20px;
+  font-weight: 500;
+  font-size: 12px !important;
+  border-width: 1px;
+  border-style: solid;
+}
+
+/* Tier Badges */
+.il-tier-1 {
+  border-color: var(--color-green);
+  background-color: rgba(34, 197, 94, 0.12);
+  color: var(--color-green);
+}
+
+.il-tier-2 {
+  border-color: var(--color-blue);
+  background-color: rgba(29, 57, 244, 0.12);
+  color: var(--color-blue);
+}
+
+.il-tier-3 {
+  border-color: var(--color-yellow);
+  background-color: rgba(249, 234, 22, 0.12);
+  color: #a89400;
+}
+
+/* Status Badges */
+.il-status-active {
+  border-color: var(--color-teal);
+  background-color: rgba(20, 184, 166, 0.12);
+  color: var(--color-teal);
   cursor: pointer;
-}
-
-/* Tier Chips */
-.tier-chip-tier1 {
-  background-color: var(--color-success) !important;
-  color: white !important;
-}
-
-.tier-chip-tier2 {
-  background-color: var(--color-primary) !important;
-  color: white !important;
-}
-
-.tier-chip-tier3 {
-  background-color: var(--color-warning) !important;
-  color: white !important;
-}
-
-/* Status Chips */
-.status-chip-table {
   transition: all 0.2s ease;
 }
 
-.status-chip-active {
-  background-color: var(--color-success) !important;
-  color: white !important;
+.il-status-active:hover {
+  transform: scale(1.05);
+  opacity: 0.9;
 }
 
-.status-chip-inactive {
-  background-color: var(--color-danger) !important;
-  color: white !important;
+.il-status-inactive {
+  border-color: var(--color-silver);
+  background-color: rgba(163, 163, 163, 0.12);
+  color: var(--color-silver);
+  cursor: pointer;
+  transition: all 0.2s ease;
 }
 
-.status-chip-table:hover {
+.il-status-inactive:hover {
   transform: scale(1.05);
   opacity: 0.9;
 }

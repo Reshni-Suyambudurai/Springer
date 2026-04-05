@@ -30,7 +30,7 @@
 
 .settings-header h1 {
   font-weight: 600;
-  color: #1a1a1a;
+  color: var(--color-text);
   margin-bottom: 8px;
 }
 
@@ -41,52 +41,31 @@
 .settings-card {
   height: 100%;
   border-radius: 12px;
-  border: 2px solid #e0e0e0;
+  border: 2px solid var(--color-border);
   cursor: pointer;
  
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  box-shadow: var(--shadow-card);
 }
 
 .settings-card:hover {
-  
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15), 0 10px 20px rgba(0, 0, 0, 0.1);
+  border-color: var(--color-primary);
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--color-primary) 25%, transparent);
 }
 
-/* Individual card border colors using App.css variables */
-.settings-card-skills {
-  border-color: var(--color-blue);
-}
-
-.settings-card-skills:hover {
-  border-color: var(--color-blue);
-  box-shadow: 0 20px 40px rgba(45, 222, 249, 0.25), 0 10px 20px rgba(45, 222, 249, 0.15);
-}
-
-.settings-card-eligibility {
-  border-color: var(--color-green);
-}
-
-.settings-card-eligibility:hover {
-  border-color: var(--color-green);
-  box-shadow: 0 20px 40px rgba(34, 197, 94, 0.25), 0 10px 20px rgba(34, 197, 94, 0.15);
-}
-
-.settings-card-rounds {
-  border-color: var(--color-orange);
-}
-
-.settings-card-rounds:hover {
-  border-color: var(--color-orange);
-  box-shadow: 0 20px 40px rgba(249, 115, 22, 0.25), 0 10px 20px rgba(249, 115, 22, 0.15);
-}
-
+/* Individual card styles unified to primary */
+.settings-card-skills,
+.settings-card-eligibility,
+.settings-card-rounds,
 .settings-card-documents {
-  border-color: var(--color-purple);
+  border-color: var(--color-border);
 }
 
+.settings-card-skills:hover,
+.settings-card-eligibility:hover,
+.settings-card-rounds:hover,
 .settings-card-documents:hover {
-  border-color: var(--color-purple);
-  box-shadow: 0 20px 40px rgba(139, 92, 246, 0.25), 0 10px 20px rgba(139, 92, 246, 0.15);
+  border-color: var(--color-primary);
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--color-primary) 25%, transparent);
 }
 
 .settings-card-content {
@@ -107,7 +86,7 @@
   width: 60px;
   height: 60px;
   border-radius: 50%;
-  background-color: rgba(0, 0, 0, 0.04);
+  background-color: color-mix(in srgb, var(--color-primary) 8%, transparent);
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -116,62 +95,32 @@
   transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Icon colors for each card using App.css variables */
-.settings-card-skills .settings-card-icon {
-  color: var(--color-blue);
-}
-
-.settings-card-skills:hover .settings-card-icon {
-  background-color: rgba(45, 222, 249, 0.15);
-  transform: scale(1.1) rotate(5deg);
-}
-
-.settings-card-skills:hover .settings-card-icon svg {
-  transform: scale(1.15);
-}
-
-.settings-card-eligibility .settings-card-icon {
-  color: var(--color-green);
-}
-
-.settings-card-eligibility:hover .settings-card-icon {
-  background-color: rgba(34, 197, 94, 0.15);
-  transform: scale(1.1) rotate(-5deg);
-}
-
-.settings-card-eligibility:hover .settings-card-icon svg {
-  transform: scale(1.15);
-}
-
-.settings-card-rounds .settings-card-icon {
-  color: var(--color-orange);
-}
-
-.settings-card-rounds:hover .settings-card-icon {
-  background-color: rgba(249, 115, 22, 0.15);
-  transform: scale(1.1) rotate(5deg);
-}
-
-.settings-card-rounds:hover .settings-card-icon svg {
-  transform: scale(1.15);
-}
-
+/* Icon colors unified to primary */
+.settings-card-skills .settings-card-icon,
+.settings-card-eligibility .settings-card-icon,
+.settings-card-rounds .settings-card-icon,
 .settings-card-documents .settings-card-icon {
-  color: var(--color-purple);
+  color: var(--color-primary);
 }
 
+.settings-card-skills:hover .settings-card-icon,
+.settings-card-eligibility:hover .settings-card-icon,
+.settings-card-rounds:hover .settings-card-icon,
 .settings-card-documents:hover .settings-card-icon {
-  background-color: rgba(139, 92, 246, 0.15);
-  transform: scale(1.1) rotate(-5deg);
+  background-color: color-mix(in srgb, var(--color-primary) 15%, transparent);
+  transform: scale(1.1);
 }
 
+.settings-card-skills:hover .settings-card-icon svg,
+.settings-card-eligibility:hover .settings-card-icon svg,
+.settings-card-rounds:hover .settings-card-icon svg,
 .settings-card-documents:hover .settings-card-icon svg {
   transform: scale(1.15);
 }
 
 .settings-card-title {
   font-weight: 600;
-  color: #1a1a1a;
+  color: var(--color-text);
   margin-bottom: 8px;
   font-size: 1.25rem;
   transition: color 0.3s ease;

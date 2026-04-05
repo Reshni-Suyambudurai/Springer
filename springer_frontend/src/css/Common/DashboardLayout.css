@@ -11,7 +11,7 @@
   flex: 1;
   display: flex;
   position: relative;
- 
+  margin-top: 64px;
 }
 
 /* Main content */
@@ -19,7 +19,7 @@
   flex: 1;
 
   margin-left: 80px;
-  min-height: calc(100vh - 50px);
+  min-height: calc(100vh - 64px);
   width: 100%;
   max-width: 100%;
   overflow-x: hidden;

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { driveScheduleApi } from "../../../services/driveschedule.api";
 import { hiringCycleApi, instituteApi } from "../../../services/hiring.api";
 import type { DriveRequest, DriveStatus } from "../../../types/TA_Recruiter/DriveSchedule/driveSchedule.types";
@@ -29,13 +29,16 @@ import "../../../css/TA_Recruiter/DriveSchedule/AddSchedule.css";
 
 const AddSchedule: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const cycleIdFromCalendar = (location.state as { cycleId?: number; cycleName?: string })?.cycleId || null;
+  const cycleNameFromCalendar = (location.state as { cycleId?: number; cycleName?: string })?.cycleName || "";
   const [loading, setLoading] = useState(false);
   const [cycles, setCycles] = useState<HiringCycleSummaryResponse[]>([]);
-  const [loadingCycles, setLoadingCycles] = useState(true);
+  const [loadingCycles, setLoadingCycles] = useState(!cycleIdFromCalendar);
   const [institutes, setInstitutes] = useState<InstituteResponse[]>([]);
   const [loadingInstitutes, setLoadingInstitutes] = useState(true);
   const [formData, setFormData] = useState<DriveRequest>({
-    cycleId: 0,
+    cycleId: cycleIdFromCalendar || 0,
     driveName: "",
     description: "",
     instituteId: undefined,
@@ -57,8 +60,11 @@ const AddSchedule: React.FC = () => {
   }>({});
 
   useEffect(() => {
-    fetchCycles();
+    if (!cycleIdFromCalendar) {
+      fetchCycles();
+    }
     fetchInstitutes();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchCycles = async () => {
@@ -200,35 +206,45 @@ const AddSchedule: React.FC = () => {
         <CardContent className="add-schedule-content">
           <form onSubmit={handleSubmit} className="add-schedule-form">
             <Box className="add-schedule-form-grid">
-              {/* Cycle Dropdown */}
-              <FormControl required error={!!errors.cycleId} className="add-schedule-input">
-                <InputLabel>Hiring Cycle</InputLabel>
-                <Select
-                  value={formData.cycleId || ""}
-                  onChange={(e) => handleChange("cycleId", e.target.value as number)}
+              {/* Cycle Display */}
+              {cycleIdFromCalendar ? (
+                <TextField
                   label="Hiring Cycle"
-                  disabled={loadingCycles}
-                >
-                  {loadingCycles ? (
-                    <MenuItem disabled>
-                      <CircularProgress size={20} /> Loading cycles...
-                    </MenuItem>
-                  ) : cycles.length === 0 ? (
-                    <MenuItem disabled>No cycles available</MenuItem>
-                  ) : (
-                    cycles.map((cycle) => (
-                      <MenuItem
-                        key={cycle.cycleId}
-                        value={cycle.cycleId}
-                        disabled={cycle.status === "CLOSED"}
-                      >
-                        {cycle.cycleName} ({cycle.cycleYear}) - {cycle.status}
+                  value={cycleNameFromCalendar}
+                  className="add-schedule-input"
+                  InputProps={{ readOnly: true }}
+                  variant="outlined"
+                />
+              ) : (
+                <FormControl required error={!!errors.cycleId} className="add-schedule-input">
+                  <InputLabel>Hiring Cycle</InputLabel>
+                  <Select
+                    value={formData.cycleId || ""}
+                    onChange={(e) => handleChange("cycleId", e.target.value as number)}
+                    label="Hiring Cycle"
+                    disabled={loadingCycles}
+                  >
+                    {loadingCycles ? (
+                      <MenuItem disabled>
+                        <CircularProgress size={20} /> Loading cycles...
                       </MenuItem>
-                    ))
-                  )}
-                </Select>
-                {errors.cycleId && <FormHelperText>{errors.cycleId}</FormHelperText>}
-              </FormControl>
+                    ) : cycles.length === 0 ? (
+                      <MenuItem disabled>No cycles available</MenuItem>
+                    ) : (
+                      cycles.map((cycle) => (
+                        <MenuItem
+                          key={cycle.cycleId}
+                          value={cycle.cycleId}
+                          disabled={cycle.status === "CLOSED"}
+                        >
+                          {cycle.cycleName} ({cycle.cycleYear}) - {cycle.status}
+                        </MenuItem>
+                      ))
+                    )}
+                  </Select>
+                  {errors.cycleId && <FormHelperText>{errors.cycleId}</FormHelperText>}
+                </FormControl>
+              )}
 
               {/* Drive Name */}
               <TextField

@@ -47,7 +47,7 @@
   flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
-  padding: 0 4px 40px 4px;
+  padding: 16px;
 }
 
 .eligibility-content-wrapper::-webkit-scrollbar {
@@ -74,7 +74,6 @@
   background-color: var(--color-surface) !important;
   height: 100%;
   cursor: pointer;
-  margin:20px;
 }
 
 .eligibility-rule-card:hover {
@@ -84,14 +83,18 @@
 }
 
 .eligibility-rule-card-content {
-  padding: 20px !important;
+  padding: 16px !important;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  box-sizing: border-box;
 }
 
 .eligibility-rule-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 16px;
+  margin-bottom: 12px;
 }
 
 .eligibility-rule-title {
@@ -113,7 +116,8 @@
 
 .eligibility-rule-details {
   display: flex;
-  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
   gap: 8px;
 }
 
@@ -167,12 +171,18 @@
 .eligibility-dialog-title {
   background-color: var(--color-surface) !important;
   border-bottom: 1px solid var(--color-border) !important;
+  padding: 10px 16px !important;
 }
 
 .dialog-title-container {
   display: flex;
   justify-content: space-between;
   align-items: center;
+}
+
+.eligibility-dialog-title-text {
+  font-weight: 600 !important;
+  color: var(--color-primary) !important;
 }
 
 .dialog-close-btn {
@@ -182,34 +192,27 @@
 
 .dialog-close-btn:hover {
   color: var(--color-text) !important;
-  transform: scale(1.1);
 }
 
 .eligibility-dialog-content {
-  padding: 24px !important;
+  padding: 16px !important;
   background-color: var(--color-bg) !important;
 }
 
 .eligibility-dialog .MuiDialog-paperWidthXs .eligibility-dialog-content {
-  padding: 20px !important;
+  padding: 16px !important;
 }
 
 .eligibility-dialog-form {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 8px;
 }
 
 .eligibility-compact-form {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-}
-
-.eligibility-compact-label {
-  font-weight: 600 !important;
-  color: var(--color-text) !important;
-  font-size: 0.95rem !important;
+  gap: 8px;
 }
 
 .eligibility-range-separator {
@@ -217,14 +220,8 @@
   align-items: center;
   color: var(--color-text-muted) !important;
   font-weight: 500;
-  padding: 0 8px;
-}
-
-.eligibility-error-space {
-  min-height: 24px;
-  display: flex;
-  align-items: center;
-  margin-top: 4px;
+  padding: 0 4px;
+  font-size: 13px;
 }
 
 .eligibility-error-text {
@@ -233,68 +230,51 @@
   line-height: 1.4;
 }
 
-.eligibility-field-label {
-  color: var(--color-text-muted) !important;
-}
-
-.eligibility-field-label strong {
-  color: var(--color-text) !important;
-}
-
 .eligibility-between-inputs {
   display: flex;
-  gap: 12px;
+  gap: 8px;
   align-items: center;
 }
 
 .eligibility-select-buttons {
   display: flex;
   gap: 8px;
-  margin-bottom: 16px;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.eligibility-selection-count {
+  color: var(--color-text-muted) !important;
+  font-style: italic;
+  margin-left: auto;
 }
 
 .eligibility-checkbox-container {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-  gap: 8px;
-  max-height: 300px;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 0;
+  max-height: 250px;
   overflow-y: auto;
   border: 1px solid var(--color-border);
   border-radius: 8px;
-  padding: 16px;
+  padding: 8px;
   background-color: var(--color-surface);
 }
 
-.eligibility-checkbox-container::-webkit-scrollbar {
-  width: 6px;
+.eligibility-checkbox-item {
+  margin: 0 !important;
+  padding: 2px 4px !important;
 }
 
-.eligibility-checkbox-container::-webkit-scrollbar-track {
-  background: var(--color-bg);
-}
-
-.eligibility-checkbox-container::-webkit-scrollbar-thumb {
-  background: var(--color-primary);
-  border-radius: 3px;
-}
-
-.eligibility-error-message {
-  margin-top: 8px !important;
-  font-size: 0.875rem !important;
-}
-
-.eligibility-helper-text {
-  margin-top: 8px !important;
-  font-size: 0.875rem !important;
-  color: var(--color-text-muted) !important;
-  font-style: italic;
+.eligibility-checkbox-item .MuiTypography-root {
+  font-size: 13px !important;
 }
 
 .eligibility-dialog-actions {
-  padding: 16px 24px !important;
+  padding: 10px 16px !important;
   background-color: var(--color-surface) !important;
   border-top: 1px solid var(--color-border) !important;
-  gap: 12px;
+  gap: 8px;
 }
 
 .eligibility-save-button {

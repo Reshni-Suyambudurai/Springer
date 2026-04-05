@@ -18,7 +18,6 @@ import {
   FormControlLabel,
   FormGroup,
   FormControl,
-  FormHelperText,
   IconButton,
 } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
@@ -317,9 +316,9 @@ const EligibilityManagement: React.FC = () => {
         {rules.length === 0 ? (
           <Alert severity="info">No eligibility rules configured.</Alert>
         ) : (
-          <Grid container spacing={3}>
+          <Grid container spacing={2}>
             {rules.map((rule, index) => (
-              <Grid size={{ xs: 12, sm: 6, md: 4 }} key={index}>
+              <Grid size={{ xs: 12, sm: 6, md: 3 }} key={index}>
                 <Card className="eligibility-rule-card">
                   <CardContent className="eligibility-rule-card-content">
                     <Box className="eligibility-rule-header">
@@ -380,17 +379,17 @@ const EligibilityManagement: React.FC = () => {
       <Dialog 
         open={dialogOpen} 
         onClose={handleCloseDialog}
-        maxWidth={editedRule?.operator === "IN" ? "md" : "xs"}
+        maxWidth={editedRule?.operator === "IN" ? "sm" : "xs"}
         fullWidth
         className="eligibility-dialog"
       >
         <DialogTitle className="eligibility-dialog-title">
           <Box className="dialog-title-container">
-            <Typography variant="h6">
-              Edit {editedRule ? formatFieldName(editedRule.field) : "Rule"}
+            <Typography variant="subtitle1" className="eligibility-dialog-title-text">
+              {editedRule ? formatFieldName(editedRule.field) : "Rule"}
             </Typography>
             <IconButton onClick={handleCloseDialog} size="small" className="dialog-close-btn">
-              <CloseIcon />
+              <CloseIcon fontSize="small" />
             </IconButton>
           </Box>
         </DialogTitle>
@@ -400,9 +399,6 @@ const EligibilityManagement: React.FC = () => {
             <Box className="eligibility-dialog-form">
               {editedRule.operator === "BETWEEN" ? (
                 <Box className="eligibility-compact-form">
-                  <Typography variant="body2" className="eligibility-compact-label">
-                    {formatFieldName(editedRule.field)} Range
-                  </Typography>
                   <Box className="eligibility-between-inputs">
                     <TextField
                       label="Min"
@@ -436,19 +432,12 @@ const EligibilityManagement: React.FC = () => {
                       }}
                     />
                   </Box>
-                  <Box className="eligibility-error-space">
-                    {error && (
-                      <Typography className="eligibility-error-text">
-                        {error}
-                      </Typography>
-                    )}
-                  </Box>
+                  {error && (
+                    <Typography className="eligibility-error-text">{error}</Typography>
+                  )}
                 </Box>
               ) : editedRule.operator === "IN" ? (
                 <FormControl error={!!error} fullWidth>
-                  <Typography variant="body2" className="eligibility-field-label">
-                    Select {formatFieldName(editedRule.field)}
-                  </Typography>
                   <Box className="eligibility-select-buttons">
                     <Button
                       size="small"
@@ -464,12 +453,18 @@ const EligibilityManagement: React.FC = () => {
                     >
                       Deselect All
                     </Button>
+                    <Typography variant="caption" className="eligibility-selection-count">
+                      {(!editedRule.allowedValues || editedRule.allowedValues.length === 0) 
+                        ? "All eligible" 
+                        : `${editedRule.allowedValues.length} selected`}
+                    </Typography>
                   </Box>
                   <FormGroup>
                     <Box className="eligibility-checkbox-container">
                       {(editedRule.field === "degree" ? DEGREE_OPTIONS : DEPARTMENT_OPTIONS).map((option) => (
                         <FormControlLabel
                           key={option}
+                          className="eligibility-checkbox-item"
                           control={
                             <Checkbox
                               checked={editedRule.allowedValues?.includes(option) || false}
@@ -477,24 +472,16 @@ const EligibilityManagement: React.FC = () => {
                               size="small"
                             />
                           }
-                          label={option}
+                          label={<Typography variant="body2">{option}</Typography>}
                         />
                       ))}
                     </Box>
                   </FormGroup>
-                  <FormHelperText className="eligibility-helper-text">
-                    {(!editedRule.allowedValues || editedRule.allowedValues.length === 0) 
-                      ? "No selection = All values are eligible" 
-                      : `${editedRule.allowedValues.length} selected`}
-                  </FormHelperText>
                 </FormControl>
               ) : (
                 <Box className="eligibility-compact-form">
-                  <Typography variant="body2" className="eligibility-compact-label">
-                    {formatFieldName(editedRule.field)} ({editedRule.operator})
-                  </Typography>
                   <TextField
-                    label="Value"
+                    label={`${formatFieldName(editedRule.field)} (${editedRule.operator})`}
                     type="number"
                     fullWidth
                     size="small"
@@ -503,18 +490,12 @@ const EligibilityManagement: React.FC = () => {
                       handleFieldChange("value", e.target.value ? Number(e.target.value) : undefined)
                     }
                     error={!!error}
+                    helperText={error || ""}
                     inputProps={{
                       min: 0,
                       step: editedRule.field === "cgpa" ? 0.01 : 1
                     }}
                   />
-                  <Box className="eligibility-error-space">
-                    {error && (
-                      <Typography className="eligibility-error-text">
-                        {error}
-                      </Typography>
-                    )}
-                  </Box>
                 </Box>
               )}
             </Box>
@@ -532,7 +513,7 @@ const EligibilityManagement: React.FC = () => {
             disabled={saving || !!error}
             className="eligibility-save-button"
           >
-            {saving ? "Saving..." : "Save Changes"}
+            {saving ? "Saving..." : "Save"}
           </Button>
         </DialogActions>
       </Dialog>

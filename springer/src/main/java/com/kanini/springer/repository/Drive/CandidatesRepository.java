@@ -214,4 +214,25 @@ List<Candidate> findMatchingCandidates(
     @Query("SELECT DISTINCT c FROM Candidate c LEFT JOIN FETCH c.institute LEFT JOIN FETCH c.candidateSkills cs LEFT JOIN FETCH cs.skill WHERE c.candidateId IN :candidateIds")
     List<Candidate> findByIdsWithInstitute(@Param("candidateIds") List<Long> candidateIds);
 
+    // ===== Dashboard aggregate queries (single DB hit each) =====
+
+    /**
+     * Count candidates per applicationStage for a cycle in 1 query.
+     * Returns rows of [ApplicationStage, count].
+     */
+    @Query("SELECT c.applicationStage, COUNT(c) FROM Candidate c " +
+           "WHERE c.cycle.cycleId = :cycleId " +
+           "GROUP BY c.applicationStage")
+    List<Object[]> countByApplicationStageByCycle(@Param("cycleId") Long cycleId);
+
+    /**
+     * Institute-wise candidate stage breakdown for a cycle in 1 query.
+     * Returns rows of [instituteId, instituteName, applicationStage, count].
+     */
+    @Query("SELECT i.instituteId, i.instituteName, c.applicationStage, COUNT(c) FROM Candidate c " +
+           "JOIN c.institute i " +
+           "WHERE c.cycle.cycleId = :cycleId " +
+           "GROUP BY i.instituteId, i.instituteName, c.applicationStage")
+    List<Object[]> countByInstituteStageByCycle(@Param("cycleId") Long cycleId);
+
 }

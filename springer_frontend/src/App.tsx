@@ -9,6 +9,7 @@ import InstitutesList from './components/TA_Recruiter/Institutes/InstitutesList'
 import InstitutesDetails from './components/TA_Recruiter/Institutes/InstitutesDetails'
 import AddInstitute from './components/TA_Recruiter/Institutes/AddInstitute'
 import CandidateList from './components/TA_Recruiter/Candidates/CandidateList'
+import CandidatesHistory from './components/TA_Recruiter/Candidates/CandidatesHistory'
 import CandidateDetails from './components/TA_Recruiter/Candidates/CandidateDetails'
 import AddCandidates from './components/TA_Recruiter/Candidates/AddCandidates'
 
@@ -111,6 +112,7 @@ function App() {
           <Route path="/ta-recruiter/institutes/:instituteId" element={<InstitutesDetails />} />
 
           <Route path="/ta-recruiter/candidates" element={<CandidateList />} />
+          <Route path="/ta-recruiter/candidates/history" element={<CandidatesHistory />} />
           <Route path="/ta-recruiter/candidates/add" element={<AddCandidates />} />
           <Route path="/ta-recruiter/candidates/:id" element={<CandidateDetails />} />
           <Route path="/ta-recruiter/documents" element={<DocumentProcessingDashboard />} />

@@ -31,11 +31,25 @@
   /* Shadows */
   --shadow-card: 0 4px 6px rgba(0,0,0,0.1);
 
-  --color-orange: #f97316;
-  --color-purple: #8b5cf6;
-  --color-green: #22c55e;
-  --color-blue: #2ddef9;
-  --color-yellow:#f9ea16;
+  --color-orange: #f97316; 
+  --color-purple: #b259fa;
+  --color-green: #22c55e; 
+  --color-blue: #1d39f4; 
+  --color-yellow:#f9ea16; 
+  --color-pink: #f811ba; 
+  --color-blue-light: #34f3fa; 
+  --color-red: #f21f1f; 
+  --color-teal: #14b8a6;
+  --color-gold: #d4af37;
+  --color-silver: #a3a3a3;
+
+  /* Funnel Colors */
+  --color-funnel-applied: #1e3a8a;
+  --color-funnel-selected: #166534;
+  --color-funnel-accepted: #a16207;
+  --color-funnel-joined: #7e22ce;
+  --color-funnel-rejected: #991b1b;
+  --color-funnel-dropped: #115e59;
 
   /* ========== BASE COLORS ========== */
   
@@ -272,11 +286,17 @@
   /* Shadows */
   --shadow-card: 0 4px 6px rgba(0,0,0,0.5);
 
-   --color-orange: #f97316;
-  --color-purple: #8b5cf6;
-  --color-green: #22c55e;
-  --color-blue: #2ddef9;
-  --color-yellow:#f9ea16;
+--color-orange: #f97316; 
+  --color-purple: #b259fa;
+  --color-green: #22c55e; 
+  --color-blue: #1d39f4; 
+  --color-yellow:#f9ea16; 
+  --color-pink: #f811ba; 
+  --color-blue-light: #34f3fa; 
+  --color-red: #f21f1f; 
+  --color-teal: #14b8a6;
+  --color-gold: #d4af37;
+  --color-silver: #a3a3a3;
 
 
 
@@ -471,4 +491,41 @@
   --opacity-black-medium: rgba(0, 0, 0, 0.4);
   --opacity-primary-hover: rgba(91, 163, 214, 0.16);
   --opacity-primary-inset: rgba(91, 163, 214, 0.05);
+}
+
+/* ═════════════════════════════════════════════════════════════════════ */
+/* GLOBAL TOOLTIP                                                       */
+/* ═════════════════════════════════════════════════════════════════════ */
+
+.g-tooltip {
+  background-color: var(--color-surface) !important;
+  color: var(--color-text) !important;
+  border: 1px solid var(--color-border) !important;
+  border-radius: 10px !important;
+  padding: 10px 16px !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12) !important;
+  backdrop-filter: blur(8px) !important;
+  animation: g-tooltip-fade-in 0.2s ease-out !important;
+  max-width: 320px !important;
+}
+
+.g-tooltip-arrow {
+  color: var(--color-surface) !important;
+}
+
+.g-tooltip-arrow::before {
+  border: 1px solid var(--color-border) !important;
+}
+
+@keyframes g-tooltip-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }

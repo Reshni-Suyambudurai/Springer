@@ -52,43 +52,7 @@
 }
 
 .add-candidates-header-btn {
-  text-transform: none !important;
-  font-weight: 600 !important;
-  padding: 8px 20px !important;
-  border-radius: 8px !important;
   white-space: nowrap;
-  transition: all 0.3s ease !important;
-}
-
-.add-candidates-add-btn {
-  background: var(--color-primary) !important;
-  color: white !important;
-}
-
-.add-candidates-add-btn:hover {
-  background: var(--color-primary-hover) !important;
-  box-shadow: 0 2px 8px rgba(126, 163, 226, 0.3) !important;
-}
-
-.add-candidates-upload-btn {
-  background: var(--color-success) !important;
-  color: white !important;
-}
-
-.add-candidates-upload-btn:hover {
-  background: #15803d !important;
-  box-shadow: 0 2px 8px rgba(34, 197, 94, 0.3) !important;
-}
-
-.add-candidates-download-btn {
-  border: 2px solid var(--color-primary) !important;
-  color: var(--color-primary) !important;
-  background: transparent !important;
-}
-
-.add-candidates-download-btn:hover {
-  background: var(--color-primary) !important;
-  color: white !important;
 }
 
 /* Bulk Data Card */
@@ -120,24 +84,10 @@
   gap: 16px;
 }
 
-.add-candidates-bulk-upload-btn {
-  background: var(--color-primary) !important;
-  color: white !important;
-  padding: 10px 24px !important;
-  border-radius: 8px !important;
-  text-transform: none !important;
-  font-weight: 600 !important;
-}
-
-.add-candidates-bulk-upload-btn:hover {
-  background: var(--color-primary-hover) !important;
-}
-
-.add-candidates-bulk-upload-btn:disabled {
-  background: var(--color-text-muted) !important;
-  color: var(--color-bg) !important;
-  cursor: not-allowed !important;
-  opacity: 0.6;
+.add-candidates-bulk-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
 /* Cycle Info Badge */
@@ -189,8 +139,12 @@
 }
 
 .table-row-old td {
-  color: var(--color-warning) !important;
+  color: var(--color-green-100) !important;
   font-weight: 600;
+}
+
+.table-row-old .warning-dot {
+  background-color: var(--color-green-100);
 }
 
 .table-row-duplicate:hover td,
@@ -206,7 +160,7 @@
 }
 
 .candidate-name-old {
-  color: var(--color-warning);
+  color: var(--color-green-100);
   font-weight: 600;
   cursor: help;
 }
@@ -347,7 +301,20 @@
   border-radius: 8px;
   border: 1px solid var(--color-border);
   display: flex;
+  align-items: center;
   gap: 8px;
+}
+
+.error-message-delete-btn {
+  margin-left: auto !important;
+  color: var(--color-danger) !important;
+  flex-shrink: 0;
+  transition: all 0.2s ease !important;
+}
+
+.error-message-delete-btn:hover {
+  background-color: var(--color-danger) !important;
+  color: var(--color-bg) !important;
 }
 
 .error-message-number {
