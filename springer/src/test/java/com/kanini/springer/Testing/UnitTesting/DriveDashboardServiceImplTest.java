@@ -139,7 +139,7 @@ class DriveDashboardServiceImplTest {
         @Test
         @DisplayName("success - maps null location to 'Unknown'")
         void getDriveSummary_nullLocation_mapsToUnknown() {
-            List<Object[]> locationCounts = List.of(
+            List<Object[]> locationCounts = Collections.singletonList(
                     new Object[]{null, 2L}
             );
 
@@ -234,10 +234,10 @@ class DriveDashboardServiceImplTest {
                     new Object[]{ApplicationStage.REJECTED, 4L},
                     new Object[]{ApplicationStage.JOINED, 10L}
             );
-            List<Object[]> locationCounts = List.of(
+            List<Object[]> locationCounts = Collections.singletonList(
                     new Object[]{"Chennai", 3L}
             );
-            List<Object[]> instituteRows = List.of(
+            List<Object[]> instituteRows = Collections.singletonList(
                     new Object[]{1L, "IIT Madras", ApplicationStage.SELECTED, 15L}
             );
 
