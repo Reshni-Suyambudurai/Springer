@@ -10,15 +10,13 @@ import {
   School as SchoolIcon, Edit as EditIcon, Delete as DeleteIcon,
 } from '@mui/icons-material';
 import { trainingProgramApi } from '../../../services/academy.api';
-import { hiringCycleApi } from '../../../services/hiring.api';
 import { showToast } from '../../../utils/toast';
-import type { TrainingProgramResponse, TrainingProgramRequest, AcademyContextProps } from '../../../types/Academy/academy.types';
-import type { HiringCycleResponse } from '../../../types/TA_Recruiter/Hiring/hiringCycle.types';
+import type { TrainingProgramResponse, TrainingProgramRequest, AcademyContextProps, TrainingLocation } from '../../../types/Academy/academy.types';
 import FilterSelect from '../../Common/FilterSelect';
 import '../../../css/Academy/TrainingCoordinator/ProgramsList.css';
 
 const ProgramsList = ({ context }: { context: AcademyContextProps }) => {
-  const { programYear, onProgramsChanged } = context;
+  const { programYear, onProgramsChanged, cycles = [] } = context;
   
   // Form template - now inside component where programYear is available
   const EMPTY_FORM: TrainingProgramRequest = {
@@ -30,11 +28,20 @@ const ProgramsList = ({ context }: { context: AcademyContextProps }) => {
     cycleId: 0,
   };
 
+  const LOCATION_OPTIONS: { value: TrainingLocation; label: string }[] = [
+    { value: 'CHENNAI',    label: 'Chennai' },
+    { value: 'BANGALORE',  label: 'Bangalore' },
+    { value: 'HYDERABAD',  label: 'Hyderabad' },
+    { value: 'PUNE',       label: 'Pune' },
+    { value: 'MUMBAI',     label: 'Mumbai' },
+    { value: 'DELHI',      label: 'Delhi' },
+    { value: 'COIMBATORE', label: 'Coimbatore' },
+    { value: 'REMOTE',     label: 'Remote' },
+  ];
+
   const [programs, setPrograms] = useState<TrainingProgramResponse[]>([]);
-  const [cycles, setCycles] = useState<HiringCycleResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
-  const [filterCycle, setFilterCycle] = useState('all');
   const [filterStatus, setFilterStatus] = useState('all');
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -56,12 +63,8 @@ const ProgramsList = ({ context }: { context: AcademyContextProps }) => {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const [progRes, cycleRes] = await Promise.all([
-        trainingProgramApi.getAllPrograms(),
-        hiringCycleApi.getAllCycles(),
-      ]);
+      const progRes = await trainingProgramApi.getAllPrograms();
       if (progRes.success && progRes.data) setPrograms(progRes.data);
-      if (cycleRes.success && cycleRes.data) setCycles(cycleRes.data);
     } catch (err: any) {
       showToast(err.message || 'Failed to load programs', 'error');
     } finally {
@@ -74,10 +77,9 @@ const ProgramsList = ({ context }: { context: AcademyContextProps }) => {
     const loc  = (p.location ?? '').toLowerCase();
     const matchYear   = programYear === 0 || p.programYear === programYear;
     const matchSearch = name.includes(search.toLowerCase()) || loc.includes(search.toLowerCase());
-    const matchCycle  = filterCycle === 'all' || String(p.cycleId) === filterCycle;
     const matchStatus = filterStatus === 'all' ||
       (filterStatus === 'active' ? p.status : !p.status);
-    return matchYear && matchSearch && matchCycle && matchStatus;
+    return matchYear && matchSearch && matchStatus;
   });
 
   const paginated = filtered.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
@@ -96,14 +98,14 @@ const ProgramsList = ({ context }: { context: AcademyContextProps }) => {
       programYear: program.programYear,
       capacity: program.capacity,
       numberOfBatches: program.numberOfBatches,
-      location: program.location,
+      location: (program.location as TrainingLocation) || '',
       cycleId: program.cycleId,
     });
     setDialogOpen(true);
   };
 
   const handleSubmit = async () => {
-    if (!form.programName.trim() || !form.cycleId || !form.location.trim()) {
+    if (!form.programName.trim() || !form.cycleId || !form.location) {
       showToast('Please fill all required fields', 'error');
       return;
     }
@@ -187,19 +189,6 @@ const ProgramsList = ({ context }: { context: AcademyContextProps }) => {
                 ),
               }}
             />
-
-            <FilterSelect
-              label="Cycle"
-              value={filterCycle}
-              onChange={(v) => { setFilterCycle(v); setPage(0); }}
-            >
-              <MenuItem value="all">All Cycles</MenuItem>
-              {cycles.map((c) => (
-                <MenuItem key={c.cycleId} value={String(c.cycleId)}>
-                  {c.cycleName}
-                </MenuItem>
-              ))}
-            </FilterSelect>
 
             <FilterSelect
               label="Status"
@@ -373,13 +362,18 @@ const ProgramsList = ({ context }: { context: AcademyContextProps }) => {
               className="prog-dialog-field"
             />
             <TextField
+              select
               label="Location *"
               size="small"
               fullWidth
               value={form.location}
-              onChange={(e) => setForm((prev) => ({ ...prev, location: e.target.value }))}
+              onChange={(e) => setForm({ ...form, location: e.target.value as TrainingLocation })}
               className="prog-dialog-field"
-            />
+            >
+              {LOCATION_OPTIONS.map(opt => (
+                <MenuItem key={opt.value} value={opt.value}>{opt.label}</MenuItem>
+              ))}
+            </TextField>
             <TextField
               label="Capacity *"
               size="small"
@@ -413,7 +407,7 @@ const ProgramsList = ({ context }: { context: AcademyContextProps }) => {
               onChange={(e) => setForm({ ...form, cycleId: Number(e.target.value) })}
               className="prog-dialog-field"
             >
-              {cycles.map((c) => (
+              {cycles.filter(c => c.status === 'OPEN').map((c) => (
                 <MenuItem key={c.cycleId} value={c.cycleId}>
                   {c.cycleName} ({c.cycleYear})
                 </MenuItem>

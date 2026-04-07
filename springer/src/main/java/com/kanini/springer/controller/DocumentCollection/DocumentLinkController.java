@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.format.annotation.DateTimeFormat;
 
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -16,6 +17,7 @@ import org.springframework.web.bind.annotation.*;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 
+import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.LinkedHashMap;
 
@@ -41,7 +43,8 @@ public class DocumentLinkController {
         DocumentLinkResponse response = documentLinkService.generateSubmissionLink(
             request.getCandidateId(),
             request.getCycleId(),
-            request.getRequiredDocumentTypeIds()
+            request.getRequiredDocumentTypeIds(),
+            request.getSubmissionDeadline()
         );
 
         return new ResponseEntity<>(
@@ -56,15 +59,26 @@ public class DocumentLinkController {
 
     /**
      * Resend document submission link (if candidate didn't receive)
+     * @param documentTypeIds optional comma-separated list of document type IDs to resend
      */
     @PostMapping("/resend-submission-link")
     public ResponseEntity<ApiResponse<String>> resendSubmissionLink(
             @RequestParam @NotNull(message = "Candidate ID required") Long candidateId,
-            @RequestParam @NotNull(message = "Cycle ID required") Long cycleId) {
+            @RequestParam @NotNull(message = "Cycle ID required") Long cycleId,
+            @RequestParam(required = false) String documentTypeIds,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime submissionDeadline) {
 
         log.info("Resending submission link for candidate: {}", candidateId);
 
-        boolean sent = documentLinkService.resendSubmissionLink(candidateId, cycleId);
+        java.util.List<Long> docTypeIds = new java.util.ArrayList<>();
+        if (documentTypeIds != null && !documentTypeIds.trim().isEmpty()) {
+            docTypeIds = java.util.Arrays.stream(documentTypeIds.split(","))
+                .map(String::trim)
+                .map(Long::parseLong)
+                .collect(java.util.stream.Collectors.toList());
+        }
+
+        boolean sent = documentLinkService.resendSubmissionLink(candidateId, cycleId, docTypeIds, submissionDeadline);
 
         if (sent) {
             return ResponseEntity.ok(
@@ -92,7 +106,8 @@ public class DocumentLinkController {
         Map<Long, String> rawResults = documentLinkService.sendBulkSubmissionLinks(
                 request.getCandidateIds(),
                 request.getCycleId(),
-                request.getDocumentTypeIds()
+            request.getDocumentTypeIds(),
+            request.getSubmissionDeadline()
         );
 
         // Convert Long keys to String so JSON serializes as {"1": "SUCCESS"} not numeric

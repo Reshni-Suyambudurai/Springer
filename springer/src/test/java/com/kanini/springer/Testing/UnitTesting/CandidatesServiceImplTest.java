@@ -542,7 +542,7 @@ class CandidatesServiceImplTest {
         @Test
         @DisplayName("Positive: updates application stage for eligible candidate")
         void updateCandidateStatus_eligibleCandidate_success() {
-            CandidateStatusUpdateRequest req = new CandidateStatusUpdateRequest("SHORTLISTED", 1L);
+            CandidateStatusUpdateRequest req = new CandidateStatusUpdateRequest("SHORTLISTED", 1L, null);
             stubCandidate.setIsEligible(true);
 
             when(candidatesRepository.findById(1L)).thenReturn(Optional.of(stubCandidate));
@@ -559,7 +559,7 @@ class CandidatesServiceImplTest {
         @Test
         @DisplayName("Negative: throws ValidationException when ineligible candidate tries to advance")
         void updateCandidateStatus_ineligibleCandidateAdvancing_throwsValidation() {
-            CandidateStatusUpdateRequest req = new CandidateStatusUpdateRequest("SHORTLISTED", 1L);
+            CandidateStatusUpdateRequest req = new CandidateStatusUpdateRequest("SHORTLISTED", 1L, null);
             stubCandidate.setIsEligible(false);
 
             when(candidatesRepository.findById(1L)).thenReturn(Optional.of(stubCandidate));
@@ -572,7 +572,7 @@ class CandidatesServiceImplTest {
         @Test
         @DisplayName("Negative: throws ValidationException when status is blank")
         void updateCandidateStatus_blankStatus_throwsValidation() {
-            CandidateStatusUpdateRequest req = new CandidateStatusUpdateRequest("", 1L);
+            CandidateStatusUpdateRequest req = new CandidateStatusUpdateRequest("", 1L, null);
 
             when(candidatesRepository.findById(1L)).thenReturn(Optional.of(stubCandidate));
 
@@ -584,7 +584,7 @@ class CandidatesServiceImplTest {
         @Test
         @DisplayName("Negative: throws IllegalArgumentException for unknown status value")
         void updateCandidateStatus_unknownStatus_throwsException() {
-            CandidateStatusUpdateRequest req = new CandidateStatusUpdateRequest("UNKNOWN_STATUS", 1L);
+            CandidateStatusUpdateRequest req = new CandidateStatusUpdateRequest("UNKNOWN_STATUS", 1L, null);
             stubCandidate.setIsEligible(true);
 
             when(candidatesRepository.findById(1L)).thenReturn(Optional.of(stubCandidate));
@@ -596,7 +596,7 @@ class CandidatesServiceImplTest {
         @Test
         @DisplayName("Negative: throws ResourceNotFoundException when candidate does not exist")
         void updateCandidateStatus_candidateNotFound_throwsResourceNotFound() {
-            CandidateStatusUpdateRequest req = new CandidateStatusUpdateRequest("SHORTLISTED", 1L);
+            CandidateStatusUpdateRequest req = new CandidateStatusUpdateRequest("SHORTLISTED", 1L, null);
 
             when(candidatesRepository.findById(99L)).thenReturn(Optional.empty());
 

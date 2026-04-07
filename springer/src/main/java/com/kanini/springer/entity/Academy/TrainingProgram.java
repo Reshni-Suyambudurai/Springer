@@ -9,6 +9,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import com.kanini.springer.entity.HiringReq.HiringCycle;
+import com.kanini.springer.entity.enums.Enums.TrainingLocation;
 
 /**
  * We start the training program for the candidates
@@ -41,7 +42,8 @@ public class TrainingProgram {
     
     private Integer numberOfBatches;
     
-    private String location; // training planned location ie bangalore or chennai
+    @Enumerated(EnumType.STRING)
+    private TrainingLocation location; // training planned location
 
     private boolean status;
     

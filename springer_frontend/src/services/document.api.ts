@@ -1,4 +1,4 @@
-import { http } from './api/https';
+import { http, publicHttp } from './api/https';
 import { handleAxiosError } from './api.error';
 import type { ApiResponse } from '../types/api.response';
 import type {
@@ -72,10 +72,15 @@ export const documentLinkApi = {
     }
   },
 
-  async resendSubmissionLink(candidateId: number, cycleId: number): Promise<ApiResponse<string>> {
+  async resendSubmissionLink(candidateId: number, cycleId: number, documentTypeIds?: number[], submissionDeadline?: string): Promise<ApiResponse<string>> {
     try {
       const response = await http.post('/documents/resend-submission-link', null, {
-        params: { candidateId, cycleId },
+        params: { 
+          candidateId, 
+          cycleId,
+          ...(documentTypeIds && documentTypeIds.length > 0 && { documentTypeIds: documentTypeIds.join(',') }),
+          ...(submissionDeadline && { submissionDeadline })
+        },
       });
       return response.data;
     } catch (error) {
@@ -113,6 +118,19 @@ export const documentSubmissionApi = {
     try {
       const response = await http.get(`/documents/submissions/${documentId}`);
       return response.data;
+    } catch (error) {
+      throw handleAxiosError(error);
+    }
+  },
+
+  async openFile(documentId: number): Promise<void> {
+    try {
+      const response = await http.get(`/documents/submissions/${documentId}/file`, {
+        responseType: 'blob',
+      });
+      const objectUrl = window.URL.createObjectURL(response.data);
+      window.open(objectUrl, '_blank', 'noopener,noreferrer');
+      window.setTimeout(() => window.URL.revokeObjectURL(objectUrl), 60_000);
     } catch (error) {
       throw handleAxiosError(error);
     }
@@ -262,13 +280,15 @@ export const docReportApi = {
 };
 
 // ==================== PUBLIC SUBMISSION PAGE (candidate-facing) ====================
+// Uses publicHttp (no auth header) — candidates are NOT logged-in users.
+// Authentication is done via the JWT token embedded in the URL.
 export const documentSubmissionPageApi = {
 
   // GET /api/documents/submission-status?token=xxx
   // Called when candidate opens the submission link
   async getSubmissionStatus(token: string): Promise<ApiResponse<DocumentSubmissionStatusResponse>> {
     try {
-      const response = await http.get('/documents/submission-status', { params: { token } });
+      const response = await publicHttp.get('/documents/submission-status', { params: { token } });
       return response.data;
     } catch (error) {
       throw handleAxiosError(error);
@@ -287,7 +307,7 @@ export const documentSubmissionPageApi = {
       formData.append('documentTypeId', String(documentTypeId));
       formData.append('file', file);
       formData.append('token', token);
-      const response = await http.post('/documents/submissions', formData);
+      const response = await publicHttp.post('/documents/submissions', formData);
       return response.data;
     } catch (error) {
       throw handleAxiosError(error);

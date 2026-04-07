@@ -446,7 +446,7 @@ class CandidatesControllerIntegrationTest {
                 .andExpect(status().isOk());
 
         // Now update status
-        CandidateStatusUpdateRequest statusRequest = new CandidateStatusUpdateRequest("SHORTLISTED", USER_ID);
+        CandidateStatusUpdateRequest statusRequest = new CandidateStatusUpdateRequest("SHORTLISTED", USER_ID, null);
 
         mockMvc.perform(patch("/api/candidates/{id}/status", createdCandidateId)
                         .header("Authorization", "Bearer " + jwtToken)
@@ -469,7 +469,7 @@ class CandidatesControllerIntegrationTest {
                         .content(objectMapper.writeValueAsString(markIneligible)))
                 .andExpect(status().isOk());
 
-        CandidateStatusUpdateRequest statusRequest = new CandidateStatusUpdateRequest("SHORTLISTED", USER_ID);
+        CandidateStatusUpdateRequest statusRequest = new CandidateStatusUpdateRequest("SHORTLISTED", USER_ID, null);
 
         mockMvc.perform(patch("/api/candidates/{id}/status", secondCandidateId)
                         .header("Authorization", "Bearer " + jwtToken)

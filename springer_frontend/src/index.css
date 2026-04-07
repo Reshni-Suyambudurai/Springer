@@ -9,9 +9,9 @@
 
 
 html, body {
-
-  overflow: hidden;   
-   
+  min-height: 100%;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 /* html, body {

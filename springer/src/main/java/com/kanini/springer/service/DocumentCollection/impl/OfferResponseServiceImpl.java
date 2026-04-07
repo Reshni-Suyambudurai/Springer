@@ -54,7 +54,7 @@ public class OfferResponseServiceImpl implements IOfferResponseService {
 
         Candidate candidate = offer.getCandidate();
         candidate.setApplicationStage(responseEnum == Enums.OfferResponse.ACCEPTED
-                ? Enums.ApplicationStage.JOINED
+            ? Enums.ApplicationStage.ACCEPTED
                 : Enums.ApplicationStage.DROPPED);
         candidateRepository.save(candidate);
 
@@ -91,7 +91,7 @@ public class OfferResponseServiceImpl implements IOfferResponseService {
 
             Candidate candidate = offer.getCandidate();
             candidate.setApplicationStage(responseEnum == Enums.OfferResponse.ACCEPTED
-                    ? Enums.ApplicationStage.JOINED
+                    ? Enums.ApplicationStage.ACCEPTED
                     : Enums.ApplicationStage.DROPPED);
             candidateRepository.save(candidate);
 

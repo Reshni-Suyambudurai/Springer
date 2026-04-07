@@ -32,9 +32,11 @@ interface CandidateOfferRow {
 }
 
 const today = () => new Date().toISOString().split('T')[0];
+const OFFER_PAGE_SIZE = 200;
+const OFFER_MAX_PAGES = 50;
 
 const OffersTab = ({ context }: { context: DocProcessingContextProps }) => {
-  const { cycleId, cycleName } = context;
+  const { cycleId } = context;
 
   const [eligible, setEligible] = useState<OfferLetterResponse[]>([]);
   const [offers, setOffers] = useState<OfferLetterResponse[]>([]);
@@ -64,6 +66,30 @@ const OffersTab = ({ context }: { context: DocProcessingContextProps }) => {
     setPage(0);
   }, [cycleId]);
 
+  const fetchAllOffersByCycle = async () => {
+    const all: OfferLetterResponse[] = [];
+    const seen = new Set<number>();
+
+    for (let pageNo = 0; pageNo < OFFER_MAX_PAGES; pageNo += 1) {
+      const res = await offerApi.getAllOffers({ cycleId, page: pageNo, size: OFFER_PAGE_SIZE });
+      const rows = (res.success && res.data) ? res.data : [];
+      if (rows.length === 0) break;
+
+      let newCount = 0;
+      rows.forEach((row) => {
+        if (!seen.has(row.offerId)) {
+          seen.add(row.offerId);
+          all.push(row);
+          newCount += 1;
+        }
+      });
+
+      if (rows.length < OFFER_PAGE_SIZE || newCount === 0) break;
+    }
+
+    return all;
+  };
+
   const fetchEligible = async () => {
     try {
       setLoadingEligible(true);
@@ -76,8 +102,8 @@ const OffersTab = ({ context }: { context: DocProcessingContextProps }) => {
   const fetchOffers = async () => {
     try {
       setLoadingOffers(true);
-      const res = await offerApi.getAllOffers({ cycleId, size: 200 });
-      if (res.success && res.data) setOffers(res.data);
+      const all = await fetchAllOffersByCycle();
+      setOffers(all);
     } catch (err: any) {
       showToast(err.message || 'Failed to load offers', 'error');
     } finally { setLoadingOffers(false); }
@@ -141,8 +167,7 @@ const OffersTab = ({ context }: { context: DocProcessingContextProps }) => {
       if (!genRes.success) { showToast('Failed to create offer records', 'error'); return; }
 
       // Step 2: fetch new offer IDs
-      const offersRes = await offerApi.getAllOffers({ cycleId, size: 500 });
-      const allOffers = (offersRes.success && offersRes.data) ? offersRes.data : [];
+      const allOffers = await fetchAllOffersByCycle();
 
       // Step 3: record responses for non-PENDING
       const toRespond = selected.filter(r => r.response !== 'PENDING');

@@ -8,11 +8,41 @@ import {
   HourglassEmpty as PendingIcon,
   Description as DocIcon,
   ErrorOutline as ErrorIcon,
+  Visibility as ViewIcon,
+  SwapHoriz as ChangeIcon,
 } from '@mui/icons-material';
-import { documentSubmissionPageApi } from '../services/document.api';
+import { documentSubmissionApi, documentSubmissionPageApi } from '../services/document.api';
 import { showToast } from '../utils/toast';
 import type { DocumentStatusDTO, DocumentSubmissionStatusResponse } from '../types/DocumentCollection/document.types';
 import '../css/pages/DocumentSubmitPage.css';
+
+const STATUS_PRIORITY: Record<string, number> = {
+  APPROVED: 4,
+  COLLECTED: 3,
+  REJECTED: 2,
+  PENDING: 1,
+};
+
+const normalizeStatus = (status: string): string => {
+  const normalized = (status || '').toUpperCase();
+  const aliases: Record<string, string> = {
+    SUBMITTED: 'COLLECTED',
+    UPLOADED: 'COLLECTED',
+    IN_REVIEW: 'COLLECTED',
+    UNDER_REVIEW: 'COLLECTED',
+    VERIFIED: 'APPROVED',
+    DECLINED: 'REJECTED',
+    NOT_UPLOADED: 'PENDING',
+    REQUIRED: 'PENDING',
+  };
+  return aliases[normalized] || normalized || 'PENDING';
+};
+
+const toTime = (value: string | null | undefined): number => {
+  if (!value) return 0;
+  const ms = new Date(value).getTime();
+  return Number.isNaN(ms) ? 0 : ms;
+};
 
 const DocumentSubmitPage = () => {
   const [searchParams] = useSearchParams();
@@ -35,7 +65,9 @@ const DocumentSubmitPage = () => {
       setLoading(true);
       const res = await documentSubmissionPageApi.getSubmissionStatus(token);
       if (res.success && res.data) {
-        setStatus(res.data);
+        // Deduplicate documents — keep latest per documentTypeId
+        const deduped = deduplicateDocs(res.data.documents);
+        setStatus({ ...res.data, documents: deduped });
       } else {
         setError('Unable to load your document checklist. The link may be expired or invalid.');
       }
@@ -46,6 +78,32 @@ const DocumentSubmitPage = () => {
     }
   };
 
+  // Merge duplicate rows from backend so each required doc type appears once.
+  const deduplicateDocs = (docs: DocumentStatusDTO[]): DocumentStatusDTO[] => {
+    const map = new Map<number, DocumentStatusDTO>();
+    docs.forEach(rawDoc => {
+      const doc: DocumentStatusDTO = {
+        ...rawDoc,
+        status: normalizeStatus(rawDoc.status),
+      };
+      const existing = map.get(doc.documentTypeId);
+
+      if (!existing) {
+        map.set(doc.documentTypeId, doc);
+      } else {
+        const statusDiff = (STATUS_PRIORITY[doc.status] || 0) - (STATUS_PRIORITY[existing.status] || 0);
+        const docTime = toTime(doc.uploadedAt);
+        const existingTime = toTime(existing.uploadedAt);
+        const isNewer = docTime > existingTime;
+
+        if (statusDiff > 0 || (statusDiff === 0 && isNewer)) {
+          map.set(doc.documentTypeId, doc);
+        }
+      }
+    });
+    return Array.from(map.values()).sort((a, b) => a.documentType.localeCompare(b.documentType));
+  };
+
   const handleUploadClick = (docTypeId: number) => {
     setActiveDocTypeId(docTypeId);
     fileInputRef.current?.click();
@@ -54,29 +112,18 @@ const DocumentSubmitPage = () => {
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !activeDocTypeId) return;
-
-    // Reset input so same file can be re-selected
     e.target.value = '';
 
-    // Validate file size (max 10MB)
-    if (file.size > 10 * 1024 * 1024) {
-      showToast('File size must be under 10MB', 'error');
-      return;
-    }
-
-    // Validate file type
+    if (file.size > 10 * 1024 * 1024) { showToast('File size must be under 10MB', 'error'); return; }
     const allowed = ['application/pdf', 'image/jpeg', 'image/png', 'image/jpg'];
-    if (!allowed.includes(file.type)) {
-      showToast('Only PDF, JPG, PNG files are allowed', 'error');
-      return;
-    }
+    if (!allowed.includes(file.type)) { showToast('Only PDF, JPG, PNG files are allowed', 'error'); return; }
 
     try {
       setUploadingDocTypeId(activeDocTypeId);
       const res = await documentSubmissionPageApi.uploadDocument(activeDocTypeId, file, token);
       if (res.success) {
         showToast('Document uploaded successfully!', 'success');
-        fetchStatus(); // Refresh status
+        fetchStatus();
       }
     } catch (err: any) {
       showToast(err.message || 'Upload failed. Please try again.', 'error');
@@ -86,7 +133,16 @@ const DocumentSubmitPage = () => {
     }
   };
 
+  const handleViewDocument = async (documentId: number) => {
+    try {
+      await documentSubmissionApi.openFile(documentId);
+    } catch {
+      showToast('Unable to open document. Please try again.', 'error');
+    }
+  };
+
   const getDocIcon = (doc: DocumentStatusDTO) => {
+    if (uploadingDocTypeId === doc.documentTypeId) return <CircularProgress size={20} sx={{ color: 'var(--color-primary)' }} />;
     switch (doc.status) {
       case 'APPROVED':  return <CheckIcon className="dsub-doc-icon dsub-doc-icon--approved" />;
       case 'REJECTED':  return <RejectIcon className="dsub-doc-icon dsub-doc-icon--rejected" />;
@@ -95,21 +151,27 @@ const DocumentSubmitPage = () => {
     }
   };
 
-  const getStatusChip = (status: string) => {
+  const getStatusChip = (doc: DocumentStatusDTO) => {
+    if (uploadingDocTypeId === doc.documentTypeId) {
+      return <Chip label="Uploading..." size="small" className="dsub-chip dsub-chip--uploading" />;
+    }
     const map: Record<string, { label: string; cls: string }> = {
       APPROVED:  { label: '✓ Approved',      cls: 'dsub-chip--approved' },
       REJECTED:  { label: '✗ Rejected',      cls: 'dsub-chip--rejected' },
       COLLECTED: { label: '⏳ Under Review',  cls: 'dsub-chip--review' },
       PENDING:   { label: 'Upload Required', cls: 'dsub-chip--pending' },
     };
-    const cfg = map[status] || { label: status, cls: '' };
+    const cfg = map[doc.status] || { label: doc.status, cls: '' };
     return <Chip label={cfg.label} size="small" className={`dsub-chip ${cfg.cls}`} />;
   };
 
-  const canUpload = (doc: DocumentStatusDTO) =>
-    doc.status === 'PENDING' || doc.status === 'REJECTED';
-
-  // ── Render States ──────────────────────────────────────────────────────────
+  const canUpload = (doc: DocumentStatusDTO) => doc.status === 'PENDING';
+  const canChange = (doc: DocumentStatusDTO) => doc.status === 'COLLECTED' || doc.status === 'REJECTED';
+  const canView = (doc: DocumentStatusDTO) => {
+    const hasDocumentId = typeof doc.documentId === 'number' && doc.documentId > 0;
+    const viewableStatus = doc.status === 'COLLECTED' || doc.status === 'APPROVED' || doc.status === 'REJECTED';
+    return viewableStatus && hasDocumentId;
+  };
 
   if (loading) {
     return (
@@ -129,9 +191,7 @@ const DocumentSubmitPage = () => {
           <ErrorIcon className="dsub-error-icon" />
           <Typography className="dsub-error-title">Link Invalid or Expired</Typography>
           <Typography className="dsub-error-desc">{error}</Typography>
-          <Typography className="dsub-error-hint">
-            Please contact your recruiter to get a new submission link.
-          </Typography>
+          <Typography className="dsub-error-hint">Please contact your recruiter to get a new submission link.</Typography>
         </Box>
       </Box>
     );
@@ -142,6 +202,9 @@ const DocumentSubmitPage = () => {
   const allDone = status.documents.every(d => d.status === 'APPROVED');
   const approved = status.documents.filter(d => d.status === 'APPROVED').length;
   const total = status.documents.length;
+  // Calculate progress from frontend — don't trust backend completionPercentage
+  const progressPct = total > 0 ? Math.round((approved / total) * 100) : 0;
+  const hasRejected = status.documents.some(d => d.status === 'REJECTED');
 
   return (
     <Box className="dsub-page">
@@ -188,14 +251,25 @@ const DocumentSubmitPage = () => {
               <Typography className="dsub-progress-label">
                 {allDone ? '🎉 All documents approved!' : `${approved} of ${total} documents approved`}
               </Typography>
-              <Typography className="dsub-progress-pct">{status.completionPercentage}%</Typography>
+              <Typography className="dsub-progress-pct">{progressPct}%</Typography>
             </Box>
             <LinearProgress
               variant="determinate"
-              value={status.completionPercentage}
+              value={progressPct}
               className={`dsub-progress-bar ${allDone ? 'dsub-progress-bar--complete' : ''}`}
             />
           </Box>
+
+          {/* Rejected Banner */}
+          {hasRejected && !allDone && (
+            <Box className="dsub-rejected-banner">
+              <RejectIcon className="dsub-rejected-banner-icon" />
+              <Box>
+                <Typography className="dsub-rejected-banner-title">Some documents were rejected</Typography>
+                <Typography className="dsub-rejected-banner-sub">Please re-upload the rejected documents below.</Typography>
+              </Box>
+            </Box>
+          )}
 
           {/* All Done Banner */}
           {allDone && (
@@ -203,9 +277,7 @@ const DocumentSubmitPage = () => {
               <CheckIcon className="dsub-done-icon" />
               <Box>
                 <Typography className="dsub-done-title">All documents verified!</Typography>
-                <Typography className="dsub-done-sub">
-                  Your recruiter will be in touch with the next steps.
-                </Typography>
+                <Typography className="dsub-done-sub">Your recruiter will be in touch with the next steps.</Typography>
               </Box>
             </Box>
           )}
@@ -222,23 +294,36 @@ const DocumentSubmitPage = () => {
                 <Box className="dsub-doc-left">
                   {getDocIcon(doc)}
                   <Box>
-                    <Typography className="dsub-doc-name">{doc.documentType}</Typography>
+                    <Typography className="dsub-doc-name">{doc.documentType.replace(/_/g, ' ')}</Typography>
                     {doc.status === 'REJECTED' && doc.rejectionReason && (
                       <Typography className="dsub-doc-rejection">
-                        ⚠ Rejected: {doc.rejectionReason}
+                        ⚠ {doc.rejectionReason}
                       </Typography>
-                    )}
-                    {doc.status === 'COLLECTED' && (
-                      <Typography className="dsub-doc-hint">Uploaded — awaiting review</Typography>
-                    )}
-                    {doc.status === 'APPROVED' && (
-                      <Typography className="dsub-doc-approved-text">Verified ✓</Typography>
                     )}
                   </Box>
                 </Box>
 
                 <Box className="dsub-doc-right">
-                  {getStatusChip(doc.status)}
+                  {getStatusChip(doc)}
+
+                  {/* View button — for uploaded/approved/rejected docs */}
+                  {canView(doc) && uploadingDocTypeId !== doc.documentTypeId && (
+                    <Button
+                      variant="outlined"
+                      size="small"
+                      startIcon={<ViewIcon />}
+                      onClick={() => {
+                        if (typeof doc.documentId === 'number') {
+                          handleViewDocument(doc.documentId);
+                        }
+                      }}
+                      className="dsub-view-btn"
+                    >
+                      View
+                    </Button>
+                  )}
+
+                  {/* Upload button — for pending docs */}
                   {canUpload(doc) && (
                     <Button
                       variant="contained"
@@ -250,11 +335,22 @@ const DocumentSubmitPage = () => {
                       }
                       onClick={() => handleUploadClick(doc.documentTypeId)}
                       disabled={uploadingDocTypeId === doc.documentTypeId}
-                      className={`dsub-upload-btn ${doc.status === 'REJECTED' ? 'dsub-upload-btn--reupload' : ''}`}
+                      className="dsub-upload-btn"
                     >
-                      {uploadingDocTypeId === doc.documentTypeId
-                        ? 'Uploading...'
-                        : doc.status === 'REJECTED' ? 'Re-upload' : 'Upload'}
+                      {uploadingDocTypeId === doc.documentTypeId ? 'Uploading...' : 'Upload'}
+                    </Button>
+                  )}
+
+                  {/* Change button — for collected/rejected docs */}
+                  {canChange(doc) && uploadingDocTypeId !== doc.documentTypeId && (
+                    <Button
+                      variant="outlined"
+                      size="small"
+                      startIcon={<ChangeIcon />}
+                      onClick={() => handleUploadClick(doc.documentTypeId)}
+                      className={`dsub-change-btn ${doc.status === 'REJECTED' ? 'dsub-change-btn--rejected' : ''}`}
+                    >
+                      {doc.status === 'REJECTED' ? 'Re-upload' : 'Change'}
                     </Button>
                   )}
                 </Box>
@@ -280,7 +376,8 @@ const DocumentSubmitPage = () => {
             <ul className="dsub-instructions-list">
               <li>Upload clear, readable scans or photos</li>
               <li>Accepted formats: PDF, JPG, PNG (max 10MB)</li>
-              <li>If a document is rejected, re-upload a corrected version</li>
+              <li>Use <strong>Change</strong> to replace an uploaded document before review</li>
+              <li>If a document is rejected, use <strong>Re-upload</strong> to submit a corrected version</li>
               <li>Contact your recruiter if you face any issues</li>
             </ul>
           </Box>

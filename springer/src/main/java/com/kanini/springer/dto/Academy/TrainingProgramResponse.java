@@ -3,6 +3,7 @@ package com.kanini.springer.dto.Academy;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import com.kanini.springer.entity.enums.Enums.TrainingLocation;
 
 import java.time.LocalDateTime;
 
@@ -16,7 +17,7 @@ public class TrainingProgramResponse {
     private Integer programYear;
     private Integer capacity;
     private Integer numberOfBatches;
-    private String location;
+    private TrainingLocation location;
     private boolean status;
     private LocalDateTime createdAt;
     private Long cycleId;

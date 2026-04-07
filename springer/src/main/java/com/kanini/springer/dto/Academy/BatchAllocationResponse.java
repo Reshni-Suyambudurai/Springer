@@ -22,5 +22,7 @@ public class BatchAllocationResponse {
     private Boolean isActive;
     private String performance;
     private BigDecimal attendancePercentage;
+    // Weighted average score across all scored courses (auto-normalized by weightage)
+    private BigDecimal overallWeightedScore;
     private LocalDateTime createdAt;
 }

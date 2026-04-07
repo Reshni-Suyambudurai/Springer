@@ -4,6 +4,7 @@ import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import com.kanini.springer.entity.enums.Enums.TrainingLocation;
 
 @Data
 @NoArgsConstructor
@@ -26,8 +27,8 @@ public class TrainingProgramRequest {
     @Max(value = 20, message = "Cannot have more than 20 batches")
     private Integer numberOfBatches;
 
-    @NotBlank(message = "Location is required")
-    private String location;
+    @NotNull(message = "Location is required")
+    private TrainingLocation location;
 
     @NotNull(message = "Hiring cycle is required")
     private Long cycleId;

@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 import java.util.List;
 
-import com.kanini.springer.entity.Academy.TrainingCourse;
+import com.kanini.springer.entity.Academy.BatchCourse;
 import com.kanini.springer.entity.Academy.TrainingScore;
 import com.kanini.springer.entity.Drive.Application;
 import com.kanini.springer.entity.Drive.CandidateEvaluation;
@@ -81,7 +81,7 @@ public class User {
     private List<CandidateEvaluation> evaluations;
     
     @OneToMany(mappedBy = "conductedBy", cascade = CascadeType.ALL)
-    private List<TrainingCourse> trainingCourses;
+    private List<BatchCourse> trainingCourses;
     
     @OneToMany(mappedBy = "reviewedBy", cascade = CascadeType.ALL)
     private List<TrainingScore> trainingScores;

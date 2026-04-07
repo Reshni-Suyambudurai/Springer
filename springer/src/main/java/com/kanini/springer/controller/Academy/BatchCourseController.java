@@ -69,6 +69,14 @@ public class BatchCourseController {
                 .body(ApiResponse.success("Batches linked to course " + courseId + " retrieved successfully", response));
     }
     
+    @PatchMapping("/{batchCourseId}/status")
+    public ResponseEntity<ApiResponse<BatchCourseResponse>> updateBatchCourseStatus(
+            @PathVariable Integer batchCourseId,
+            @RequestParam String status) {
+        BatchCourseResponse response = batchCourseService.updateBatchCourseStatus(batchCourseId, status);
+        return ResponseEntity.ok(ApiResponse.success("Batch course status updated successfully", response));
+    }
+
     @DeleteMapping("/{batchCourseId}")
     public ResponseEntity<ApiResponse<String>> removeCourseFromBatch(
             @PathVariable Integer batchCourseId) {

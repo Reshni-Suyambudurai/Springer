@@ -66,11 +66,6 @@ const DocumentProcessingDashboard = () => {
             <Typography className="dp-title">
               {TABS.find(t => t.key === activeTab)?.label || 'Document Processing'}
             </Typography>
-            <Typography className="dp-subtitle">
-              {selectedCycle
-                ? `${selectedCycle.cycleName} · ${selectedCycle.cycleYear}`
-                : 'Manage document collection, verification & offers'}
-            </Typography>
           </Box>
 
           {/* Cycle Selector */}
@@ -82,7 +77,7 @@ const DocumentProcessingDashboard = () => {
               <TextField
                 select size="small"
                 value={selectedCycleId || ''}
-                onChange={e => { setSelectedCycleId(Number(e.target.value)); setActiveTab('doc-types'); }}
+                onChange={e => { setSelectedCycleId(Number(e.target.value)); }}
                 className="dp-cycle-select"
               >
                 {cycles.map(c => (

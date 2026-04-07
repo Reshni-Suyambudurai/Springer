@@ -14,4 +14,5 @@ public class CandidateStatusUpdateRequest {
     
     private String status; // CandidateStatus enum string
     private Long updatedBy; // User ID who updated the status
+    private String reason; // Optional; required when status is DROPPED
 }

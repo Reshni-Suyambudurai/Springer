@@ -2,10 +2,11 @@
 
 /* ── Full Page Layout ── */
 .dsub-page {
-  min-height: 100vh;
+  min-height: 100dvh;
   background-color: var(--color-bg-secondary);
   display: flex;
   flex-direction: column;
+  overflow-y: auto;
 }
 
 .dsub-fullpage {
@@ -57,7 +58,9 @@
   flex: 1;
   display: flex;
   justify-content: center;
-  padding: 32px 16px;
+  padding: 32px 16px 48px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .dsub-card {
@@ -66,11 +69,12 @@
   border-radius: 16px;
   padding: 32px;
   width: 100%;
-  max-width: 600px;
+  max-width: 620px;
   display: flex;
   flex-direction: column;
   gap: 24px;
   box-shadow: 0 4px 16px var(--opacity-shadow-medium);
+  height: fit-content;
 }
 
 /* ── Loading / Error ── */
@@ -175,6 +179,35 @@
 
 .dsub-progress-bar--complete .MuiLinearProgress-bar {
   background-color: var(--color-success) !important;
+}
+
+/* ── Rejected Banner ── */
+.dsub-rejected-banner {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 20px;
+  background-color: var(--color-error-light);
+  border: 1px solid var(--color-error-border);
+  border-radius: 10px;
+}
+
+.dsub-rejected-banner-icon {
+  font-size: 28px !important;
+  color: var(--color-error) !important;
+  flex-shrink: 0;
+}
+
+.dsub-rejected-banner-title {
+  font-size: var(--text-md) !important;
+  font-weight: 700 !important;
+  color: var(--color-error-dark) !important;
+  margin-bottom: 2px !important;
+}
+
+.dsub-rejected-banner-sub {
+  font-size: var(--text-sm) !important;
+  color: var(--color-error-dark) !important;
 }
 
 /* ── Done Banner ── */
@@ -288,9 +321,34 @@
 .dsub-doc-right {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
   gap: 10px;
   flex-shrink: 0;
 }
+
+.dsub-instructions {
+  padding: 14px 16px;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  background: var(--color-bg-primary);
+}
+
+.dsub-instructions-title {
+  font-size: var(--text-sm) !important;
+  font-weight: 700 !important;
+  color: var(--color-text-primary) !important;
+  margin-bottom: 8px !important;
+}
+
+.dsub-instructions-list {
+  margin: 0;
+  padding-left: 18px;
+  color: var(--color-text-secondary);
+  font-size: var(--text-xs);
+  line-height: 1.5;
+}
+
 
 /* ── Status Chips ── */
 .dsub-chip {
@@ -347,6 +405,44 @@
 
 .dsub-upload-spinner { color: var(--color-white) !important; }
 
+/* ── View Button ── */
+.dsub-view-btn {
+  border-color: var(--color-primary) !important;
+  color: var(--color-primary) !important;
+  font-weight: 600 !important;
+  text-transform: none !important;
+  border-radius: 8px !important;
+  font-size: var(--text-xs) !important;
+  white-space: nowrap;
+}
+
+.dsub-view-btn:hover {
+  background-color: var(--color-primary-hover-6) !important;
+}
+
+/* ── Change Button ── */
+.dsub-change-btn {
+  border-color: var(--color-warning) !important;
+  color: var(--color-warning) !important;
+  font-weight: 600 !important;
+  text-transform: none !important;
+  border-radius: 8px !important;
+  font-size: var(--text-xs) !important;
+  white-space: nowrap;
+}
+
+.dsub-change-btn--rejected {
+  border-color: var(--color-error) !important;
+  color: var(--color-error) !important;
+}
+
+/* ── Uploading chip ── */
+.dsub-chip--uploading {
+  color: var(--color-primary) !important;
+  background-color: var(--color-primary-light) !important;
+  border-color: var(--color-blue-100) !important;
+}
+
 /* ── Expiry ── */
 .dsub-expiry {
   padding: 10px 14px;
@@ -360,33 +456,40 @@
   color: var(--color-warning-text) !important;
 }
 
-/* ── Instructions ── */
-.dsub-instructions {
-  padding: 16px;
-  background-color: var(--color-bg-secondary);
-  border-radius: 8px;
-  border: 1px solid var(--color-border-light);
-}
+@media (max-width: 768px) {
+  .dsub-header {
+    padding: 14px 16px;
+  }
 
-.dsub-instructions-title {
-  font-size: var(--text-sm) !important;
-  font-weight: 700 !important;
-  color: var(--color-text-primary) !important;
-  margin-bottom: 8px !important;
-}
+  .dsub-content {
+    padding: 18px 10px;
+  }
 
-.dsub-instructions-list {
-  margin: 0;
-  padding-left: 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
+  .dsub-card {
+    padding: 16px;
+    border-radius: 12px;
+    gap: 16px;
+  }
 
-.dsub-instructions-list li {
-  font-size: var(--text-xs);
-  color: var(--color-text-secondary);
-  line-height: 1.5;
+  .dsub-welcome {
+    align-items: flex-start;
+  }
+
+  .dsub-doc-item {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .dsub-doc-right {
+    justify-content: flex-start;
+  }
+
+  .dsub-progress-header {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 4px;
+  }
 }
 
 @media (max-width: 640px) {

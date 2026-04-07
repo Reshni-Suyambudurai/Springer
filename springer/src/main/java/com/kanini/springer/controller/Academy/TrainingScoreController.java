@@ -1,5 +1,6 @@
 package com.kanini.springer.controller.Academy;
 
+import com.kanini.springer.dto.Academy.ExcelUploadResponse;
 import com.kanini.springer.dto.Academy.TrainingScoreRequest;
 import com.kanini.springer.dto.Academy.TrainingScoreResponse;
 import com.kanini.springer.dto.Authentication.ApiResponse;
@@ -7,9 +8,11 @@ import com.kanini.springer.service.Academy.ITrainingScoreService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -90,5 +93,17 @@ public class TrainingScoreController {
         scoreService.deleteScore(scoreId);
         return ResponseEntity.status(HttpStatus.OK)
                 .body(ApiResponse.success("Training score deleted successfully", null));
+    }
+
+    @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ApiResponse<ExcelUploadResponse>> uploadScores(
+            @RequestPart("file") MultipartFile file,
+            @RequestParam Integer programId,
+            @RequestParam Integer batchNumber,
+            @RequestParam Integer courseId,
+            @RequestParam Long reviewedBy) {
+        ExcelUploadResponse response = scoreService.uploadScoresFromExcel(file, programId, batchNumber, courseId, reviewedBy);
+        String message = response.getSavedCount() + " score(s) saved, " + response.getFailedCount() + " failed out of " + response.getTotalRows();
+        return ResponseEntity.ok(ApiResponse.success(message, response));
     }
 }
