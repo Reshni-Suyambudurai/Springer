@@ -400,7 +400,7 @@ class ApplicationServiceImplTest {
             ApplicationResponse response = buildResponse(1L);
             response.setApplicationStatus("SELECTED");
 
-            ApplicationStatusUpdateRequest request = new ApplicationStatusUpdateRequest("SELECTED");
+            ApplicationStatusUpdateRequest request = new ApplicationStatusUpdateRequest("SELECTED", 1L);
 
             when(applicationRepository.findById(1L)).thenReturn(Optional.of(app));
             when(applicationRepository.save(any(Application.class))).thenReturn(updated);
@@ -418,7 +418,7 @@ class ApplicationServiceImplTest {
             when(applicationRepository.findById(99L)).thenReturn(Optional.empty());
 
             assertThatThrownBy(() -> service.updateApplicationStatus(99L,
-                    new ApplicationStatusUpdateRequest("SELECTED")))
+                    new ApplicationStatusUpdateRequest("SELECTED", 1L)))
                     .isInstanceOf(ResourceNotFoundException.class);
         }
 
@@ -426,7 +426,7 @@ class ApplicationServiceImplTest {
         @DisplayName("failure - throws ValidationException when applicationId is null")
         void updateApplicationStatus_nullId_throwsValidation() {
             assertThatThrownBy(() -> service.updateApplicationStatus(null,
-                    new ApplicationStatusUpdateRequest("SELECTED")))
+                    new ApplicationStatusUpdateRequest("SELECTED", 1L)))
                     .isInstanceOf(ValidationException.class);
         }
 
@@ -434,7 +434,7 @@ class ApplicationServiceImplTest {
         @DisplayName("failure - throws ValidationException when status is blank")
         void updateApplicationStatus_blankStatus_throwsValidation() {
             assertThatThrownBy(() -> service.updateApplicationStatus(1L,
-                    new ApplicationStatusUpdateRequest("")))
+                    new ApplicationStatusUpdateRequest("", 1L)))
                     .isInstanceOf(ValidationException.class);
         }
 
@@ -448,7 +448,7 @@ class ApplicationServiceImplTest {
             when(applicationRepository.findById(1L)).thenReturn(Optional.of(app));
 
             assertThatThrownBy(() -> service.updateApplicationStatus(1L,
-                    new ApplicationStatusUpdateRequest("INVALID_STATUS")))
+                    new ApplicationStatusUpdateRequest("INVALID_STATUS", 1L)))
                     .isInstanceOf(ValidationException.class)
                     .hasMessageContaining("Invalid application status");
         }
@@ -466,7 +466,7 @@ class ApplicationServiceImplTest {
         @DisplayName("failure - throws ValidationException when applications list is empty")
         void bulkUpdate_emptyList_throwsValidation() {
             BulkApplicationStatusUpdateRequest request = new BulkApplicationStatusUpdateRequest();
-            request.setApplications(List.of());
+            request.setApplicationIds(List.of());
 
             assertThatThrownBy(() -> service.bulkUpdateApplicationStatus(request))
                     .isInstanceOf(ValidationException.class)
@@ -474,19 +474,19 @@ class ApplicationServiceImplTest {
         }
 
         @Test
-        @DisplayName("success - updates SELECTED status and sets candidate stage to SELECTED")
+        @DisplayName("success - updates IN_DRIVE to SELECTED and sets candidate stage to SELECTED")
         void bulkUpdate_selectedStatus_updatesCandidateStage() {
             Drive drive = buildDrive(1L);
             Candidate candidate = buildCandidate(1L, ApplicationStage.SCHEDULED, true);
             Application app = buildApplication(1L, drive, candidate);
+            app.setApplicationStatus(ApplicationStatus.IN_DRIVE);
 
             ApplicationResponse response = buildResponse(1L);
             response.setApplicationStatus("SELECTED");
 
-            BulkApplicationStatusUpdateRequest.ApplicationStatusData data =
-                    new BulkApplicationStatusUpdateRequest.ApplicationStatusData(1L, "SELECTED");
             BulkApplicationStatusUpdateRequest request = new BulkApplicationStatusUpdateRequest();
-            request.setApplications(List.of(data));
+            request.setApplicationIds(List.of(1L));
+            request.setApplicationStatus("SELECTED");
 
             when(applicationRepository.findAllById(List.of(1L))).thenReturn(List.of(app));
             when(applicationRepository.saveAll(anyList())).thenReturn(List.of(app));
@@ -500,17 +500,17 @@ class ApplicationServiceImplTest {
         }
 
         @Test
-        @DisplayName("success - FAILED status sets candidate stage to REJECTED")
+        @DisplayName("success - IN_DRIVE to FAILED sets candidate stage to REJECTED")
         void bulkUpdate_failedStatus_setsCandidateRejected() {
             Drive drive = buildDrive(1L);
             Candidate candidate = buildCandidate(1L, ApplicationStage.SCHEDULED, true);
             Application app = buildApplication(1L, drive, candidate);
+            app.setApplicationStatus(ApplicationStatus.IN_DRIVE);
 
             ApplicationResponse response = buildResponse(1L);
-            BulkApplicationStatusUpdateRequest.ApplicationStatusData data =
-                    new BulkApplicationStatusUpdateRequest.ApplicationStatusData(1L, "FAILED");
             BulkApplicationStatusUpdateRequest request = new BulkApplicationStatusUpdateRequest();
-            request.setApplications(List.of(data));
+            request.setApplicationIds(List.of(1L));
+            request.setApplicationStatus("FAILED");
 
             when(applicationRepository.findAllById(List.of(1L))).thenReturn(List.of(app));
             when(applicationRepository.saveAll(anyList())).thenReturn(List.of(app));
@@ -526,10 +526,9 @@ class ApplicationServiceImplTest {
         @Test
         @DisplayName("failure - reports error for non-existent application")
         void bulkUpdate_nonExistentApp_reportsError() {
-            BulkApplicationStatusUpdateRequest.ApplicationStatusData data =
-                    new BulkApplicationStatusUpdateRequest.ApplicationStatusData(99L, "SELECTED");
             BulkApplicationStatusUpdateRequest request = new BulkApplicationStatusUpdateRequest();
-            request.setApplications(List.of(data));
+            request.setApplicationIds(List.of(99L));
+            request.setApplicationStatus("IN_DRIVE");
 
             when(applicationRepository.findAllById(List.of(99L))).thenReturn(Collections.emptyList());
             when(applicationRepository.saveAll(anyList())).thenReturn(List.of());
@@ -541,24 +540,15 @@ class ApplicationServiceImplTest {
         }
 
         @Test
-        @DisplayName("failure - reports error for invalid status string")
-        void bulkUpdate_invalidStatus_reportsError() {
-            Drive drive = buildDrive(1L);
-            Candidate candidate = buildCandidate(1L, ApplicationStage.SCHEDULED, true);
-            Application app = buildApplication(1L, drive, candidate);
-
-            BulkApplicationStatusUpdateRequest.ApplicationStatusData data =
-                    new BulkApplicationStatusUpdateRequest.ApplicationStatusData(1L, "GARBAGE");
+        @DisplayName("failure - throws ValidationException for invalid status string")
+        void bulkUpdate_invalidStatus_throwsValidation() {
             BulkApplicationStatusUpdateRequest request = new BulkApplicationStatusUpdateRequest();
-            request.setApplications(List.of(data));
+            request.setApplicationIds(List.of(1L));
+            request.setApplicationStatus("GARBAGE");
 
-            when(applicationRepository.findAllById(List.of(1L))).thenReturn(List.of(app));
-            when(applicationRepository.saveAll(anyList())).thenReturn(List.of());
-
-            BulkApplicationStatusUpdateResponse result = service.bulkUpdateApplicationStatus(request);
-
-            assertThat(result.getFailureCount()).isEqualTo(1);
-            assertThat(result.getErrorMessages().get(0)).contains("Invalid application status");
+            assertThatThrownBy(() -> service.bulkUpdateApplicationStatus(request))
+                    .isInstanceOf(ValidationException.class)
+                    .hasMessageContaining("Invalid application status");
         }
     }
 

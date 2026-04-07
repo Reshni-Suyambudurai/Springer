@@ -170,7 +170,7 @@ export const hiringDemandApi = {
    */
   async createDemand(data: HiringDemandRequest, userId: number): Promise<ApiResponse<HiringDemandResponse>> {
     try {
-      const response = await http.post(`/hiring/demands?userId=${userId}`, data);
+      const response = await http.post('/hiring/demands', data, { params: { userId } });
       return response.data;
     } catch (error) {
       throw handleAxiosError(error);

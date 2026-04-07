@@ -29,7 +29,7 @@ import {
   Paper,
   Autocomplete,
 } from "@mui/material";
-import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import BackButton from "../../Common/BackButton";
 import AddIcon from "@mui/icons-material/Add";
 import UploadIcon from "@mui/icons-material/Upload";
 import DownloadIcon from "@mui/icons-material/Download";
@@ -268,9 +268,7 @@ const AddInstitute: React.FC = () => {
       {/* Unified Header */}
       <Card className="add-institute-header">
         <Box className="add-institute-header-left">
-          <IconButton onClick={() => navigate("/ta-recruiter/institutes")} className="add-institute-back-btn">
-            <ArrowBackIcon />
-          </IconButton>
+          <BackButton onClick={() => navigate("/ta-recruiter/institutes")} variant="header" />
           
           <Typography variant="h6" className="add-institute-title">
             Institute Management
@@ -279,7 +277,8 @@ const AddInstitute: React.FC = () => {
           <Button
             startIcon={<AddIcon />}
             onClick={() => setAddDialog(true)}
-            className="add-institute-header-btn g-btn g-btn-primary"
+            variant="contained"
+            className="add-institute-header-btn t-btn-primary"
           >
             Add Institute
           </Button>
@@ -287,7 +286,8 @@ const AddInstitute: React.FC = () => {
           <Button
             component="label"
             startIcon={<UploadIcon />}
-            className="add-institute-header-btn g-btn g-btn-success"
+            variant="contained"
+            className="add-institute-header-btn t-btn-success"
           >
             Upload Institutes
             <input type="file" hidden accept=".xlsx,.xls" onChange={handleFileUpload} />
@@ -296,7 +296,8 @@ const AddInstitute: React.FC = () => {
           <Button
             startIcon={<DownloadIcon />}
             onClick={handleDownloadFormat}
-            className="add-institute-header-btn g-btn g-btn-outline-primary"
+            variant="outlined"
+            className="add-institute-header-btn t-btn-small"
           >
             Download Format
           </Button>
@@ -315,7 +316,7 @@ const AddInstitute: React.FC = () => {
                     variant="outlined"
                     startIcon={<DeleteIcon />}
                     onClick={handleRemoveDuplicates}
-                    className="g-btn g-btn-outline-danger"
+                    className="t-btn-secondary"
                   >
                     Remove Duplicates
                   </Button>
@@ -323,7 +324,7 @@ const AddInstitute: React.FC = () => {
                 <Button 
                   variant="contained" 
                   onClick={handleBulkUpload} 
-                  className="g-btn g-btn-primary"
+                  className="t-btn-primary"
                   disabled={duplicateIndices.size > 0}
                 >
                   Upload to Database
@@ -335,12 +336,12 @@ const AddInstitute: React.FC = () => {
               <Table>
                 <TableHead>
                   <TableRow>
-                    <TableCell className="table-header">Institute Name</TableCell>
-                    <TableCell className="table-header">Tier</TableCell>
-                    <TableCell className="table-header">City</TableCell>
-                    <TableCell className="table-header">State</TableCell>
-                    <TableCell className="table-header">TPO Name</TableCell>
-                    <TableCell className="table-header">Actions</TableCell>
+                    <TableCell className="t-head-cell">Institute Name</TableCell>
+                    <TableCell className="t-head-cell">Tier</TableCell>
+                    <TableCell className="t-head-cell">City</TableCell>
+                    <TableCell className="t-head-cell">State</TableCell>
+                    <TableCell className="t-head-cell">TPO Name</TableCell>
+                    <TableCell className="t-head-cell">Actions</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -364,7 +365,7 @@ const AddInstitute: React.FC = () => {
                         <IconButton
                           size="small"
                           onClick={() => handleRemoveRow(index)}
-                          className="g-icon-btn bulk-delete-btn"
+                          className="t-action-btn"
                           title="Remove row"
                         >
                           <DeleteIcon fontSize="small" />
@@ -430,7 +431,7 @@ const AddInstitute: React.FC = () => {
                 setShowTpoForm(!showTpoForm);
                 if (showTpoForm) setTpoForm({ tpoName: "", tpoEmail: "", tpoMobile: "", tpoDesignation: "" });
               }}
-              className="g-btn g-btn-outline-primary add-institute-tpo-toggle"
+              className="t-btn-small add-institute-tpo-toggle"
             >
               {showTpoForm ? "Remove TPO" : "Add TPO Contact"}
             </Button>
@@ -475,8 +476,8 @@ const AddInstitute: React.FC = () => {
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setAddDialog(false)}>Cancel</Button>
-          <Button onClick={handleAddSingle} variant="contained">
+          <Button variant="outlined" onClick={() => setAddDialog(false)} className="t-dialog-cancel-btn">Cancel</Button>
+          <Button onClick={handleAddSingle} variant="contained" className="t-dialog-confirm-btn">
             Add Institute
           </Button>
         </DialogActions>
@@ -491,7 +492,7 @@ const AddInstitute: React.FC = () => {
             left: 0,
             right: 0,
             bottom: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            backgroundColor: 'rgba(0,0,0,0.5)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -510,7 +511,7 @@ const AddInstitute: React.FC = () => {
               overflow: 'auto',
               position: 'relative',
               border: '1px solid var(--color-border)',
-              boxShadow: 'var(--shadow-card)',
+              boxShadow: '0 1px 4px var(--opacity-shadow-card)',
             }}
             onClick={(e) => e.stopPropagation()}
           >
@@ -528,23 +529,17 @@ const AddInstitute: React.FC = () => {
                   key={index}
                   sx={{
                     padding: '12px',
-                    backgroundColor: 'var(--color-bg)',
+                    backgroundColor: 'var(--color-surface)',
                     borderRadius: '8px',
                     border: '1px solid var(--color-border)',
                     display: 'flex',
                     gap: '8px',
                   }}
                 >
-                  <Typography
-                    sx={{
-                      fontWeight: 600,
-                      color: 'var(--color-danger)',
-                      minWidth: '24px',
-                    }}
-                  >
+                  <Typography sx={{ fontWeight: 600, color: 'var(--color-danger)', minWidth: '24px' }}>
                     {index + 1}.
                   </Typography>
-                  <Typography sx={{ color: 'var(--color-text)', fontSize: '14px' }}>
+                  <Typography sx={{ color: 'var(--color-text-primary)', fontSize: 'var(--text-sm)' }}>
                     {error}
                   </Typography>
                 </Box>

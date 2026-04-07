@@ -67,7 +67,7 @@ const Round1: React.FC<Round1Props> = ({ data }) => {
           <Table className="r1-table">
             <TableHead>
               <TableRow className="r1-thead-row">
-                <TableCell className="r1-th">#</TableCell>
+                <TableCell className="r1-th">Index</TableCell>
                 <TableCell className="r1-th">Candidate Name</TableCell>
                 <TableCell className="r1-th">Total Score</TableCell>
                 {sectionNames.map((name) => (

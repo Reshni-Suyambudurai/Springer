@@ -1,17 +1,17 @@
 import { useState, useEffect, useRef } from 'react';
 import {
-  Box, Card, Typography, Stack, Chip, Button, IconButton,
+  Box, Card, Typography, Stack, Chip, Button,
   CircularProgress, Alert, Table, TableBody, TableCell,
   TableContainer, TableHead, TableRow,
 } from '@mui/material';
 import {
-  Loop as CycleIcon,
-  ArrowBack as ArrowBackIcon,
+  DateRange as CycleIcon,
   FileUpload as UploadIcon,
   FileDownload as DownloadIcon,
   Add as AddIcon,
 } from '@mui/icons-material';
 import { useNavigate, useParams } from 'react-router-dom';
+import BackButton from '../../Common/BackButton';
 import { hiringCycleApi, hiringDemandApi } from '../../../services/hiring.api';
 import type { HiringCycleResponse } from '../../../types/TA_Recruiter/Hiring/hiringCycle.types';
 import type { HiringDemandResponse } from '../../../types/TA_Recruiter/Hiring/hiringDemand.types';
@@ -46,7 +46,6 @@ const TARHiringCycleDetails = () => {
       if (cycleRes.success && cycleRes.data) setCycle(cycleRes.data);
       else setError(cycleRes.message || 'Failed to load cycle.');
       if (demandsRes.success && demandsRes.data) {
-        // TA Recruiter sees only APPROVED demands
         setDemands(demandsRes.data.filter(d => d.approvalStatus === 'APPROVED'));
       }
     } catch (err: any) {
@@ -93,130 +92,120 @@ const TARHiringCycleDetails = () => {
   const totalPositions = demands.reduce((sum, d) => sum + d.demandCount, 0);
 
   return (
-    <Box className="tar-hcd-page">
-      <Card className="tar-hcd-card">
+    <Box className="t-page">
+      <Card className="t-card">
 
         {/* Header */}
-        <Box className="tar-hcd-header">
-          <Stack direction="row" alignItems="center" justifyContent="space-between">
-            <Stack direction="row" alignItems="center" gap={1.5}>
-              <IconButton
-                size="small"
-                className="tar-hcd-back-btn"
-                onClick={() => navigate('/ta-recruiter/hiring-cycles')}
-              >
-                <ArrowBackIcon fontSize="small" />
-              </IconButton>
-              <Box className="tar-hcd-icon-box">
-                <CycleIcon sx={{ fontSize: 20, color: 'var(--color-primary)' }} />
-              </Box>
-              <Stack>
-                <Typography className="tar-hcd-title">
-                  {loading ? 'Cycle Details' : (cycle?.cycleName ?? 'Cycle Details')}
-                </Typography>
-                <Typography className="tar-hcd-subtitle">Approved demands ready for execution</Typography>
-              </Stack>
+        <Box className="t-header">
+          <Stack direction="row" alignItems="center" gap={1.5}>
+            <BackButton onClick={() => navigate('/ta-recruiter/hiring-cycles')} variant="header" />
+            <Box className="t-icon-box">
+              <CycleIcon sx={{ fontSize: 20, color: 'var(--color-primary)' }} />
+            </Box>
+            <Stack>
+              <Typography className="t-page-title">
+                {loading ? 'Cycle Details' : (cycle?.cycleName ?? 'Cycle Details')}
+              </Typography>
+              <Typography className="t-page-subtitle">Approved demands ready for execution</Typography>
             </Stack>
-
-            {!loading && cycle && (
-              <Stack direction="row" gap={1} alignItems="center">
-                <Chip
-                  label={cycle.status}
-                  size="small"
-                  className={cycle.status === 'OPEN' ? 'tar-hcd-cycle-status--open' : 'tar-hcd-cycle-status--closed'}
-                />
-                <Button
-                    variant="contained"
-                    size="small"
-                    startIcon={<AddIcon sx={{ fontSize: '16px !important' }} />}
-                    className="tar-hcd-upload-btn"
-                    onClick={() => navigate(`/ta-recruiter/drive-schedules/add?cycleId=${id}`)}
-                  >
-                    Create Drive
-                  </Button>
-                {cycle.hasJd && (
-                  <Button
-                    variant="outlined"
-                    size="small"
-                    startIcon={<DownloadIcon sx={{ fontSize: '16px !important' }} />}
-                    className="tar-hcd-download-btn"
-                    onClick={handleDownloadJd}
-                  >
-                    Download JD
-                  </Button>
-                )}
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept=".pdf"
-                  style={{ display: 'none' }}
-                  onChange={handleUploadJd}
-                />
-                <Button
-                  variant="contained"
-                  size="small"
-                  startIcon={<UploadIcon sx={{ fontSize: '16px !important' }} />}
-                  className="tar-hcd-upload-btn"
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={uploading}
-                >
-                  {uploading ? 'Uploading...' : (cycle.hasJd ? 'Update JD' : 'Upload JD')}
-                </Button>
-              </Stack>
-            )}
           </Stack>
+
+          {!loading && cycle && (
+            <Stack direction="row" gap={1} alignItems="center">
+              <Chip
+                label={cycle.status}
+                size="small"
+                className={cycle.status === 'OPEN' ? 't-chip-success' : 't-chip-neutral'}
+              />
+              <Button
+                variant="contained"
+                size="small"
+                startIcon={<AddIcon />}
+                className="t-btn-primary"
+                onClick={() => navigate(`/ta-recruiter/drive-schedules/add?cycleId=${id}`)}
+              >
+                Create Drive
+              </Button>
+              {cycle.hasJd && (
+                <Button
+                  variant="outlined"
+                  size="small"
+                  startIcon={<DownloadIcon />}
+                  className="t-btn-small"
+                  onClick={handleDownloadJd}
+                >
+                  Download JD
+                </Button>
+              )}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".pdf"
+                style={{ display: 'none' }}
+                onChange={handleUploadJd}
+              />
+              <Button
+                variant="contained"
+                size="small"
+                startIcon={<UploadIcon />}
+                className="t-btn-primary"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploading}
+              >
+                {uploading ? 'Uploading...' : (cycle.hasJd ? 'Update JD' : 'Upload JD')}
+              </Button>
+            </Stack>
+          )}
         </Box>
 
-        <Box className="tar-hcd-separator" />
+        <Box className="t-separator" />
 
         {loading ? (
-          <Box className="tar-hcd-loading">
+          <Box className="t-loading">
             <CircularProgress size={28} sx={{ color: 'var(--color-primary)' }} />
-            <Typography className="tar-hcd-loading-text">Loading...</Typography>
+            <Typography className="t-loading-text">Loading...</Typography>
           </Box>
         ) : error ? (
           <Box className="tar-hcd-alert-wrap"><Alert severity="error">{error}</Alert></Box>
         ) : cycle && (
-          <Box className="tar-hcd-body">
+          <Box className="t-body">
 
             {/* Cycle Info */}
-            <Box className="tar-hcd-section">
-              <Box className="tar-hcd-section-header">
-                <Typography className="tar-hcd-section-label">Cycle Information</Typography>
-                <Box className="tar-hcd-section-rule" />
+            <Box className="t-section-header">
+              <Typography className="t-section-label">Cycle Information</Typography>
+              <Box className="t-section-rule" />
+            </Box>
+            <Box className="t-info-grid">
+              <Box className="t-info-field">
+                <Typography className="t-info-label">Cycle Name</Typography>
+                <Typography className="t-info-value">{cycle.cycleName}</Typography>
               </Box>
-              <Box className="tar-hcd-info-grid">
-                <Box className="tar-hcd-info-field">
-                  <Typography className="tar-hcd-info-label">Cycle Name</Typography>
-                  <Typography className="tar-hcd-info-value">{cycle.cycleName}</Typography>
-                </Box>
-                <Box className="tar-hcd-info-field">
-                  <Typography className="tar-hcd-info-label">Year</Typography>
-                  <Typography className="tar-hcd-info-value">{cycle.cycleYear}</Typography>
-                </Box>
-                <Box className="tar-hcd-info-field">
-                  <Typography className="tar-hcd-info-label">Budget</Typography>
-                  <Typography className="tar-hcd-info-value">
-                    {cycle.budget ? `₹ ${cycle.budget.toLocaleString('en-IN')}` : '—'}
-                  </Typography>
-                </Box>
-                <Box className="tar-hcd-info-field">
-                  <Typography className="tar-hcd-info-label">Total Approved Positions</Typography>
-                  <Typography className="tar-hcd-info-value">{totalPositions}</Typography>
-                </Box>
+              <Box className="t-info-field">
+                <Typography className="t-info-label">Year</Typography>
+                <Typography className="t-info-value">{cycle.cycleYear}</Typography>
+              </Box>
+              <Box className="t-info-field">
+                <Typography className="t-info-label">Budget</Typography>
+                <Typography className="t-info-value">
+                  {cycle.budget ? `₹ ${cycle.budget.toLocaleString('en-IN')}` : '—'}
+                </Typography>
+              </Box>
+              <Box className="t-info-field">
+                <Typography className="t-info-label">Total Approved Positions</Typography>
+                <Typography className="t-info-value">{totalPositions}</Typography>
               </Box>
             </Box>
 
             {/* Approved Demands Table */}
-            <Box className="tar-hcd-section" sx={{ mt: '24px' }}>
-              <Box className="tar-hcd-section-header">
+            <Box>
+              <Box className="t-section-header">
                 <Stack direction="row" alignItems="center" gap={1}>
-                  <Typography className="tar-hcd-section-label">Approved Demands</Typography>
+                  <Typography className="t-section-label">Approved Demands</Typography>
                   {demands.length > 0 && (
-                    <Chip label={demands.length} size="small" className="tar-hcd-count-chip" />
+                    <Chip label={demands.length} size="small" className="t-chip-count" />
                   )}
                 </Stack>
-                <Box className="tar-hcd-section-rule" />
+                <Box className="t-section-rule" />
               </Box>
 
               {demands.length === 0 ? (
@@ -228,47 +217,47 @@ const TARHiringCycleDetails = () => {
                 <TableContainer className="tar-hcd-table-container">
                   <Table>
                     <TableHead>
-                      <TableRow className="tar-hcd-head-row">
-                        <TableCell className="tar-hcd-head-cell">Business Unit</TableCell>
-                        <TableCell className="tar-hcd-head-cell">Positions</TableCell>
-                        <TableCell className="tar-hcd-head-cell">Compensation Band</TableCell>
-                        <TableCell className="tar-hcd-head-cell">Required Skills</TableCell>
-                        <TableCell className="tar-hcd-head-cell">Raised By</TableCell>
-                        <TableCell className="tar-hcd-head-cell">Created On</TableCell>
+                      <TableRow className="t-head-row">
+                        <TableCell className="t-head-cell">Business Unit</TableCell>
+                        <TableCell className="t-head-cell">Positions</TableCell>
+                        <TableCell className="t-head-cell">Compensation Band</TableCell>
+                        <TableCell className="t-head-cell">Required Skills</TableCell>
+                        <TableCell className="t-head-cell">Raised By</TableCell>
+                        <TableCell className="t-head-cell">Created On</TableCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
                       {demands.map((demand, idx) => (
                         <TableRow
                           key={demand.demandId}
-                          className={`tar-hcd-row ${idx % 2 === 0 ? 'tar-hcd-row--even' : 'tar-hcd-row--odd'}`}
+                          className={`t-row ${idx % 2 === 0 ? 't-row--even' : 't-row--odd'}`}
                         >
-                          <TableCell className="tar-hcd-cell">
-                            <Typography className="tar-hcd-cell-primary">
+                          <TableCell className="t-cell">
+                            <Typography className="t-row-primary">
                               {buLabelMap[demand.businessUnit] ?? demand.businessUnit}
                             </Typography>
                           </TableCell>
-                          <TableCell className="tar-hcd-cell">
-                            <Typography className="tar-hcd-cell-secondary">{demand.demandCount}</Typography>
+                          <TableCell className="t-cell">
+                            <Typography className="t-row-secondary">{demand.demandCount}</Typography>
                           </TableCell>
-                          <TableCell className="tar-hcd-cell">
-                            <Typography className="tar-hcd-cell-secondary">{demand.compensationBand}</Typography>
+                          <TableCell className="t-cell">
+                            <Typography className="t-row-secondary">{demand.compensationBand}</Typography>
                           </TableCell>
-                          <TableCell className="tar-hcd-cell">
+                          <TableCell className="t-cell">
                             <Stack direction="row" gap={0.5} flexWrap="wrap">
                               {demand.skills.slice(0, 3).map(s => (
-                                <Chip key={s.skillId} label={s.skillName} size="small" className="tar-hcd-skill-chip" />
+                                <Chip key={s.skillId} label={s.skillName} size="small" className="t-skill-chip" />
                               ))}
                               {demand.skills.length > 3 && (
-                                <Chip label={`+${demand.skills.length - 3}`} size="small" className="tar-hcd-skill-chip" />
+                                <Chip label={`+${demand.skills.length - 3}`} size="small" className="t-skill-chip" />
                               )}
                             </Stack>
                           </TableCell>
-                          <TableCell className="tar-hcd-cell">
-                            <Typography className="tar-hcd-cell-secondary">{demand.createdByUsername}</Typography>
+                          <TableCell className="t-cell">
+                            <Typography className="t-row-secondary">{demand.createdByUsername}</Typography>
                           </TableCell>
-                          <TableCell className="tar-hcd-cell">
-                            <Typography className="tar-hcd-cell-secondary">
+                          <TableCell className="t-cell">
+                            <Typography className="t-row-secondary">
                               {new Date(demand.createdAt).toLocaleDateString('en-IN', {
                                 day: '2-digit', month: 'short', year: 'numeric',
                               })}

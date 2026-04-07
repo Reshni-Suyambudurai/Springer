@@ -15,6 +15,14 @@ public interface ApplicationRepository extends JpaRepository<Application, Long> 
     List<Application> findByDriveDriveId(Long driveId);
     List<Application> findByCandidateCandidateId(Long candidateId);
     Optional<Application> findByRegistrationCode(String registrationCode);
+    boolean existsByDriveDriveIdAndRegistrationCode(Long driveId, String registrationCode);
+
+    /**
+     * Batch fetch applications by registration codes within a drive, eagerly loading candidate.
+     * Single query avoids N+1 for email verification.
+     */
+    @Query("SELECT a FROM Application a JOIN FETCH a.candidate WHERE a.registrationCode IN :codes")
+    List<Application> findByRegistrationCodeInWithCandidate(@Param("codes") List<String> codes);
 
     /** Total number of applications for a drive */
     Long countByDriveDriveId(Long driveId);

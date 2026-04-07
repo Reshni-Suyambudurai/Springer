@@ -26,4 +26,7 @@ public class ApplicationResponse {
     private LocalDateTime createdAt;
     private Long createdBy;
     private String createdByName;
+    private LocalDateTime updatedAt;
+    private Long updatedBy;
+    private String updatedByName;
 }

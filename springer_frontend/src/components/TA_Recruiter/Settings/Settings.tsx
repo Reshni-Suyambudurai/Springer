@@ -1,109 +1,74 @@
+import { useNavigate } from 'react-router-dom';
+import { Box, Card, Typography } from '@mui/material';
+import SchoolIcon from '@mui/icons-material/School';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import ViewListIcon from '@mui/icons-material/ViewList';
+import DescriptionIcon from '@mui/icons-material/Description';
+import ChevronRightIcon from '@mui/icons-material/ChevronRight';
+import '../../../css/TA_Recruiter/Settings/Settings.css';
 
-import React from "react";
-import { useNavigate } from "react-router-dom";
-import {
-  Box,
-  Card,
-  CardContent,
-  Typography,
-  Grid,
-  Container,
-} from "@mui/material";
-import SchoolIcon from "@mui/icons-material/School";
-import CheckCircleIcon from "@mui/icons-material/CheckCircle";
-import ViewListIcon from "@mui/icons-material/ViewList";
-import DescriptionIcon from "@mui/icons-material/Description";
-import "../../../css/TA_Recruiter/Settings/Settings.css";
+const CARDS = [
+  {
+    title: 'Skills Management',
+    desc: 'Manage technical and soft skills for candidate assessment',
+    icon: <SchoolIcon sx={{ fontSize: 22 }} />,
+    path: '/ta-recruiter/settings/skills',
+  },
+  {
+    title: 'Eligibility Management',
+    desc: 'Define and configure candidate eligibility criteria',
+    icon: <CheckCircleIcon sx={{ fontSize: 22 }} />,
+    path: '/ta-recruiter/settings/eligibility',
+  },
+  {
+    title: 'Round Template Management',
+    desc: 'Create and manage interview round templates',
+    icon: <ViewListIcon sx={{ fontSize: 22 }} />,
+    path: '/ta-recruiter/settings/round-templates',
+  },
+  {
+    title: 'Documents Management',
+    desc: 'Manage required documents and verification settings',
+    icon: <DescriptionIcon sx={{ fontSize: 22 }} />,
+    path: '/ta-recruiter/settings/documents',
+  },
+];
 
-interface SettingsCard {
-  title: string;
-  description: string;
-  icon: React.ReactNode;
-  path: string;
-  color: string;
-}
-
-const Settings: React.FC = () => {
+const Settings = () => {
   const navigate = useNavigate();
 
-  const settingsCards: SettingsCard[] = [
-    {
-      title: "Skills Management",
-      description: "Manage and configure technical and soft skills for assessment",
-      icon: <SchoolIcon />,
-      path: "/ta-recruiter/settings/skills",
-      color: "skills",
-    },
-    {
-      title: "Eligibility Management",
-      description: "Define and manage candidate eligibility criteria",
-      icon: <CheckCircleIcon />,
-      path: "/ta-recruiter/settings/eligibility",
-      color: "eligibility",
-    },
-    {
-      title: "Round Template Management",
-      description: "Create and manage interview round templates",
-      icon: <ViewListIcon />,
-      path: "/ta-recruiter/settings/round-templates",
-      color: "rounds",
-    },
-    {
-      title: "Documents Management",
-      description: "Manage required documents and verification settings",
-      icon: <DescriptionIcon />,
-      path: "/ta-recruiter/settings/documents",
-      color: "documents",
-    },
-  ];
-
-  const handleCardClick = (path: string) => {
-    navigate(path);
-  };
-
   return (
-    <Container maxWidth="lg" className="settings-container">
-      <Box className="settings-header">
-        <Typography variant="h4" component="h1" gutterBottom>
-          Settings
-        </Typography>
-        <Typography variant="body1" color="text.secondary">
-          Configure and manage system settings
-        </Typography>
-      </Box>
+    <Box className="t-page">
+      <Card className="t-card">
 
-      <Grid container spacing={3} className="settings-grid">
-        {settingsCards.map((card, index) => (
-          <Grid size={{ xs: 12, sm: 6, md: 6 }} key={index}>
-            <Card
-              className={`settings-card settings-card-${card.color}`}
-              onClick={() => handleCardClick(card.path)}
-            >
-              <CardContent className="settings-card-content">
-                <Box className="settings-card-icon">
-                  {card.icon}
+        <Box className="t-header">
+          <Typography className="t-page-title">Manage</Typography>
+          <Typography className="t-page-subtitle">Configure system settings and preferences</Typography>
+        </Box>
+
+        <Box className="t-separator" />
+
+        <Box className="t-body">
+          <Box className="settings-grid">
+            {CARDS.map((card) => (
+              <Card
+                key={card.path}
+                className="settings-item-card"
+                onClick={() => navigate(card.path)}
+              >
+                <Box className="settings-item-icon-box">{card.icon}</Box>
+                <Box className="settings-item-body">
+                  <Typography className="t-row-primary">{card.title}</Typography>
+                  <Typography className="t-body-text">{card.desc}</Typography>
                 </Box>
-                <Typography
-                  variant="h5"
-                  component="h2"
-                  className="settings-card-title"
-                  gutterBottom
-                >
-                  {card.title}
-                </Typography>
-                <Typography
-                  variant="body2"
-                  color="text.secondary"
-                  className="settings-card-description"
-                >
-                  {card.description}
-                </Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-        ))}
-      </Grid>
-    </Container>
+                <ChevronRightIcon className="settings-item-arrow" fontSize="small" />
+              </Card>
+            ))}
+          </Box>
+        </Box>
+
+      </Card>
+    </Box>
   );
 };
 

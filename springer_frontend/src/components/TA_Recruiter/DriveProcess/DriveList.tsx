@@ -4,8 +4,8 @@ import { driveScheduleApi } from "../../../services/driveschedule.api";
 import type { DriveResponse } from "../../../types/TA_Recruiter/DriveSchedule/driveSchedule.types";
 import { showToast } from "../../../utils/toast";
 import { handleAxiosError } from "../../../services/api.error";
-import { Box, Card, Typography, IconButton, CircularProgress, Button } from "@mui/material";
-import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import { Box, Card, Typography, CircularProgress, Button } from "@mui/material";
+import BackButton from "../../Common/BackButton";
 import "../../../css/TA_Recruiter/DriveProcess/DriveList.css";
 
 const DriveList: React.FC = () => {
@@ -78,9 +78,7 @@ const DriveList: React.FC = () => {
     <Box className="drive-list-container">
       {/* Header - matches InstitutesList pattern */}
       <Card className="drive-list-header">
-        <IconButton className="drive-list-back-btn" onClick={handleBackClick}>
-          <ArrowBackIcon />
-        </IconButton>
+        <BackButton onClick={handleBackClick} variant="header" />
 
         <Box className="drive-list-header-center">
           <Typography variant="h4" className="drive-list-title">

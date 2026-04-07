@@ -5,7 +5,7 @@ import {
   TablePagination, CircularProgress, Alert,
 } from '@mui/material';
 import {
-  Loop as CycleIcon,
+  DateRange as CycleIcon,
   OpenInNew as OpenInNewIcon,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
@@ -40,52 +40,52 @@ const TARHiringCycleList = () => {
   const paginated = cycles.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 
   return (
-    <Box className="tar-hcl-page">
-      <Card className="tar-hcl-card">
+    <Box className="t-page">
+      <Card className="t-card">
 
-        <Box className="tar-hcl-header">
+        <Box className="t-header">
           <Stack direction="row" alignItems="center" gap={1.5}>
-            <Box className="tar-hcl-icon-box">
+            <Box className="t-icon-box">
               <CycleIcon sx={{ fontSize: 20, color: 'var(--color-primary)' }} />
             </Box>
             <Stack>
-              <Typography className="tar-hcl-title">Hiring Cycles</Typography>
-              <Typography className="tar-hcl-subtitle">View cycles and approved demands for execution</Typography>
+              <Typography className="t-page-title">Hiring Cycles</Typography>
+              <Typography className="t-page-subtitle">View cycles and approved demands for execution</Typography>
             </Stack>
           </Stack>
         </Box>
 
-        <Box className="tar-hcl-separator" />
+        <Box className="t-separator" />
 
-        <Box className="tar-hcl-table-section">
+        <Box className="t-table-section">
           {loading ? (
-            <Box className="tar-hcl-loading">
+            <Box className="t-loading">
               <CircularProgress size={28} sx={{ color: 'var(--color-primary)' }} />
-              <Typography className="tar-hcl-loading-text">Loading hiring cycles...</Typography>
+              <Typography className="t-loading-text">Loading hiring cycles...</Typography>
             </Box>
           ) : error ? (
             <Box className="tar-hcl-alert-wrap"><Alert severity="error">{error}</Alert></Box>
           ) : (
             <>
-              <TableContainer className="tar-hcl-table-container">
+              <TableContainer className="t-table-container">
                 <Table stickyHeader>
                   <TableHead>
-                    <TableRow className="tar-hcl-head-row">
-                      <TableCell className="tar-hcl-head-cell">Cycle Name</TableCell>
-                      <TableCell className="tar-hcl-head-cell">Year</TableCell>
-                      <TableCell className="tar-hcl-head-cell">Budget</TableCell>
-                      <TableCell className="tar-hcl-head-cell">Compensation Band</TableCell>
-                      <TableCell className="tar-hcl-head-cell">Status</TableCell>
-                      <TableCell className="tar-hcl-head-cell">Created On</TableCell>
-                      <TableCell className="tar-hcl-head-cell tar-hcl-head-cell--actions">Actions</TableCell>
+                    <TableRow className="t-head-row">
+                      <TableCell className="t-head-cell">Cycle Name</TableCell>
+                      <TableCell className="t-head-cell">Year</TableCell>
+                      <TableCell className="t-head-cell">Budget</TableCell>
+                      <TableCell className="t-head-cell">Compensation Band</TableCell>
+                      <TableCell className="t-head-cell">Status</TableCell>
+                      <TableCell className="t-head-cell">Created On</TableCell>
+                      <TableCell className="t-head-cell t-head-cell--actions">Actions</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
                     {paginated.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={7} align="center" className="tar-hcl-empty-cell">
-                          <CycleIcon className="tar-hcl-empty-icon" />
-                          <Typography className="tar-hcl-empty-text">No hiring cycles found</Typography>
+                        <TableCell colSpan={7} align="center" className="t-empty-cell">
+                          <CycleIcon className="t-empty-icon" />
+                          <Typography className="t-empty-text">No hiring cycles found</Typography>
                         </TableCell>
                       </TableRow>
                     ) : (
@@ -94,47 +94,47 @@ const TARHiringCycleList = () => {
                           key={cycle.cycleId}
                           hover
                           onClick={() => navigate(`/ta-recruiter/hiring-cycles/${cycle.cycleId}`)}
-                          className={`tar-hcl-row ${idx % 2 === 0 ? 'tar-hcl-row--even' : 'tar-hcl-row--odd'}`}
+                          className={`t-row ${idx % 2 === 0 ? 't-row--even' : 't-row--odd'}`}
                         >
-                          <TableCell className="tar-hcl-cell">
+                          <TableCell className="t-cell">
                             <Stack direction="row" alignItems="center" gap={1.5}>
                               <Box className="tar-hcl-name-icon-box">
                                 <CycleIcon sx={{ fontSize: 16, color: 'var(--color-primary)' }} />
                               </Box>
-                              <Typography className="tar-hcl-cell-primary">{cycle.cycleName}</Typography>
+                              <Typography className="t-row-primary">{cycle.cycleName}</Typography>
                             </Stack>
                           </TableCell>
-                          <TableCell className="tar-hcl-cell">
-                            <Typography className="tar-hcl-cell-secondary">{cycle.cycleYear}</Typography>
+                          <TableCell className="t-cell">
+                            <Typography className="t-row-secondary">{cycle.cycleYear}</Typography>
                           </TableCell>
-                          <TableCell className="tar-hcl-cell">
-                            <Typography className="tar-hcl-cell-secondary">
+                          <TableCell className="t-cell">
+                            <Typography className="t-row-secondary">
                               {cycle.budget ? `₹ ${cycle.budget.toLocaleString('en-IN')}` : '—'}
                             </Typography>
                           </TableCell>
-                          <TableCell className="tar-hcl-cell">
-                            <Typography className="tar-hcl-cell-secondary">
+                          <TableCell className="t-cell">
+                            <Typography className="t-row-secondary">
                               {cycle.compensationBand ? `Band ${cycle.compensationBand}` : '—'}
                             </Typography>
                           </TableCell>
-                          <TableCell className="tar-hcl-cell">
+                          <TableCell className="t-cell">
                             <Chip
                               label={cycle.status}
                               size="small"
-                              className={cycle.status === 'OPEN' ? 'tar-hcl-status--open' : 'tar-hcl-status--closed'}
+                              className={cycle.status === 'OPEN' ? 't-chip-success' : 't-chip-neutral'}
                             />
                           </TableCell>
-                          <TableCell className="tar-hcl-cell">
-                            <Typography className="tar-hcl-cell-secondary">
+                          <TableCell className="t-cell">
+                            <Typography className="t-row-secondary">
                               {new Date(cycle.createdAt).toLocaleDateString('en-IN', {
                                 day: '2-digit', month: 'short', year: 'numeric',
                               })}
                             </Typography>
                           </TableCell>
-                          <TableCell className="tar-hcl-cell tar-hcl-cell--actions">
+                          <TableCell className="t-cell t-cell--actions">
                             <IconButton
                               size="small"
-                              className="tar-hcl-action-btn"
+                              className="t-action-btn"
                               title="View Cycle"
                               onClick={(e) => { e.stopPropagation(); navigate(`/ta-recruiter/hiring-cycles/${cycle.cycleId}`); }}
                             >
@@ -155,7 +155,7 @@ const TARHiringCycleList = () => {
                 rowsPerPage={rowsPerPage}
                 onRowsPerPageChange={(e) => { setRowsPerPage(parseInt(e.target.value, 10)); setPage(0); }}
                 rowsPerPageOptions={[10, 25, 50]}
-                className="tar-hcl-pagination"
+                className="t-pagination"
               />
             </>
           )}

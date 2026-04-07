@@ -45,6 +45,9 @@ export interface ApplicationResponse {
   createdAt: string; // ISO-8601 format from LocalDateTime
   createdBy: number;
   createdByName: string;
+  updatedAt?: string; // ISO-8601 format from LocalDateTime
+  updatedBy?: number;
+  updatedByName?: string;
 }
 
 export interface ApplicationStatusUpdateRequest {
@@ -59,14 +62,9 @@ export interface BulkApplicationResponse {
   failureCount: number;
 }
 
-// Nested type for bulk application status update
-export interface ApplicationStatusData {
-  applicationId: number;
-  applicationStatus: ApplicationStatus;
-}
-
 export interface BulkApplicationStatusUpdateRequest {
-  applications: ApplicationStatusData[];
+  applicationIds: number[];
+  applicationStatus: ApplicationStatus;
   updatedBy: number;
 }
 

@@ -1,12 +1,14 @@
+/* Only styles unique to AddInstitute — all common layout uses t-* from template.css */
+
 .add-institute-container {
   padding: 10px;
   max-width: 100%;
   height: 100vh;
   overflow-y: auto;
-  background-color: var(--color-bg);
+  background-color: var(--color-surface);
 }
 
-/* Single Unified Header */
+/* ── Header ── */
 .add-institute-header {
   display: flex;
   justify-content: space-between;
@@ -16,7 +18,7 @@
   border-radius: 12px !important;
   border: 1px solid var(--color-border) !important;
   background: var(--color-surface) !important;
-  box-shadow: var(--shadow-card) !important;
+  box-shadow: 0 1px 4px var(--opacity-shadow-card) !important;
   gap: 16px;
 }
 
@@ -28,37 +30,22 @@
   flex: 1;
 }
 
-.add-institute-back-btn {
-  color: var(--color-primary) !important;
-  border: 1px solid var(--color-border) !important;
-  background: var(--color-surface) !important;
-  transition: all 0.3s ease !important;
-}
-
-.add-institute-back-btn:hover {
-  background: var(--color-primary) !important;
-  color: var(--color-bg) !important;
-  transform: scale(1.1);
-}
-
 .add-institute-title {
   font-weight: 600 !important;
-  color: var(--color-text) !important;
+  color: var(--color-text-primary) !important;
   white-space: nowrap;
   padding: 8px 16px;
-  background: var(--color-bg);
+  background: var(--color-surface);
   border-radius: 8px;
   border: 1px solid var(--color-border);
 }
 
-.add-institute-header-btn {
-  white-space: nowrap;
-}
+.add-institute-header-btn { white-space: nowrap; }
 
-/* Bulk Data Card */
+/* ── Bulk Card ── */
 .add-institute-bulk-card {
   border-radius: 12px;
-  box-shadow: var(--shadow-card);
+  box-shadow: 0 1px 4px var(--opacity-shadow-card);
   background: var(--color-surface);
   border: 1px solid var(--color-border);
 }
@@ -78,7 +65,7 @@
   gap: 12px;
 }
 
-/* Bulk Table */
+/* ── Bulk Table ── */
 .add-institute-bulk-table {
   border-radius: 8px;
   border: 1px solid var(--color-border);
@@ -87,31 +74,11 @@
   overflow-y: auto;
 }
 
-.bulk-table-container .table-header {
-  background: var(--color-primary);
-  color: white;
-  font-weight: 600;
-  padding: 12px 16px;
-  position: sticky;
-  top: 0;
-  z-index: 1;
-}
-
 .add-institute-bulk-table tbody tr {
   transition: background-color 0.2s ease;
 }
 
-.bulk-table-container tbody tr:hover {
-  background-color: var(--color-bg);
-}
-
-.bulk-table-container tbody td {
-  padding: 12px 16px;
-  color: var(--color-text);
-  border-bottom: 1px solid var(--color-border);
-}
-
-/* Duplicate Name Indicator */
+/* ── Duplicate indicator ── */
 .duplicate-name-container {
   display: flex;
   align-items: center;
@@ -132,18 +99,7 @@
   font-weight: 600;
 }
 
-/* Bulk Action Buttons */
-.bulk-delete-btn {
-  color: var(--color-danger) !important;
-  border: 1px solid var(--color-border) !important;
-}
-
-.bulk-delete-btn:hover {
-  background-color: var(--color-danger) !important;
-  color: white !important;
-}
-
-/* Add Form Dialog */
+/* ── Dialog form ── */
 .add-institute-form {
   display: flex;
   flex-direction: column;
@@ -153,26 +109,16 @@
 
 .add-institute-form .MuiTextField-root,
 .add-institute-form .MuiFormControl-root {
-  background: var(--color-bg);
+  background: var(--color-surface);
   border-radius: 8px;
 }
 
-.add-institute-form .MuiInputLabel-root {
-  color: var(--color-text);
-}
+.add-institute-form .MuiInputLabel-root { color: var(--color-text-primary); }
+.add-institute-form .MuiInputBase-input { color: var(--color-text-primary); }
+.add-institute-form .MuiOutlinedInput-notchedOutline { border-color: var(--color-border); }
+.add-institute-form .MuiInputBase-root.Mui-focused .MuiOutlinedInput-notchedOutline { border-color: var(--color-primary); }
 
-.add-institute-form .MuiInputBase-input {
-  color: var(--color-text);
-}
-
-.add-institute-form .MuiOutlinedInput-notchedOutline {
-  border-color: var(--color-border);
-}
-
-/* Dialog body layout */
-.add-institute-dialog-body {
-  padding-top: 16px;
-}
+.add-institute-dialog-body { padding-top: 16px; }
 
 .add-institute-dialog-body--with-tpo {
   display: flex;
@@ -185,10 +131,8 @@
   min-width: 0;
 }
 
-/* TPO Contact Section */
-.add-institute-tpo-toggle {
-  align-self: flex-start;
-}
+/* ── TPO Section ── */
+.add-institute-tpo-toggle { align-self: flex-start; }
 
 .add-institute-tpo-section {
   flex: 1;
@@ -196,14 +140,14 @@
   border: 1px solid var(--color-border);
   border-radius: 10px;
   padding: 20px;
-  background: var(--color-bg);
+  background: var(--color-surface);
   align-self: flex-start;
 }
 
 .add-institute-tpo-title {
   font-weight: 600 !important;
-  font-size: 0.9rem !important;
-  color: var(--color-text) !important;
+  font-size: var(--text-sm) !important;
+  color: var(--color-text-primary) !important;
   margin-bottom: 12px !important;
 }
 
@@ -213,56 +157,18 @@
   gap: 14px;
 }
 
-.add-institute-form .MuiInputBase-root.Mui-focused .MuiOutlinedInput-notchedOutline {
-  border-color: var(--color-primary);
-}
-
-/* Responsive */
+/* ── Responsive ── */
 @media (max-width: 1024px) {
-  .add-institute-header-left {
-    flex-wrap: wrap;
-  }
-
-  .add-institute-title {
-    flex: 1 0 100%;
-    text-align: center;
-  }
+  .add-institute-header-left { flex-wrap: wrap; }
+  .add-institute-title { flex: 1 0 100%; text-align: center; }
 }
 
 @media (max-width: 768px) {
-  .add-institute-container {
-    padding: 12px;
-  }
-
-  .add-institute-header {
-    padding: 12px 16px !important;
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .add-institute-header-left {
-    flex-direction: column;
-    gap: 12px;
-  }
-
-  .add-institute-title {
-    text-align: center;
-  }
-
-  .add-institute-header-btn {
-    width: 100%;
-  }
-
-  .add-institute-bulk-header {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .add-institute-bulk-upload-btn {
-    width: 100%;
-  }
-
-  .add-institute-bulk-table {
-    max-height: 400px;
-  }
+  .add-institute-container { padding: 12px; }
+  .add-institute-header { padding: 12px 16px !important; flex-direction: column; align-items: stretch; }
+  .add-institute-header-left { flex-direction: column; gap: 12px; }
+  .add-institute-title { text-align: center; }
+  .add-institute-header-btn { width: 100%; }
+  .add-institute-bulk-header { flex-direction: column; align-items: flex-start; }
+  .add-institute-bulk-table { max-height: 400px; }
 }

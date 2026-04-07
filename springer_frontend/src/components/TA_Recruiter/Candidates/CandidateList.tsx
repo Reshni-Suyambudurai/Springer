@@ -455,10 +455,14 @@ const CandidateList: React.FC = () => {
           {/* Single Unified Header */}
           <Card className="candidates-header">
             <Box className="candidates-header-left">
-              <IconButton onClick={toggleSidebar} className="candidates-hamburger-btn">
+              <IconButton
+                onClick={toggleSidebar}
+                className="candidates-hamburger-btn"
+                size="small"
+              >
                 <MenuIcon />
               </IconButton>
-              
+
               <FormControl size="small" className="cycle-dropdown">
                 <InputLabel>Hiring Cycle</InputLabel>
                 <Select
@@ -496,7 +500,7 @@ const CandidateList: React.FC = () => {
                       <MenuItem value="OFFERED">OFFERED</MenuItem>
                       <MenuItem value="JOINED">JOINED</MenuItem>
                       <MenuItem value="DROPPED">DROPPED</MenuItem>
-                      <MenuItem value="CLOSED" sx={{ color: 'var(--color-danger)' }}>MOVE TO HISTORY</MenuItem>
+                      <MenuItem value="CLOSED" sx={{ color: 'var(--color-error-delete)' }}>MOVE TO HISTORY</MenuItem>
                     </Select>
                   </FormControl>
 
@@ -509,7 +513,7 @@ const CandidateList: React.FC = () => {
                       (selectMode ? selectedCandidates.size === 0 : allCandidates.length === 0) ||
                       updatingBulkStatus
                     }
-                    className="bulk-update-btn"
+                  className="t-btn-success"
                   >
                     {updatingBulkStatus ? "Updating..." : selectMode ? `Update (${selectedCandidates.size})` : "Update"}
                   </Button>
@@ -518,11 +522,19 @@ const CandidateList: React.FC = () => {
                     variant="outlined"
                     onClick={handleToggleSelectMode}
                     disabled={allCandidates.length === 0}
-                    className={selectMode ? "select-all-btn active" : "select-all-btn"}
+                    className={selectMode ? "select-all-btn t-btn-small active" : "select-all-btn t-btn-small"}
                   >
                     {selectMode ? "Deselect" : "Select"}
                   </Button>
 
+                 
+                </>
+              )}
+            </Box>
+
+            <Box className="candidates-header-right">
+              {selectedCycle && (
+                <>
                   <Button
                     variant="outlined"
                     startIcon={<HistoryIcon />}
@@ -530,7 +542,7 @@ const CandidateList: React.FC = () => {
                       const selectedCycleData = cycles.find(c => c.cycleId === selectedCycle);
                       navigate(`/ta-recruiter/candidates/history?cycleId=${selectedCycle}&cycleName=${encodeURIComponent(selectedCycleData?.cycleName + ' - ' + selectedCycleData?.cycleYear || '')}`);
                     }}
-                    className="select-all-btn"
+                    className="select-all-btn t-btn-small"
                   >
                     History
                   </Button>
@@ -557,32 +569,32 @@ const CandidateList: React.FC = () => {
                     } : undefined}
                     onScheduleComplete={handleScheduleComplete}
                   />
-
-                 
                 </>
               )}
-            </Box>
 
-            <Tooltip title={selectedCycle && cycles.find(c => c.cycleId === selectedCycle)?.status === "CLOSED" ? "Cannot add candidates to closed cycle" : "Add Candidate"}>
-              <span>
-                <IconButton
-                  onClick={handleAddCandidate}
-                  className="add-candidate-icon-btn"
-                  disabled={selectedCycle ? cycles.find(c => c.cycleId === selectedCycle)?.status === "CLOSED" : false}
-                >
-                  <AddIcon />
-                </IconButton>
+              <Tooltip title={selectedCycle && cycles.find(c => c.cycleId === selectedCycle)?.status === "CLOSED" ? "Cannot add candidates to closed cycle" : "Add Candidate"}>
+                <span>
+                  <Button
+                    variant="contained"
+                    startIcon={<AddIcon />}
+                    onClick={handleAddCandidate}
+                    className="t-btn-primary"
+                    disabled={selectedCycle ? cycles.find(c => c.cycleId === selectedCycle)?.status === "CLOSED" : false}
+                  >
+                    Add Candidate
+                  </Button>
               </span>
             </Tooltip>
+            </Box>
           </Card>
 
           {/* Table */}
           {selectedCycle && (
             <>
               {candidatesLoading ? (
-                <Box className="candidates-loading">
+                <Box className="t-loading">
                   <CircularProgress />
-                  <Typography>Loading candidates...</Typography>
+                  <Typography className="t-loading-text">Loading candidates...</Typography>
                 </Box>
               ) : allCandidates.length === 0 ? (
                 <Card className="no-results-card">
@@ -605,13 +617,13 @@ const CandidateList: React.FC = () => {
                   <Table stickyHeader>
                     <TableHead>
                       <TableRow>
-                        <TableCell className="table-header">College Name</TableCell>
-                        <TableCell className="table-header">Candidate Name</TableCell>
-                        <TableCell className="table-header">CGPA</TableCell>
-                        <TableCell className="table-header">No.of Arrears</TableCell>
-                        <TableCell className="table-header">Passout</TableCell>
-                        <TableCell className="table-header">Status</TableCell>
-                        <TableCell className="table-header">Category</TableCell>
+                        <TableCell className="t-head-cell">College Name</TableCell>
+                        <TableCell className="t-head-cell">Candidate Name</TableCell>
+                        <TableCell className="t-head-cell">CGPA</TableCell>
+                        <TableCell className="t-head-cell">No.of Arrears</TableCell>
+                        <TableCell className="t-head-cell">Passout</TableCell>
+                        <TableCell className="t-head-cell">Status</TableCell>
+                        <TableCell className="t-head-cell">Category</TableCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
@@ -642,7 +654,7 @@ const CandidateList: React.FC = () => {
                                   }
                                   onClick={(e) => selectMode && handleToggleCandidateSelection(candidate.candidateId, e)}
                                 />
-                                <Typography>{candidate.instituteName || "N/A"}</Typography>
+                                <Typography className="t-row-primary">{candidate.instituteName || "N/A"}</Typography>
                               </Box>
                             </Tooltip>
                           </TableCell>

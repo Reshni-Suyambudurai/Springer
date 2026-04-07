@@ -186,16 +186,16 @@ const CandidatesHistory: React.FC = () => {
               <MenuIcon />
             </IconButton>
 
-            <Typography variant="h6" sx={{ fontWeight: 600, fontSize: "0.95rem", position: 'absolute', left: '50%', transform: 'translateX(-50%)' }}>
+            <Typography className="t-page-title" sx={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)' }}>
               History of {cycleName}
             </Typography>
           </Card>
 
           {/* Table */}
           {candidatesLoading ? (
-            <Box className="candidates-loading">
+            <Box className="t-loading">
               <CircularProgress />
-              <Typography>Loading closed candidates...</Typography>
+              <Typography className="t-loading-text">Loading closed candidates...</Typography>
             </Box>
           ) : allCandidates.length === 0 ? (
             <Card className="no-results-card">
@@ -218,17 +218,17 @@ const CandidatesHistory: React.FC = () => {
               <Table stickyHeader>
                 <TableHead>
                   <TableRow>
-                    <TableCell className="table-header">College Name</TableCell>
-                    <TableCell className="table-header">
+                    <TableCell className="t-head-cell">College Name</TableCell>
+                    <TableCell className="t-head-cell">
                       Candidate Name
                     </TableCell>
-                    <TableCell className="table-header">CGPA</TableCell>
-                    <TableCell className="table-header">
+                    <TableCell className="t-head-cell">CGPA</TableCell>
+                    <TableCell className="t-head-cell">
                       No.of Arrears
                     </TableCell>
-                    <TableCell className="table-header">Passout</TableCell>
-                    <TableCell className="table-header">Status</TableCell>
-                    <TableCell className="table-header">Category</TableCell>
+                    <TableCell className="t-head-cell">Passout</TableCell>
+                    <TableCell className="t-head-cell">Status</TableCell>
+                    <TableCell className="t-head-cell">Category</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -250,7 +250,7 @@ const CandidatesHistory: React.FC = () => {
                         >
                           <Box className="institute-name-cell">
                             <SchoolIcon className="institute-icon-small" />
-                            <Typography>
+                            <Typography className="t-row-primary">
                               {candidate.instituteName || "N/A"}
                             </Typography>
                           </Box>

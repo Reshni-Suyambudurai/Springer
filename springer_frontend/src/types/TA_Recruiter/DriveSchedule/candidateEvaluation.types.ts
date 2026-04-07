@@ -70,22 +70,21 @@ export interface EvaluationStatusUpdateRequest {
 
 // Nested type for bulk evaluation
 export interface EvaluationData {
-  applicationId: number;
-  score: number;
-  sectionScore: Record<string, unknown>; // JSON object
-  review: string;
-  evaluationStatus: string;
+  registrationCode: string;
+  candidateName: string;
+  candidateEmail: string;
+  sections: Record<string, number>;
 }
 
 export interface BulkCandidateEvaluationRequest {
   roundConfigId: number;
-  reviewedBy: number;
+  roundNo: number;
+  updatedBy: number;
   evaluations: EvaluationData[];
 }
 
 export interface BulkCandidateEvaluationResponse {
-  successfulEvaluations: CandidateEvaluationResponse[];
-  errorMessages: string[];
+  errorMessages: Record<number, string>;
   totalProcessed: number;
   successCount: number;
   failureCount: number;

@@ -210,7 +210,7 @@ const CandidateDetails: React.FC = () => {
 
   if (loading) {
     return (
-      <Box className="candidate-details-loading">
+      <Box className="t-loading">
         <CircularProgress />
         <Typography>Loading candidate details...</Typography>
       </Box>
@@ -699,7 +699,8 @@ const CandidateDetails: React.FC = () => {
           <Button 
             onClick={handleDialogClose} 
             disabled={saving}
-            className="dialog-btn-cancel"
+            variant="outlined"
+            className="t-dialog-cancel-btn"
           >
             Cancel
           </Button>
@@ -707,7 +708,7 @@ const CandidateDetails: React.FC = () => {
             onClick={handleSave} 
             variant="contained"
             disabled={saving || !editForm.reason.trim()}
-            className="dialog-btn-save"
+            className="t-dialog-confirm-btn"
           >
             {saving ? "Saving..." : "Update Eligibility"}
           </Button>

@@ -1,0 +1,104 @@
+/* ========== Container ========== */
+.as-container {
+  padding: 16px;
+  background-color: var(--color-bg);
+  min-height: 100vh;
+}
+
+/* ========== Header ========== */
+.as-header {
+  display: flex !important;
+  align-items: center;
+  gap: 16px;
+  background: var(--color-surface) !important;
+  padding: 16px 20px !important;
+  border-radius: 12px !important;
+  border: 1px solid var(--color-border) !important;
+  box-shadow: none !important;
+  margin-bottom: 32px;
+}
+
+.as-title {
+  color: var(--color-text) !important;
+  font-size: 18px !important;
+  font-weight: 600 !important;
+  margin: 0 !important;
+}
+
+/* ========== Cards Grid ========== */
+.as-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+}
+
+/* ========== Card ========== */
+.as-card {
+  display: flex !important;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 16px;
+  padding: 32px 24px !important;
+  border-radius: 12px !important;
+  border: 1px solid var(--color-border) !important;
+  background: var(--color-surface) !important;
+  box-shadow: none !important;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.as-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* ========== Icon ========== */
+.as-card-icon-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  border-radius: 16px;
+}
+
+.as-card-icon {
+  font-size: 32px !important;
+}
+
+/* ========== Icon Colors ========== */
+.as-icon-aptitude {
+  background-color: var(--color-blue-50);
+  color: var(--color-blue-500);
+}
+
+.as-icon-communication {
+  background-color: #f3e8ff;
+  color: var(--color-purple);
+}
+
+.as-icon-technical {
+  background-color: var(--color-green-50);
+  color: var(--color-green-500);
+}
+
+/* ========== Text ========== */
+.as-card-title {
+  font-size: 16px !important;
+  font-weight: 600 !important;
+  color: var(--color-text) !important;
+}
+
+.as-card-desc {
+  font-size: 13px !important;
+  color: var(--color-text-muted) !important;
+  line-height: 1.5;
+}
+
+/* ========== Responsive ========== */
+@media (max-width: 900px) {
+  .as-cards-grid {
+    grid-template-columns: 1fr;
+  }
+}
