@@ -760,6 +760,11 @@ public class CandidatesServiceImpl implements ICandidatesService {
             throw new ValidationException("Cannot update status to " + newStatus + ". Candidate is not eligible. Only eligible candidates can progress in recruitment.");
         }
         
+        // SELECTED is only allowed from SHORTLISTED
+        if (newStatus == ApplicationStage.SELECTED && candidate.getApplicationStage() != ApplicationStage.SHORTLISTED) {
+            throw new ValidationException("Cannot move to SELECTED. Candidate must be in SHORTLISTED status, but is currently " + candidate.getApplicationStage());
+        }
+        
         // Create copy for change detection
         Candidate oldCandidate = createCandidateCopy(candidate);
         
@@ -888,6 +893,15 @@ public class CandidatesServiceImpl implements ICandidatesService {
                     String candidateName = candidate.getFirstName() + 
                             (candidate.getLastName() != null ? " " + candidate.getLastName() : "");
                     response.getErrorMessages().add(candidateName + " is ineligible, status cannot be updated to next level");
+                    failureCount++;
+                    continue;
+                }
+                
+                // SELECTED is only allowed from SHORTLISTED
+                if (newStatus == ApplicationStage.SELECTED && candidate.getApplicationStage() != ApplicationStage.SHORTLISTED) {
+                    String candidateName = candidate.getFirstName() + 
+                            (candidate.getLastName() != null ? " " + candidate.getLastName() : "");
+                    response.getErrorMessages().add(candidateName + " cannot move to SELECTED — must be SHORTLISTED, currently " + candidate.getApplicationStage());
                     failureCount++;
                     continue;
                 }

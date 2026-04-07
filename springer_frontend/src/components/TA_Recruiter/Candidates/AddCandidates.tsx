@@ -49,7 +49,7 @@ import {
   Autocomplete,
   Tooltip,
 } from "@mui/material";
-import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import BackButton from "../../Common/BackButton";
 import AddIcon from "@mui/icons-material/Add";
 import UploadIcon from "@mui/icons-material/Upload";
 import DownloadIcon from "@mui/icons-material/Download";
@@ -593,9 +593,7 @@ console.log("Skills data:", response.data);
       {/* Single Unified Header */}
       <Card className="add-candidates-header">
         <Box className="add-candidates-header-left">
-          <IconButton onClick={() => navigate("/ta-recruiter/candidates")} className="add-candidates-back-btn">
-            <ArrowBackIcon />
-          </IconButton>
+          <BackButton onClick={() => navigate("/ta-recruiter/candidates")} variant="header" />
           
           <Typography variant="h6" className="add-candidates-cycle-name">
             {cycleName} - {cycleYear}
@@ -605,7 +603,7 @@ console.log("Skills data:", response.data);
             variant="contained"
             startIcon={<AddIcon />}
             onClick={() => setAddDialog(true)}
-            className="add-candidates-header-btn g-btn g-btn-primary"
+            className="add-candidates-header-btn t-btn-primary"
           >
             Add Candidate
           </Button>
@@ -614,7 +612,7 @@ console.log("Skills data:", response.data);
             variant="contained"
             component="label"
             startIcon={<UploadIcon />}
-            className="add-candidates-header-btn g-btn g-btn-success"
+            className="add-candidates-header-btn t-btn-success"
           >
             Upload Candidates
             <input type="file" hidden accept=".xlsx,.xls" onChange={handleFileUpload} />
@@ -624,7 +622,7 @@ console.log("Skills data:", response.data);
             variant="outlined"
             startIcon={<DownloadIcon />}
             onClick={handleDownloadFormat}
-            className="add-candidates-header-btn g-btn g-btn-outline-primary"
+            className="add-candidates-header-btn t-btn-small"
           >
             Download Format
           </Button>
@@ -646,7 +644,7 @@ console.log("Skills data:", response.data);
                     variant="outlined"
                     startIcon={<DeleteIcon />}
                     onClick={handleRemoveDuplicates}
-                    className="g-btn g-btn-outline-danger"
+                    className="t-btn-secondary"
                     disabled={isValidating}
                   >
                     Remove Duplicates
@@ -655,7 +653,7 @@ console.log("Skills data:", response.data);
                 <Button
                   variant="contained"
                   onClick={handleBulkUpload}
-                  className="g-btn g-btn-primary"
+                  className="t-btn-primary"
                   disabled={hasDuplicates() || isValidating || validationResults.size === 0}
                 >
                   Upload to Database
@@ -667,16 +665,16 @@ console.log("Skills data:", response.data);
               <Table>
                 <TableHead>
                   <TableRow>
-                    <TableCell className="table-header">Index</TableCell>
-                    <TableCell className="table-header">First Name</TableCell>
-                    <TableCell className="table-header">Last Name</TableCell>
-                    <TableCell className="table-header">Email</TableCell>
-                    <TableCell className="table-header">Mobile</TableCell>
-                    <TableCell className="table-header">Institute</TableCell>
-                    <TableCell className="table-header">CGPA</TableCell>
-                    <TableCell className="table-header">Age</TableCell>
-                    <TableCell className="table-header">Passout Year</TableCell>
-                    <TableCell className="table-header">Actions</TableCell>
+                    <TableCell className="t-head-cell">Index</TableCell>
+                    <TableCell className="t-head-cell">First Name</TableCell>
+                    <TableCell className="t-head-cell">Last Name</TableCell>
+                    <TableCell className="t-head-cell">Email</TableCell>
+                    <TableCell className="t-head-cell">Mobile</TableCell>
+                    <TableCell className="t-head-cell">Institute</TableCell>
+                    <TableCell className="t-head-cell">CGPA</TableCell>
+                    <TableCell className="t-head-cell">Age</TableCell>
+                    <TableCell className="t-head-cell">Passout Year</TableCell>
+                    <TableCell className="t-head-cell">Actions</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -721,7 +719,7 @@ console.log("Skills data:", response.data);
                         <IconButton
                           size="small"
                           onClick={() => handleRemoveRow(index)}
-                          className="g-icon-btn bulk-delete-btn"
+                          className="t-action-btn"
                           title="Remove row"
                         >
                           <DeleteIcon fontSize="small" />
@@ -950,8 +948,8 @@ console.log("Skills data:", response.data);
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setAddDialog(false)}>Cancel</Button>
-          <Button onClick={handleAddSingle} variant="contained" className="add-candidates-add-btn">
+          <Button variant="outlined" onClick={() => setAddDialog(false)} className="t-dialog-cancel-btn">Cancel</Button>
+          <Button onClick={handleAddSingle} variant="contained" className="t-dialog-confirm-btn">
             Add Candidate
           </Button>
         </DialogActions>

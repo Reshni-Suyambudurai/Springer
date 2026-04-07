@@ -178,31 +178,19 @@ function DashboardTAR() {
                     <h3 className="dashboard-section-title">Institute Funnel</h3>
                     <span className="dashboard-funnel-institute-name">{activeInstitute.instituteName}</span>
                   </div>
-                  <div className="dashboard-funnel-pyramid">
-                    {funnelStages.map((stage, idx) => {
-                      const widthPct = Math.max((stage.value / funnelMax) * 100, 14);
-                      const nextStage = funnelStages[idx + 1];
-                      const nextWidthPct = nextStage
-                        ? Math.max((nextStage.value / funnelMax) * 100, 14)
-                        : widthPct * 0.6;
-                      const isLast = idx === funnelStages.length - 1;
+                  <div className="dashboard-funnel-chart">
+                    {funnelStages.map((stage) => {
+                      const widthPct = Math.max((stage.value / funnelMax) * 100, 16);
                       return (
-                        <div className="dashboard-funnel-layer" key={stage.label}>
-                          <span className="dashboard-funnel-layer-label-left">{stage.label}</span>
-                          <div className="dashboard-funnel-layer-shape-wrap">
-                            <svg
-                              className="dashboard-funnel-layer-svg"
-                              viewBox="0 0 200 50"
-                              preserveAspectRatio="none"
+                        <div className="dashboard-funnel-row" key={stage.label}>
+                          <span className="dashboard-funnel-label">{stage.label}</span>
+                          <div className="dashboard-funnel-bar-wrap">
+                            <div
+                              className={`dashboard-funnel-bar ${stage.className}`}
+                              style={{ width: `${widthPct}%` }}
                             >
-                              <polygon
-                                className={stage.className}
-                                points={`${100 - widthPct},0 ${100 + widthPct},0 ${100 + (isLast ? widthPct * 0.6 : nextWidthPct)},50 ${100 - (isLast ? widthPct * 0.6 : nextWidthPct)},50`}
-                              />
-                            </svg>
-                            <span className="dashboard-funnel-layer-text">
-                              {stage.value} <span className="dashboard-funnel-layer-pct">({stage.pct}%)</span>
-                            </span>
+                              <span className="dashboard-funnel-bar-value">{stage.value}</span>
+                            </div>
                           </div>
                         </div>
                       );

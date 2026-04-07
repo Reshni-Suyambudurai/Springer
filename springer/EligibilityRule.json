@@ -38,7 +38,7 @@
     "min" : null,
     "max" : null,
     "message" : "Department isn't eligible",
-    "allowedValues" : [ "CSE", "EEE", "IT", "ECE", "AIML", "Mech", "AIDS", "CS", "IoT", "Cyber Security", "Data Science" ]
+    "allowedValues" : [ ]
   } ],
   "logic" : "AND"
 }

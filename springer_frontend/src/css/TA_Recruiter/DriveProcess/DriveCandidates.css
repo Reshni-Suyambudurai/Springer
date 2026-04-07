@@ -186,39 +186,39 @@
 }
 
 .dc-status-in-drive {
-  border: 1.5px solid var(--color-blue);
-  color: var(--color-text);
-  background-color: transparent;
+  border: 1.5px solid #1d4ed8;
+  color: #1d4ed8;
+  background-color: #dbeafe;
 }
 
 .dc-status-passed {
-  border: 1.5px solid var(--color-success);
-  color: var(--color-text);
-  background-color: transparent;
+  border: 1.5px solid #16a34a;
+  color: #16a34a;
+  background-color: #dcfce7;
 }
 
 .dc-status-selected {
-  border: 1.5px solid var(--color-green);
-  color: var(--color-text);
-  background-color: transparent;
+  border: 1.5px solid #15803d;
+  color: #15803d;
+  background-color: #d1fae5;
 }
 
 .dc-status-failed {
-  border: 1.5px solid var(--color-danger);
-  color: var(--color-text);
-  background-color: transparent;
+  border: 1.5px solid #dc2626;
+  color: #dc2626;
+  background-color: #fee2e2;
 }
 
 .dc-status-dropped {
-  border: 1.5px solid var(--color-text-muted);
-  color: var(--color-text);
-  background-color: transparent;
+  border: 1.5px solid #6b7280;
+  color: #6b7280;
+  background-color: #f3f4f6;
 }
 
 .dc-status-on-hold {
-  border: 1.5px solid var(--color-warning);
-  color: var(--color-text);
-  background-color: transparent;
+  border: 1.5px solid #d97706;
+  color: #d97706;
+  background-color: #fef3c7;
 }
 
 /* ========== Table ========== */
@@ -228,21 +228,21 @@
   background: var(--color-surface) !important;
   box-shadow: none !important;
   overflow: auto;
-  max-height: calc(100vh - 300px);
+  max-height: calc(100vh - 210px);
 }
 
 .dc-table-head-row {
-  background-color: var(--color-bg);
+  background-color: var(--color-primary);
 }
 
 .dc-th {
   font-size: 13px !important;
   font-weight: 700 !important;
-  color: var(--color-text-muted) !important;
+  color: #ffffff !important;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  border-bottom: 2px solid var(--color-border) !important;
-  background-color: var(--color-bg) !important;
+  border-bottom: 2px solid var(--color-primary) !important;
+  background-color: var(--color-primary) !important;
   white-space: nowrap;
   padding: 14px 16px !important;
   position: sticky;

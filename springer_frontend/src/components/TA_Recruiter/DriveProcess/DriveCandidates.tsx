@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { applicationApi, candidateEvaluationApi } from "../../../services/driveschedule.api";
 import type { ApplicationResponse, BatchCandidatesMap } from "../../../types/TA_Recruiter/DriveSchedule/application.types";
 import type { RoundEvaluationResponse } from "../../../types/TA_Recruiter/DriveSchedule/candidateEvaluation.types";
 import { showToast } from "../../../utils/toast";
 import { handleAxiosError } from "../../../services/api.error";
+import { tokenstore } from "../../../auth/tokenstore";
 import { Box, Card, Typography, CircularProgress, Select, MenuItem, Button,
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper } from "@mui/material";
 import BackButton from "../../Common/BackButton";
@@ -19,6 +20,7 @@ const ROUND_NO_MAP: Record<string, number> = {
 
 const DriveCandidates: React.FC = () => {
   const { driveId } = useParams<{ driveId: string }>();
+  const navigate = useNavigate();
   const [applications, setApplications] = useState<ApplicationResponse[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [driveName, setDriveName] = useState<string>("");
@@ -125,6 +127,60 @@ const DriveCandidates: React.FC = () => {
     });
   };
 
+  const formatDateTime = (iso: string) => {
+    const d = new Date(iso);
+    const day = d.getDate();
+    const month = d.getMonth() + 1;
+    const year = String(d.getFullYear()).slice(2);
+    let hours = d.getHours();
+    const minutes = String(d.getMinutes()).padStart(2, "0");
+    const ampm = hours >= 12 ? "pm" : "am";
+    hours = hours % 12 || 12;
+    return `${day}/${month}/${year}-${hours}:${minutes}${ampm}`;
+  };
+
+  const formatUserDate = (name?: string, dateIso?: string) => {
+    if (!name) return "-";
+    if (!dateIso) return name;
+    return `${name} (${formatDateTime(dateIso)})`;
+  };
+
+  const handleStart = async () => {
+    const user = tokenstore.getUser();
+    if (!user) {
+      showToast("User not found. Please log in again.", "error");
+      return;
+    }
+    const ids = filteredApplications.map((app) => app.applicationId);
+    if (ids.length === 0) {
+      showToast("No candidates to start.", "error");
+      return;
+    }
+    try {
+      const response = await applicationApi.bulkUpdateApplicationStatus({
+        applicationIds: ids,
+        applicationStatus: "IN_DRIVE",
+        updatedBy: user.userId,
+      });
+      if (response.data.success && response.data.data) {
+        const { successCount, failureCount, successfulUpdates } = response.data.data;
+        showToast(`Started: ${successCount} succeeded, ${failureCount} failed`, "success");
+        // Merge updated applications into local state without full reload
+        setApplications((prev) =>
+          prev.map((app) => {
+            const updated = successfulUpdates.find((u) => u.applicationId === app.applicationId);
+            return updated ?? app;
+          })
+        );
+      } else {
+        showToast(response.data.message || "Failed to start drive", "error");
+      }
+    } catch (error: unknown) {
+      const appError = handleAxiosError(error);
+      showToast(appError.message, "error");
+    }
+  };
+
   const batchOptions = Object.keys(batchMap);
 
   const filteredApplications = applications.filter((app) => {
@@ -132,6 +188,8 @@ const DriveCandidates: React.FC = () => {
     const appIds = batchMap[selectedBatch];
     return appIds ? appIds.includes(app.applicationId) : false;
   });
+
+  const hasInDrive = filteredApplications.some((app) => app.applicationStatus === "IN_DRIVE");
 
   if (loading) {
     return (
@@ -149,7 +207,7 @@ const DriveCandidates: React.FC = () => {
       {/* Header — mirrors InstitutesList / DriveList pattern */}
       <Card className="dc-header">
         <Box className="dc-header-left">
-          <BackButton inline />
+          <BackButton variant="header" />
           <Typography variant="h6" className="dc-title">
             {driveName ? `${driveName} — Candidates` : "Drive Candidates"}
           </Typography>
@@ -184,9 +242,9 @@ const DriveCandidates: React.FC = () => {
           </Select>
 
           {evaluationsLoading && <CircularProgress size={20} />}
- <Button variant="outlined" className="dc-btn-action">Start</Button>
-          <Button variant="outlined" className="dc-btn-action">Panel Assignment</Button>
-          <Button variant="outlined" className="dc-btn-action">Add Score</Button>
+ <Button variant="outlined" className="dc-btn-action" onClick={handleStart}>Start</Button>
+          <Button variant="outlined" className="dc-btn-action" disabled={!hasInDrive}>Allocate Panel</Button>
+          <Button variant="outlined" className="dc-btn-action" disabled={!hasInDrive} onClick={() => navigate(`/drive-process/add-scores/${driveId}`)}>Add Score</Button>
         </Box>
       </Card>
 
@@ -218,6 +276,7 @@ const DriveCandidates: React.FC = () => {
               
                 <TableCell className="dc-th">Status</TableCell>
                 <TableCell className="dc-th">Created By</TableCell>
+                <TableCell className="dc-th">Updated By</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -233,7 +292,12 @@ const DriveCandidates: React.FC = () => {
                     </span>
                   </TableCell>
 
-                  <TableCell className="dc-td">{app.createdByName}</TableCell>
+                  <TableCell className="dc-td">
+                    {formatUserDate(app.createdByName, app.createdAt)}
+                  </TableCell>
+                  <TableCell className="dc-td">
+                    {formatUserDate(app.updatedByName, app.updatedAt)}
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>

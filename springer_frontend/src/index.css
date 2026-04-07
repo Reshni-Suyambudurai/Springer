@@ -1,14 +1,23 @@
-:root {
-  /* Typography Scale (only 5 sizes) */
-  --text-xs: 0.75rem;   /* 12px */
-  --text-sm: 0.875rem;  /* 14px */
-  --text-md: 1rem;      /* 16px (base) */
-  --text-lg: 1.25rem;   /* 20px */
-  --text-xl: 1.75rem;   /* 28px */
+html, body, #root {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
 }
 
-html, body {
-  overflow: hidden;
+body {
+  font-family: "Inter", "Segoe UI", Arial, sans-serif;
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+html {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+html::-webkit-scrollbar {
+  display: none;
 }
 
 /* ═══════════════════════════════════════════════════ */

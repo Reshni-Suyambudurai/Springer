@@ -274,7 +274,7 @@ const DriveCalendar: React.FC = () => {
             <Button
               variant="outlined"
               onClick={handleToday}
-              className="drive-calendar-today-btn"
+              className="t-btn-small"
             >
               Today
             </Button>
@@ -309,12 +309,14 @@ const DriveCalendar: React.FC = () => {
             </Box>
           </Box>
 
-          <IconButton
-            onClick={handleAddDrive}
-            className="drive-calendar-add-btn"
-          >
-            <AddIcon />
-          </IconButton>
+          <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={handleAddDrive}
+              className="t-btn-primary"
+            >
+              Add Drive
+            </Button>
         </Box>
       </Card>
 
@@ -322,7 +324,7 @@ const DriveCalendar: React.FC = () => {
       {loading ? (
         <Box className="drive-calendar-loading">
           <CircularProgress />
-          <Typography>Loading drive schedules...</Typography>
+          <Typography className="t-loading-text">Loading drive schedules...</Typography>
         </Box>
       ) : (
         <Card className="drive-calendar-grid-container">
@@ -366,9 +368,11 @@ const DriveCalendar: React.FC = () => {
                             <Typography variant="caption" className="drive-event-name">
                               {drive.driveName}
                             </Typography>
-                            <Typography variant="caption" className="drive-event-status">
-                              {drive.status}
-                            </Typography>
+                            {drivesForDay.length === 1 && (
+                              <Typography variant="caption" className="drive-event-status">
+                                {drive.status}
+                              </Typography>
+                            )}
                           </Box>
                         ))}
                         {drivesForDay.length > 3 && (

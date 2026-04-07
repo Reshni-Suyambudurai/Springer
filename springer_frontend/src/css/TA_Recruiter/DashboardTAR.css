@@ -256,7 +256,7 @@
   border-radius: 10px;
 }
 
-/* ===== Vertical Funnel — Inverted Pyramid ===== */
+/* ===== Funnel Chart ===== */
 .dashboard-funnel-section {
   background-color: var(--color-surface);
   border: 1px solid var(--color-border-card);
@@ -270,7 +270,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 14px;
+  margin-bottom: 16px;
 }
 
 .dashboard-funnel-institute-name {
@@ -282,69 +282,63 @@
   border-radius: 14px;
 }
 
-.dashboard-funnel-pyramid {
+.dashboard-funnel-chart {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 0;
+  gap: 8px;
 }
 
-.dashboard-funnel-layer {
+.dashboard-funnel-row {
   display: grid;
-  grid-template-columns: 110px 1fr;
+  grid-template-columns: 100px 1fr;
   align-items: center;
-  width: 100%;
-  gap: 0;
+  gap: 10px;
 }
 
-.dashboard-funnel-layer-label-left {
+.dashboard-funnel-label {
   font-size: var(--text-xs);
   font-weight: 600;
   color: var(--color-text-secondary);
   text-align: right;
-  padding-right: 12px;
   text-transform: uppercase;
   letter-spacing: 0.3px;
 }
 
-.dashboard-funnel-layer-shape-wrap {
+.dashboard-funnel-bar-wrap {
+  display: flex;
+  justify-content: center;
+}
+
+.dashboard-funnel-bar {
+  height: 34px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: width 0.4s ease, box-shadow 0.2s ease;
+  min-width: 40px;
   position: relative;
-  width: 100%;
-  height: 50px;
 }
 
-.dashboard-funnel-layer-svg {
-  display: block;
-  width: 100%;
-  height: 100%;
+.dashboard-funnel-bar:hover {
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.18);
+  filter: brightness(1.1);
 }
 
-.dashboard-funnel-layer-text {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
+.dashboard-funnel-bar-value {
   font-size: var(--text-sm);
   font-weight: 700;
-  color: var(--color-white);
-  pointer-events: none;
-  white-space: nowrap;
+  color: #fff;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
 }
 
-.dashboard-funnel-layer-pct {
-  font-weight: 500;
-  opacity: 0.85;
-  font-size: var(--text-xs);
-}
-
-/* Funnel SVG fill colors — dark rich tones */
-.dashboard-funnel-applied { fill: var(--color-funnel-applied); }
-.dashboard-funnel-selected { fill: var(--color-funnel-selected); }
-.dashboard-funnel-accepted { fill: var(--color-funnel-accepted); }
-.dashboard-funnel-joined { fill: var(--color-funnel-joined); }
-.dashboard-funnel-rejected { fill: var(--color-funnel-rejected); }
-.dashboard-funnel-dropped { fill: var(--color-funnel-dropped); }
+/* Funnel bar colors */
+.dashboard-funnel-applied { background-color: var(--color-funnel-applied); }
+.dashboard-funnel-selected { background-color: var(--color-funnel-selected); }
+.dashboard-funnel-accepted { background-color: var(--color-funnel-accepted); }
+.dashboard-funnel-joined { background-color: var(--color-funnel-joined); }
+.dashboard-funnel-rejected { background-color: var(--color-funnel-rejected); }
+.dashboard-funnel-dropped { background-color: var(--color-funnel-dropped); }
 
 /* ===== College Sidebar — Table ===== */
 .dashboard-college-sidebar {

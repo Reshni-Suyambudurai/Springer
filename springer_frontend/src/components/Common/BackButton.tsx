@@ -13,6 +13,8 @@ interface BackButtonProps {
   className?: string;
   /** If true, uses inline positioning instead of absolute positioning */
   inline?: boolean;
+  /** Visual variant: 'default' for floating circle, 'header' for compact inline header style */
+  variant?: 'default' | 'header';
 }
 
 const BackButton: React.FC<BackButtonProps> = ({
@@ -20,6 +22,7 @@ const BackButton: React.FC<BackButtonProps> = ({
   ariaLabel = "Go back",
   className = "",
   inline = false,
+  variant = "default",
 }) => {
   const navigate = useNavigate();
 
@@ -30,6 +33,19 @@ const BackButton: React.FC<BackButtonProps> = ({
       navigate(-1);
     }
   };
+
+  if (variant === "header") {
+    return (
+      <IconButton
+        onClick={handleClick}
+        className={`back-button-header ${className}`}
+        aria-label={ariaLabel}
+        size="small"
+      >
+        <ArrowBackIcon fontSize="small" />
+      </IconButton>
+    );
+  }
 
   return (
     <IconButton

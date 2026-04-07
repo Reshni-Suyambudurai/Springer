@@ -189,7 +189,7 @@ class ApplicationControllerIntegrationTest {
     @Order(20)
     @DisplayName("PATCH /api/applications/{id}/status - returns 404 for non-existent application")
     void updateApplicationStatus_nonExistent_returns404() throws Exception {
-        ApplicationStatusUpdateRequest request = new ApplicationStatusUpdateRequest("SELECTED");
+        ApplicationStatusUpdateRequest request = new ApplicationStatusUpdateRequest("SELECTED", 1L);
 
         mockMvc.perform(patch("/api/applications/{applicationId}/status", 99999L)
                         .header("Authorization", "Bearer " + jwtToken)
@@ -207,7 +207,8 @@ class ApplicationControllerIntegrationTest {
     @DisplayName("PATCH /api/applications/bulk/status - returns 400 when applications list is empty")
     void bulkUpdateApplicationStatus_emptyList_returns400() throws Exception {
         BulkApplicationStatusUpdateRequest request = new BulkApplicationStatusUpdateRequest();
-        request.setApplications(List.of());
+        request.setApplicationIds(List.of());
+        request.setApplicationStatus("IN_DRIVE");
 
         mockMvc.perform(patch("/api/applications/bulk/status")
                         .header("Authorization", "Bearer " + jwtToken)
@@ -220,10 +221,9 @@ class ApplicationControllerIntegrationTest {
     @Order(26)
     @DisplayName("PATCH /api/applications/bulk/status - handles non-existent application IDs gracefully")
     void bulkUpdateApplicationStatus_nonExistentIds_returnsWithErrors() throws Exception {
-        BulkApplicationStatusUpdateRequest.ApplicationStatusData appData =
-                new BulkApplicationStatusUpdateRequest.ApplicationStatusData(99999L, "SELECTED");
         BulkApplicationStatusUpdateRequest request = new BulkApplicationStatusUpdateRequest();
-        request.setApplications(List.of(appData));
+        request.setApplicationIds(List.of(99999L));
+        request.setApplicationStatus("IN_DRIVE");
 
         mockMvc.perform(patch("/api/applications/bulk/status")
                         .header("Authorization", "Bearer " + jwtToken)

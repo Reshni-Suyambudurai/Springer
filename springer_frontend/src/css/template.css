@@ -1,0 +1,578 @@
+/*
+ * ═══════════════════════════════════════════════════════════════════
+ *  SPRINGER PROJECT — BASE TEMPLATE
+ *  All t-* utility classes. Import once in main.tsx.
+ *  Uses ONLY variables from App.css — no hardcoded colors.
+ * ═══════════════════════════════════════════════════════════════════
+ */
+
+
+/* ─────────────────────────────────────────────────────────────────
+   1. TYPOGRAPHY
+   ───────────────────────────────────────────────────────────────── */
+
+.t-page-title {
+  font-size: 1.75rem !important;
+  font-weight: 700 !important;
+  color: var(--color-text-primary) !important;
+  line-height: 1.2 !important;
+  letter-spacing: -0.4px !important;
+  margin-bottom: 3px !important;
+}
+
+.t-page-subtitle {
+  font-size: 0.9375rem !important;
+  font-weight: 400 !important;
+  color: var(--color-text-secondary) !important;
+  line-height: 1.5 !important;
+}
+
+.t-section-label {
+  font-size: 0.75rem !important;
+  font-weight: 700 !important;
+  color: var(--color-chip-count-text) !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.08em !important;
+}
+
+.t-table-head {
+  font-size: 0.75rem !important;
+  font-weight: 700 !important;
+  color: var(--color-grey-600) !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.75px !important;
+  background-color: var(--color-bg-table-header) !important;
+  padding: 10px 14px !important;
+  border-bottom-color: var(--color-border-table) !important;
+}
+
+.t-row-primary {
+  font-size: 0.9375rem !important;
+  font-weight: 700 !important;
+  color: var(--color-text-primary) !important;
+  line-height: 1.4 !important;
+}
+
+.t-row-secondary {
+  font-size: 0.875rem !important;
+  font-weight: 500 !important;
+  color: var(--color-grey-550) !important;
+  line-height: 1.4 !important;
+}
+
+.t-body-text {
+  font-size: 0.875rem !important;
+  font-weight: 400 !important;
+  color: var(--color-text-secondary) !important;
+  line-height: 1.5 !important;
+}
+
+.t-meta-text {
+  font-size: 0.75rem !important;
+  color: var(--color-text-disabled) !important;
+  line-height: 1.4 !important;
+}
+
+
+/* ─────────────────────────────────────────────────────────────────
+   2. PAGE & CARD STRUCTURE
+   ───────────────────────────────────────────────────────────────── */
+
+.t-page {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  gap: 4px;
+  background-color: var(--color-bg-secondary);
+  padding: 4px;
+}
+
+.t-card {
+  border-radius: 12px !important;
+  border: 1px solid var(--color-card-border) !important;
+  box-shadow: 0 1px 3px 0 var(--opacity-shadow-light),
+              0 6px 16px -2px var(--opacity-shadow-dark) !important;
+  background-color: var(--color-surface) !important;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 0;
+}
+
+.t-header {
+  flex-shrink: 0;
+  padding: 16px 20px 12px 20px;
+  background-color: var(--color-surface);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.t-icon-box {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background-color: var(--color-icon-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.t-separator {
+  border-top: 1px solid var(--color-grey-200);
+  flex-shrink: 0;
+}
+
+.t-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-height: 0;
+}
+
+
+/* ─────────────────────────────────────────────────────────────────
+   3. FILTER / SEARCH BAR
+   ───────────────────────────────────────────────────────────────── */
+
+.t-filter-bar {
+  flex-shrink: 0;
+  padding: 8px 16px;
+  background-color: var(--color-surface);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.t-filter-spacer { flex-grow: 1; }
+
+.t-search-field { width: 260px; }
+
+.t-search-field .MuiOutlinedInput-root { transition: all 0.2s ease; }
+.t-search-field .MuiOutlinedInput-root:hover { background-color: var(--color-primary-hover-6); }
+.t-search-field .MuiOutlinedInput-root.Mui-focused { background-color: var(--color-primary-hover-4); }
+.t-search-field .MuiOutlinedInput-root.Mui-focused fieldset { border-color: var(--color-primary); }
+.t-search-icon { color: var(--color-primary) !important; }
+
+
+/* ─────────────────────────────────────────────────────────────────
+   4. TABLE STYLES
+   ───────────────────────────────────────────────────────────────── */
+
+.t-table-section {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 0;
+}
+
+.t-table-container {
+  flex: 1;
+  overflow: auto !important;
+  min-height: 0;
+}
+
+.t-head-row { background-color: var(--color-bg-table-header); height: 48px; }
+
+.t-head-cell {
+  font-size: 0.75rem !important;
+  font-weight: 700 !important;
+  color: var(--color-grey-600) !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.75px !important;
+  background-color: var(--color-bg-table-header) !important;
+  padding: 10px 14px !important;
+  border-bottom-color: var(--color-border-table) !important;
+  vertical-align: middle !important;
+}
+.t-head-cell--actions { text-align: right !important; }
+
+.t-row {
+  cursor: pointer;
+  height: 64px;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.t-row--even { background-color: var(--color-surface); }
+.t-row--odd  { background-color: var(--color-surface-alt); }
+.t-row td    { border-bottom: 1px solid var(--color-border-table); }
+.t-row:hover { background-color: var(--color-hover-bg) !important; box-shadow: inset 0 2px 4px var(--color-primary-shadow-8); }
+.t-row:hover td { border-bottom-color: var(--color-primary-shadow-22); }
+.t-row:last-child td { border-bottom-color: var(--color-border-dark); }
+
+.t-cell { padding: 12px 14px !important; vertical-align: middle !important; }
+.t-cell--actions { text-align: right !important; }
+
+.t-name-cell { display: flex; align-items: center; gap: 12px; }
+
+.t-name-icon-box {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background-color: var(--color-icon-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.t-empty-cell { padding-top: 48px !important; padding-bottom: 48px !important; }
+.t-empty-icon { font-size: 40px !important; color: var(--color-empty-icon) !important; margin-bottom: 12px !important; }
+.t-empty-text { font-size: 0.9375rem !important; font-weight: 500 !important; color: var(--color-empty-text) !important; }
+
+
+/* ─────────────────────────────────────────────────────────────────
+   5. PAGINATION
+   ───────────────────────────────────────────────────────────────── */
+
+.t-pagination {
+  border-top: 1px solid var(--color-border-dark) !important;
+  background-color: var(--color-surface) !important;
+  padding: 8px 10px !important;
+  flex-shrink: 0;
+}
+.t-pagination .MuiTablePagination-selectLabel,
+.t-pagination .MuiTablePagination-displayedRows {
+  font-size: 0.8125rem !important;
+  font-weight: 500 !important;
+  color: var(--color-grey-450) !important;
+  margin: 0 !important;
+}
+.t-pagination .MuiInputBase-root { margin-right: 32px !important; }
+.t-pagination .MuiIconButton-root { padding: 4px !important; color: var(--color-text-secondary) !important; transition: all 0.2s ease !important; }
+.t-pagination .MuiIconButton-root:hover { background-color: var(--opacity-shadow-very-light) !important; color: var(--color-grey-550) !important; }
+.t-pagination .MuiIconButton-root.Mui-disabled { color: var(--color-grey-350) !important; }
+
+
+/* ─────────────────────────────────────────────────────────────────
+   6. BUTTONS
+   ───────────────────────────────────────────────────────────────── */
+
+.t-btn-primary {
+  text-transform: none !important;
+  font-size: 0.95rem !important;
+  font-weight: 600 !important;
+  padding-left: 24px !important;
+  padding-right: 24px !important;
+  background-color: var(--color-primary) !important;
+  color: var(--color-white) !important;
+  box-shadow: 0 2px 8px var(--color-primary-shadow-18) !important;
+  transition: all 0.2s ease !important;
+}
+.t-btn-primary:hover {
+  background-color: var(--color-primary-dark) !important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px var(--color-primary-shadow-28) !important;
+}
+.t-btn-primary:active { transform: translateY(0); }
+
+.t-btn-secondary {
+  text-transform: none !important;
+  font-size: 0.95rem !important;
+  font-weight: 600 !important;
+  padding-left: 24px !important;
+  padding-right: 24px !important;
+  color: var(--color-grey-550) !important;
+  border-color: var(--color-grey-350) !important;
+  transition: all 0.2s ease !important;
+}
+.t-btn-secondary:hover { background-color: var(--color-inactive-bg) !important; border-color: var(--color-text-disabled) !important; }
+
+.t-btn-small {
+  text-transform: none !important;
+  font-size: 0.875rem !important;
+  font-weight: 500 !important;
+  color: var(--color-primary) !important;
+  border-color: var(--color-primary) !important;
+  transition: all 0.2s ease !important;
+}
+.t-btn-small:hover { background-color: var(--color-primary-shadow-8) !important; }
+
+.t-btn-danger {
+  text-transform: none !important;
+  font-size: 0.95rem !important;
+  font-weight: 600 !important;
+  padding-left: 24px !important;
+  padding-right: 24px !important;
+  background-color: var(--color-error-delete) !important;
+  color: var(--color-white) !important;
+  transition: all 0.2s ease !important;
+}
+.t-btn-danger:hover { background-color: var(--color-error-dark) !important; }
+
+.t-btn-success {
+  text-transform: none !important;
+  font-size: 0.95rem !important;
+  font-weight: 600 !important;
+  padding-left: 24px !important;
+  padding-right: 24px !important;
+  background-color: var(--color-success-dark) !important;
+  color: var(--color-white) !important;
+  transition: all 0.2s ease !important;
+}
+.t-btn-success:hover { background-color: var(--color-success-dark) !important; }
+.t-btn-success:disabled, .t-btn-success.Mui-disabled {
+  background-color: var(--color-grey-350) !important;
+  color: var(--color-grey-500) !important;
+}
+
+.t-action-btn {
+  color: var(--color-action-btn) !important;
+  padding: 5px !important;
+  transition: all 0.2s ease !important;
+}
+.t-action-btn:hover { color: var(--color-primary) !important; background-color: var(--color-primary-hover-14) !important; transform: scale(1.05); }
+
+.t-back-btn {
+  color: var(--color-text-secondary) !important;
+  border: 1px solid var(--color-border-table) !important;
+  border-radius: 8px !important;
+  padding: 6px !important;
+  transition: all 0.2s ease !important;
+}
+.t-back-btn:hover { color: var(--color-primary) !important; background-color: var(--color-icon-bg) !important; border-color: var(--color-blue-100) !important; }
+
+.t-activate-btn { padding: 5px !important; transition: all 0.2s ease !important; }
+.t-activate-btn:hover { background-color: var(--color-success-light) !important; }
+.t-deactivate-btn { padding: 5px !important; transition: all 0.2s ease !important; }
+.t-deactivate-btn:hover { background-color: var(--color-error-light) !important; }
+
+
+/* ─────────────────────────────────────────────────────────────────
+   7. STATUS CHIPS
+   ───────────────────────────────────────────────────────────────── */
+
+.t-chip-success { background-color: var(--color-success-light) !important; color: var(--color-success-dark) !important; border: 1px solid var(--color-success-border) !important; font-size: 0.75rem !important; font-weight: 600 !important; height: 22px !important; border-radius: 6px !important; }
+.t-chip-error   { background-color: var(--color-error-light) !important; color: var(--color-error-dark) !important; border: 1px solid var(--color-error-border) !important; font-size: 0.75rem !important; font-weight: 600 !important; height: 22px !important; border-radius: 6px !important; }
+.t-chip-warning { background-color: var(--color-warning-bg) !important; color: var(--color-warning-text) !important; border: 1px solid var(--color-warning-border) !important; font-size: 0.75rem !important; font-weight: 600 !important; height: 22px !important; border-radius: 6px !important; }
+.t-chip-info    { background-color: var(--color-info-light) !important; color: var(--color-info-dark) !important; font-size: 0.75rem !important; font-weight: 600 !important; height: 22px !important; border-radius: 6px !important; }
+.t-chip-neutral { background-color: var(--color-grey-150) !important; color: var(--color-grey-600) !important; border: 1px solid var(--color-grey-350) !important; font-size: 0.75rem !important; font-weight: 600 !important; height: 22px !important; border-radius: 6px !important; }
+.t-chip-primary { background-color: var(--color-primary-light) !important; color: var(--color-primary) !important; border: 1px solid var(--color-blue-100) !important; font-size: 0.75rem !important; font-weight: 600 !important; height: 22px !important; border-radius: 6px !important; }
+.t-chip-count   { background-color: var(--color-chip-count-bg) !important; color: var(--color-chip-count-text) !important; font-size: 0.75rem !important; font-weight: 600 !important; height: 22px !important; border-radius: 6px !important; }
+
+
+/* ─────────────────────────────────────────────────────────────────
+   8. INPUT FIELD
+   ───────────────────────────────────────────────────────────────── */
+
+.t-field .MuiOutlinedInput-root { height: 40px; border-radius: 8px; transition: all 0.2s ease; }
+.t-field .MuiOutlinedInput-notchedOutline { border-color: var(--color-input-border); }
+.t-field .MuiOutlinedInput-root:hover .MuiOutlinedInput-notchedOutline { border-color: var(--color-input-border-hover); }
+.t-field .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline { border-color: var(--color-input-border-focus); border-width: 1px; }
+.t-field .MuiOutlinedInput-root.Mui-focused { box-shadow: 0 0 0 2px var(--opacity-primary-light); }
+.t-field .MuiInputLabel-root { color: var(--color-grey-550); font-weight: 500; }
+.t-field .MuiInputLabel-root.Mui-focused { color: var(--color-input-border-focus); }
+
+
+/* ─────────────────────────────────────────────────────────────────
+   9. LOADING STATE
+   ───────────────────────────────────────────────────────────────── */
+
+.t-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 64px 0;
+}
+.t-loading-text { font-size: 0.9375rem !important; color: var(--color-text-secondary) !important; }
+
+
+/* ─────────────────────────────────────────────────────────────────
+   10. SECTION HEADER
+   ───────────────────────────────────────────────────────────────── */
+
+.t-section-header { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+.t-section-rule { flex: 1; height: 1px; background-color: var(--color-inactive-border); }
+
+
+/* ─────────────────────────────────────────────────────────────────
+   11. MODE TOGGLE
+   ───────────────────────────────────────────────────────────────── */
+
+.t-mode-toggle { display: flex; background-color: var(--color-mode-toggle-bg); border-radius: 8px; padding: 3px; gap: 4px; }
+.t-mode-tab { padding: 6px 14px; border: none; border-radius: 6px; font-size: 0.875rem; font-weight: 500; cursor: pointer; background: transparent; color: var(--color-text-secondary); transition: all 0.18s ease; white-space: nowrap; }
+.t-mode-tab:hover { color: var(--color-grey-550); }
+.t-mode-tab--active { background-color: var(--color-surface); color: var(--color-primary); box-shadow: 0 1px 4px var(--opacity-shadow-generic-light); }
+
+
+/* ─────────────────────────────────────────────────────────────────
+   12. FORM FOOTER
+   ───────────────────────────────────────────────────────────────── */
+
+.t-form-footer {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 12px;
+  margin-top: 24px;
+  padding-bottom: 16px;
+  flex-shrink: 0;
+}
+
+
+/* ─────────────────────────────────────────────────────────────────
+   13. FORM FIELDS GRID
+   ───────────────────────────────────────────────────────────────── */
+
+.t-fields-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+.t-fields-grid--full { grid-column: 1 / -1; }
+
+.t-form-container {
+  max-width: 1000px;
+  width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+
+/* ─────────────────────────────────────────────────────────────────
+   14. INFO GRID
+   ───────────────────────────────────────────────────────────────── */
+
+.t-info-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  column-gap: 32px;
+  row-gap: 16px;
+}
+.t-info-field { display: flex; flex-direction: column; gap: 4px; }
+.t-info-label {
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  color: var(--color-text-disabled) !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.08em !important;
+}
+.t-info-value {
+  font-size: 0.9375rem !important;
+  font-weight: 600 !important;
+  color: var(--color-text-primary) !important;
+}
+
+
+/* ─────────────────────────────────────────────────────────────────
+   15. SUMMARY STRIP
+   ───────────────────────────────────────────────────────────────── */
+
+.t-summary-strip {
+  display: flex;
+  align-items: center;
+  padding: 16px 20px;
+  background-color: var(--color-bg-secondary);
+  border-radius: 10px;
+  border: 1px solid var(--color-border-light);
+}
+.t-summary-item { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.t-summary-divider { width: 1px; height: 36px; background-color: var(--color-border-table); }
+.t-summary-count { font-size: 1.5rem !important; font-weight: 700 !important; color: var(--color-text-primary) !important; line-height: 1 !important; }
+.t-summary-count--primary  { color: var(--color-primary) !important; }
+.t-summary-count--success  { color: var(--color-success-dark) !important; }
+.t-summary-count--error    { color: var(--color-error-dark) !important; }
+.t-summary-count--warning  { color: var(--color-warning) !important; }
+.t-summary-count--muted    { color: var(--color-text-secondary) !important; }
+.t-summary-label { font-size: 0.75rem !important; color: var(--color-text-secondary) !important; font-weight: 500 !important; }
+
+
+/* ─────────────────────────────────────────────────────────────────
+   16. SKILL / TAG CHIPS
+   ───────────────────────────────────────────────────────────────── */
+
+.t-skill-chip {
+  background-color: var(--color-primary-light) !important;
+  color: var(--color-primary) !important;
+  font-size: 0.72rem !important;
+  font-weight: 500 !important;
+  height: 20px !important;
+  border-radius: 4px !important;
+}
+
+.t-autocomplete-chip {
+  background-color: var(--color-icon-bg) !important;
+  color: var(--color-primary) !important;
+  font-size: 0.75rem !important;
+  font-weight: 500 !important;
+  height: 26px !important;
+  border-radius: 6px !important;
+  margin: 2px !important;
+}
+
+
+/* ─────────────────────────────────────────────────────────────────
+   17. DIALOG BUTTONS
+   ───────────────────────────────────────────────────────────────── */
+
+.t-dialog-cancel-btn {
+  text-transform: none !important;
+  font-size: 0.875rem !important;
+  font-weight: 500 !important;
+  border-radius: 8px !important;
+  color: var(--color-text-secondary) !important;
+  border-color: var(--color-border) !important;
+}
+.t-dialog-confirm-btn {
+  text-transform: none !important;
+  font-size: 0.875rem !important;
+  font-weight: 600 !important;
+  border-radius: 8px !important;
+  background-color: var(--color-primary) !important;
+  color: var(--color-white) !important;
+}
+.t-dialog-confirm-btn:hover { background-color: var(--color-primary-dark) !important; }
+.t-dialog-danger-btn {
+  text-transform: none !important;
+  font-size: 0.875rem !important;
+  font-weight: 600 !important;
+  border-radius: 8px !important;
+  background-color: var(--color-error-darker) !important;
+  color: var(--color-white) !important;
+}
+.t-dialog-danger-btn:hover { background-color: var(--color-error-dark) !important; }
+
+
+/* ─────────────────────────────────────────────────────────────────
+   18. BULK UPLOAD — DROPZONE
+   ───────────────────────────────────────────────────────────────── */
+
+.t-dropzone {
+  border: 2px dashed var(--color-dropzone-border);
+  border-radius: 12px;
+  background-color: var(--color-dropzone-bg);
+  padding: 32px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: center;
+}
+.t-dropzone:hover { border-color: var(--color-primary); background-color: var(--color-dropzone-hover-bg); }
+.t-dropzone--dragging { border-color: var(--color-primary); background-color: var(--color-dropzone-drag-bg); transform: scale(1.005); }
+.t-dropzone-icon { font-size: 40px !important; color: var(--color-primary) !important; margin-bottom: 12px; }
+.t-dropzone-title { font-size: 0.95rem !important; font-weight: 600 !important; color: var(--color-text-primary) !important; margin-bottom: 6px !important; }
+.t-dropzone-sub { font-size: 0.85rem !important; color: var(--color-text-secondary) !important; margin-bottom: 16px !important; }
+
+
+/* ─────────────────────────────────────────────────────────────────
+   19. BULK UPLOAD — PREVIEW ROW STATES
+   ───────────────────────────────────────────────────────────────── */
+
+.t-preview-row--ok        { background-color: var(--color-surface); }
+.t-preview-row--ok:hover  { background-color: var(--color-surface-alt); }
+.t-preview-row--error     { background-color: var(--color-error-row-bg); border-left: 3px solid var(--color-error-delete); }
+.t-preview-row--duplicate { background-color: var(--color-warning-bg); border-left: 3px solid var(--color-warning); }
+
+.t-preview-ok-icon  { font-size: 15px !important; color: var(--color-success-icon) !important; }
+.t-preview-ok-text  { font-size: 0.8125rem !important; color: var(--color-success-dark) !important; font-weight: 500 !important; }
+.t-preview-err-icon { font-size: 14px !important; color: var(--color-error-delete) !important; flex-shrink: 0; }
+.t-preview-err-text { font-size: 0.78rem !important; color: var(--color-error-dark) !important; line-height: 1.4 !important; }

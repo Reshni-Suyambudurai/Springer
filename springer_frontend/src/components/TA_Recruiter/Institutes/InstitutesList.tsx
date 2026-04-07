@@ -31,7 +31,7 @@ import {
   FormControlLabel,
   Checkbox,
   FormGroup,
-  Tooltip,
+ 
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import MenuIcon from "@mui/icons-material/Menu";
@@ -319,7 +319,7 @@ const InstitutesList: React.FC = () => {
 
   if (loading) {
     return (
-      <Box className="institutes-loading">
+      <Box className="t-loading">
         <CircularProgress />
         <Typography>Loading institutes...</Typography>
       </Box>
@@ -333,7 +333,7 @@ const InstitutesList: React.FC = () => {
         {sidebarOpen && (
           <Box className="institutes-sidebar">
             <Box className="institutes-sidebar-header">
-              <Typography variant="h6" className="institutes-sidebar-title">
+              <Typography variant="h6" className="t-row-primary">
                 Filters
               </Typography>
               <IconButton
@@ -408,7 +408,7 @@ const InstitutesList: React.FC = () => {
               {/* Cities Checkboxes - Show only when state is selected */}
               {filters.state && citiesForSelectedState.length > 0 && (
                 <Box className="institutes-sidebar-cities">
-                  <Typography variant="subtitle2" className="institutes-sidebar-cities-label">
+                  <Typography variant="subtitle2" className="t-section-label">
                     Cities in {filters.state}
                   </Typography>
                   <FormGroup className="institutes-sidebar-cities-group">
@@ -433,7 +433,7 @@ const InstitutesList: React.FC = () => {
               {/* Programs Checkboxes */}
               {uniquePrograms.length > 0 && (
                 <Box className="institutes-sidebar-cities">
-                  <Typography variant="subtitle2" className="institutes-sidebar-cities-label">
+                  <Typography variant="subtitle2" className="t-section-label">
                     Programs
                   </Typography>
                   <FormGroup className="institutes-sidebar-cities-group">
@@ -496,30 +496,31 @@ const InstitutesList: React.FC = () => {
         <Box className={`institutes-content ${sidebarOpen ? 'sidebar-open' : ''}`}>
           {/* Header */}
           <Card className="institutes-header">
-            <IconButton
-              onClick={() => toggleSidebar(!sidebarOpen)}
-              className="institutes-hamburger-btn"
-            >
-              <MenuIcon />
-            </IconButton>
-            
-            <Box className="institutes-header-center">
-              <Box className="institutes-header-text">
-                <Typography variant="h4" className="institutes-title">
-                  Institutes Management
-                </Typography>
-                <Typography variant="body2" className="institutes-subtitle">
-                  Manage and view all registered institutes
-                </Typography>
-              </Box>
+            <Box className="institutes-header-left">
+              <IconButton
+                onClick={() => toggleSidebar(!sidebarOpen)}
+                className="institutes-hamburger-btn"
+                size="small"
+              >
+                <MenuIcon />
+              </IconButton>
+
+              <Typography variant="h4" className="t-page-title">
+                Institutes Management
+              </Typography>
+              <Typography variant="body2" className="t-page-subtitle" sx={{ mb: 0 }}>
+                — Manage and view all registered institutes
+              </Typography>
             </Box>
 
-            <IconButton
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
               onClick={handleAddInstitute}
-              className="add-institute-icon-btn"
+              className="t-btn-primary"
             >
-              <AddIcon />
-            </IconButton>
+              Add Institute
+            </Button>
           </Card>
 
           {/* Table */}
@@ -540,11 +541,11 @@ const InstitutesList: React.FC = () => {
               <Table>
                 <TableHead>
                   <TableRow>
-                    <TableCell className="table-header">Institute</TableCell>
-                    <TableCell className="table-header">Tier</TableCell>
-                    <TableCell className="table-header">Location</TableCell>
-                    <TableCell className="table-header">Status</TableCell>
-                    <TableCell className="table-header" align="center">
+                    <TableCell className="t-head-cell">Institute</TableCell>
+                    <TableCell className="t-head-cell">Tier</TableCell>
+                    <TableCell className="t-head-cell">Location</TableCell>
+                    <TableCell className="t-head-cell">Status</TableCell>
+                    <TableCell className="t-head-cell" align="center">
                       Actions
                     </TableCell>
                   </TableRow>
@@ -557,24 +558,16 @@ const InstitutesList: React.FC = () => {
                       onClick={() => handleInstituteClick(institute.instituteId)}
                     >
                       <TableCell>
-                        <Tooltip
-                          title={institute.instituteName}
-                          placement="top-start"
-                          arrow
-                          slotProps={{
-                            tooltip: { className: 'g-tooltip' },
-                            arrow: { className: 'g-tooltip-arrow' },
-                          }}
-                        >
                           <Box className="institute-name-cell">
-                            <SchoolIcon className="institute-table-icon" />
-                            <Box>
-                              <Typography className="institute-table-name">
+                              <Box className="institute-icon-box">
+                                <SchoolIcon className="institute-table-icon" />
+                              </Box>
+                              <Box>
+                              <Typography className="t-row-primary">
                                 {institute.instituteName}
                               </Typography>
                             </Box>
                           </Box>
-                        </Tooltip>
                       </TableCell>
                       <TableCell>
                         <Typography
@@ -606,7 +599,7 @@ const InstitutesList: React.FC = () => {
                         <Box className="action-buttons">
                           <IconButton
                             size="small"
-                            className="action-btn edit-action-btn"
+                            className="t-action-btn"
                             onClick={(e) => {
                               e.stopPropagation();
                               handleEditClick(institute);
@@ -617,7 +610,7 @@ const InstitutesList: React.FC = () => {
                           </IconButton>
                           <IconButton
                             size="small"
-                            className="action-btn invite-action-btn"
+                            className="t-action-btn"
                             onClick={(e) => {
                               e.stopPropagation();
                               handleInvite(institute.instituteId, institute.instituteName);
@@ -684,8 +677,9 @@ const InstitutesList: React.FC = () => {
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setEditDialog(false)}>Cancel</Button>
-          <Button onClick={handleEditSave} variant="contained">Save</Button>
+          <Button variant="outlined" onClick={() => setEditDialog(false)} className="t-dialog-cancel-btn">Cancel</Button>
+          <Button onClick={handleEditSave} variant="contained" className="t-dialog-confirm-btn"
+            sx={{ backgroundColor: 'var(--color-primary)', '&:hover': { backgroundColor: 'var(--color-primary-dark)' } }}>Save</Button>
         </DialogActions>
       </Dialog>
     </Box>

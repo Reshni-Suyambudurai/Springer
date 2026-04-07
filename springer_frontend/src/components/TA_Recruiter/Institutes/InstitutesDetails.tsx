@@ -32,7 +32,7 @@ import {
   FormControl,
   InputLabel,
 } from "@mui/material";
-import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import BackButton from "../../Common/BackButton";
 import SchoolIcon from "@mui/icons-material/School";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
 import EmailIcon from "@mui/icons-material/Email";
@@ -244,7 +244,7 @@ const InstitutesDetails: React.FC = () => {
 
   if (loading) {
     return (
-      <Box className="details-loading">
+      <Box className="t-loading">
         <CircularProgress />
       </Box>
     );
@@ -261,14 +261,15 @@ const InstitutesDetails: React.FC = () => {
   return (
     <Box className="institute-details-page">
       {/* Back Button */}
-      <IconButton onClick={() => navigate("/ta-recruiter/institutes")} className="details-back-btn">
-        <ArrowBackIcon />
-      </IconButton>
+      <Box className="details-back-row">
+        <BackButton onClick={() => navigate("/ta-recruiter/institutes")} variant="header" />
+        <Typography className="t-page-title">Institute Details</Typography>
+      </Box>
 
       {/* Top Section: Institute Info (Left) & Programs (Right) */}
       <Box className="details-top-section">
         {/* Left: Institute Information Card */}
-        <Card className="details-info-card">
+        <Card className="details-info-card" elevation={0}>
           <CardContent>
             <Box className="details-info-header">
               <SchoolIcon className="details-info-icon" />
@@ -281,7 +282,7 @@ const InstitutesDetails: React.FC = () => {
                   <Chip 
                     label={data.isActive ? "Active" : "Inactive"} 
                     size="small" 
-                    className={data.isActive ? "status-chip-active" : "status-chip-inactive"}
+                    className={data.isActive ? "t-chip-success" : "t-chip-error"}
                   />
                 </Box>
                 <Box className="details-location">
@@ -296,7 +297,7 @@ const InstitutesDetails: React.FC = () => {
         </Card>
 
         {/* Right: Programs Card */}
-        <Card className="details-programs-card">
+        <Card className="details-programs-card" elevation={0}>
           <CardContent>
             <Box className="details-programs-header">
               <Typography variant="h6" className="details-section-title">
@@ -306,7 +307,7 @@ const InstitutesDetails: React.FC = () => {
                 variant="contained" 
                 startIcon={<AddIcon />}
                 onClick={handleOpenAddProgram}
-                className="details-add-btn"
+                className="t-btn-primary"
                 size="small"
               >
                 Add Program
@@ -337,9 +338,9 @@ const InstitutesDetails: React.FC = () => {
         </Card>
       </Box>
 
-      {/* Bottom Section: TPO Contacts (Centered) */}
-      <Box className="details-tpo-section">
-        <Card className="details-tpo-card">
+      {/* Bottom Section: TPO Contacts */}
+      <Box>
+        <Card className="details-tpo-card" elevation={0}>
           <CardContent>
             <Box className="details-tpo-header">
               <Typography variant="h6" className="details-section-title">
@@ -349,7 +350,7 @@ const InstitutesDetails: React.FC = () => {
                 variant="contained" 
                 startIcon={<AddIcon />}
                 onClick={handleOpenAddTPO}
-                className="details-add-btn"
+                className="t-btn-primary"
               >
                 Add TPO
               </Button>
@@ -362,13 +363,13 @@ const InstitutesDetails: React.FC = () => {
                 <Table>
                   <TableHead>
                     <TableRow>
-                      <TableCell className="details-table-header">Name</TableCell>
-                      <TableCell className="details-table-header">Email</TableCell>
-                      <TableCell className="details-table-header">Mobile</TableCell>
-                      <TableCell className="details-table-header">Designation</TableCell>
-                      <TableCell className="details-table-header">Status</TableCell>
-                      <TableCell className="details-table-header">Primary</TableCell>
-                      <TableCell className="details-table-header" align="center">Actions</TableCell>
+                      <TableCell className="t-head-cell">Name</TableCell>
+                      <TableCell className="t-head-cell">Email</TableCell>
+                      <TableCell className="t-head-cell">Mobile</TableCell>
+                      <TableCell className="t-head-cell">Designation</TableCell>
+                      <TableCell className="t-head-cell">Status</TableCell>
+                      <TableCell className="t-head-cell">Primary</TableCell>
+                      <TableCell className="t-head-cell" align="center">Actions</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
@@ -392,7 +393,7 @@ const InstitutesDetails: React.FC = () => {
                           <Chip 
                             label={tpo.tpoStatus} 
                             size="small" 
-                            className={tpo.tpoStatus === "ACTIVE" ? "status-chip-active" : "status-chip-inactive"}
+                            className={tpo.tpoStatus === "ACTIVE" ? "t-chip-success" : "t-chip-error"}
                             onClick={() => handleToggleStatus(tpo.tpoId, tpo.tpoStatus)}
                           />
                         </TableCell>
@@ -405,7 +406,7 @@ const InstitutesDetails: React.FC = () => {
                           <IconButton
                             size="small"
                             onClick={() => handleEditClick(tpo)}
-                            className="details-edit-btn"
+                            className="t-action-btn"
                           >
                             <EditIcon fontSize="small" />
                           </IconButton>
@@ -440,8 +441,8 @@ const InstitutesDetails: React.FC = () => {
           </FormControl>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setAddProgramDialog(false)}>Cancel</Button>
-          <Button onClick={handleAddProgram} variant="contained" disabled={!selectedProgramId}>
+          <Button variant="outlined" onClick={() => setAddProgramDialog(false)} className="t-dialog-cancel-btn">Cancel</Button>
+          <Button onClick={handleAddProgram} variant="contained" className="t-dialog-confirm-btn" disabled={!selectedProgramId}>
             Add
           </Button>
         </DialogActions>
@@ -489,8 +490,8 @@ const InstitutesDetails: React.FC = () => {
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setAddTPODialog(false)}>Cancel</Button>
-          <Button onClick={handleAddTPO} variant="contained">Add</Button>
+          <Button variant="outlined" onClick={() => setAddTPODialog(false)} className="t-dialog-cancel-btn">Cancel</Button>
+          <Button onClick={handleAddTPO} variant="contained" className="t-dialog-confirm-btn">Add</Button>
         </DialogActions>
       </Dialog>
 
@@ -536,8 +537,8 @@ const InstitutesDetails: React.FC = () => {
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setEditTPODialog(false)}>Cancel</Button>
-          <Button onClick={handleEditSave} variant="contained">Save</Button>
+          <Button variant="outlined" onClick={() => setEditTPODialog(false)} className="t-dialog-cancel-btn">Cancel</Button>
+          <Button onClick={handleEditSave} variant="contained" className="t-dialog-confirm-btn">Save</Button>
         </DialogActions>
       </Dialog>
     </Box>
