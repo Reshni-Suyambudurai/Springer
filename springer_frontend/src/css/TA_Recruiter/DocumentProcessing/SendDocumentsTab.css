@@ -192,6 +192,25 @@
 .sdt-stage-chip--offered   { color: var(--color-warning-text) !important; border-color: var(--color-warning) !important; }
 .sdt-stage-chip--joined    { color: var(--color-success-dark) !important; border-color: var(--color-success-border) !important; }
 
+/* ── Docs Submission Chips ── */
+.sdt-docs-chip {
+  font-size: var(--text-xs) !important;
+  font-weight: 600 !important;
+  border-radius: 6px !important;
+}
+
+.sdt-docs-chip--full {
+  color: var(--color-success-dark) !important;
+  background-color: var(--color-success-light) !important;
+  border: 1px solid var(--color-success-border) !important;
+}
+
+.sdt-docs-chip--partial {
+  color: var(--color-warning-text) !important;
+  background-color: var(--color-warning-bg) !important;
+  border: 1px solid var(--color-warning-border) !important;
+}
+
 /* ── Resend Button ── */
 .sdt-resend-btn {
   text-transform: none !important;

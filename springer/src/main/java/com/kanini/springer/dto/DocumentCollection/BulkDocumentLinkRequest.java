@@ -6,6 +6,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Data
@@ -21,4 +22,7 @@ public class BulkDocumentLinkRequest {
 
     @NotEmpty(message = "Document type IDs cannot be empty")
     private List<Long> documentTypeIds;
+
+    // Optional exact deadline configured by user. If omitted, system defaults to 7 days.
+    private LocalDateTime submissionDeadline;
 }

@@ -17,9 +17,9 @@
 }
 
 .acd-header-inner {
-  padding: 20px 28px 0 28px;
+  padding: 14px 28px 0 28px;
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
 }
 
@@ -130,5 +130,15 @@
   color: var(--color-text-secondary) !important;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+
+.acd-program-count {
+  font-size: var(--text-xs) !important;
+  font-weight: 600 !important;
+  color: var(--color-primary) !important;
+  background-color: var(--color-primary-light) !important;
+  padding: 3px 10px;
+  border-radius: 12px;
   white-space: nowrap;
 }

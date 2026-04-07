@@ -50,6 +50,25 @@ public class TokenServiceImpl implements ITokenService {
     }
 
     @Override
+    public String generateToken(Long candidateId, Long cycleId, String purpose, LocalDateTime expiryDate, String candidateEmail) {
+        try {
+            Date tokenExpiryDate = java.sql.Timestamp.valueOf(expiryDate);
+            return Jwts.builder()
+                .subject("candidate_submission_" + candidateId)
+                .claim("candidateId", candidateId)
+                .claim("cycleId", cycleId)
+                .claim("purpose", purpose)
+                .claim("candidateEmail", candidateEmail)
+                .issuedAt(new Date())
+                .expiration(tokenExpiryDate)
+                .signWith(getSigningKey())
+                .compact();
+        } catch (Exception e) {
+            throw new ValidationException("Failed to generate JWT token: " + e.getMessage());
+        }
+    }
+
+    @Override
     public String generateResubmitToken(Long candidateId, Long cycleId, Long documentTypeId, String rejectionReason) {
         try {
             Date expiryDate = java.sql.Timestamp.valueOf(LocalDateTime.now().plusDays(defaultExpiryDays));

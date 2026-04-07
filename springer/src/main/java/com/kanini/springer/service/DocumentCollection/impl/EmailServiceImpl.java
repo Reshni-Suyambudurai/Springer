@@ -47,9 +47,15 @@ public class EmailServiceImpl implements IEmailService {
                     .orElseThrow(() -> new RuntimeException("Email template DOCUMENT_SUBMISSION_LINK not found in DB"));
             log.info("✅ Template found: {}", template.getTemplateName());
 
+            // Deduplicate documents by type (in case same document appears multiple times)
+            java.util.Set<String> seenDocTypes = new java.util.HashSet<>();
             StringBuilder docListHtml = new StringBuilder();
             for (RequiredDocumentDTO doc : requiredDocuments) {
-                docListHtml.append("<li>").append(formatDocumentName(doc.getDocumentType())).append("</li>");
+                String docTypeName = formatDocumentName(doc.getDocumentType());
+                if (!seenDocTypes.contains(docTypeName)) {
+                    docListHtml.append("<li>").append(docTypeName).append("</li>");
+                    seenDocTypes.add(docTypeName);
+                }
             }
 
             String body = template.getBody()

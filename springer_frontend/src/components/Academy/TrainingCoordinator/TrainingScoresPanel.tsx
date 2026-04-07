@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import * as XLSX from 'xlsx';
 import {
   Box, Card, TextField, Button, Typography, Stack,
   Table, TableBody, TableCell, TableContainer, TableHead,
@@ -7,13 +8,13 @@ import {
 } from '@mui/material';
 import {
   Add as AddIcon, MenuBook as MenuBookIcon,
-  Save as SaveIcon,
+  Save as SaveIcon, Upload as UploadIcon, Download as DownloadIcon,
 } from '@mui/icons-material';
 import {
   trainingScoreApi, trainingCourseApi,
   batchAllocationApi, batchCourseApi, trainingProgramApi,
+  excelUploadApi,
 } from '../../../services/academy.api';
-import { hiringCycleApi } from '../../../services/hiring.api';
 import { showToast } from '../../../utils/toast';
 import { tokenstore } from '../../../auth/tokenstore';
 import FilterSelect from '../../Common/FilterSelect';
@@ -22,7 +23,6 @@ import type {
   TrainingCourseResponse, BatchAllocationResponse,
   BatchCourseResponse, AcademyContextProps, TrainingProgramResponse,
 } from '../../../types/Academy/academy.types';
-import type { HiringCycleResponse } from '../../../types/TA_Recruiter/Hiring/hiringCycle.types';
 import '../../../css/Academy/TrainingCoordinator/TrainingScoresPanel.css';
 
 const STATUS_CLASS: Record<string, string> = {
@@ -33,7 +33,7 @@ const STATUS_CLASS: Record<string, string> = {
 };
 
 const TrainingScoresPanel = ({ context, readOnly = false }: { context: AcademyContextProps; readOnly?: boolean }) => {
-  const { programs: yearPrograms } = context;
+  const { programYear, programs: yearPrograms, cycles: ctxCycles = [] } = context;
   const loggedInUser = tokenstore.getUser();
   const userRole = loggedInUser?.roleName?.toUpperCase() ?? '';
   const isTrainer = userRole === 'TRAINING_COORDINATOR' || userRole === 'MEMBERS';
@@ -44,12 +44,10 @@ const TrainingScoresPanel = ({ context, readOnly = false }: { context: AcademyCo
   const [batchCourses, setBatchCourses] = useState<BatchCourseResponse[]>([]);
   const [allocations, setAllocations]   = useState<BatchAllocationResponse[]>([]);
   const [scores, setScores]             = useState<TrainingScoreResponse[]>([]);
-  const [cycles, setCycles]             = useState<HiringCycleResponse[]>([]);
   const [allPrograms, setAllPrograms]   = useState<TrainingProgramResponse[]>([]);
   const [loading, setLoading]           = useState(true);
 
   // ── View filters ──
-  const [filterCycleId, setFilterCycleId]     = useState(0);
   const [filterProgramId, setFilterProgramId] = useState(0);
   const [filterBatchNo, setFilterBatchNo]     = useState(0);
   const [filterCourseId, setFilterCourseId]   = useState(0);
@@ -61,30 +59,32 @@ const TrainingScoresPanel = ({ context, readOnly = false }: { context: AcademyCo
   const [dlgProgramId, setDlgProgramId] = useState(0);
   const [dlgBatchNo, setDlgBatchNo]     = useState(0);
   const [dlgCourseId, setDlgCourseId]   = useState(0);
-  // scoreMap: studentId -> { score, review }
   const [scoreMap, setScoreMap]         = useState<Record<number, { score: string; review: string }>>({});
   const [saving, setSaving]             = useState(false);
 
+  // ── Upload state ──
+  const [uploading, setUploading]       = useState(false);
+  const uploadRef                       = useRef<HTMLInputElement>(null);
+
   useEffect(() => {
     fetchBase();
+    setFilterProgramId(0); setFilterBatchNo(0); setFilterCourseId(0); setPage(0);
   }, [yearPrograms]);
 
   const fetchBase = async () => {
     try {
       setLoading(true);
-      const [crsRes, bcRes, allocRes, scRes, cycleRes, progRes] = await Promise.all([
+      const [crsRes, bcRes, allocRes, scRes, progRes] = await Promise.all([
         trainingCourseApi.getAllCourses(),
         batchCourseApi.getAllBatchCourses(),
         batchAllocationApi.getAllAllocations(),
         trainingScoreApi.getAllScores(),
-        hiringCycleApi.getAllCycles(),
         trainingProgramApi.getAllPrograms(),
       ]);
       if (crsRes.success && crsRes.data)    setAllCourses(crsRes.data);
       if (bcRes.success && bcRes.data)      setBatchCourses(bcRes.data);
       if (allocRes.success && allocRes.data) setAllocations(allocRes.data);
       if (scRes.success && scRes.data)      setScores(scRes.data);
-      if (cycleRes.success && cycleRes.data) setCycles(cycleRes.data);
       if (progRes.success && progRes.data)  setAllPrograms(progRes.data);
     } catch (err: any) {
       showToast(err.message || 'Failed to load data', 'error');
@@ -98,52 +98,44 @@ const TrainingScoresPanel = ({ context, readOnly = false }: { context: AcademyCo
     if (res.success && res.data) setScores(res.data);
   };
 
-  // ── Auto-select current year defaults after data loads ──
+  // ── Auto-select based on global programYear ──
   useEffect(() => {
-    if (loading || allPrograms.length === 0 || cycles.length === 0) return;
+    if (loading || allPrograms.length === 0) return;
+    if (filterProgramId !== 0) return; // don't override if user already selected
 
-    const currentYear = new Date().getFullYear();
-
-    // Pick cycle for current year (prefer OPEN)
-    const yearCycle = cycles.find(c => c.cycleYear === currentYear && c.status === 'OPEN')
-      ?? cycles.find(c => c.cycleYear === currentYear)
-      ?? cycles[0];
-    if (!yearCycle || filterCycleId !== 0) return; // don't override if user already selected
-
-    setFilterCycleId(yearCycle.cycleId);
+    // Find cycle matching programYear from context
+    const matchedCycle = programYear !== 0
+      ? ctxCycles.find(c => c.cycleYear === programYear)
+      : ctxCycles.find(c => c.status === 'OPEN') ?? ctxCycles[0];
+    if (!matchedCycle) return;
 
     // Pick first active program in that cycle
-    const prog = allPrograms.find(p => p.cycleId === yearCycle.cycleId && p.status === true)
-      ?? allPrograms.find(p => p.cycleId === yearCycle.cycleId);
+    const prog = allPrograms.find(p => p.cycleId === matchedCycle.cycleId && p.status === true)
+      ?? allPrograms.find(p => p.cycleId === matchedCycle.cycleId);
     if (!prog) return;
     setFilterProgramId(prog.programId);
 
-    // Pick batch 1
     if (prog.numberOfBatches >= 1) {
       setFilterBatchNo(1);
-
-      // Pick first linked course for this program + batch 1
       const linkedBC = batchCourses.find(bc => bc.programId === prog.programId && bc.batchNo === 1);
       if (linkedBC) {
         const course = allCourses.find(c => c.courseId === linkedBC.courseId);
         if (course) setFilterCourseId(course.courseId);
       }
     }
-  }, [loading, allPrograms, cycles, batchCourses, allCourses]);
+  }, [loading, allPrograms, programYear, ctxCycles, batchCourses, allCourses]);
 
   // ── View filter derived ──
 
-  // Programs filtered by selected cycle (for view filter) — uses ALL programs
-  const programsForCycle = allPrograms.filter(p =>
-    filterCycleId === 0 || p.cycleId === filterCycleId
-  );
+  // Programs scoped to global programYear — uses yearPrograms from context
+  const programsForCycle = programYear === 0 ? allPrograms : yearPrograms;
 
   // Batch numbers for selected program (view)
   const batchesForProgram = filterProgramId
     ? Array.from({ length: allPrograms.find(p => p.programId === filterProgramId)?.numberOfBatches ?? 0 }, (_, i) => i + 1)
     : [];
 
-  // Courses linked to selected program+batch (view)
+  // Courses linked to selected program+batch (view) — all statuses visible
   const coursesForBatch = (filterProgramId && filterBatchNo)
     ? batchCourses
         .filter(bc => bc.programId === filterProgramId && bc.batchNo === filterBatchNo)
@@ -175,14 +167,16 @@ const TrainingScoresPanel = ({ context, readOnly = false }: { context: AcademyCo
     ? Array.from({ length: allPrograms.find(p => p.programId === dlgProgramId)?.numberOfBatches ?? 0 }, (_, i) => i + 1)
     : [];
 
-  // ACTIVE courses linked to selected program+batch in dialog (trainer sees only their own)
+  // All courses linked to selected program+batch in dialog (trainer sees only their own)
   const dlgCourses = (dlgProgramId && dlgBatchNo)
     ? batchCourses
-        .filter(bc => bc.programId === dlgProgramId && bc.batchNo === dlgBatchNo)
+        .filter(bc => {
+          if (bc.programId !== dlgProgramId || bc.batchNo !== dlgBatchNo) return false;
+          if (isTrainer && bc.conductedBy !== loggedInUser?.userId) return false;
+          return true;
+        })
         .map(bc => allCourses.find(c => c.courseId === bc.courseId))
         .filter((c): c is TrainingCourseResponse => !!c)
-        .filter(c => c.status === 'ACTIVE')
-        .filter(c => !isTrainer || c.conductedBy === loggedInUser?.userId)
     : [];
 
   // Students for selected program+batch in dialog
@@ -193,6 +187,66 @@ const TrainingScoresPanel = ({ context, readOnly = false }: { context: AcademyCo
   const openDlg = () => {
     setDlgProgramId(0); setDlgBatchNo(0); setDlgCourseId(0); setScoreMap({});
     setDlgOpen(true);
+  };
+
+  const downloadScoreTemplate = () => {
+    if (!filterProgramId || !filterBatchNo || !filterCourseId) {
+      showToast('Select Program, Batch and Course before downloading template', 'error');
+      return;
+    }
+
+    const batchStudents = studentsForView.sort((a, b) => a.candidateName.localeCompare(b.candidateName));
+    if (batchStudents.length === 0) {
+      showToast('No active students found for selected Program and Batch', 'error');
+      return;
+    }
+
+    const rows = batchStudents.map(student => ({
+      'Student ID': student.studentId,
+      'Candidate Name': student.candidateName,
+      'Candidate Email': student.candidateEmail,
+      'Score': '',
+      'Review': '',
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(rows);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Scores');
+    XLSX.writeFile(workbook, `scores_template_program_${filterProgramId}_batch_${filterBatchNo}_course_${filterCourseId}.xlsx`);
+  };
+
+  const handleScoreUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    e.target.value = '';
+    if (!file.name.endsWith('.xlsx')) { showToast('Only .xlsx files are supported', 'error'); return; }
+    if (!filterProgramId || !filterBatchNo || !filterCourseId) {
+      showToast('Select Program, Batch and Course before uploading', 'error'); return;
+    }
+    try {
+      setUploading(true);
+      const res = await excelUploadApi.uploadScores(file, filterProgramId, filterBatchNo, filterCourseId, loggedInUser?.userId ?? 0);
+      if (res.success && res.data) {
+        const d = res.data;
+        if (d.failedCount === 0) {
+          showToast(`✅ ${d.savedCount} score(s) saved successfully`, 'success');
+        } else if (d.savedCount === 0) {
+          showToast(`❌ Upload failed — ${d.failedCount} error(s). Check details below.`, 'error');
+        } else {
+          showToast(`⚠ ${d.savedCount} saved, ${d.failedCount} failed — check details below`, 'error');
+        }
+        if (d.errors.length > 0) {
+          // Show first 3 errors as individual toasts so user sees them
+          d.errors.slice(0, 3).forEach(err => showToast(err, 'error'));
+          if (d.errors.length > 3) showToast(`...and ${d.errors.length - 3} more errors`, 'error');
+        }
+        await refreshScores();
+      }
+    } catch (err: any) {
+      showToast(err.message || 'Upload failed', 'error');
+    } finally {
+      setUploading(false);
+    }
   };
 
   // When course selected in dialog — pre-fill existing scores
@@ -268,23 +322,12 @@ const TrainingScoresPanel = ({ context, readOnly = false }: { context: AcademyCo
         <Box className="sc-filter-section">
           <Box className="sc-filter-row">
 
-            {/* Hiring Cycle */}
-            <FilterSelect label="Hiring Cycle" value={String(filterCycleId)}
-              onChange={v => {
-                setFilterCycleId(Number(v));
-                setFilterProgramId(0); setFilterBatchNo(0); setFilterCourseId(0); setPage(0);
-              }}>
-              <MenuItem value="0">All Cycles</MenuItem>
-              {cycles.map(c => (
-                <MenuItem key={c.cycleId} value={String(c.cycleId)}>{c.cycleName} ({c.cycleYear})</MenuItem>
-              ))}
-            </FilterSelect>
-
             {/* Program */}
             <FilterSelect label="Program" value={String(filterProgramId)}
               onChange={v => {
                 setFilterProgramId(Number(v));
                 setFilterBatchNo(0); setFilterCourseId(0); setPage(0);
+
               }}>
               <MenuItem value="0">All Programs</MenuItem>
               {programsForCycle.map(p => (
@@ -301,16 +344,55 @@ const TrainingScoresPanel = ({ context, readOnly = false }: { context: AcademyCo
               ))}
             </FilterSelect>
 
-            {/* Course */}
+            {/* Course — selecting course auto-fills Cycle, Program, Batch */}
             <FilterSelect label="Course" value={String(filterCourseId)}
-              onChange={v => { setFilterCourseId(Number(v)); setPage(0); }}>
+              onChange={v => {
+                const courseId = Number(v);
+                setFilterCourseId(courseId);
+                setPage(0);
+                if (!courseId) return;
+                // Auto-fill upward only if batch not already selected
+                if (!filterBatchNo) {
+                  const linkedBCs = batchCourses.filter(bc => bc.courseId === courseId);
+                  if (linkedBCs.length === 0) return;
+                  const bc = linkedBCs[0];
+                  const prog = allPrograms.find(p => p.programId === bc.programId);
+                  if (!prog) return;
+                  setFilterProgramId(prog.programId);
+                  setFilterBatchNo(bc.batchNo);
+                }
+              }}>
               <MenuItem value="0">All Courses</MenuItem>
-              {coursesForBatch.map(c => (
+              {/* Show only batch-linked courses when batch is selected, else show all */}
+              {(filterBatchNo ? coursesForBatch : allCourses).map(c => (
                 <MenuItem key={c.courseId} value={String(c.courseId)}>{c.courseName}</MenuItem>
               ))}
             </FilterSelect>
 
             <Box className="sc-filter-spacer" />
+            {canEdit && (
+              <Button variant="outlined" size="small" startIcon={<DownloadIcon />}
+                onClick={downloadScoreTemplate} className="sc-template-btn">
+                Template
+              </Button>
+            )}
+            {canEdit && (
+              <>
+                <input ref={uploadRef} type="file" accept=".xlsx"
+                  style={{ display: 'none' }} onChange={handleScoreUpload} />
+                <Button variant="outlined" size="small"
+                  startIcon={uploading ? <CircularProgress size={14} /> : <UploadIcon />}
+                  onClick={() => {
+                    if (!filterProgramId || !filterBatchNo || !filterCourseId) {
+                      showToast('Select Program, Batch and Course first', 'error'); return;
+                    }
+                    uploadRef.current?.click();
+                  }}
+                  disabled={uploading} className="sc-upload-btn">
+                  {uploading ? 'Uploading...' : 'Upload Excel'}
+                </Button>
+              </>
+            )}
             {canEdit && (
               <Button variant="contained" startIcon={<AddIcon />} onClick={openDlg} className="sc-add-button">
                 Give Score
@@ -318,11 +400,14 @@ const TrainingScoresPanel = ({ context, readOnly = false }: { context: AcademyCo
             )}
 
             {/* Course info pill */}
-            {selectedCourse && (
-              <Typography className="sc-course-pill">
-                Min Score: {selectedCourse.minScore} · {selectedCourse.status}
-              </Typography>
-            )}
+            {selectedCourse && (() => {
+              const bc = batchCourses.find(b => b.courseId === filterCourseId && b.programId === filterProgramId && b.batchNo === filterBatchNo);
+              return (
+                <Typography className="sc-course-pill">
+                  Min Score: {selectedCourse.minScore}{bc?.status ? ` · ${bc.status}` : ''}
+                </Typography>
+              );
+            })()}
           </Box>
         </Box>
 
@@ -334,7 +419,7 @@ const TrainingScoresPanel = ({ context, readOnly = false }: { context: AcademyCo
             <Box className="sc-empty-state">
               <MenuBookIcon className="sc-empty-icon" />
               <Typography className="sc-empty-text">
-                {!filterProgramId ? 'Select a hiring cycle and program to get started'
+                {!filterProgramId ? 'Select a program to get started'
                   : !filterBatchNo ? 'Now select a batch'
                   : 'Now select a course to view scores'}
               </Typography>
@@ -433,7 +518,7 @@ const TrainingScoresPanel = ({ context, readOnly = false }: { context: AcademyCo
                 className="sc-dialog-field">
                 <MenuItem value="">— Select Course —</MenuItem>
                 {dlgCourses.length === 0 && dlgBatchNo
-                  ? <MenuItem disabled value="">No ACTIVE courses for this batch</MenuItem>
+                  ? <MenuItem disabled value="">No courses linked to this batch yet</MenuItem>
                   : dlgCourses.map(c => (
                     <MenuItem key={c.courseId} value={c.courseId}>{c.courseName}</MenuItem>
                   ))}

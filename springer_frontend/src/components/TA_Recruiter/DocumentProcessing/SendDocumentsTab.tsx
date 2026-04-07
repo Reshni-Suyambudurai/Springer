@@ -21,9 +21,18 @@ import '../../../css/TA_Recruiter/DocumentProcessing/SendDocumentsTab.css';
 const SendDocumentsTab = ({ context }: { context: DocProcessingContextProps }) => {
   const { cycleId, cycleName } = context;
 
+  const getDefaultSubmissionDeadline = () => {
+    const value = new Date();
+    value.setDate(value.getDate() + 7);
+    value.setSeconds(0, 0);
+    const offsetMs = value.getTimezoneOffset() * 60 * 1000;
+    return new Date(value.getTime() - offsetMs).toISOString().slice(0, 16);
+  };
+
   const [docTypes, setDocTypes] = useState<DocumentTypeResponse[]>([]);
   const [candidates, setCandidates] = useState<CandidateResponse[]>([]);
-  const [submissions, setSubmissions] = useState<Record<number, number>>({});
+  const [submissions, setSubmissions] = useState<Record<number, number>>({}); // Count of SUBMITTED documents (COLLECTED/APPROVED/REJECTED)
+  const [linkSent, setLinkSent] = useState<Record<number, boolean>>({}); // Track if link was ever sent (includes PENDING)
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [filterSubmission, setFilterSubmission] = useState('all');
@@ -36,6 +45,7 @@ const SendDocumentsTab = ({ context }: { context: DocProcessingContextProps }) =
   // Send dialog
   const [sendDialog, setSendDialog] = useState(false);
   const [selectedDocTypeIds, setSelectedDocTypeIds] = useState<Set<number>>(new Set());
+  const [submissionDeadline, setSubmissionDeadline] = useState(getDefaultSubmissionDeadline());
 
   useEffect(() => {
     if (cycleId) fetchData();
@@ -43,6 +53,7 @@ const SendDocumentsTab = ({ context }: { context: DocProcessingContextProps }) =
     setSearch('');
     setFilterSubmission('all');
     setPage(0);
+    setSubmissionDeadline(getDefaultSubmissionDeadline());
   }, [cycleId]);
 
   const fetchData = async () => {
@@ -58,14 +69,35 @@ const SendDocumentsTab = ({ context }: { context: DocProcessingContextProps }) =
         setSelectedDocTypeIds(new Set(typeRes.data.map(d => d.documentTypeId)));
       }
       if (candRes.success && candRes.data) {
+        // Show SELECTED, OFFERED and ACCEPTED candidates — all need documents
         setCandidates(candRes.data.filter(c =>
-          c.applicationStage === 'SELECTED'
+          ['SELECTED', 'OFFERED', 'ACCEPTED'].includes(c.applicationStage)
         ));
       }
       if (subRes.success && subRes.data) {
-        const counts: Record<number, number> = {};
-        subRes.data.forEach(s => { counts[s.candidateId] = (counts[s.candidateId] || 0) + 1; });
-        setSubmissions(counts);
+        // Track TWO things:
+        // 1. submissions = count of SUBMITTED documents (COLLECTED/APPROVED/REJECTED) — for status chip
+        // 2. linkSent = whether link was ever sent (ANY status including PENDING) — for resend button
+        const countsActual: Record<number, Set<string>> = {};
+        const linkSentMap: Record<number, boolean> = {};
+        
+        subRes.data.forEach(s => {
+          // Track if ANY submission exists (link was sent)
+          linkSentMap[s.candidateId] = true;
+          
+          // Count only submitted documents
+          if (s.verificationStatus !== 'PENDING') {
+            if (!countsActual[s.candidateId]) countsActual[s.candidateId] = new Set();
+            if (s.documentType) countsActual[s.candidateId].add(s.documentType);
+          }
+        });
+        
+        const uniqueCounts: Record<number, number> = {};
+        Object.entries(countsActual).forEach(([cid, set]) => {
+          uniqueCounts[Number(cid)] = set.size;
+        });
+        setSubmissions(uniqueCounts);
+        setLinkSent(linkSentMap);
       }
     } catch (err: any) {
       showToast(err.message || 'Failed to load data', 'error');
@@ -74,14 +106,23 @@ const SendDocumentsTab = ({ context }: { context: DocProcessingContextProps }) =
     }
   };
 
+  const getSubmissionStatus = (candidateId: number): 'none' | 'partial' | 'full' => {
+    const submitted = submissions[candidateId] || 0;
+    if (submitted === 0) return 'none';
+    if (submitted >= docTypes.length && docTypes.length > 0) return 'full';
+    return 'partial';
+  };
+
   const filtered = candidates.filter(c => {
     const name = `${c.firstName} ${c.lastName}`.toLowerCase();
     const matchSearch = search.trim() === '' || name.includes(search.toLowerCase()) || c.email.toLowerCase().includes(search.toLowerCase());
-    const submitted = (submissions[c.candidateId] || 0) > 0;
+    const status = getSubmissionStatus(c.candidateId);
     const matchSubmission =
-      filterSubmission === 'all' ? true :
-      filterSubmission === 'not-sent' ? !submitted :
-      submitted; // 'sent'
+      filterSubmission === 'all'     ? true :
+      filterSubmission === 'none'    ? status === 'none' :
+      filterSubmission === 'partial' ? status === 'partial' :
+      filterSubmission === 'full'    ? status === 'full' :
+      status !== 'none'; // 'any-submitted'
     return matchSearch && matchSubmission;
   });
 
@@ -110,12 +151,14 @@ const SendDocumentsTab = ({ context }: { context: DocProcessingContextProps }) =
 
   const handleSend = async () => {
     if (selectedDocTypeIds.size === 0) { showToast('Select at least one document type', 'error'); return; }
+    if (!submissionDeadline) { showToast('Select a submission deadline', 'error'); return; }
     try {
       setSending(true);
       const res = await documentLinkApi.sendBulkSubmissionLinks({
         candidateIds: Array.from(selectedCandidateIds),
         cycleId,
         documentTypeIds: Array.from(selectedDocTypeIds),
+        submissionDeadline,
       });
       if (res.success) {
         const results = res.data as Record<string, string>;
@@ -136,7 +179,8 @@ const SendDocumentsTab = ({ context }: { context: DocProcessingContextProps }) =
     e.stopPropagation();
     try {
       setResendingId(candidateId);
-      await documentLinkApi.resendSubmissionLink(candidateId, cycleId);
+      // Pass the currently selected document types to resend only those
+      await documentLinkApi.resendSubmissionLink(candidateId, cycleId, Array.from(selectedDocTypeIds), submissionDeadline || undefined);
       showToast('Link resent successfully', 'success');
     } catch (err: any) {
       showToast(err.message || 'Failed to resend', 'error');
@@ -166,8 +210,10 @@ const SendDocumentsTab = ({ context }: { context: DocProcessingContextProps }) =
             />
             <FilterSelect label="Submission" value={filterSubmission} onChange={v => { setFilterSubmission(v); setPage(0); }}>
               <MenuItem value="all">All Candidates</MenuItem>
-              <MenuItem value="not-sent">Not Yet Submitted</MenuItem>
-              <MenuItem value="sent">Already Submitted</MenuItem>
+              <MenuItem value="none">Not Yet Submitted</MenuItem>
+              <MenuItem value="partial">Partially Submitted</MenuItem>
+              <MenuItem value="full">Fully Submitted</MenuItem>
+              <MenuItem value="any-submitted">Any Submission</MenuItem>
             </FilterSelect>
             <Box className="sdt-filter-spacer" />
             <Typography className="sdt-filter-count">
@@ -277,12 +323,33 @@ const SendDocumentsTab = ({ context }: { context: DocProcessingContextProps }) =
                               />
                             </TableCell>
                             <TableCell className="sdt-table-cell">
-                              <Typography className={submitted > 0 ? 'sdt-row-primary' : 'sdt-row-secondary'}>
-                                {submitted > 0 ? `${submitted} submitted` : 'Not submitted'}
-                              </Typography>
+                              {(() => {
+                                const st = getSubmissionStatus(c.candidateId);
+                                if (st === 'full') {
+                                  return (
+                                    <Chip
+                                      label={`All submitted (${submitted}/${docTypes.length})`}
+                                      size="small"
+                                      className="sdt-docs-chip sdt-docs-chip--full"
+                                    />
+                                  );
+                                }
+                                if (st === 'partial') {
+                                  return (
+                                    <Chip
+                                      label={`${submitted}/${docTypes.length} submitted`}
+                                      size="small"
+                                      className="sdt-docs-chip sdt-docs-chip--partial"
+                                    />
+                                  );
+                                }
+                                return (
+                                  <Typography className="sdt-row-secondary">Not submitted</Typography>
+                                );
+                              })()}
                             </TableCell>
                             <TableCell className="sdt-table-cell sdt-table-cell--actions" onClick={e => e.stopPropagation()}>
-                              {submitted > 0 && (
+                              {linkSent[c.candidateId] && (
                                 <Button
                                   size="small"
                                   variant="outlined"
@@ -346,6 +413,20 @@ const SendDocumentsTab = ({ context }: { context: DocProcessingContextProps }) =
                 </Box>
               ))
             )}
+            <TextField
+              label="Submission Deadline *"
+              type="datetime-local"
+              size="small"
+              fullWidth
+              value={submissionDeadline}
+              onChange={e => setSubmissionDeadline(e.target.value)}
+              InputLabelProps={{ shrink: true }}
+              inputProps={{ min: getDefaultSubmissionDeadline() }}
+              className="sdt-deadline-field"
+            />
+            <Typography sx={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-secondary)' }}>
+              Candidates must upload before this date and time. If you do not change it, the system uses the default 7-day deadline.
+            </Typography>
           </Stack>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>

@@ -1,5 +1,7 @@
 package com.kanini.springer.service.DocumentCollection;
 
+import java.time.LocalDateTime;
+
 public interface ITokenService {
 
     /**
@@ -11,6 +13,17 @@ public interface ITokenService {
      * @return JWT token string
      */
     String generateToken(Long candidateId, Long cycleId, String purpose, int expiryDays, String candidateEmail);
+
+    /**
+     * Generate JWT token for document submission with an exact expiry timestamp.
+     * @param candidateId candidate ID
+     * @param cycleId hiring cycle ID
+     * @param purpose token purpose
+     * @param expiryDate exact expiry timestamp
+     * @param candidateEmail candidate email embedded for validation
+     * @return JWT token string
+     */
+    String generateToken(Long candidateId, Long cycleId, String purpose, LocalDateTime expiryDate, String candidateEmail);
 
     /**
      * Generate scoped token for re-submitting specific rejected document

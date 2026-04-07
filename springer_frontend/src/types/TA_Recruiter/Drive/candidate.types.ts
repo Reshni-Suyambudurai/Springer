@@ -147,6 +147,7 @@ export interface CandidateUpdateRequest {
 export interface CandidateStatusUpdateRequest {
   status: string;
   updatedBy: number;
+  reason?: string;
 }
 
 export interface BulkCandidateStatusUpdateRequest {

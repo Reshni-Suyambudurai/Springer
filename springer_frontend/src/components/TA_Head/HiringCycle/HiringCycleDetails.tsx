@@ -11,7 +11,6 @@ import {
   CheckCircle as ApproveIcon,
   Cancel as RejectIcon,
   OpenInNew as OpenInNewIcon,
-  Edit as EditIcon,
 } from '@mui/icons-material';
 import { useNavigate, useParams } from 'react-router-dom';
 import { hiringCycleApi, hiringDemandApi } from '../../../services/hiring.api';
@@ -53,17 +52,6 @@ const TAHiringCycleDetails = () => {
   const [editOpen, setEditOpen] = useState(false);
   const [editForm, setEditForm] = useState({ cycleYear: '', cycleName: '', compensationBand: '', budget: '' });
   const [editSaving, setEditSaving] = useState(false);
-
-  const openEdit = () => {
-    if (!cycle) return;
-    setEditForm({
-      cycleYear: String(cycle.cycleYear),
-      cycleName: cycle.cycleName,
-      compensationBand: cycle.compensationBand ? String(cycle.compensationBand) : '',
-      budget: cycle.budget ? String(cycle.budget) : '',
-    });
-    setEditOpen(true);
-  };
 
   const handleEditSave = async () => {
     if (!editForm.cycleName.trim()) return showToast('Cycle name is required', 'error');

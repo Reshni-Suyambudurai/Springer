@@ -5,11 +5,15 @@ import com.kanini.springer.dto.Academy.BatchCourseResponse;
 import com.kanini.springer.entity.Academy.BatchCourse;
 import com.kanini.springer.entity.Academy.TrainingCourse;
 import com.kanini.springer.entity.Academy.TrainingProgram;
+import com.kanini.springer.entity.HiringReq.User;
+import com.kanini.springer.entity.enums.Enums.CourseStatus;
 import com.kanini.springer.exception.ResourceNotFoundException;
 import com.kanini.springer.mapper.Academy.BatchCourseMapper;
 import com.kanini.springer.repository.Academy.BatchCourseRepository;
 import com.kanini.springer.repository.Academy.TrainingCourseRepository;
 import com.kanini.springer.repository.Academy.TrainingProgramRepository;
+import com.kanini.springer.repository.Hiring.UserRepository;
+import com.kanini.springer.service.Common.INotificationService;
 import com.kanini.springer.service.Academy.IBatchCourseService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -21,76 +25,81 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class BatchCourseServiceImpl implements IBatchCourseService {
-    
+
     private final BatchCourseRepository batchCourseRepository;
     private final TrainingProgramRepository programRepository;
     private final TrainingCourseRepository courseRepository;
+    private final UserRepository userRepository;
     private final BatchCourseMapper mapper;
-    
+    private final INotificationService notificationService;
+
     @Override
     @Transactional
     public BatchCourseResponse linkCourseToBatch(BatchCourseRequest request) {
+
         TrainingProgram program = programRepository.findByProgramId(request.getProgramId())
                 .orElseThrow(() -> new ResourceNotFoundException("Training Program not found with ID: " + request.getProgramId()));
-        
+
         TrainingCourse course = courseRepository.findByCourseId(request.getCourseId())
                 .orElseThrow(() -> new ResourceNotFoundException("Training Course not found with ID: " + request.getCourseId()));
-        
-        // Validate batch number is valid for this program
+
+        User trainer = userRepository.findById(request.getConductedBy())
+                .orElseThrow(() -> new ResourceNotFoundException("Trainer not found with ID: " + request.getConductedBy()));
+
         if (request.getBatchNo() == null || request.getBatchNo() < 1 || request.getBatchNo() > program.getNumberOfBatches()) {
-            throw new IllegalArgumentException("Invalid batch number: " + request.getBatchNo() + ". Program has only " + program.getNumberOfBatches() + " batches. Valid range: 1-" + program.getNumberOfBatches());
+            throw new IllegalArgumentException("Invalid batch number: " + request.getBatchNo()
+                    + ". Program has " + program.getNumberOfBatches() + " batch(es). Valid range: 1-" + program.getNumberOfBatches());
         }
 
-        // Validate course belongs to the same year as the program
-        if (course.getStartDate() == null) {
-            throw new IllegalArgumentException("Course ID: " + course.getCourseId() + " has no start date. Cannot validate year.");
-        }
-        int courseYear = course.getStartDate().getYear();
-        if (courseYear != program.getProgramYear()) {
-            throw new IllegalArgumentException(
-                "Course '" + course.getCourseName() + "' belongs to year " + courseYear +
-                " but program '" + program.getProgramName() + "' is for year " + program.getProgramYear() +
-                ". You must create a new course for " + program.getProgramYear() + "."
-            );
-        }
-        
-        // Traceability: a course can only be linked to programs within the SAME hiring cycle
-        // It can link to multiple programs/batches of the same cycle, but NOT across different cycles
-        List<BatchCourse> existingLinks = batchCourseRepository.findByCourse_CourseId(request.getCourseId());
-        Long targetCycleId = program.getCycle() != null ? program.getCycle().getCycleId() : null;
-        boolean linkedToDifferentCycle = existingLinks.stream()
-            .anyMatch(bc -> {
-                Long existingCycleId = bc.getProgram() != null && bc.getProgram().getCycle() != null
-                    ? bc.getProgram().getCycle().getCycleId() : null;
-                return existingCycleId != null && !existingCycleId.equals(targetCycleId);
-            });
-        if (linkedToDifferentCycle) {
-            throw new IllegalArgumentException(
-                "Course '" + course.getCourseName() + "' is already linked to a program from a different hiring cycle. " +
-                "For traceability, a course can only be used within one hiring cycle."
-            );
+        if (request.getEndDate() != null && request.getStartDate() != null
+                && request.getEndDate().isBefore(request.getStartDate())) {
+            throw new IllegalArgumentException("End date cannot be before start date.");
         }
 
         BatchCourse batchCourse = mapper.toEntity(request);
         batchCourse.setProgram(program);
         batchCourse.setCourse(course);
-        
-        BatchCourse savedBatchCourse = batchCourseRepository.save(batchCourse);
-        
-        // Note: Training days are tracked in TrainingDayAttendance table, not in BatchAllocation
-        // Daily attendance records are created separately through the attendance service
-        
-        return mapper.toResponse(savedBatchCourse);
+        batchCourse.setConductedBy(trainer);
+        batchCourse.setStartDate(request.getStartDate() != null ? request.getStartDate().atStartOfDay() : null);
+        batchCourse.setEndDate(request.getEndDate() != null ? request.getEndDate().atStartOfDay() : null);
+
+        if (request.getStatus() != null && !request.getStatus().isBlank()) {
+            batchCourse.setStatus(CourseStatus.valueOf(request.getStatus()));
+        } else {
+            batchCourse.setStatus(CourseStatus.PLANNED);
+        }
+
+        BatchCourse saved = batchCourseRepository.save(batchCourse);
+
+        // Send instant notification to trainer via WebSocket
+        String startStr = request.getStartDate() != null ? request.getStartDate().toString() : "TBD";
+        String endStr   = request.getEndDate()   != null ? request.getEndDate().toString()   : "TBD";
+        String message  = String.format(
+            "You have been assigned to conduct '%s' for '%s' \u2014 Batch %d (%s to %s)",
+            course.getCourseName(), program.getProgramName(),
+            request.getBatchNo(), startStr, endStr
+        );
+        notificationService.createAndSend(request.getConductedBy(), message, "COURSE_ASSIGNMENT");
+
+        return mapper.toResponse(saved);
     }
-    
+
+    @Override
+    @Transactional
+    public BatchCourseResponse updateBatchCourseStatus(Integer batchCourseId, String status) {
+        BatchCourse batchCourse = batchCourseRepository.findByBatchCourseId(batchCourseId)
+                .orElseThrow(() -> new ResourceNotFoundException("Batch Course not found with ID: " + batchCourseId));
+        batchCourse.setStatus(CourseStatus.valueOf(status));
+        return mapper.toResponse(batchCourseRepository.save(batchCourse));
+    }
+
     @Override
     @Transactional(readOnly = true)
     public BatchCourseResponse getBatchCourseById(Integer batchCourseId) {
-        BatchCourse batchCourse = batchCourseRepository.findByBatchCourseId(batchCourseId)
-                .orElseThrow(() -> new ResourceNotFoundException("Batch Course not found with ID: " + batchCourseId));
-        return mapper.toResponse(batchCourse);
+        return mapper.toResponse(batchCourseRepository.findByBatchCourseId(batchCourseId)
+                .orElseThrow(() -> new ResourceNotFoundException("Batch Course not found with ID: " + batchCourseId)));
     }
-    
+
     @Override
     @Transactional(readOnly = true)
     public List<BatchCourseResponse> getAllBatchCourses() {
@@ -98,54 +107,45 @@ public class BatchCourseServiceImpl implements IBatchCourseService {
                 .map(mapper::toResponse)
                 .collect(Collectors.toList());
     }
-    
+
     @Override
     @Transactional(readOnly = true)
     public List<BatchCourseResponse> getCoursesByProgram(Integer programId) {
-        // Validate program exists first
         programRepository.findByProgramId(programId)
                 .orElseThrow(() -> new ResourceNotFoundException("Training Program not found with ID: " + programId));
-        
         return batchCourseRepository.findByProgram_ProgramId(programId).stream()
                 .map(mapper::toResponse)
                 .collect(Collectors.toList());
     }
-    
+
     @Override
     @Transactional(readOnly = true)
     public List<BatchCourseResponse> getCoursesByBatch(Integer programId, Integer batchNumber) {
-        // Validate program exists first
         TrainingProgram program = programRepository.findByProgramId(programId)
                 .orElseThrow(() -> new ResourceNotFoundException("Training Program not found with ID: " + programId));
-        
-        // Validate batch number is valid for this program
         if (batchNumber == null || batchNumber < 1 || batchNumber > program.getNumberOfBatches()) {
-            throw new IllegalArgumentException("Invalid batch number: " + batchNumber + ". Program has only " + program.getNumberOfBatches() + " batches. Valid range: 1-" + program.getNumberOfBatches());
+            throw new IllegalArgumentException("Invalid batch number: " + batchNumber);
         }
-        
         return batchCourseRepository.findByProgram_ProgramIdAndBatchNo(programId, batchNumber).stream()
                 .map(mapper::toResponse)
                 .collect(Collectors.toList());
     }
-    
+
     @Override
     @Transactional(readOnly = true)
     public List<BatchCourseResponse> getCoursesByTrainingCourse(Integer courseId) {
-        // Validate course exists first
         courseRepository.findByCourseId(courseId)
                 .orElseThrow(() -> new ResourceNotFoundException("Training Course not found with ID: " + courseId));
-        
         return batchCourseRepository.findByCourse_CourseId(courseId).stream()
                 .map(mapper::toResponse)
                 .collect(Collectors.toList());
     }
-    
+
     @Override
     @Transactional
     public void removeCourseFromBatch(Integer batchCourseId) {
-        BatchCourse batchCourse = batchCourseRepository.findByBatchCourseId(batchCourseId)
+        batchCourseRepository.findByBatchCourseId(batchCourseId)
                 .orElseThrow(() -> new ResourceNotFoundException("Batch Course not found with ID: " + batchCourseId));
-        
         batchCourseRepository.deleteById(batchCourseId);
     }
 }

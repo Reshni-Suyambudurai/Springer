@@ -1,12 +1,13 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import * as XLSX from 'xlsx';
 import {
   Box, Card, TextField, Button, Typography,
   Table, TableBody, TableCell, TableContainer, TableHead,
   TableRow, TablePagination, CircularProgress, Chip, LinearProgress,
   Dialog, DialogTitle, DialogContent, DialogActions, MenuItem,
 } from '@mui/material';
-import { Add as AddIcon, Person as PersonIcon } from '@mui/icons-material';
-import { attendanceApi, batchAllocationApi, trainingProgramApi } from '../../../services/academy.api';
+import { Add as AddIcon, Person as PersonIcon, Upload as UploadIcon, Download as DownloadIcon } from '@mui/icons-material';
+import { attendanceApi, batchAllocationApi, trainingProgramApi, excelUploadApi } from '../../../services/academy.api';
 import { showToast } from '../../../utils/toast';
 import FilterSelect from '../../Common/FilterSelect';
 import type {
@@ -38,6 +39,8 @@ const BatchAttendancePanel = ({ context, readOnly = false }: { context: AcademyC
   // attendanceMap: studentId -> true=present, false=absent
   const [attendanceMap, setAttendanceMap] = useState<Record<number, boolean>>({});
   const [submitting, setSubmitting]       = useState(false);
+  const [uploading, setUploading]         = useState(false);
+  const uploadRef                         = useRef<HTMLInputElement>(null);
 
   useEffect(() => { fetchBase(); }, []);
 
@@ -124,6 +127,69 @@ const BatchAttendancePanel = ({ context, readOnly = false }: { context: AcademyC
     setDlgOpen(true);
   };
 
+  const downloadAttendanceTemplate = () => {
+    if (!filterProgramId || !filterBatchNo) {
+      showToast('Select Program and Batch before downloading template', 'error');
+      return;
+    }
+
+    const batchStudents = allocations
+      .filter(a => a.programId === filterProgramId && a.batchNumber === filterBatchNo && a.isActive)
+      .sort((a, b) => a.candidateName.localeCompare(b.candidateName));
+
+    if (batchStudents.length === 0) {
+      showToast('No active students found for selected Program and Batch', 'error');
+      return;
+    }
+
+    const today = new Date().toISOString().split('T')[0];
+    const rows = batchStudents.map(student => ({
+      'Student ID': student.studentId,
+      'Candidate Name': student.candidateName,
+      'Candidate Email': student.candidateEmail,
+      'Date': today,
+      'Present': 'true',
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(rows);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Attendance');
+    XLSX.writeFile(workbook, `attendance_template_program_${filterProgramId}_batch_${filterBatchNo}.xlsx`);
+  };
+
+  const handleAttendanceUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    e.target.value = '';
+    if (!file.name.endsWith('.xlsx')) { showToast('Only .xlsx files are supported', 'error'); return; }
+    if (!filterProgramId || !filterBatchNo) {
+      showToast('Select Program and Batch before uploading', 'error'); return;
+    }
+    try {
+      setUploading(true);
+      const res = await excelUploadApi.uploadAttendance(file, filterProgramId, filterBatchNo);
+      if (res.success && res.data) {
+        const d = res.data;
+        if (d.failedCount === 0) {
+          showToast(`✅ ${d.savedCount} attendance record(s) saved successfully`, 'success');
+        } else if (d.savedCount === 0) {
+          showToast(`❌ Upload failed — ${d.failedCount} error(s). Check details below.`, 'error');
+        } else {
+          showToast(`⚠ ${d.savedCount} saved, ${d.failedCount} failed — check details below`, 'error');
+        }
+        if (d.errors.length > 0) {
+          d.errors.slice(0, 3).forEach(err => showToast(err, 'error'));
+          if (d.errors.length > 3) showToast(`...and ${d.errors.length - 3} more errors`, 'error');
+        }
+        fetchBase();
+      }
+    } catch (err: any) {
+      showToast(err.message || 'Upload failed', 'error');
+    } finally {
+      setUploading(false);
+    }
+  };
+
   const handleBatchSelect = (batchNo: number) => {
     setDlgBatchNo(batchNo);
     const students = allocations.filter(a => a.programId === dlgProgramId && a.batchNumber === batchNo && a.isActive);
@@ -199,7 +265,20 @@ const BatchAttendancePanel = ({ context, readOnly = false }: { context: AcademyC
         <Box className="atp-filter-section">
           <Box className="atp-filter-row">
             <FilterSelect label="Program" value={String(filterProgramId)}
-              onChange={v => { setFilterProgramId(Number(v)); setFilterBatchNo(0); setPage(0); }}>
+              onChange={v => {
+                const progId = Number(v);
+                setFilterProgramId(progId);
+                setFilterBatchNo(0);
+                setPage(0);
+                // Auto-fill batch if program has only one batch
+                if (progId) {
+                  const prog = allPrograms.find(p => p.programId === progId)
+                    ?? yearPrograms.find(p => p.programId === progId);
+                  if (prog && prog.numberOfBatches === 1) {
+                    setFilterBatchNo(1);
+                  }
+                }
+              }}>
               <MenuItem value="0">All Programs</MenuItem>
               {yearPrograms.map(p => (
                 <MenuItem key={p.programId} value={String(p.programId)}>{p.programName}</MenuItem>
@@ -222,6 +301,29 @@ const BatchAttendancePanel = ({ context, readOnly = false }: { context: AcademyC
 
             <Box className="atp-filter-spacer" />
             <Typography className="atp-filter-count">{filteredAllocations.length} student(s)</Typography>
+            {!readOnly && (
+              <Button variant="outlined" size="small" startIcon={<DownloadIcon />}
+                onClick={downloadAttendanceTemplate} className="atp-template-btn">
+                Template
+              </Button>
+            )}
+            {!readOnly && (
+              <>
+                <input ref={uploadRef} type="file" accept=".xlsx"
+                  style={{ display: 'none' }} onChange={handleAttendanceUpload} />
+                <Button variant="outlined" size="small"
+                  startIcon={uploading ? <CircularProgress size={14} /> : <UploadIcon />}
+                  onClick={() => {
+                    if (!filterProgramId || !filterBatchNo) {
+                      showToast('Select Program and Batch first', 'error'); return;
+                    }
+                    uploadRef.current?.click();
+                  }}
+                  disabled={uploading} className="atp-upload-btn">
+                  {uploading ? 'Uploading...' : 'Upload Excel'}
+                </Button>
+              </>
+            )}
             {!readOnly && (
               <Button variant="contained" startIcon={<AddIcon />} onClick={openDlg} className="atp-add-button">
                 Mark Attendance

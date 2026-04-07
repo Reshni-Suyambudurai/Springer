@@ -750,6 +750,11 @@ public class CandidatesServiceImpl implements ICandidatesService {
         
         // Parse the new status
         ApplicationStage newStatus = ApplicationStage.valueOf(request.getStatus());
+
+        String statusReason = request.getReason() != null ? request.getReason().trim() : null;
+        if (newStatus == ApplicationStage.DROPPED && (statusReason == null || statusReason.isEmpty())) {
+            throw new ValidationException("Reason is required when marking candidate as DROPPED");
+        }
         
         // Ineligible candidates cannot be moved to progression statuses
         if (!candidate.getIsEligible() && 
@@ -781,8 +786,12 @@ public class CandidatesServiceImpl implements ICandidatesService {
             }
         }
         
-        // Append to statusHistory
-        appendStatusHistory(candidate, newStatus, userName);
+        // Append to statusHistory; include drop reason for audit readability
+        String historyActor = userName;
+        if (newStatus == ApplicationStage.DROPPED && statusReason != null && !statusReason.isEmpty()) {
+            historyActor = userName + " (Reason: " + statusReason + ")";
+        }
+        appendStatusHistory(candidate, newStatus, historyActor);
         
         // Save
         Candidate updatedCandidate = candidatesRepository.save(candidate);
@@ -800,7 +809,11 @@ public class CandidatesServiceImpl implements ICandidatesService {
             overrideRequest.setEntityType("CANDIDATES");
             overrideRequest.setEntityId(candidateId);
             overrideRequest.setChanges(changes);
-            overrideRequest.setOverrideReason("Status update");
+                overrideRequest.setOverrideReason(
+                    newStatus == ApplicationStage.DROPPED && statusReason != null && !statusReason.isEmpty()
+                        ? "Dropped: " + statusReason
+                        : "Status update"
+                );
             overrideRequest.setCreatedBy(request.getUpdatedBy());
             
             try {

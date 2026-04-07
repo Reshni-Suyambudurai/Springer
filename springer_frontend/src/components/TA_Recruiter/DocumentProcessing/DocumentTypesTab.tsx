@@ -3,9 +3,9 @@ import {
   Box, Card, Typography, Button, CircularProgress, Stack,
   IconButton, Table, TableBody, TableCell, TableContainer,
   TableHead, TableRow, Dialog, DialogTitle, DialogContent,
-  DialogActions, MenuItem, TextField,
+  DialogActions, MenuItem, TextField, InputAdornment,
 } from '@mui/material';
-import { Add as AddIcon, Delete as DeleteIcon, Description as DocIcon } from '@mui/icons-material';
+import { Add as AddIcon, Delete as DeleteIcon, Description as DocIcon, Search as SearchIcon } from '@mui/icons-material';
 import { documentTypeApi } from '../../../services/document.api';
 import { showToast } from '../../../utils/toast';
 import type { DocumentTypeResponse } from '../../../types/DocumentCollection/document.types';
@@ -19,6 +19,7 @@ const DOCUMENT_TYPE_OPTIONS = [
 const DocumentTypesTab = () => {
   const [types, setTypes] = useState<DocumentTypeResponse[]>([]);
   const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selected, setSelected] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -76,9 +77,37 @@ const DocumentTypesTab = () => {
     opt => !types.some(t => t.documentType === opt)
   );
 
+  const filteredTypes = types.filter(t =>
+    search.trim() === '' ||
+    t.documentType.replace(/_/g, ' ').toLowerCase().includes(search.toLowerCase())
+  );
+
   return (
     <Box className="dtt-page">
       <Card className="dtt-card">
+
+        {/* Filter Section */}
+        <Box className="dtt-filter-section">
+          <Box className="dtt-filter-row">
+            <TextField
+              placeholder="Search document types..."
+              size="small"
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              className="dtt-search-field"
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon fontSize="small" className="dtt-search-icon" />
+                  </InputAdornment>
+                ),
+              }}
+            />
+            <Box className="dtt-filter-spacer" />
+          </Box>
+        </Box>
+
+        <Box className="dtt-separator" />
 
         {/* Table */}
         <Box className="dtt-table-section">
@@ -110,16 +139,20 @@ const DocumentTypesTab = () => {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {types.length === 0 ? (
+                  {filteredTypes.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={3} className="dtt-empty-cell">
                         <DocIcon className="dtt-empty-icon" />
-                        <Typography className="dtt-empty-text">No document types configured yet</Typography>
-                        <Typography className="dtt-empty-sub">Click "Add Document Type" to get started</Typography>
+                        <Typography className="dtt-empty-text">
+                          {types.length === 0 ? 'No document types configured yet' : 'No document types match your search'}
+                        </Typography>
+                        {types.length === 0 && (
+                          <Typography className="dtt-empty-sub">Click "Add Document Type" to get started</Typography>
+                        )}
                       </TableCell>
                     </TableRow>
                   ) : (
-                    types.map((t, idx) => (
+                    filteredTypes.map((t, idx) => (
                       <TableRow
                         key={t.documentTypeId}
                         hover

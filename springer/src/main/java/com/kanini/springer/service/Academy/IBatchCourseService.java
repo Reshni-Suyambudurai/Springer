@@ -8,7 +8,9 @@ import java.util.List;
 public interface IBatchCourseService {
     
     BatchCourseResponse linkCourseToBatch(BatchCourseRequest request);
-    
+
+    BatchCourseResponse updateBatchCourseStatus(Integer batchCourseId, String status);
+
     BatchCourseResponse getBatchCourseById(Integer batchCourseId);
     
     List<BatchCourseResponse> getAllBatchCourses();

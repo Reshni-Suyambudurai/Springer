@@ -3,6 +3,8 @@ package com.kanini.springer.service.DocumentCollection;
 import com.kanini.springer.dto.DocumentCollection.DocumentLinkResponse;
 import com.kanini.springer.dto.DocumentCollection.DocumentSubmissionStatusResponse;
 
+import java.time.LocalDateTime;
+
 public interface IDocumentLinkService {
 
     /**
@@ -14,6 +16,13 @@ public interface IDocumentLinkService {
      */
     DocumentLinkResponse generateSubmissionLink(Long candidateId, Long cycleId,
         java.util.List<Long> documentTypeIds);
+
+    /**
+     * Generate submission link with optional exact deadline.
+     * If submissionDeadline is null, service falls back to default 7-day expiry.
+     */
+    DocumentLinkResponse generateSubmissionLink(Long candidateId, Long cycleId,
+        java.util.List<Long> documentTypeIds, LocalDateTime submissionDeadline);
 
     /**
      * Generate resubmit link for rejected document
@@ -50,6 +59,9 @@ public interface IDocumentLinkService {
     boolean sendInitialSubmissionLink(Long candidateId, Long cycleId,
         java.util.List<Long> documentTypeIds);
 
+    boolean sendInitialSubmissionLink(Long candidateId, Long cycleId,
+        java.util.List<Long> documentTypeIds, LocalDateTime submissionDeadline);
+
     /**
      * Send rejection email with resubmit link
      * @param documentId rejected document
@@ -62,9 +74,14 @@ public interface IDocumentLinkService {
      * Resend submission link (if candidate didn't receive)
      * @param candidateId candidate
      * @param cycleId cycle
+     * @param documentTypeIds optional list of specific document types to include in resend
+     *                        if empty, resends for all PENDING/REJECTED documents
      * @return true if email resent
      */
-    boolean resendSubmissionLink(Long candidateId, Long cycleId);
+    boolean resendSubmissionLink(Long candidateId, Long cycleId, java.util.List<Long> documentTypeIds);
+
+    boolean resendSubmissionLink(Long candidateId, Long cycleId, java.util.List<Long> documentTypeIds,
+        LocalDateTime submissionDeadline);
 
     /**
      * Send submission links to multiple candidates at once (bulk)
@@ -76,4 +93,7 @@ public interface IDocumentLinkService {
      */
     java.util.Map<Long, String> sendBulkSubmissionLinks(java.util.List<Long> candidateIds,
         Long cycleId, java.util.List<Long> documentTypeIds);
+
+    java.util.Map<Long, String> sendBulkSubmissionLinks(java.util.List<Long> candidateIds,
+        Long cycleId, java.util.List<Long> documentTypeIds, LocalDateTime submissionDeadline);
 }
