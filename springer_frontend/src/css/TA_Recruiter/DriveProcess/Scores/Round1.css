@@ -1,0 +1,133 @@
+/* ========== Round1 Scores Component ========== */
+
+.r1-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* ========== Summary Bar ========== */
+.r1-summary {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding: 14px 20px;
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  flex-wrap: wrap;
+}
+
+.r1-summary-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.r1-summary-label {
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  color: var(--color-text-muted) !important;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.r1-summary-value {
+  font-size: 15px !important;
+  font-weight: 700 !important;
+  color: var(--color-text) !important;
+}
+
+/* ========== Empty State ========== */
+.r1-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+}
+
+.r1-empty-text {
+  font-size: 14px !important;
+  color: var(--color-text-muted) !important;
+}
+
+/* ========== Table ========== */
+.r1-table-container {
+  border-radius: 12px !important;
+  border: 1px solid var(--color-border) !important;
+  background: var(--color-surface) !important;
+  box-shadow: none !important;
+  overflow: auto;
+}
+
+.r1-thead-row {
+  background-color: var(--color-bg);
+}
+
+.r1-th {
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  color: var(--color-text-muted) !important;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 2px solid var(--color-border) !important;
+  background-color: var(--color-bg) !important;
+  white-space: nowrap;
+  padding: 12px 14px !important;
+}
+
+.r1-tbody-row {
+  transition: background-color 0.15s ease;
+}
+
+.r1-tbody-row:hover {
+  background-color: var(--color-bg) !important;
+}
+
+.r1-td {
+  font-size: 13px !important;
+  color: var(--color-text) !important;
+  border-bottom: 1px solid var(--color-border) !important;
+  padding: 12px 14px !important;
+  background-color: var(--color-surface) !important;
+  text-align: center !important;
+}
+
+.r1-td-name {
+  font-weight: 600 !important;
+  text-align: left !important;
+}
+
+.r1-td-score {
+  font-weight: 700 !important;
+}
+
+/* ========== Status Color on Name & Score ========== */
+.r1-color-pass {
+  color: var(--color-success) !important;
+}
+
+.r1-color-fail {
+  color: var(--color-danger) !important;
+}
+
+/* ========== Responsive ========== */
+@media (max-width: 768px) {
+  .r1-summary {
+    gap: 12px;
+    padding: 12px 14px;
+  }
+
+  .r1-summary-value {
+    font-size: 13px !important;
+  }
+
+  .r1-th,
+  .r1-td {
+    padding: 10px 10px !important;
+    font-size: 12px !important;
+  }
+}

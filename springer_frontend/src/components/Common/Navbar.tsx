@@ -106,7 +106,7 @@ function Navbar() {
             <div className="navbar-content">
                 <div className="navbar-left">
                     <div className="navbar-logo">
-                        <img src={kaniniLogo} alt="Kanini Logo" className="logo-img" />
+                        <img src="/kanini.png" alt="Kanini" className="logo-img" />
                     </div>
                     <span className="navbar-title">Springer</span>
                 </div>

@@ -1,6 +1,26 @@
 // Candidate Evaluation Type Definitions
 // Maps to backend DTOs in com.kanini.springer.dto.Drive
 
+/**
+ * Request DTO for fetching evaluations by round number and application IDs.
+ * Static round mapping: Aptitude=1, Communication=2, Technical=3
+ */
+export interface RoundEvaluationRequest {
+  roundNo: number;
+  applicationIds: number[];
+}
+
+import type { RoundTemplateResponse } from "../Drive/roundTemplate.types";
+
+/**
+ * Response DTO for evaluations fetched by round and application IDs.
+ * Contains the full round template details and the list of candidate evaluation records.
+ */
+export interface RoundEvaluationResponse {
+  roundTemplate: RoundTemplateResponse;
+  evaluations: CandidateEvaluationResponse[];
+}
+
 export interface CandidateEvaluationRequest {
   applicationId: number;
   roundConfigId: number;
@@ -50,22 +70,21 @@ export interface EvaluationStatusUpdateRequest {
 
 // Nested type for bulk evaluation
 export interface EvaluationData {
-  applicationId: number;
-  score: number;
-  sectionScore: Record<string, unknown>; // JSON object
-  review: string;
-  evaluationStatus: string;
+  registrationCode: string;
+  candidateName: string;
+  candidateEmail: string;
+  sections: Record<string, number>;
 }
 
 export interface BulkCandidateEvaluationRequest {
   roundConfigId: number;
-  reviewedBy: number;
+  roundNo: number;
+  updatedBy: number;
   evaluations: EvaluationData[];
 }
 
 export interface BulkCandidateEvaluationResponse {
-  successfulEvaluations: CandidateEvaluationResponse[];
-  errorMessages: string[];
+  errorMessages: Record<number, string>;
   totalProcessed: number;
   successCount: number;
   failureCount: number;

@@ -1,42 +1,6 @@
 
 :root {
 
-  /* Brand */
-  --color-primary: #0a0a98d6;
-  --color-primary-hover: #0941c3a7;
-
-  /* Backgrounds */
-  --color-bg: #f8fafc;
-  --color-surface: #ffffff;
-
-  /* Text */
-  --color-text: #0f172a;
-  --color-text-muted: #475569;
-
-  /* Borders */
-  --color-border: #e2e8f0;
-
-  /* Accent */
-  --color-accent: #7ea3e2;
-
-  /* Status */
-  --color-success: #3ee37b;
-  --color-warning: #f8c14b;
-  --color-danger: #f65c5c;
-
-  /* Buttons */
-  --btn-bg: var(--color-primary);
-  --btn-hover: var(--color-primary-hover);
-
-  /* Shadows */
-  --shadow-card: 0 4px 6px rgba(0,0,0,0.1);
-
-  --color-orange: #f97316;
-  --color-purple: #8b5cf6;
-  --color-green: #22c55e;
-  --color-blue: #2ddef9;
-  --color-yellow:#f9ea16;
-
   /* ========== BASE COLORS ========== */
   
   /* Blue Palette */
@@ -106,18 +70,18 @@
 
   /* Status Colors */
   --color-success: var(--color-green-700);
-  --color-success-dark: #027A48;
+  --color-success-dark: #2D9D6E;
   --color-success-light: #ECFDF3;
   --color-success-border: #6CE9A6;
   
   --color-warning: #C98A1A;
   
   --color-error: var(--color-red-500);
-  --color-error-dark: #B42318;
-  --color-error-darker: #D92D20;
+  --color-error-dark: #D14343;
+  --color-error-darker: #E05252;
   --color-error-light: #FEF3F2;
   --color-error-border: #FDA29B;
-  --color-error-delete: #F04438;
+  --color-error-delete: #E05252;
   
   --color-danger: var(--color-red-500);
   
@@ -202,6 +166,14 @@
   --color-empty-text: var(--color-grey-375);
   --color-hover-bg: #E6F2FF;
 
+  /* ========== FUNNEL COLORS ========== */
+  --color-funnel-applied:  #0F4C81;
+  --color-funnel-selected: #2D9D6E;
+  --color-funnel-accepted: #C98A1A;
+  --color-funnel-joined:   #3730A3;
+  --color-funnel-rejected: #E05252;
+  --color-funnel-dropped:  #667085;
+
   /* ========== SHADOW & OPACITY ========== */
   --opacity-shadow-very-light: rgba(0, 0, 0, 0.04);
   --opacity-shadow-light: rgba(0, 0, 0, 0.05);
@@ -242,44 +214,6 @@
 /* ═════════════════════════════════════════════════════════════════════ */
 
 [data-theme="dark"] {
-  /* Brand */
-  --color-primary: #3b82f6;
-  --color-primary-hover: #60a5fa;
-
-  /* Backgrounds */
-  --color-bg: #020617;
-  --color-surface: #0f172a;
-
-  /* Text */
-  --color-text: #f1f5f9;
-  --color-text-muted: #94a3b8;
-
-  /* Borders */
-  --color-border: #1e293b;
-
-  /* Accent */
-  --color-accent: #60a5fa;
-
-  /* Status */
-  --color-success: #4ade80;
-  --color-warning: #fbbf24;
-  --color-danger: #f87171;
-
-  /* Buttons */
-  --btn-bg: var(--color-primary);
-  --btn-hover: var(--color-primary-hover);
-
-  /* Shadows */
-  --shadow-card: 0 4px 6px rgba(0,0,0,0.5);
-
-   --color-orange: #f97316;
-  --color-purple: #8b5cf6;
-  --color-green: #22c55e;
-  --color-blue: #2ddef9;
-  --color-yellow:#f9ea16;
-
-
-
   /* ========== BASE COLORS - DARK PALETTE ========== */
   
   /* Blue Palette - Dark variants */
@@ -471,4 +405,41 @@
   --opacity-black-medium: rgba(0, 0, 0, 0.4);
   --opacity-primary-hover: rgba(91, 163, 214, 0.16);
   --opacity-primary-inset: rgba(91, 163, 214, 0.05);
+}
+
+/* ═════════════════════════════════════════════════════════════════════ */
+/* GLOBAL TOOLTIP                                                       */
+/* ═════════════════════════════════════════════════════════════════════ */
+
+.g-tooltip {
+  background-color: var(--color-surface) !important;
+  color: var(--color-text) !important;
+  border: 1px solid var(--color-border) !important;
+  border-radius: 10px !important;
+  padding: 10px 16px !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12) !important;
+  backdrop-filter: blur(8px) !important;
+  animation: g-tooltip-fade-in 0.2s ease-out !important;
+  max-width: 320px !important;
+}
+
+.g-tooltip-arrow {
+  color: var(--color-surface) !important;
+}
+
+.g-tooltip-arrow::before {
+  border: 1px solid var(--color-border) !important;
+}
+
+@keyframes g-tooltip-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }

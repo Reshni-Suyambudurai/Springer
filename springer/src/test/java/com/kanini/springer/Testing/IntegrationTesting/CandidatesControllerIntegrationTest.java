@@ -489,6 +489,7 @@ class CandidatesControllerIntegrationTest {
     void bulkUpdateCandidateStatus_returnsOk() throws Exception {
         BulkCandidateStatusUpdateRequest request = new BulkCandidateStatusUpdateRequest(
                 List.of(createdCandidateId),
+                null,
                 "SCHEDULED",
                 "Shortlisted batch",
                 USER_ID
@@ -509,6 +510,7 @@ class CandidatesControllerIntegrationTest {
     void bulkUpdateCandidateStatus_invalidStatus_returns400() throws Exception {
         BulkCandidateStatusUpdateRequest request = new BulkCandidateStatusUpdateRequest(
                 List.of(createdCandidateId),
+                null,
                 "INVALID_STATUS",
                 "Test",
                 USER_ID
@@ -532,6 +534,7 @@ class CandidatesControllerIntegrationTest {
     void bulkUpdateLifecycleStatus_success_returnsOk() throws Exception {
         BulkCandidateLifecycleUpdateRequest request = new BulkCandidateLifecycleUpdateRequest(
                 List.of(createdCandidateId, secondCandidateId),
+                null,
                 "CLOSED",
                 USER_ID
         );
@@ -552,6 +555,7 @@ class CandidatesControllerIntegrationTest {
     void bulkUpdateLifecycleStatus_invalidStatus_returns400() throws Exception {
         BulkCandidateLifecycleUpdateRequest request = new BulkCandidateLifecycleUpdateRequest(
                 List.of(createdCandidateId),
+                null,
                 "EXPIRED",   // not a valid LifecycleStatus
                 USER_ID
         );

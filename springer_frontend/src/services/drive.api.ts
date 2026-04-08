@@ -20,11 +20,14 @@ import type {
   CandidateStatusUpdateRequest,
   BulkCandidateStatusUpdateRequest,
   BulkCandidateStatusUpdateResponse,
+  BulkCandidateLifecycleUpdateRequest,
+  BulkCandidateLifecycleUpdateResponse,
   BulkCandidateCreateResponse,
   CandidateValidationRequest,
   CandidateValidationResponse,
   FilterOptionsResponse
 } from "../types/TA_Recruiter/Drive/candidate.types";
+import type { DriveDashboardResponse } from "../types/TA_Recruiter/Drive/dashboard.types";
 
 // ==================== ROUND TEMPLATE APIs ====================
 export const roundTemplateApi = {
@@ -278,6 +281,19 @@ export const candidateApi = {
   },
 
   /**
+   * Bulk update candidate lifecycle status
+   * PATCH /api/candidates/lifecycle-status/bulk
+   */
+  async bulkUpdateCandidateLifecycleStatus(data: BulkCandidateLifecycleUpdateRequest): Promise<ApiResponse<BulkCandidateLifecycleUpdateResponse>> {
+    try {
+      const response = await http.patch('/candidates/lifecycle-status/bulk', data);
+      return response.data;
+    } catch (error) {
+      throw handleAxiosError(error);
+    }
+  },
+
+  /**
    * Get eligibility rules
    * GET /api/candidates/eligibility-rules
    */
@@ -314,6 +330,22 @@ export const candidateApi = {
       const response = await http.get('/candidates/filter-options', {
         params: { cycleId }
       });
+      return response.data;
+    } catch (error) {
+      throw handleAxiosError(error);
+    }
+  }
+};
+
+// ==================== DRIVE DASHBOARD APIs ====================
+export const driveDashboardApi = {
+  /**
+   * Get drive summary for a cycle
+   * POST /api/dashboards/drive/summary
+   */
+  async getDriveSummary(cycleId: number): Promise<ApiResponse<DriveDashboardResponse>> {
+    try {
+      const response = await http.post('/dashboards/drive/summary', { cycleId });
       return response.data;
     } catch (error) {
       throw handleAxiosError(error);

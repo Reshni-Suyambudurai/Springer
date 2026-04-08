@@ -20,11 +20,15 @@ import { showToast } from "../../../utils/toast";
 import { tokenstore } from "../../../auth/tokenstore";
 import "../../../css/TA_Recruiter/Candidates/ScheduleDrive.css";
 
+import type { ApplicationRequest } from "../../../types/TA_Recruiter/DriveSchedule/application.types";
+
 interface ScheduleDriveProps {
   cycleId: number | null;
   candidateIds: number[];
   selectMode: boolean;
   selectedCount: number;
+  totalElements: number;
+  filterRequest?: ApplicationRequest["filterRequest"];
   onScheduleComplete: () => void;
 }
 
@@ -33,6 +37,8 @@ const ScheduleDrive: React.FC<ScheduleDriveProps> = ({
   candidateIds,
   selectMode,
   selectedCount,
+  totalElements,
+  filterRequest,
   onScheduleComplete,
 }) => {
   const [upcomingDrives, setUpcomingDrives] = useState<UpcomingDriveSummaryResponse[]>([]);
@@ -52,7 +58,7 @@ const ScheduleDrive: React.FC<ScheduleDriveProps> = ({
       return;
     }
 
-    if (candidateIds.length === 0) {
+    if (selectMode ? candidateIds.length === 0 : totalElements === 0) {
       showToast(
         selectMode ? "Please select candidates to schedule" : "No candidates available to schedule",
         "error"
@@ -111,12 +117,21 @@ const ScheduleDrive: React.FC<ScheduleDriveProps> = ({
           ? `${selectedDrive.startDate}T${batchTimeInput}:00`
           : undefined;
 
-      const response = await applicationApi.createApplications({
-        driveId: selectedDrive.driveId,
-        candidateIds: candidateIds,
-        batchTime,
-        createdBy: user.userId,
-      });
+      const response = await applicationApi.createApplications(
+        selectMode
+          ? {
+              driveId: selectedDrive.driveId,
+              candidateIds: candidateIds,
+              batchTime,
+              createdBy: user.userId,
+            }
+          : {
+              driveId: selectedDrive.driveId,
+              filterRequest: filterRequest,
+              batchTime,
+              createdBy: user.userId,
+            }
+      );
 
       if (response.data && response.data.data) {
         const result = response.data.data;
@@ -173,11 +188,11 @@ const ScheduleDrive: React.FC<ScheduleDriveProps> = ({
 
   return (
     <>
-      <Tooltip title={`Schedule ${selectMode ? selectedCount : candidateIds.length} candidate(s) to drive`}>
+      <Tooltip title={`Schedule ${selectMode ? selectedCount : totalElements} candidate(s) to drive`}>
         <span>
           <IconButton
             onClick={handleOpenMenu}
-            disabled={candidateIds.length === 0 || loadingDrives || scheduling}
+            disabled={(selectMode ? candidateIds.length === 0 : totalElements === 0) || loadingDrives || scheduling}
             className="schedule-drive-btn"
           >
             <EventIcon />
@@ -226,7 +241,7 @@ const ScheduleDrive: React.FC<ScheduleDriveProps> = ({
             <strong>{selectedDrive?.driveName}</strong>?
           </Typography>
           <Typography className="schedule-drive-count">
-            {selectMode ? selectedCount : candidateIds.length} candidate(s) will be scheduled.
+            {selectMode ? selectedCount : totalElements} candidate(s) will be scheduled.
           </Typography>
 
           {/* Drive date display */}

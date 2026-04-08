@@ -3,12 +3,13 @@ import { Routes, Route, Navigate } from 'react-router-dom'
 
 // TA Recruiter
 import DashboardTAR from './components/TA_Recruiter/DashboardTAR'
-import TARHiringCycleList from './components/TA_Head/HiringCycle/HiringCycleList'
-import TARHiringCycleDetails from './components/TA_Head/HiringCycle/HiringCycleDetails'
+import TARHiringCycleList from './components/TA_Recruiter/HiringCycle/HiringCycleList'
+import TARHiringCycleDetails from './components/TA_Recruiter/HiringCycle/HiringCycleDetails'
 import InstitutesList from './components/TA_Recruiter/Institutes/InstitutesList'
 import InstitutesDetails from './components/TA_Recruiter/Institutes/InstitutesDetails'
 import AddInstitute from './components/TA_Recruiter/Institutes/AddInstitute'
 import CandidateList from './components/TA_Recruiter/Candidates/CandidateList'
+import CandidatesHistory from './components/TA_Recruiter/Candidates/CandidatesHistory'
 import CandidateDetails from './components/TA_Recruiter/Candidates/CandidateDetails'
 import AddCandidates from './components/TA_Recruiter/Candidates/AddCandidates'
 
@@ -23,11 +24,15 @@ import SkillsManagement from './components/TA_Recruiter/Settings/SkillsManagemen
 import DriveCalendar from './components/TA_Recruiter/DriveSchedule/DriveCalendar'
 import AddSchedule from './components/TA_Recruiter/DriveSchedule/AddSchedule'
 
-// 🔥 Your existing Drive Process (kept)
+//  Your existing Drive Process (kept)
 import DriveCycle from './components/TA_Recruiter/DriveProcess/DriveCycle'
 import DriveList from './components/TA_Recruiter/DriveProcess/DriveList'
 import DriveDetails from './components/TA_Recruiter/DriveProcess/DriveDetails'
 import DriveCandidates from './components/TA_Recruiter/DriveProcess/DriveCandidates'
+import AddScores from './components/TA_Recruiter/DriveProcess/AddScores/AddScores'
+import AddRound1 from './components/TA_Recruiter/DriveProcess/AddScores/AddRound1'
+import AddRound2 from './components/TA_Recruiter/DriveProcess/AddScores/AddRound2'
+import AddRound3 from './components/TA_Recruiter/DriveProcess/AddScores/AddRound3'
 
 // Document Processing
 import DocumentProcessingDashboard from './components/TA_Recruiter/DocumentProcessing/DocumentProcessingDashboard'
@@ -111,6 +116,7 @@ function App() {
           <Route path="/ta-recruiter/institutes/:instituteId" element={<InstitutesDetails />} />
 
           <Route path="/ta-recruiter/candidates" element={<CandidateList />} />
+          <Route path="/ta-recruiter/candidates/history" element={<CandidatesHistory />} />
           <Route path="/ta-recruiter/candidates/add" element={<AddCandidates />} />
           <Route path="/ta-recruiter/candidates/:id" element={<CandidateDetails />} />
           <Route path="/ta-recruiter/documents" element={<DocumentProcessingDashboard />} />
@@ -123,6 +129,10 @@ function App() {
           <Route path="/drive-process/drive-list/:cycleId" element={<DriveList />} />
           <Route path="/drive-process/drive-details/:driveId" element={<DriveDetails />} />
           <Route path="/drive-process/drive-candidates/:driveId" element={<DriveCandidates />} />
+          <Route path="/drive-process/add-scores/:driveId" element={<AddScores />} />
+          <Route path="/drive-process/add-scores/:driveId/round1" element={<AddRound1 />} />
+          <Route path="/drive-process/add-scores/:driveId/round2" element={<AddRound2 />} />
+          <Route path="/drive-process/add-scores/:driveId/round3" element={<AddRound3 />} />
 
           {/* Settings */}
           <Route path="/ta-recruiter/settings" element={<Settings />} />

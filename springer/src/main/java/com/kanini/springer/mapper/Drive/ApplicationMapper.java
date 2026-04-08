@@ -47,6 +47,13 @@ public class ApplicationMapper {
             response.setCreatedBy(application.getCreatedByUser().getUserId());
             response.setCreatedByName(application.getCreatedByUser().getUsername());
         }
+
+        // Updated by user info
+        response.setUpdatedAt(application.getUpdatedAt());
+        if (application.getUpdatedByUser() != null) {
+            response.setUpdatedBy(application.getUpdatedByUser().getUserId());
+            response.setUpdatedByName(application.getUpdatedByUser().getUsername());
+        }
         
         return response;
     }

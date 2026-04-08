@@ -7,14 +7,10 @@ function DashboardLayout() {
   return (
     <div className="layout">
       <Navbar />
-
-      <div className="layout-body">
-        <Sidebar />
-
-        <main className="layout-content">
-          <Outlet />
-        </main>
-      </div>
+      <Sidebar />
+      <main className="layout-content">
+        <Outlet />
+      </main>
     </div>
   );
 }

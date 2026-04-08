@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { driveScheduleApi } from "../../../services/driveschedule.api";
+import { hiringCycleApi } from "../../../services/hiring.api";
 import type { DriveResponse } from "../../../types/TA_Recruiter/DriveSchedule/driveSchedule.types";
+import type { HiringCycleSummaryResponse } from "../../../types/TA_Recruiter/Hiring/hiringCycle.types";
 import { showToast } from "../../../utils/toast";
 import {
   Box,
@@ -13,6 +15,7 @@ import {
   Select,
   MenuItem,
   FormControl,
+  InputLabel,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
@@ -40,25 +43,56 @@ const DriveCalendar: React.FC = () => {
   const [selectedYear, setSelectedYear] = useState<number>(currentYear);
   const yearOptions = Array.from({ length: 4 }, (_, i) => currentYear - i);
 
+  // Cycle picker state
+  const [cycles, setCycles] = useState<HiringCycleSummaryResponse[]>([]);
+  const [selectedCycle, setSelectedCycle] = useState<number | null>(null);
+
   // Edit Modal State
   const [editModalOpen, setEditModalOpen] = useState<boolean>(false);
   const [selectedDrive, setSelectedDrive] = useState<DriveResponse | null>(null);
   const [loadingDriveDetails, setLoadingDriveDetails] = useState<boolean>(false);
 
   useEffect(() => {
-    fetchDrives();
+    fetchCycles();
   }, []);
 
-  const fetchDrives = async () => {
+  useEffect(() => {
+    if (selectedCycle !== null) {
+      fetchDrives(selectedCycle);
+    }
+  }, [selectedCycle]);
+
+  const fetchCycles = async () => {
     try {
-      const response = await driveScheduleApi.getAllDrives();
+      const response = await hiringCycleApi.getAllCycleSummaries();
+      if (response.data) {
+        const sortedCycles = response.data.sort((a: HiringCycleSummaryResponse, b: HiringCycleSummaryResponse) => b.cycleYear - a.cycleYear);
+        setCycles(sortedCycles);
+        if (sortedCycles.length > 0) {
+          setSelectedCycle(sortedCycles[0].cycleId);
+        } else {
+          setLoading(false);
+        }
+      }
+    } catch {
+      showToast("Failed to fetch hiring cycles", "error");
+      setLoading(false);
+    }
+  };
+
+  const fetchDrives = async (cycleId: number) => {
+    setLoading(true);
+    try {
+      const response = await driveScheduleApi.getDrivesByCycleId({ cycleId });
       if (response.data && response.data.data) {
-        const drivesWithDates = response.data.data.map((drive) => ({
+        const drivesWithDates = response.data.data.map((drive: DriveResponse) => ({
           ...drive,
           startDateObj: new Date(drive.startDate),
           endDateObj: new Date(drive.endDate),
         }));
         setDrives(drivesWithDates);
+      } else {
+        setDrives([]);
       }
     } catch (error: unknown) {
       const errorMessage = 
@@ -72,7 +106,13 @@ const DriveCalendar: React.FC = () => {
   };
 
   const handleAddDrive = () => {
-    navigate("/ta-recruiter/drive-schedules/add");
+    const selectedCycleData = cycles.find(c => c.cycleId === selectedCycle);
+    navigate("/ta-recruiter/drive-schedules/add", {
+      state: {
+        cycleId: selectedCycle,
+        cycleName: selectedCycleData ? `${selectedCycleData.cycleName} (${selectedCycleData.cycleYear})` : "",
+      },
+    });
   };
 
   const handleEventClick = async (driveId: number, e: React.MouseEvent) => {
@@ -104,7 +144,9 @@ const DriveCalendar: React.FC = () => {
   };
 
   const handleEditSuccess = () => {
-    fetchDrives(); // Refresh calendar after successful edit
+    if (selectedCycle !== null) {
+      fetchDrives(selectedCycle); // Refresh calendar after successful edit
+    }
   };
 
   const handleYearChange = (year: number) => {
@@ -149,20 +191,17 @@ const DriveCalendar: React.FC = () => {
     return days;
   };
 
-  // Get drives for a specific date
+  // Get drives for a specific date (only show on start date)
   const getDrivesForDate = (date: Date | null): CalendarDrive[] => {
     if (!date) return [];
     
     return drives.filter((drive) => {
       const driveStart = new Date(drive.startDateObj);
-      const driveEnd = new Date(drive.endDateObj);
-      
       driveStart.setHours(0, 0, 0, 0);
-      driveEnd.setHours(0, 0, 0, 0);
       const checkDate = new Date(date);
       checkDate.setHours(0, 0, 0, 0);
       
-      return checkDate >= driveStart && checkDate <= driveEnd;
+      return checkDate.getTime() === driveStart.getTime();
     });
   };
 
@@ -189,6 +228,25 @@ const DriveCalendar: React.FC = () => {
       {/* Single Header */}
       <Card className="drive-calendar-header">
         <Box className="drive-calendar-header-left">
+          <FormControl size="small" className="drive-calendar-cycle-select">
+            <InputLabel>Hiring Cycle</InputLabel>
+            <Select
+              value={selectedCycle || ""}
+              label="Hiring Cycle"
+              onChange={(e) => setSelectedCycle(Number(e.target.value))}
+            >
+              {cycles.map((cycle) => (
+                <MenuItem
+                  key={cycle.cycleId}
+                  value={cycle.cycleId}
+                  className={cycle.status === "OPEN" ? "drive-cycle-status-open" : "drive-cycle-status-closed"}
+                >
+                  {cycle.cycleName} - {cycle.cycleYear}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
           <FormControl className="drive-calendar-year-select">
             <Select
               value={selectedYear}
@@ -216,7 +274,7 @@ const DriveCalendar: React.FC = () => {
             <Button
               variant="outlined"
               onClick={handleToday}
-              className="drive-calendar-today-btn"
+              className="t-btn-small"
             >
               Today
             </Button>
@@ -227,15 +285,19 @@ const DriveCalendar: React.FC = () => {
           </Box>
         </Box>
 
-        {/* Center Title (Absolutely Positioned) */}
+        {/* Center Title (Absolutely Positioned)
         <Box className="drive-calendar-header-center">
           <Typography variant="h5" className="drive-calendar-title">
             Drive Calendar
           </Typography>
-        </Box>
+        </Box> */}
 
-        {/* Right Side - Legend and Add Button */}
+        {/* Right Side - Legend, Count and Add Button */}
         <Box className="drive-calendar-header-right">
+          <Typography variant="body2" className="drive-calendar-count">
+            Drives: {drives.length}
+          </Typography>
+
           <Box className="drive-calendar-legend">
             <Box className="drive-calendar-legend-item">
               <span className="drive-calendar-legend-color drive-legend-oncampus"></span>
@@ -247,12 +309,14 @@ const DriveCalendar: React.FC = () => {
             </Box>
           </Box>
 
-          <IconButton
-            onClick={handleAddDrive}
-            className="drive-calendar-add-btn"
-          >
-            <AddIcon />
-          </IconButton>
+          <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={handleAddDrive}
+              className="t-btn-primary"
+            >
+              Add Drive
+            </Button>
         </Box>
       </Card>
 
@@ -260,7 +324,7 @@ const DriveCalendar: React.FC = () => {
       {loading ? (
         <Box className="drive-calendar-loading">
           <CircularProgress />
-          <Typography>Loading drive schedules...</Typography>
+          <Typography className="t-loading-text">Loading drive schedules...</Typography>
         </Box>
       ) : (
         <Card className="drive-calendar-grid-container">
@@ -304,9 +368,11 @@ const DriveCalendar: React.FC = () => {
                             <Typography variant="caption" className="drive-event-name">
                               {drive.driveName}
                             </Typography>
-                            <Typography variant="caption" className="drive-event-status">
-                              {drive.status}
-                            </Typography>
+                            {drivesForDay.length === 1 && (
+                              <Typography variant="caption" className="drive-event-status">
+                                {drive.status}
+                              </Typography>
+                            )}
                           </Box>
                         ))}
                         {drivesForDay.length > 3 && (

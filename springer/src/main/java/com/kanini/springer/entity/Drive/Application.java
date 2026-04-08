@@ -17,6 +17,9 @@ import com.kanini.springer.entity.enums.Enums.ApplicationStatus;
  */
 @Entity
 @Table(name = "applications",
+    uniqueConstraints = {
+        @UniqueConstraint(name = "uk_app_drive_regcode", columnNames = {"drive_id", "registration_code"})
+    },
     indexes = {
         @Index(name = "idx_app_drive_id", columnList = "drive_id"),
         @Index(name = "idx_app_candidate_id", columnList = "candidate_id"),
@@ -42,8 +45,8 @@ public class Application {
     
     private LocalDateTime batchTime; // scheduled batch time for the drive
     
-    @Column(unique = true, nullable = true)
-    private String registrationCode; // unique when present, null allowed for on-campus
+    @Column(name = "registration_code", nullable = true)
+    private String registrationCode; // unique per drive, null allowed for on-campus
     
     @Enumerated(EnumType.STRING)
     private ApplicationStatus applicationStatus; // ALLOTED, IN_DRIVE, DROPPED, FAILED, SELECTED
@@ -53,6 +56,12 @@ public class Application {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "created_by")
     private User createdByUser;
+
+    private LocalDateTime updatedAt;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "updated_by")
+    private User updatedByUser;
     
     @OneToMany(mappedBy = "application", cascade = CascadeType.ALL)
     private List<CandidateEvaluation> candidateEvaluations;
@@ -60,5 +69,10 @@ public class Application {
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = LocalDateTime.now();
     }
 }

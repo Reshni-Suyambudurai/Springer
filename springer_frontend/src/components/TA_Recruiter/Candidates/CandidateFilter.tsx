@@ -102,7 +102,7 @@ const CandidateFilter: React.FC<CandidateFilterProps> = ({
       {/* Sidebar Header */}
       <Box className="candidate-filter-header">
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <Typography variant="h6" className="candidate-filter-title">
+          <Typography variant="h6" className="t-row-primary">
             Filters
           </Typography>
           <IconButton
@@ -151,7 +151,7 @@ const CandidateFilter: React.FC<CandidateFilterProps> = ({
             </MenuItem>
            
             <MenuItem onClick={() => handleSortSelect('candidateId', 'DESC')}>
-              <Typography sx={{ color: 'var(--color-text-muted)' }}>
+              <Typography sx={{ color: 'var(--color-text-secondary)' }}>
                 Default (Latest First)
               </Typography>
             </MenuItem>
@@ -422,6 +422,7 @@ const CandidateFilter: React.FC<CandidateFilterProps> = ({
           {hasActiveFilters && (
             <>
               <Button
+                variant="outlined"
                 onClick={onSaveFilters}
                 size="small"
                 className="candidate-filter-save-btn"
@@ -429,7 +430,7 @@ const CandidateFilter: React.FC<CandidateFilterProps> = ({
                 Save
               </Button>
               <Button
-                
+                variant="outlined"
                 onClick={onClearFilters}
                 size="small"
                 className="candidate-filter-clear-btn"

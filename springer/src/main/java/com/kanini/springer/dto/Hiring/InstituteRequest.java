@@ -18,4 +18,15 @@ public class InstituteRequest {
     private String city;
     private Boolean isActive;
     private List<Long> programIds; // List of program IDs to map to this institute
+    private TPOContactRequest tpoContact; // Optional TPO contact to create alongside the institute
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class TPOContactRequest {
+        private String tpoName;
+        private String tpoEmail;
+        private String tpoMobile;
+        private String tpoDesignation;
+    }
 }

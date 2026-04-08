@@ -13,7 +13,21 @@ export type ApplicationStatus =
 
 export interface ApplicationRequest {
   driveId: number;
-  candidateIds: number[];
+  candidateIds?: number[];
+  filterRequest?: {
+    cycleId: number;
+    lifecycleStatus?: string;
+    candidateName?: string;
+    instituteName?: string;
+    state?: string;
+    cities?: string[];
+    degrees?: string[];
+    departments?: string[];
+    eligibility?: string[];
+    applicationTypes?: string[];
+    applicationStages?: string[];
+    skills?: string[];
+  };
   batchTime?: string; // ISO-8601 format (LocalDateTime) - scheduled batch time
   createdBy: number;
 }
@@ -31,6 +45,9 @@ export interface ApplicationResponse {
   createdAt: string; // ISO-8601 format from LocalDateTime
   createdBy: number;
   createdByName: string;
+  updatedAt?: string; // ISO-8601 format from LocalDateTime
+  updatedBy?: number;
+  updatedByName?: string;
 }
 
 export interface ApplicationStatusUpdateRequest {
@@ -45,14 +62,9 @@ export interface BulkApplicationResponse {
   failureCount: number;
 }
 
-// Nested type for bulk application status update
-export interface ApplicationStatusData {
-  applicationId: number;
-  applicationStatus: ApplicationStatus;
-}
-
 export interface BulkApplicationStatusUpdateRequest {
-  applications: ApplicationStatusData[];
+  applicationIds: number[];
+  applicationStatus: ApplicationStatus;
   updatedBy: number;
 }
 
@@ -63,3 +75,9 @@ export interface BulkApplicationStatusUpdateResponse {
   successfulUpdates: ApplicationResponse[];
   errorMessages: string[];
 }
+
+/**
+ * Map of batchTime → list of application IDs for that batch.
+ * Applications with no batchTime are grouped under 'UNSCHEDULED'.
+ */
+export type BatchCandidatesMap = Record<string, number[]>;

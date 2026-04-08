@@ -10,7 +10,6 @@ public class Enums {
         TA_HEAD,
         TA_RECRUITER,
         HIRING_MANAGER,
-        
         MEMBERS,
         HR_OPERATIONS,
         TRAINING_COORDINATOR,
@@ -139,6 +138,7 @@ public class Enums {
 
     // Evaluation status
     public enum EvaluationStatus {
+        PENDING,
         PASS,
         FAIL,
         ABSENT,

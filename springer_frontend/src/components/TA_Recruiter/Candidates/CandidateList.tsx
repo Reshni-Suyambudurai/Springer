@@ -30,13 +30,36 @@ import {
   Paper,
   IconButton,
   Tooltip,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import SchoolIcon from "@mui/icons-material/School";
-import EmailIcon from "@mui/icons-material/Email";
 import UpdateIcon from "@mui/icons-material/Update";
+import HistoryIcon from "@mui/icons-material/History";
 import MenuIcon from "@mui/icons-material/Menu";
+import CloseIcon from "@mui/icons-material/Close";
 import "../../../css/TA_Recruiter/Candidates/CandidateList.css";
+
+const STATUS_CLASS_MAP: Record<string, string> = {
+  APPLIED: 'cl-status-applied',
+  SHORTLISTED: 'cl-status-shortlisted',
+  INVITED: 'cl-status-invited',
+  SCHEDULED: 'cl-status-scheduled',
+  SELECTED: 'cl-status-selected',
+  OFFERED: 'cl-status-offered',
+  JOINED: 'cl-status-joined',
+  REJECTED: 'cl-status-rejected',
+  ACCEPTED: 'cl-status-accepted',
+  DROPPED: 'cl-status-dropped',
+};
+
+const TYPE_CLASS_MAP: Record<string, string> = {
+  PREMIUM: 'cl-type-premium',
+  STANDARD: 'cl-type-standard',
+};
 
 const CandidateList: React.FC = () => {
   const navigate = useNavigate();
@@ -45,14 +68,15 @@ const CandidateList: React.FC = () => {
   const [selectedCycle, setSelectedCycle] = useState<number | null>(null);
   const [bulkStatusUpdate, setBulkStatusUpdate] = useState<string>("");
   const [updatingBulkStatus, setUpdatingBulkStatus] = useState<boolean>(false);
-  const [sendingInvite, setSendingInvite] = useState<boolean>(false);
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(() => tokenstore.getSidebarOpen());
   const [selectMode, setSelectMode] = useState<boolean>(false);
   const [selectedCandidates, setSelectedCandidates] = useState<Set<number>>(new Set());
+  const [bulkResultErrors, setBulkResultErrors] = useState<string[]>([]);
   
   // Use custom pagination hook for ACTIVE candidates
   const {
     allCandidates,
+    totalElements,
     candidatesLoading,
     loadingMore,
     fetchCandidates,
@@ -215,66 +239,7 @@ const CandidateList: React.FC = () => {
     });
   };
 
-  const handleSendInvite = async () => {
-    if (!selectedCycle) {
-      showToast("Please select a hiring cycle first", "error");
-      return;
-    }
-
-    const user = tokenstore.getUser();
-    if (!user) {
-      showToast("Unable to get user information", "error");
-      return;
-    }
-
-    // Determine which candidates to update based on select mode
-    const candidateIdsToUpdate = selectMode 
-      ? Array.from(selectedCandidates) 
-      : allCandidates.map((c) => c.candidateId);
-
-    if (candidateIdsToUpdate.length === 0) {
-      showToast(
-        selectMode 
-          ? "Please select candidates to invite" 
-          : "No candidates available to invite", 
-        "error"
-      );
-      return;
-    }
-
-    setSendingInvite(true);
-    try {
-      const response = await candidateApi.bulkUpdateCandidateStatus({
-        candidateIds: candidateIdsToUpdate,
-        status: "INVITED",
-        reason: `Bulk invite to ${candidateIdsToUpdate.length} candidate(s)`,
-        updatedBy: user.userId,
-      });
-
-      if (response.data) {
-        showToast(
-          `Invited ${response.data.successCount} candidates successfully. ${response.data.failureCount} failed.`,
-          response.data.failureCount > 0 ? "error" : "success"
-        );
-        
-        // Clear selections and exit select mode if active
-        if (selectMode) {
-          setSelectedCandidates(new Set());
-          setSelectMode(false);
-        }
-        
-        // Refresh candidates with current filters
-        if (selectedCycle) {
-          await fetchCandidates(selectedCycle, filters, false);
-        }
-      }
-    } catch (error) {
-      showToast("Failed to send invites to candidates", "error");
-      console.error("Error sending invites:", error);
-    } finally {
-      setSendingInvite(false);
-    }
-  };
+  
 
   // Toggle select mode
   const handleToggleSelectMode = () => {
@@ -309,46 +274,130 @@ const CandidateList: React.FC = () => {
       return;
     }
 
-    // Determine which candidates to update based on select mode
-    const candidateIdsToUpdate = selectMode 
-      ? Array.from(selectedCandidates) 
-      : allCandidates.map((c) => c.candidateId);
-
-    if (!bulkStatusUpdate || candidateIdsToUpdate.length === 0) {
-      showToast(
-        selectMode 
-          ? "Please select candidates and a status to update" 
-          : "Please select a status and ensure candidates are displayed", 
-        "error"
-      );
+    if (!bulkStatusUpdate) {
+      showToast("Please select a status to update", "error");
       return;
     }
 
     setUpdatingBulkStatus(true);
     try {
-      const response = await candidateApi.bulkUpdateCandidateStatus({
-        candidateIds: candidateIdsToUpdate,
-        status: bulkStatusUpdate,
-        reason: `Bulk status update to ${bulkStatusUpdate}`,
-        updatedBy: user.userId,
-      });
+      // If CLOSED → use lifecycle status endpoint
+      if (bulkStatusUpdate === "CLOSED") {
+        let lifecycleRequest: Parameters<typeof candidateApi.bulkUpdateCandidateLifecycleStatus>[0];
 
-      if (response.data) {
-        showToast(
-          `Updated ${response.data.successCount} candidates successfully. ${response.data.failureCount} failed.`,
-          response.data.failureCount > 0 ? "error" : "success"
-        );
-        setBulkStatusUpdate("");
-        
-        // Clear selections and exit select mode if active
         if (selectMode) {
-          setSelectedCandidates(new Set());
-          setSelectMode(false);
+          const candidateIdsToUpdate = Array.from(selectedCandidates);
+          if (candidateIdsToUpdate.length === 0) {
+            showToast("Please select candidates to update", "error");
+            setUpdatingBulkStatus(false);
+            return;
+          }
+          lifecycleRequest = {
+            candidateIds: candidateIdsToUpdate,
+            lifecycleStatus: "CLOSED",
+            updatedBy: user.userId,
+          };
+        } else {
+          lifecycleRequest = {
+            filterRequest: {
+              cycleId: selectedCycle!,
+              lifecycleStatus: 'ACTIVE',
+              candidateName: filters.candidateName || undefined,
+              instituteName: filters.instituteName || undefined,
+              state: filters.state || undefined,
+              cities: filters.cities.length > 0 ? filters.cities : undefined,
+              degrees: filters.degrees.length > 0 ? filters.degrees : undefined,
+              departments: filters.departments.length > 0 ? filters.departments : undefined,
+              eligibility: filters.eligibility.length > 0 ? filters.eligibility : undefined,
+              applicationTypes: filters.applicationTypes.length > 0 ? filters.applicationTypes : undefined,
+              applicationStages: filters.applicationStages.length > 0 ? filters.applicationStages : undefined,
+              skills: filters.skills.length > 0 ? filters.skills : undefined,
+            },
+            lifecycleStatus: "CLOSED",
+            updatedBy: user.userId,
+          };
         }
-        
-        // Refresh candidates with current filters
-        if (selectedCycle) {
-          await fetchCandidates(selectedCycle, filters, false);
+
+        const response = await candidateApi.bulkUpdateCandidateLifecycleStatus(lifecycleRequest);
+
+        if (response.data) {
+          showToast(
+            `Moved ${response.data.successCount} candidates to history. ${response.data.failureCount} failed.`,
+            response.data.failureCount > 0 ? "error" : "success"
+          );
+
+          if (response.data.errorMessages && response.data.errorMessages.length > 0) {
+            setBulkResultErrors(response.data.errorMessages);
+          }
+
+          setBulkStatusUpdate("");
+          if (selectMode) {
+            setSelectedCandidates(new Set());
+            setSelectMode(false);
+          }
+          if (selectedCycle) {
+            await fetchCandidates(selectedCycle, filters, false);
+          }
+        }
+      } else {
+        // Normal application stage update
+        let bulkRequest: Parameters<typeof candidateApi.bulkUpdateCandidateStatus>[0];
+
+        if (selectMode) {
+          const candidateIdsToUpdate = Array.from(selectedCandidates);
+          if (candidateIdsToUpdate.length === 0) {
+            showToast("Please select candidates to update", "error");
+            setUpdatingBulkStatus(false);
+            return;
+          }
+          bulkRequest = {
+            candidateIds: candidateIdsToUpdate,
+            status: bulkStatusUpdate,
+            reason: `Bulk status update to ${bulkStatusUpdate}`,
+            updatedBy: user.userId,
+          };
+        } else {
+          bulkRequest = {
+            filterRequest: {
+              cycleId: selectedCycle!,
+              lifecycleStatus: 'ACTIVE',
+              candidateName: filters.candidateName || undefined,
+              instituteName: filters.instituteName || undefined,
+              state: filters.state || undefined,
+              cities: filters.cities.length > 0 ? filters.cities : undefined,
+              degrees: filters.degrees.length > 0 ? filters.degrees : undefined,
+              departments: filters.departments.length > 0 ? filters.departments : undefined,
+              eligibility: filters.eligibility.length > 0 ? filters.eligibility : undefined,
+              applicationTypes: filters.applicationTypes.length > 0 ? filters.applicationTypes : undefined,
+              applicationStages: filters.applicationStages.length > 0 ? filters.applicationStages : undefined,
+              skills: filters.skills.length > 0 ? filters.skills : undefined,
+            },
+            status: bulkStatusUpdate,
+            reason: `Bulk status update to ${bulkStatusUpdate}`,
+            updatedBy: user.userId,
+          };
+        }
+
+        const response = await candidateApi.bulkUpdateCandidateStatus(bulkRequest);
+
+        if (response.data) {
+          showToast(
+            `Updated ${response.data.successCount} candidates successfully. ${response.data.failureCount} failed.`,
+            response.data.failureCount > 0 ? "error" : "success"
+          );
+
+          if (response.data.errorMessages && response.data.errorMessages.length > 0) {
+            setBulkResultErrors(response.data.errorMessages);
+          }
+
+          setBulkStatusUpdate("");
+          if (selectMode) {
+            setSelectedCandidates(new Set());
+            setSelectMode(false);
+          }
+          if (selectedCycle) {
+            await fetchCandidates(selectedCycle, filters, false);
+          }
         }
       }
     } catch (error) {
@@ -396,7 +445,7 @@ const CandidateList: React.FC = () => {
           uniqueApplicationStages={uniqueApplicationStages}
           uniqueApplicationTypes={uniqueApplicationTypes}
           uniqueSkills={filterOptions?.skills || []}
-          totalCount={allCandidates.length}
+          totalCount={totalElements}
           filteredCount={allCandidates.length}
           hasActiveFilters={hasActiveFilters}
         />
@@ -406,10 +455,14 @@ const CandidateList: React.FC = () => {
           {/* Single Unified Header */}
           <Card className="candidates-header">
             <Box className="candidates-header-left">
-              <IconButton onClick={toggleSidebar} className="candidates-hamburger-btn">
+              <IconButton
+                onClick={toggleSidebar}
+                className="candidates-hamburger-btn"
+                size="small"
+              >
                 <MenuIcon />
               </IconButton>
-              
+
               <FormControl size="small" className="cycle-dropdown">
                 <InputLabel>Hiring Cycle</InputLabel>
                 <Select
@@ -447,6 +500,7 @@ const CandidateList: React.FC = () => {
                       <MenuItem value="OFFERED">OFFERED</MenuItem>
                       <MenuItem value="JOINED">JOINED</MenuItem>
                       <MenuItem value="DROPPED">DROPPED</MenuItem>
+                      <MenuItem value="CLOSED" sx={{ color: 'var(--color-error-delete)' }}>MOVE TO HISTORY</MenuItem>
                     </Select>
                   </FormControl>
 
@@ -459,7 +513,7 @@ const CandidateList: React.FC = () => {
                       (selectMode ? selectedCandidates.size === 0 : allCandidates.length === 0) ||
                       updatingBulkStatus
                     }
-                    className="bulk-update-btn"
+                  className="t-btn-success"
                   >
                     {updatingBulkStatus ? "Updating..." : selectMode ? `Update (${selectedCandidates.size})` : "Update"}
                   </Button>
@@ -468,57 +522,79 @@ const CandidateList: React.FC = () => {
                     variant="outlined"
                     onClick={handleToggleSelectMode}
                     disabled={allCandidates.length === 0}
-                    className={selectMode ? "select-all-btn active" : "select-all-btn"}
+                    className={selectMode ? "select-all-btn t-btn-small active" : "select-all-btn t-btn-small"}
                   >
                     {selectMode ? "Deselect" : "Select"}
                   </Button>
 
-                  <ScheduleDrive
-                    cycleId={selectedCycle}
-                    candidateIds={selectMode ? Array.from(selectedCandidates) : allCandidates.map((c) => c.candidateId)}
-                    selectMode={selectMode}
-                    selectedCount={selectedCandidates.size}
-                    onScheduleComplete={handleScheduleComplete}
-                  />
-
-                  <Tooltip title={`Send invite to ${selectMode ? selectedCandidates.size : allCandidates.length} candidate(s)`}>
-                    <span>
-                      <IconButton
-                        onClick={handleSendInvite}
-                        disabled={
-                          (selectMode ? selectedCandidates.size === 0 : allCandidates.length === 0) ||
-                          sendingInvite
-                        }
-                        className="send-invite-btn"
-                      >
-                        <EmailIcon />
-                      </IconButton>
-                    </span>
-                  </Tooltip>
+                 
                 </>
               )}
             </Box>
 
-            <Tooltip title={selectedCycle && cycles.find(c => c.cycleId === selectedCycle)?.status === "CLOSED" ? "Cannot add candidates to closed cycle" : "Add Candidate"}>
-              <span>
-                <IconButton
-                  onClick={handleAddCandidate}
-                  className="add-candidate-icon-btn"
-                  disabled={selectedCycle ? cycles.find(c => c.cycleId === selectedCycle)?.status === "CLOSED" : false}
-                >
-                  <AddIcon />
-                </IconButton>
+            <Box className="candidates-header-right">
+              {selectedCycle && (
+                <>
+                  <Button
+                    variant="outlined"
+                    startIcon={<HistoryIcon />}
+                    onClick={() => {
+                      const selectedCycleData = cycles.find(c => c.cycleId === selectedCycle);
+                      navigate(`/ta-recruiter/candidates/history?cycleId=${selectedCycle}&cycleName=${encodeURIComponent(selectedCycleData?.cycleName + ' - ' + selectedCycleData?.cycleYear || '')}`);
+                    }}
+                    className="select-all-btn t-btn-small"
+                  >
+                    History
+                  </Button>
+
+                  <ScheduleDrive
+                    cycleId={selectedCycle}
+                    candidateIds={selectMode ? Array.from(selectedCandidates) : []}
+                    selectMode={selectMode}
+                    selectedCount={selectedCandidates.size}
+                    totalElements={totalElements}
+                    filterRequest={!selectMode && selectedCycle ? {
+                      cycleId: selectedCycle,
+                      lifecycleStatus: 'ACTIVE',
+                      candidateName: filters.candidateName || undefined,
+                      instituteName: filters.instituteName || undefined,
+                      state: filters.state || undefined,
+                      cities: filters.cities.length > 0 ? filters.cities : undefined,
+                      degrees: filters.degrees.length > 0 ? filters.degrees : undefined,
+                      departments: filters.departments.length > 0 ? filters.departments : undefined,
+                      eligibility: filters.eligibility.length > 0 ? filters.eligibility : undefined,
+                      applicationTypes: filters.applicationTypes.length > 0 ? filters.applicationTypes : undefined,
+                      applicationStages: filters.applicationStages.length > 0 ? filters.applicationStages : undefined,
+                      skills: filters.skills.length > 0 ? filters.skills : undefined,
+                    } : undefined}
+                    onScheduleComplete={handleScheduleComplete}
+                  />
+                </>
+              )}
+
+              <Tooltip title={selectedCycle && cycles.find(c => c.cycleId === selectedCycle)?.status === "CLOSED" ? "Cannot add candidates to closed cycle" : "Add Candidate"}>
+                <span>
+                  <Button
+                    variant="contained"
+                    startIcon={<AddIcon />}
+                    onClick={handleAddCandidate}
+                    className="t-btn-primary"
+                    disabled={selectedCycle ? cycles.find(c => c.cycleId === selectedCycle)?.status === "CLOSED" : false}
+                  >
+                    Add Candidate
+                  </Button>
               </span>
             </Tooltip>
+            </Box>
           </Card>
 
           {/* Table */}
           {selectedCycle && (
             <>
               {candidatesLoading ? (
-                <Box className="candidates-loading">
+                <Box className="t-loading">
                   <CircularProgress />
-                  <Typography>Loading candidates...</Typography>
+                  <Typography className="t-loading-text">Loading candidates...</Typography>
                 </Box>
               ) : allCandidates.length === 0 ? (
                 <Card className="no-results-card">
@@ -541,13 +617,13 @@ const CandidateList: React.FC = () => {
                   <Table stickyHeader>
                     <TableHead>
                       <TableRow>
-                        <TableCell className="table-header">College Name</TableCell>
-                        <TableCell className="table-header">Candidate Name</TableCell>
-                        <TableCell className="table-header">CGPA</TableCell>
-                        <TableCell className="table-header">No.of Arrears</TableCell>
-                        <TableCell className="table-header">Passout</TableCell>
-                        <TableCell className="table-header">Status</TableCell>
-                        <TableCell className="table-header">Category</TableCell>
+                        <TableCell className="t-head-cell">College Name</TableCell>
+                        <TableCell className="t-head-cell">Candidate Name</TableCell>
+                        <TableCell className="t-head-cell">CGPA</TableCell>
+                        <TableCell className="t-head-cell">No.of Arrears</TableCell>
+                        <TableCell className="t-head-cell">Passout</TableCell>
+                        <TableCell className="t-head-cell">Status</TableCell>
+                        <TableCell className="t-head-cell">Category</TableCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
@@ -558,7 +634,15 @@ const CandidateList: React.FC = () => {
                           onClick={() => !selectMode && handleCandidateView(candidate.candidateId)}
                         >
                           <TableCell>
-                            <Tooltip title={candidate.instituteName || "N/A"} placement="top-start">
+                            <Tooltip
+                              title={candidate.instituteName || "N/A"}
+                              placement="top-start"
+                              arrow
+                              slotProps={{
+                                tooltip: { className: 'g-tooltip' },
+                                arrow: { className: 'g-tooltip-arrow' },
+                              }}
+                            >
                               <Box className="institute-name-cell">
                                 <SchoolIcon 
                                   className={
@@ -570,7 +654,7 @@ const CandidateList: React.FC = () => {
                                   }
                                   onClick={(e) => selectMode && handleToggleCandidateSelection(candidate.candidateId, e)}
                                 />
-                                <Typography>{candidate.instituteName || "N/A"}</Typography>
+                                <Typography className="t-row-primary">{candidate.instituteName || "N/A"}</Typography>
                               </Box>
                             </Tooltip>
                           </TableCell>
@@ -579,6 +663,10 @@ const CandidateList: React.FC = () => {
                               title={candidate.reason || "No additional information"}
                               arrow
                               placement="top"
+                              slotProps={{
+                                tooltip: { className: 'g-tooltip' },
+                                arrow: { className: 'g-tooltip-arrow' },
+                              }}
                             >
                               <Typography
                                 className={
@@ -601,10 +689,10 @@ const CandidateList: React.FC = () => {
                             <Typography>{candidate.passoutYear || "N/A"}</Typography>
                           </TableCell>
                           <TableCell>
-                            <Typography className="status-text">{candidate.applicationStage}</Typography>
+                            <Typography className={`cl-status-badge ${STATUS_CLASS_MAP[candidate.applicationStage] || ''}`}>{candidate.applicationStage}</Typography>
                           </TableCell>
                           <TableCell>
-                            <Typography>{candidate.applicationType || "N/A"}</Typography>
+                            <Typography className={`cl-status-badge ${TYPE_CLASS_MAP[candidate.applicationType] || ''}`}>{candidate.applicationType || "N/A"}</Typography>
                           </TableCell>
                         </TableRow>
                       ))}
@@ -626,6 +714,44 @@ const CandidateList: React.FC = () => {
           )}
         </Box>
       </Box>
+
+      {/* Bulk Update Error Dialog */}
+      <Dialog
+        open={bulkResultErrors.length > 0}
+        onClose={() => setBulkResultErrors([])}
+        maxWidth="sm"
+        fullWidth
+        className="cl-error-dialog"
+      >
+        <DialogTitle className="cl-error-dialog-title">
+          <Typography className="cl-error-dialog-heading">
+            Update Errors ({bulkResultErrors.length})
+          </Typography>
+          <IconButton
+            size="small"
+            onClick={() => setBulkResultErrors([])}
+            className="cl-error-dialog-close"
+          >
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent className="cl-error-dialog-content">
+          {bulkResultErrors.map((error, index) => (
+            <Box key={index} className="cl-error-dialog-item">
+              <Typography className="cl-error-dialog-index">{index + 1}</Typography>
+              <Typography className="cl-error-dialog-message">{error}</Typography>
+            </Box>
+          ))}
+        </DialogContent>
+        <DialogActions className="cl-error-dialog-actions">
+          <Button
+            onClick={() => setBulkResultErrors([])}
+            className="cl-error-dialog-close-btn"
+          >
+            Close
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };

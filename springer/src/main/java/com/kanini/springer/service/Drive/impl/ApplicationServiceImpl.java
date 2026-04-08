@@ -20,13 +20,20 @@ import com.kanini.springer.repository.Drive.CandidatesRepository;
 import com.kanini.springer.repository.Drive.DriveRepository;
 import com.kanini.springer.repository.Hiring.UserRepository;
 import com.kanini.springer.service.Drive.IApplicationService;
+import com.kanini.springer.specification.CandidateSpecification;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.CriteriaQuery;
+import jakarta.persistence.criteria.Root;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 
 @Service
@@ -38,6 +45,7 @@ public class ApplicationServiceImpl implements IApplicationService {
     private final DriveRepository driveRepository;
     private final UserRepository userRepository;
     private final ApplicationMapper mapper;
+    private final EntityManager entityManager;
     
     @Override
     @Transactional
@@ -48,11 +56,32 @@ public class ApplicationServiceImpl implements IApplicationService {
         if (request.getDriveId() == null) {
             throw new ValidationException("Drive ID is required");
         }
-        if (request.getCandidateIds() == null || request.getCandidateIds().isEmpty()) {
-            throw new ValidationException("Candidate IDs list cannot be empty");
-        }
         if (request.getCreatedBy() == null) {
             throw new ValidationException("Created by user ID is required");
+        }
+
+        // Resolve candidate IDs: either from explicit list (select mode) or from filters (non-select mode)
+        List<Long> candidateIds = request.getCandidateIds();
+        if (candidateIds == null || candidateIds.isEmpty()) {
+            if (request.getFilterRequest() != null) {
+                // Lightweight ID-only query using CriteriaQuery — SELECT candidate_id only, no entity loading
+                Specification<Candidate> spec = CandidateSpecification.withFilters(request.getFilterRequest());
+                CriteriaBuilder cb = entityManager.getCriteriaBuilder();
+                CriteriaQuery<Long> idQuery = cb.createQuery(Long.class);
+                Root<Candidate> root = idQuery.from(Candidate.class);
+                idQuery.select(root.get("candidateId"));
+
+                jakarta.persistence.criteria.Predicate predicate = spec.toPredicate(root, idQuery, cb);
+                if (predicate != null) {
+                    idQuery.where(predicate);
+                }
+
+                candidateIds = entityManager.createQuery(idQuery).getResultList();
+            }
+        }
+
+        if (candidateIds == null || candidateIds.isEmpty()) {
+            throw new ValidationException("Candidate IDs list cannot be empty");
         }
         
         // Fetch drive
@@ -63,16 +92,22 @@ public class ApplicationServiceImpl implements IApplicationService {
         User createdByUser = userRepository.findById(request.getCreatedBy())
             .orElseThrow(() -> new ResourceNotFoundException("User", "ID", request.getCreatedBy()));
         
+        // Batch fetch all candidates (1 query instead of N)
+        Map<Long, Candidate> candidateMap = candidatesRepository.findAllById(candidateIds)
+            .stream().collect(Collectors.toMap(Candidate::getCandidateId, c -> c));
+        
         int totalProcessed = 0;
         int successCount = 0;
         int failureCount = 0;
+        List<Application> applicationsToSave = new ArrayList<>();
+        List<Candidate> candidatesToUpdate = new ArrayList<>();
         
-        for (Long candidateId : request.getCandidateIds()) {
+        for (Long candidateId : candidateIds) {
             totalProcessed++;
             
             try {
-                // Find candidate
-                Candidate candidate = candidatesRepository.findById(candidateId).orElse(null);
+                // Lookup from pre-fetched map
+                Candidate candidate = candidateMap.get(candidateId);
                 
                 if (candidate == null) {
                     response.getErrorMessages().add("Candidate with ID " + candidateId + " not found");
@@ -106,25 +141,30 @@ public class ApplicationServiceImpl implements IApplicationService {
                 application.setApplicationStatus(ApplicationStatus.ALLOTED);
                 application.setCreatedByUser(createdByUser);
                 
-                // Generate GUID for registration code
-                String registrationCode = UUID.randomUUID().toString();
+                // Generate unique 6-digit registration code per drive
+                String registrationCode = generateRegistrationCode(drive.getDriveId());
                 application.setRegistrationCode(registrationCode);
                 
-                // Save application
-                Application savedApplication = applicationRepository.save(application);
+                applicationsToSave.add(application);
                 
                 // Update candidate status to SCHEDULED
                 candidate.setApplicationStage(ApplicationStage.SCHEDULED);
-                candidatesRepository.save(candidate);
+                candidatesToUpdate.add(candidate);
                 
-                // Add to successful applications
-                response.getSuccessfulApplications().add(mapper.toResponse(savedApplication));
                 successCount++;
                 
             } catch (Exception e) {
                 response.getErrorMessages().add("Error processing candidate " + candidateId + ": " + e.getMessage());
                 failureCount++;
             }
+        }
+        
+        // Batch save all applications and update all candidates (2 queries instead of 2N)
+        List<Application> savedApplications = applicationRepository.saveAll(applicationsToSave);
+        candidatesRepository.saveAll(candidatesToUpdate);
+        
+        for (Application saved : savedApplications) {
+            response.getSuccessfulApplications().add(mapper.toResponse(saved));
         }
         
         response.setTotalProcessed(totalProcessed);
@@ -181,8 +221,14 @@ public class ApplicationServiceImpl implements IApplicationService {
             throw new ValidationException("Invalid application status: " + request.getApplicationStatus());
         }
         
+        // Validate transition
+        validateStatusTransition(application.getApplicationStatus(), newStatus, applicationId);
+        
         // Update status
         application.setApplicationStatus(newStatus);
+        
+        // Update candidate stage based on new status
+        updateCandidateStage(application.getCandidate(), newStatus);
         
         // Save
         Application updatedApplication = applicationRepository.save(application);
@@ -196,83 +242,97 @@ public class ApplicationServiceImpl implements IApplicationService {
         BulkApplicationStatusUpdateResponse response = new BulkApplicationStatusUpdateResponse();
         
         // Validate required fields
-        if (request.getApplications() == null || request.getApplications().isEmpty()) {
-            throw new ValidationException("Applications list cannot be empty");
+        if (request.getApplicationIds() == null || request.getApplicationIds().isEmpty()) {
+            throw new ValidationException("Application IDs list cannot be empty");
         }
+        
+        if (request.getApplicationStatus() == null || request.getApplicationStatus().isBlank()) {
+            throw new ValidationException("Application status is required");
+        }
+        
+        // Parse and validate the common status once
+        ApplicationStatus newStatus;
+        try {
+            newStatus = ApplicationStatus.valueOf(request.getApplicationStatus());
+        } catch (IllegalArgumentException e) {
+            throw new ValidationException("Invalid application status: " + request.getApplicationStatus());
+        }
+
+        // Resolve updatedBy user
+        User updatedByUser = null;
+        if (request.getUpdatedBy() != null) {
+            updatedByUser = userRepository.findById(request.getUpdatedBy())
+                .orElseThrow(() -> new ResourceNotFoundException("User", "ID", request.getUpdatedBy()));
+        }
+        
+        // Batch fetch all applications (1 query instead of N)
+        Map<Long, Application> applicationMap = applicationRepository.findAllById(request.getApplicationIds())
+            .stream().collect(Collectors.toMap(Application::getApplicationId, a -> a));
         
         int totalProcessed = 0;
         int successCount = 0;
         int failureCount = 0;
+        List<Application> applicationsToSave = new ArrayList<>();
+        List<Candidate> candidatesToSave = new ArrayList<>();
         
-        for (BulkApplicationStatusUpdateRequest.ApplicationStatusData appData : request.getApplications()) {
+        for (Long appId : request.getApplicationIds()) {
             totalProcessed++;
             
             try {
-                // Validate application data
-                if (appData.getApplicationId() == null) {
-                    response.getErrorMessages().add("Application ID is required for entry #" + totalProcessed);
+                if (appId == null) {
+                    response.getErrorMessages().add("Null application ID at entry #" + totalProcessed);
                     failureCount++;
                     continue;
                 }
                 
-                if (appData.getApplicationStatus() == null || appData.getApplicationStatus().isBlank()) {
-                    response.getErrorMessages().add("Application status is required for application ID: " + appData.getApplicationId());
-                    failureCount++;
-                    continue;
-                }
-                
-                // Find application
-                Application application = applicationRepository.findById(appData.getApplicationId()).orElse(null);
+                Application application = applicationMap.get(appId);
                 
                 if (application == null) {
-                    response.getErrorMessages().add("Application not found with ID: " + appData.getApplicationId());
+                    response.getErrorMessages().add("Application not found with ID: " + appId);
                     failureCount++;
                     continue;
                 }
                 
-                // Parse and validate status
-                ApplicationStatus newStatus;
-                try {
-                    newStatus = ApplicationStatus.valueOf(appData.getApplicationStatus());
-                } catch (IllegalArgumentException e) {
-                    response.getErrorMessages().add("Invalid application status '" + appData.getApplicationStatus() + 
-                            "' for application ID: " + appData.getApplicationId());
+                // Validate transition
+                ApplicationStatus currentStatus = application.getApplicationStatus();
+                if (!isValidTransition(currentStatus, newStatus)) {
+                    response.getErrorMessages().add("Invalid transition from " + currentStatus + " to " + newStatus 
+                            + " for application ID: " + appId);
                     failureCount++;
                     continue;
                 }
                 
                 // Update application status
                 application.setApplicationStatus(newStatus);
-                Application updatedApplication = applicationRepository.save(application);
+                if (updatedByUser != null) {
+                    application.setUpdatedByUser(updatedByUser);
+                }
+                applicationsToSave.add(application);
                 
-                // Update candidate status based on application status
+                // Update candidate stage
                 Candidate candidate = application.getCandidate();
                 if (candidate != null) {
-                    ApplicationStage newCandidateStage = null;
-                    
-                    if (newStatus == ApplicationStatus.SELECTED) {
-                        // If application status is SELECTED → candidate stage = SELECTED
-                        newCandidateStage = ApplicationStage.SELECTED;
-                    } else if (newStatus == ApplicationStatus.FAILED || newStatus == ApplicationStatus.DROPPED) {
-                        // If application status is FAILED or DROPPED → candidate stage = REJECTED
-                        newCandidateStage = ApplicationStage.REJECTED;
-                    }
-                    
-                    // Update candidate stage if applicable
+                    ApplicationStage newCandidateStage = mapToCandidateStage(newStatus);
                     if (newCandidateStage != null) {
                         candidate.setApplicationStage(newCandidateStage);
-                        candidatesRepository.save(candidate);
+                        candidatesToSave.add(candidate);
                     }
                 }
                 
-                // Add to successful updates
-                response.getSuccessfulUpdates().add(mapper.toResponse(updatedApplication));
                 successCount++;
                 
             } catch (Exception e) {
-                response.getErrorMessages().add("Error processing application " + appData.getApplicationId() + ": " + e.getMessage());
+                response.getErrorMessages().add("Error processing application " + appId + ": " + e.getMessage());
                 failureCount++;
             }
+        }
+        
+        // Batch save all applications and candidates (2 queries instead of 2N)
+        List<Application> savedApplications = applicationRepository.saveAll(applicationsToSave);
+        candidatesRepository.saveAll(candidatesToSave);
+        
+        for (Application saved : savedApplications) {
+            response.getSuccessfulUpdates().add(mapper.toResponse(saved));
         }
         
         response.setTotalProcessed(totalProcessed);
@@ -282,19 +342,80 @@ public class ApplicationServiceImpl implements IApplicationService {
         return response;
     }
 
+    // =========================================================================
+    // Status transition helpers
+    // =========================================================================
+
+    /**
+     * Validates that the status transition is allowed.
+     * Rules:
+     *   ALLOTED   → IN_DRIVE
+     *   IN_DRIVE  → DROPPED, FAILED, SELECTED
+     */
+    private void validateStatusTransition(ApplicationStatus current, ApplicationStatus target, Long applicationId) {
+        if (!isValidTransition(current, target)) {
+            throw new ValidationException("Invalid status transition from " + current + " to " + target 
+                    + " for application ID: " + applicationId);
+        }
+    }
+
+    private boolean isValidTransition(ApplicationStatus current, ApplicationStatus target) {
+        if (current == null) return false;
+        return switch (current) {
+            case ALLOTED  -> target == ApplicationStatus.IN_DRIVE;
+            case IN_DRIVE -> target == ApplicationStatus.DROPPED 
+                          || target == ApplicationStatus.FAILED 
+                          || target == ApplicationStatus.SELECTED;
+            default       -> false;
+        };
+    }
+
+    private ApplicationStage mapToCandidateStage(ApplicationStatus status) {
+        return switch (status) {
+            case SELECTED -> ApplicationStage.SELECTED;
+            case FAILED, DROPPED -> ApplicationStage.REJECTED;
+            default -> null;
+        };
+    }
+
+    private void updateCandidateStage(Candidate candidate, ApplicationStatus newStatus) {
+        if (candidate == null) return;
+        ApplicationStage newStage = mapToCandidateStage(newStatus);
+        if (newStage != null) {
+            candidate.setApplicationStage(newStage);
+            candidatesRepository.save(candidate);
+        }
+    }
+
     @Override
     @Transactional(readOnly = true)
-    public Map<String, List<ApplicationResponse>> getBatchCandidatesByDriveId(Long driveId) {
+    public Map<String, List<Long>> getBatchCandidatesByDriveId(Long driveId) {
         if (driveId == null) {
             throw new ValidationException("Drive ID is required");
         }
-
         List<Application> applications = applicationRepository.findByDriveDriveId(driveId);
-
         return applications.stream()
                 .collect(Collectors.groupingBy(
                         a -> a.getBatchTime() != null ? a.getBatchTime().toString() : "UNSCHEDULED",
-                        Collectors.mapping(mapper::toResponse, Collectors.toList())
+                        Collectors.mapping(Application::getApplicationId, Collectors.toList())
                 ));
+    }
+
+    /**
+     * Generates a unique 6-digit registration code (100000–999999).
+     * Retries if the generated code already exists in the database.
+     */
+    private String generateRegistrationCode(Long driveId) {
+        String code;
+        int maxAttempts = 10;
+        int attempt = 0;
+        do {
+            code = String.valueOf(ThreadLocalRandom.current().nextInt(100000, 1000000));
+            attempt++;
+            if (attempt > maxAttempts) {
+                throw new ValidationException("Unable to generate a unique registration code after " + maxAttempts + " attempts");
+            }
+        } while (applicationRepository.existsByDriveDriveIdAndRegistrationCode(driveId, code));
+        return code;
     }
 }

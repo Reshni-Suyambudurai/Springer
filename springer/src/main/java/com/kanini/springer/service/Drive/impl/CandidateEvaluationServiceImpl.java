@@ -15,6 +15,7 @@ import com.kanini.springer.entity.enums.Enums.EvaluationStatus;
 import com.kanini.springer.exception.ResourceNotFoundException;
 import com.kanini.springer.exception.ValidationException;
 import com.kanini.springer.mapper.Drive.CandidateEvaluationMapper;
+import com.kanini.springer.mapper.Drive.RoundTemplateMapper;
 import com.kanini.springer.repository.Drive.ApplicationRepository;
 import com.kanini.springer.repository.Drive.CandidateEvaluationRepository;
 import com.kanini.springer.repository.Drive.CandidatesRepository;
@@ -27,9 +28,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -42,6 +45,7 @@ public class CandidateEvaluationServiceImpl implements ICandidateEvaluationServi
     private final UserRepository userRepository;
     private final CandidatesRepository candidatesRepository;
     private final CandidateEvaluationMapper mapper;
+    private final RoundTemplateMapper roundTemplateMapper;
     private final ObjectMapper objectMapper;
     private final IOverrideService overrideService;
     
@@ -124,108 +128,141 @@ public class CandidateEvaluationServiceImpl implements ICandidateEvaluationServi
         if (request.getRoundConfigId() == null) {
             throw new ValidationException("Round config ID is required");
         }
-        if (request.getReviewedBy() == null) {
-            throw new ValidationException("Reviewed by user ID is required");
+        if (request.getUpdatedBy() == null) {
+            throw new ValidationException("Updated by user ID is required");
         }
         if (request.getEvaluations() == null || request.getEvaluations().isEmpty()) {
             throw new ValidationException("Evaluations list cannot be empty");
         }
         
-        // Fetch round template (common for all)
+        // 1. Fetch round template (1 DB hit)
         RoundTemplate roundTemplate = roundTemplateRepository.findById(request.getRoundConfigId())
             .orElseThrow(() -> new ResourceNotFoundException("Round template", "ID", request.getRoundConfigId()));
         
-        // Fetch reviewed by user (common for all)
-        User reviewedByUser = userRepository.findById(request.getReviewedBy())
-            .orElseThrow(() -> new ResourceNotFoundException("User", "ID", request.getReviewedBy()));
+        // 2. Fetch user (1 DB hit)
+        User updatedByUser = userRepository.findById(request.getUpdatedBy())
+            .orElseThrow(() -> new ResourceNotFoundException("User", "ID", request.getUpdatedBy()));
         
-        int totalProcessed = 0;
-        int successCount = 0;
-        int failureCount = 0;
+        // 3. Collect all registration codes and batch fetch applications + candidates (1 DB hit)
+        List<String> registrationCodes = request.getEvaluations().stream()
+            .map(BulkCandidateEvaluationRequest.EvaluationData::getRegistrationCode)
+            .filter(code -> code != null && !code.isBlank())
+            .distinct()
+            .collect(Collectors.toList());
         
-        for (BulkCandidateEvaluationRequest.EvaluationData evalData : request.getEvaluations()) {
-            totalProcessed++;
-            
-            try {
-                // Validate individual evaluation data
-                if (evalData.getApplicationId() == null) {
-                    response.getErrorMessages().add("Application ID is required for evaluation " + totalProcessed);
-                    failureCount++;
-                    continue;
-                }
-                if (evalData.getScore() == null) {
-                    response.getErrorMessages().add("Score is required for application " + evalData.getApplicationId());
-                    failureCount++;
-                    continue;
-                }
-                if (evalData.getEvaluationStatus() == null || evalData.getEvaluationStatus().isBlank()) {
-                    response.getErrorMessages().add("Evaluation status is required for application " + evalData.getApplicationId());
-                    failureCount++;
-                    continue;
-                }
-                
-                // Fetch application
-                Application application = applicationRepository.findById(evalData.getApplicationId()).orElse(null);
-                
-                if (application == null) {
-                    response.getErrorMessages().add("Application with ID " + evalData.getApplicationId() + " not found");
-                    failureCount++;
-                    continue;
-                }
-                
-                // Parse evaluation status
-                EvaluationStatus evaluationStatus;
-                try {
-                    evaluationStatus = EvaluationStatus.valueOf(evalData.getEvaluationStatus());
-                } catch (IllegalArgumentException e) {
-                    response.getErrorMessages().add("Invalid evaluation status for application " + evalData.getApplicationId() + ": " + evalData.getEvaluationStatus());
-                    failureCount++;
-                    continue;
-                }
-                
-                // Create evaluation
-                CandidateEvaluation evaluation = new CandidateEvaluation();
-                evaluation.setApplication(application);
-                evaluation.setRoundConfig(roundTemplate);
-                evaluation.setScore(evalData.getScore());
-                evaluation.setReview(evalData.getReview());
-                evaluation.setStatus(evaluationStatus);
-                evaluation.setReviewedBy(reviewedByUser);
-                
-                // Serialize sectionScore to JSON string if provided
-                if (evalData.getSectionScore() != null) {
-                    try {
-                        String sectionScoreJson = objectMapper.writeValueAsString(evalData.getSectionScore());
-                        evaluation.setSectionScore(sectionScoreJson);
-                    } catch (JsonProcessingException e) {
-                        response.getErrorMessages().add("Failed to serialize sectionScore for application " + evalData.getApplicationId());
-                        failureCount++;
-                        continue;
-                    }
-                }
-                
-                // Save evaluation
-                CandidateEvaluation savedEvaluation = evaluationRepository.save(evaluation);
-                
-                // Update candidate status if FAIL
-                if (evaluationStatus == EvaluationStatus.FAIL) {
-                    updateCandidateStatusOnFailure(application.getCandidate(), roundTemplate.getRoundName());
-                }
-                
-                response.getSuccessfulEvaluations().add(mapper.toResponse(savedEvaluation));
-                successCount++;
-                
-            } catch (Exception e) {
-                response.getErrorMessages().add("Error processing evaluation for application " + 
-                        (evalData.getApplicationId() != null ? evalData.getApplicationId() : "unknown") + 
-                        ": " + e.getMessage());
-                failureCount++;
-            }
+        Map<String, Application> appByRegCode = Map.of();
+        if (!registrationCodes.isEmpty()) {
+            List<Application> applications = applicationRepository.findByRegistrationCodeInWithCandidate(registrationCodes);
+            appByRegCode = applications.stream()
+                .collect(Collectors.toMap(Application::getRegistrationCode, app -> app, (a, b) -> a));
         }
         
+        // 4. Pre-fetch existing evaluations for this round to detect duplicates (1 DB hit)
+        List<Long> allApplicationIds = appByRegCode.values().stream()
+            .map(Application::getApplicationId)
+            .collect(Collectors.toList());
+        Set<Long> existingAppIds = Set.of();
+        if (!allApplicationIds.isEmpty()) {
+            existingAppIds = evaluationRepository
+                .findByApplicationIdsAndRoundConfigIdFetched(allApplicationIds, request.getRoundConfigId())
+                .stream()
+                .map(e -> e.getApplication().getApplicationId())
+                .collect(Collectors.toSet());
+        }
+        
+        // 5. Validate all rows first (all-or-nothing)
+        List<CandidateEvaluation> evaluationsToSave = new ArrayList<>();
+        Map<Integer, String> errors = new LinkedHashMap<>();
+        Set<Long> seenAppIds = new HashSet<>();
+        
+        List<BulkCandidateEvaluationRequest.EvaluationData> evalList = request.getEvaluations();
+        for (int i = 0; i < evalList.size(); i++) {
+            BulkCandidateEvaluationRequest.EvaluationData evalData = evalList.get(i);
+            String name = evalData.getCandidateName() != null ? evalData.getCandidateName() : "Unknown";
+            
+            // Validate registration code
+            if (evalData.getRegistrationCode() == null || evalData.getRegistrationCode().isBlank()) {
+                errors.put(i, name + ": Registration code is required");
+                continue;
+            }
+            
+            // Look up application from pre-fetched map
+            Application application = appByRegCode.get(evalData.getRegistrationCode());
+            if (application == null) {
+                errors.put(i, name + ": No application found for registration code " + evalData.getRegistrationCode());
+                continue;
+            }
+            
+            // Verify candidate exists
+            Candidate candidate = application.getCandidate();
+            if (candidate == null) {
+                errors.put(i, name + ": No candidate linked to registration code " + evalData.getRegistrationCode());
+                continue;
+            }
+            
+            // Verify email against the candidate record
+            if (evalData.getCandidateEmail() != null && !evalData.getCandidateEmail().isBlank()
+                    && !evalData.getCandidateEmail().equalsIgnoreCase(candidate.getEmail())) {
+                errors.put(i, name + ": Email mismatch — expected " + candidate.getEmail() + " but got " + evalData.getCandidateEmail());
+                continue;
+            }            
+            // Check for duplicate in DB
+            if (existingAppIds.contains(application.getApplicationId())) {
+                errors.put(i, name + ": Evaluation already exists for this round");
+                continue;
+            }
+            
+            // Check for duplicate within this upload batch
+            if (!seenAppIds.add(application.getApplicationId())) {
+                errors.put(i, name + ": Duplicate entry in upload \u2014 registration code " + evalData.getRegistrationCode() + " appears more than once");
+                continue;
+            }            
+            // Compute total score from sections
+            int totalScore = 0;
+            if (evalData.getSections() != null) {
+                for (Number val : evalData.getSections().values()) {
+                    totalScore += (val != null ? val.intValue() : 0);
+                }
+            }
+            
+            // Build evaluation entity
+            CandidateEvaluation evaluation = new CandidateEvaluation();
+            evaluation.setApplication(application);
+            evaluation.setRoundConfig(roundTemplate);
+            evaluation.setScore(totalScore);
+            evaluation.setStatus(EvaluationStatus.PENDING);
+            evaluation.setReviewedBy(updatedByUser);
+            
+            // Serialize sections to JSON sectionScore
+            if (evalData.getSections() != null && !evalData.getSections().isEmpty()) {
+                try {
+                    evaluation.setSectionScore(objectMapper.writeValueAsString(evalData.getSections()));
+                } catch (JsonProcessingException e) {
+                    errors.put(i, name + ": Failed to serialize section scores");
+                    continue;
+                }
+            }
+            
+            evaluationsToSave.add(evaluation);
+        }
+        
+        int totalProcessed = evalList.size();
+        
+        // 5. All-or-nothing: if any validation errors, return without saving
+        if (!errors.isEmpty()) {
+            response.setErrorMessages(errors);
+            response.setTotalProcessed(totalProcessed);
+            response.setSuccessCount(0);
+            response.setFailureCount(errors.size());
+            return response;
+        }
+        
+        // 6. Bulk save all evaluations (1 DB hit)
+        evaluationRepository.saveAll(evaluationsToSave);
+        
         response.setTotalProcessed(totalProcessed);
-        response.setSuccessCount(successCount);
-        response.setFailureCount(failureCount);
+        response.setSuccessCount(evaluationsToSave.size());
+        response.setFailureCount(0);
         
         return response;
     }
@@ -442,5 +479,33 @@ public class CandidateEvaluationServiceImpl implements ICandidateEvaluationServi
         } catch (Exception e) {
             System.err.println("Error logging manual override: " + e.getMessage());
         }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public RoundEvaluationResponse getEvaluationsByRoundAndApplications(RoundEvaluationRequest request) {
+        if (request.getRoundNo() == null) {
+            throw new ValidationException("Round number is required");
+        }
+        if (request.getApplicationIds() == null || request.getApplicationIds().isEmpty()) {
+            throw new ValidationException("Application IDs list cannot be empty");
+        }
+
+        // Find the RoundTemplate by roundNo
+        RoundTemplate roundTemplate = roundTemplateRepository.findByRoundNo(request.getRoundNo())
+                .orElseThrow(() -> new ResourceNotFoundException("Round template", "roundNo", request.getRoundNo()));
+
+        // Single query with JOIN FETCH to avoid N+1 — loads application, candidate, and reviewedBy
+        List<CandidateEvaluation> evaluations = evaluationRepository
+                .findByApplicationIdsAndRoundConfigIdFetched(
+                        request.getApplicationIds(), roundTemplate.getRoundConfigId());
+
+        RoundEvaluationResponse response = new RoundEvaluationResponse();
+        response.setRoundTemplate(roundTemplateMapper.toResponse(roundTemplate));
+        response.setEvaluations(evaluations.stream()
+                .map(mapper::toResponse)
+                .collect(Collectors.toList()));
+
+        return response;
     }
 }

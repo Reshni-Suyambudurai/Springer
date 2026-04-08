@@ -77,12 +77,12 @@ public class ApplicationController {
     }
 
     @GetMapping("/drive/{driveId}/batches")
-    @Operation(summary = "Get batch-wise candidates for a drive",
-               description = "Returns a map of batchTime → list of applications for that batch. " +
+    @Operation(summary = "Get batch-wise application IDs for a drive",
+               description = "Returns a map of batchTime → list of application IDs for that batch. " +
                              "Applications with no batchTime are grouped under the key 'UNSCHEDULED'.")
-    public ResponseEntity<ApiResponse<Map<String, List<ApplicationResponse>>>> getBatchCandidatesByDriveId(
+    public ResponseEntity<ApiResponse<Map<String, List<Long>>>> getBatchCandidatesByDriveId(
             @PathVariable Long driveId) {
-        Map<String, List<ApplicationResponse>> batchMap = applicationService.getBatchCandidatesByDriveId(driveId);
+        Map<String, List<Long>> batchMap = applicationService.getBatchCandidatesByDriveId(driveId);
         return ResponseEntity.ok(new ApiResponse<>(true, "Batch candidates retrieved successfully", batchMap));
     }
 }

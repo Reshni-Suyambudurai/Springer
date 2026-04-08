@@ -13,4 +13,5 @@ import lombok.NoArgsConstructor;
 public class ApplicationStatusUpdateRequest {
     
     private String applicationStatus; // required - new status
+    private Long updatedBy;          // required - userId performing the update
 }

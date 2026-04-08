@@ -73,18 +73,21 @@
 }
 
 .drive-cycle-status-open {
-  background-color: var(--color-success);
-  color: var(--color-surface);
+  background-color: var(--color-green-50);
+  color: var(--color-green-600);
+  border: 1px solid var(--color-green-600);
 }
 
 .drive-cycle-status-closed {
-  background-color: var(--color-danger);
-  color: var(--color-surface);
+  background-color: color-mix(in srgb, var(--color-danger) 15%, transparent);
+  color: var(--color-danger);
+  border: 1px solid var(--color-danger);
 }
 
 .drive-cycle-status-pending {
-  background-color: var(--color-warning);
-  color: var(--color-text);
+  background-color: color-mix(in srgb, var(--color-warning) 15%, transparent);
+  color: var(--color-warning);
+  border: 1px solid var(--color-warning);
 }
 
 /* Card Body */

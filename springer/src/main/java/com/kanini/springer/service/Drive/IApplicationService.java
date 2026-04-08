@@ -60,11 +60,11 @@ public interface IApplicationService {
     BulkApplicationStatusUpdateResponse bulkUpdateApplicationStatus(BulkApplicationStatusUpdateRequest request);
 
     /**
-     * Get all distinct batch times for a drive, each mapped to the list of applications in that batch.
+     * Get all distinct batch times for a drive, each mapped to the list of application IDs in that batch.
      * Null batchTime applications are grouped under the key "UNSCHEDULED".
      *
      * @param driveId Drive ID
-     * @return Map of batchTime string → list of ApplicationResponse
+     * @return Map of batchTime string → list of application IDs
      */
-    Map<String, List<ApplicationResponse>> getBatchCandidatesByDriveId(Long driveId);
+    Map<String, List<Long>> getBatchCandidatesByDriveId(Long driveId);
 }

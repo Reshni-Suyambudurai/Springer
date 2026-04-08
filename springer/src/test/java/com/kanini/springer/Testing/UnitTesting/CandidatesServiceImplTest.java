@@ -618,7 +618,7 @@ class CandidatesServiceImplTest {
         void bulkUpdateStatus_allEligible_allSucceed() {
             stubCandidate.setIsEligible(true);
             BulkCandidateStatusUpdateRequest req = new BulkCandidateStatusUpdateRequest(
-                    List.of(1L), "SHORTLISTED", "Bulk shortlist", 1L
+                    List.of(1L), null, "SHORTLISTED", "Bulk shortlist", 1L
             );
 
             when(userRepository.findById(1L)).thenReturn(Optional.of(stubUser));
@@ -638,7 +638,7 @@ class CandidatesServiceImplTest {
             Candidate eligible   = candidate(10L, true);
             Candidate ineligible = candidate(11L, false);
             BulkCandidateStatusUpdateRequest req = new BulkCandidateStatusUpdateRequest(
-                    List.of(10L, 11L), "SHORTLISTED", "Bulk test", null
+                    List.of(10L, 11L), null, "SHORTLISTED", "Bulk test", null
             );
 
             when(candidatesRepository.findById(10L)).thenReturn(Optional.of(eligible));
@@ -656,31 +656,31 @@ class CandidatesServiceImplTest {
         @DisplayName("Negative: throws ValidationException when candidateIds list is null")
         void bulkUpdateStatus_nullCandidateIds_throwsValidation() {
             BulkCandidateStatusUpdateRequest req = new BulkCandidateStatusUpdateRequest(
-                    null, "SHORTLISTED", "Reason", 1L
+                    null, null, "SHORTLISTED", "Reason", 1L
             );
 
             assertThatThrownBy(() -> candidatesService.bulkUpdateCandidateStatus(req))
                     .isInstanceOf(ValidationException.class)
-                    .hasMessageContaining("Candidate IDs list cannot be empty");
+                    .hasMessageContaining("No candidates to update");
         }
 
         @Test
         @DisplayName("Negative: throws ValidationException when candidateIds list is empty")
         void bulkUpdateStatus_emptyCandidateIds_throwsValidation() {
             BulkCandidateStatusUpdateRequest req = new BulkCandidateStatusUpdateRequest(
-                    Collections.emptyList(), "SHORTLISTED", "Reason", 1L
+                    Collections.emptyList(), null, "SHORTLISTED", "Reason", 1L
             );
 
             assertThatThrownBy(() -> candidatesService.bulkUpdateCandidateStatus(req))
                     .isInstanceOf(ValidationException.class)
-                    .hasMessageContaining("Candidate IDs list cannot be empty");
+                    .hasMessageContaining("No candidates to update");
         }
 
         @Test
         @DisplayName("Negative: throws ValidationException when status is null")
         void bulkUpdateStatus_nullStatus_throwsValidation() {
             BulkCandidateStatusUpdateRequest req = new BulkCandidateStatusUpdateRequest(
-                    List.of(1L), null, "Reason", 1L
+                    List.of(1L), null, null, "Reason", 1L
             );
 
             assertThatThrownBy(() -> candidatesService.bulkUpdateCandidateStatus(req))
@@ -692,7 +692,7 @@ class CandidatesServiceImplTest {
         @DisplayName("Negative: throws ValidationException when status string is invalid enum value")
         void bulkUpdateStatus_invalidStatus_throwsValidation() {
             BulkCandidateStatusUpdateRequest req = new BulkCandidateStatusUpdateRequest(
-                    List.of(1L), "INVALID_STATUS", "Reason", 1L
+                    List.of(1L), null, "INVALID_STATUS", "Reason", 1L
             );
 
             assertThatThrownBy(() -> candidatesService.bulkUpdateCandidateStatus(req))
@@ -713,7 +713,7 @@ class CandidatesServiceImplTest {
         @DisplayName("Positive: sets lifecycle to CLOSED for all candidates in list")
         void bulkUpdateLifecycle_valid_allSucceed() {
             BulkCandidateLifecycleUpdateRequest req = new BulkCandidateLifecycleUpdateRequest(
-                    List.of(1L), "CLOSED", 1L
+                    List.of(1L), null, "CLOSED", 1L
             );
 
             when(userRepository.findById(1L)).thenReturn(Optional.of(stubUser));
@@ -731,7 +731,7 @@ class CandidatesServiceImplTest {
         @DisplayName("Positive: records error for non-existent ID without aborting others")
         void bulkUpdateLifecycle_oneNotFound_errorRecordedForMissing() {
             BulkCandidateLifecycleUpdateRequest req = new BulkCandidateLifecycleUpdateRequest(
-                    List.of(1L, 99L), "ACTIVE", null
+                    List.of(1L, 99L), null, "ACTIVE", null
             );
 
             when(candidatesRepository.findById(1L)).thenReturn(Optional.of(stubCandidate));
@@ -746,22 +746,22 @@ class CandidatesServiceImplTest {
         }
 
         @Test
-        @DisplayName("Negative: throws ValidationException when candidateIds is null")
+        @DisplayName("Negative: throws ValidationException when candidateIds is null and no filterRequest")
         void bulkUpdateLifecycle_nullCandidateIds_throwsValidation() {
             BulkCandidateLifecycleUpdateRequest req = new BulkCandidateLifecycleUpdateRequest(
-                    null, "CLOSED", 1L
+                    null, null, "CLOSED", 1L
             );
 
             assertThatThrownBy(() -> candidatesService.bulkUpdateCandidateLifecycleStatus(req))
                     .isInstanceOf(ValidationException.class)
-                    .hasMessageContaining("Candidate IDs list cannot be empty");
+                    .hasMessageContaining("No candidates to update");
         }
 
         @Test
         @DisplayName("Negative: throws ValidationException when lifecycleStatus is blank")
         void bulkUpdateLifecycle_blankLifecycleStatus_throwsValidation() {
             BulkCandidateLifecycleUpdateRequest req = new BulkCandidateLifecycleUpdateRequest(
-                    List.of(1L), "  ", 1L
+                    List.of(1L), null, "  ", 1L
             );
 
             assertThatThrownBy(() -> candidatesService.bulkUpdateCandidateLifecycleStatus(req))
@@ -773,7 +773,7 @@ class CandidatesServiceImplTest {
         @DisplayName("Negative: throws ValidationException for invalid lifecycle status string")
         void bulkUpdateLifecycle_invalidStatus_throwsValidation() {
             BulkCandidateLifecycleUpdateRequest req = new BulkCandidateLifecycleUpdateRequest(
-                    List.of(1L), "EXPIRED", 1L
+                    List.of(1L), null, "EXPIRED", 1L
             );
 
             assertThatThrownBy(() -> candidatesService.bulkUpdateCandidateLifecycleStatus(req))

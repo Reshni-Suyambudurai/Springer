@@ -1,0 +1,319 @@
+/* ========== Container ========== */
+.ar1-container {
+  padding: 16px;
+  background-color: var(--color-bg);
+  min-height: 100vh;
+}
+
+/* ========== Header ========== */
+.ar1-header {
+  display: flex !important;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--color-surface) !important;
+  padding: 16px 20px !important;
+  border-radius: 12px !important;
+  border: 1px solid var(--color-border) !important;
+  box-shadow: none !important;
+  margin-bottom: 20px;
+}
+
+.ar1-header-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.ar1-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.ar1-title {
+  color: var(--color-text) !important;
+  font-size: 18px !important;
+  font-weight: 600 !important;
+  margin: 0 !important;
+}
+
+/* ========== Buttons ========== */
+.ar1-btn {
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  border-radius: 8px !important;
+  padding: 8px 18px !important;
+  text-transform: none !important;
+  white-space: nowrap;
+  transition: background-color 0.2s ease !important;
+}
+
+.ar1-btn-download {
+  background-color: transparent !important;
+  color: var(--color-primary) !important;
+  border: 1.5px solid var(--color-primary) !important;
+}
+
+.ar1-btn-download:hover {
+  background-color: var(--color-primary) !important;
+  color: var(--color-surface) !important;
+}
+
+/* ========== Drag & Drop Zone ========== */
+.ar1-dropzone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 64px 24px;
+  margin-bottom: 20px;
+  border: 2px dashed var(--color-border);
+  border-radius: 12px;
+  background-color: var(--color-surface);
+  cursor: pointer;
+  transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.ar1-dropzone:hover {
+  border-color: var(--color-primary);
+  background-color: var(--color-bg);
+}
+
+.ar1-dropzone-active {
+  border-color: var(--color-primary) !important;
+  background-color: var(--color-bg) !important;
+}
+
+.ar1-dropzone-icon {
+  font-size: 56px !important;
+  color: var(--color-primary) !important;
+}
+
+.ar1-dropzone-title {
+  color: var(--color-text) !important;
+  font-weight: 600 !important;
+  font-size: 16px !important;
+}
+
+.ar1-dropzone-subtitle {
+  color: var(--color-text-muted) !important;
+  font-size: 13px !important;
+}
+
+/* ========== File Info ========== */
+.ar1-file-info {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  margin-bottom: 16px;
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+}
+
+.ar1-file-info-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.ar1-search-wrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background-color: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: 4px 10px;
+}
+
+.ar1-search-icon {
+  font-size: 20px !important;
+  color: var(--color-text-muted) !important;
+}
+
+.ar1-search-input {
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 13px;
+  color: var(--color-text);
+  width: 180px;
+}
+
+.ar1-search-input::placeholder {
+  color: var(--color-text-muted);
+}
+
+.ar1-file-name {
+  font-size: 13px !important;
+  color: var(--color-text-muted) !important;
+  font-weight: 500 !important;
+}
+
+.ar1-btn-clear {
+  font-size: 12px !important;
+  color: var(--color-danger) !important;
+  text-transform: none !important;
+}
+
+.ar1-btn-upload {
+  font-size: 12px !important;
+  background-color: var(--color-primary) !important;
+  color: #ffffff !important;
+  text-transform: none !important;
+  border-radius: 6px !important;
+  padding: 4px 16px !important;
+}
+
+.ar1-btn-upload:hover {
+  opacity: 0.9;
+}
+
+.ar1-btn-upload:disabled {
+  opacity: 0.5 !important;
+}
+
+/* ========== Table ========== */
+.ar1-table-container {
+  border-radius: 12px !important;
+  border: 1px solid var(--color-border) !important;
+  background: var(--color-surface) !important;
+  box-shadow: none !important;
+  overflow: auto;
+  max-height: calc(100vh - 220px);
+}
+
+.ar1-table-head-row {
+  background-color: var(--color-primary);
+}
+
+.ar1-th {
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  color: #ffffff !important;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 2px solid var(--color-primary) !important;
+  background-color: var(--color-primary) !important;
+  white-space: nowrap;
+  padding: 12px 14px !important;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.ar1-table-row {
+  transition: background-color 0.15s ease;
+}
+
+.ar1-table-row:hover {
+  background-color: var(--color-bg) !important;
+}
+
+.ar1-td {
+  font-size: 13px !important;
+  color: var(--color-text) !important;
+  border-bottom: 1px solid var(--color-border) !important;
+  padding: 12px 14px !important;
+  background-color: var(--color-surface) !important;
+}
+
+.ar1-td-code {
+  font-weight: 600 !important;
+  font-family: monospace;
+}
+
+.ar1-td-name {
+  font-weight: 600 !important;
+}
+
+.ar1-td-score {
+  text-align: center !important;
+  font-weight: 500 !important;
+}
+
+.ar1-delete-btn {
+  color: var(--color-danger) !important;
+}
+
+.ar1-delete-btn:hover {
+  background-color: var(--color-bg) !important;
+}
+
+/* ========== Actions Cell ========== */
+.ar1-actions-cell {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.ar1-edit-btn {
+  color: var(--color-primary) !important;
+}
+
+.ar1-edit-btn:hover {
+  background-color: var(--color-bg) !important;
+}
+
+.ar1-save-btn {
+  color: var(--color-green) !important;
+}
+
+.ar1-save-btn:hover {
+  background-color: var(--color-bg) !important;
+}
+
+.ar1-cancel-btn {
+  color: var(--color-text-muted) !important;
+}
+
+.ar1-cancel-btn:hover {
+  background-color: var(--color-bg) !important;
+}
+
+/* ========== Edit Input ========== */
+.ar1-edit-input .MuiInputBase-input {
+  font-size: 13px !important;
+  padding: 6px 8px !important;
+}
+
+.ar1-edit-input .MuiOutlinedInput-notchedOutline {
+  border-color: var(--color-primary) !important;
+  border-radius: 6px;
+}
+
+/* ========== Error Rows ========== */
+.ar1-row-error {
+  background-color: rgba(246, 92, 92, 0.06) !important;
+}
+
+.ar1-cell-error {
+  color: var(--color-danger) !important;
+  font-weight: 600 !important;
+}
+
+.ar1-error-name {
+  cursor: pointer;
+  border-bottom: 1px dashed var(--color-danger);
+}
+
+/* ========== Responsive ========== */
+@media (max-width: 768px) {
+  .ar1-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .ar1-header-actions {
+    flex-wrap: wrap;
+  }
+
+  .ar1-th,
+  .ar1-td {
+    padding: 8px 10px !important;
+  }
+}

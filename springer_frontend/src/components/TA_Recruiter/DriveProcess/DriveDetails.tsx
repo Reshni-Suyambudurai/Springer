@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Box, Card, Typography, IconButton, CircularProgress } from "@mui/material";
-import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import { Box, Card, Typography, CircularProgress } from "@mui/material";
+import BackButton from "../../Common/BackButton";
 import { driveScheduleApi } from "../../../services/driveschedule.api";
 import type { DriveAnalyticsResponse } from "../../../types/TA_Recruiter/DriveSchedule/driveSchedule.types";
 import { showToast } from "../../../utils/toast";
@@ -90,9 +90,7 @@ const DriveDetails: React.FC = () => {
 
       {/* ═══ Header — fixed, flex-shrink: 0 ═══ */}
       <Card className="dd-header">
-        <IconButton className="dd-back-btn" onClick={handleBackClick}>
-          <ArrowBackIcon />
-        </IconButton>
+        <BackButton onClick={handleBackClick} variant="header" />
         <Box className="dd-header-center">
           <Typography variant="h5" className="dd-header-title">{drive.driveName}</Typography>
           <Typography className="dd-header-sub">{drive.cycleName}</Typography>

@@ -1,0 +1,16 @@
+/* Only styles unique to HiringCycleList — all common layout uses t-* from template.css */
+
+.tar-hcl-alert-wrap { padding: 24px; }
+
+.tar-hcl-name-icon-box {
+  width: 30px;
+  height: 30px;
+  border-radius: 6px;
+  background-color: var(--color-icon-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.tar-hcl-action-icon { font-size: 18px !important; color: var(--color-primary) !important; }

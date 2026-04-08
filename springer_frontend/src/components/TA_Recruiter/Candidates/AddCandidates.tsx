@@ -49,7 +49,7 @@ import {
   Autocomplete,
   Tooltip,
 } from "@mui/material";
-import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import BackButton from "../../Common/BackButton";
 import AddIcon from "@mui/icons-material/Add";
 import UploadIcon from "@mui/icons-material/Upload";
 import DownloadIcon from "@mui/icons-material/Download";
@@ -368,10 +368,11 @@ console.log("Skills data:", response.data);
       const response = await candidateApi.bulkValidateCandidates(validationRequests);
       
       if (response.success && response.data) {
-        // Create a map of tempId to validation response
+        // Create a map of email to validation response for stable lookups
         const resultsMap = new Map<string, CandidateValidationResponse>();
-        response.data.forEach((result) => {
-          resultsMap.set(result.tempId, result);
+        response.data.forEach((result, idx) => {
+          const email = candidates[idx]?.email?.toLowerCase();
+          if (email) resultsMap.set(email, result);
         });
         setValidationResults(resultsMap);
 
@@ -511,20 +512,16 @@ console.log("Skills data:", response.data);
   };
 
   const handleRemoveRow = (index: number) => {
+    const removedEmail = bulkData[index]?.email?.toLowerCase();
     const updated = bulkData.filter((_, idx) => idx !== index);
     setBulkData(updated);
     
-    // Update validation results by removing the deleted row and shifting indices
-    const newValidationResults = new Map<string, CandidateValidationResponse>();
-    validationResults.forEach((value, key) => {
-      const rowNum = parseInt(key.split("-")[1]);
-      if (rowNum < index + 1) {
-        newValidationResults.set(key, value);
-      } else if (rowNum > index + 1) {
-        newValidationResults.set(`row-${rowNum - 1}`, value);
-      }
-    });
-    setValidationResults(newValidationResults);
+    // Remove validation entry for the deleted candidate's email
+    if (removedEmail) {
+      const newValidationResults = new Map(validationResults);
+      newValidationResults.delete(removedEmail);
+      setValidationResults(newValidationResults);
+    }
     
     showToast("Row removed", "success");
   };
@@ -560,9 +557,8 @@ console.log("Skills data:", response.data);
     return age;
   };
   
-  const getValidationForIndex = (index: number): CandidateValidationResponse | undefined => {
-    const tempId = `row-${index + 1}`;
-    return validationResults.get(tempId);
+  const getValidationForCandidate = (email: string): CandidateValidationResponse | undefined => {
+    return validationResults.get(email.toLowerCase());
   };
 
   const hasDuplicates = (): boolean => {
@@ -571,14 +567,33 @@ console.log("Skills data:", response.data);
     );
   };
 
+  const handleRemoveDuplicates = () => {
+    // Find emails marked as duplicate
+    const duplicateEmails = new Set<string>();
+    validationResults.forEach((result, email) => {
+      if (result.status === ValidationStatus.DUPLICATE) {
+        duplicateEmails.add(email);
+      }
+    });
+
+    if (duplicateEmails.size === 0) return;
+
+    // Filter out duplicate rows and remove their validation entries
+    const filtered = bulkData.filter((c) => !duplicateEmails.has(c.email.toLowerCase()));
+    const newValidationResults = new Map(validationResults);
+    duplicateEmails.forEach((email) => newValidationResults.delete(email));
+
+    setBulkData(filtered);
+    setValidationResults(newValidationResults);
+    showToast(`Removed ${duplicateEmails.size} duplicate row(s)`, "success");
+  };
+
   return (
     <Box className="add-candidates-container">
       {/* Single Unified Header */}
       <Card className="add-candidates-header">
         <Box className="add-candidates-header-left">
-          <IconButton onClick={() => navigate("/ta-recruiter/candidates")} className="add-candidates-back-btn">
-            <ArrowBackIcon />
-          </IconButton>
+          <BackButton onClick={() => navigate("/ta-recruiter/candidates")} variant="header" />
           
           <Typography variant="h6" className="add-candidates-cycle-name">
             {cycleName} - {cycleYear}
@@ -588,7 +603,7 @@ console.log("Skills data:", response.data);
             variant="contained"
             startIcon={<AddIcon />}
             onClick={() => setAddDialog(true)}
-            className="add-candidates-header-btn add-candidates-add-btn"
+            className="add-candidates-header-btn t-btn-primary"
           >
             Add Candidate
           </Button>
@@ -597,7 +612,7 @@ console.log("Skills data:", response.data);
             variant="contained"
             component="label"
             startIcon={<UploadIcon />}
-            className="add-candidates-header-btn add-candidates-upload-btn"
+            className="add-candidates-header-btn t-btn-success"
           >
             Upload Candidates
             <input type="file" hidden accept=".xlsx,.xls" onChange={handleFileUpload} />
@@ -607,7 +622,7 @@ console.log("Skills data:", response.data);
             variant="outlined"
             startIcon={<DownloadIcon />}
             onClick={handleDownloadFormat}
-            className="add-candidates-header-btn add-candidates-download-btn"
+            className="add-candidates-header-btn t-btn-small"
           >
             Download Format
           </Button>
@@ -623,35 +638,48 @@ console.log("Skills data:", response.data);
                 Uploaded Data ({bulkData.length} candidates)
                 {isValidating && <span className="validation-loading"> - Validating...</span>}
               </Typography>
-              <Button
-                variant="contained"
-                onClick={handleBulkUpload}
-                className="add-candidates-bulk-upload-btn"
-                disabled={hasDuplicates() || isValidating || validationResults.size === 0}
-              >
-                Upload to Database
-              </Button>
+              <Box className="add-candidates-bulk-header-actions">
+                {hasDuplicates() && (
+                  <Button
+                    variant="outlined"
+                    startIcon={<DeleteIcon />}
+                    onClick={handleRemoveDuplicates}
+                    className="t-btn-secondary"
+                    disabled={isValidating}
+                  >
+                    Remove Duplicates
+                  </Button>
+                )}
+                <Button
+                  variant="contained"
+                  onClick={handleBulkUpload}
+                  className="t-btn-primary"
+                  disabled={hasDuplicates() || isValidating || validationResults.size === 0}
+                >
+                  Upload to Database
+                </Button>
+              </Box>
             </Box>
 
             <TableContainer component={Paper} className="add-candidates-bulk-table">
               <Table>
                 <TableHead>
                   <TableRow>
-                    <TableCell className="table-header">Index</TableCell>
-                    <TableCell className="table-header">First Name</TableCell>
-                    <TableCell className="table-header">Last Name</TableCell>
-                    <TableCell className="table-header">Email</TableCell>
-                    <TableCell className="table-header">Mobile</TableCell>
-                    <TableCell className="table-header">Institute</TableCell>
-                    <TableCell className="table-header">CGPA</TableCell>
-                    <TableCell className="table-header">Age</TableCell>
-                    <TableCell className="table-header">Passout Year</TableCell>
-                    <TableCell className="table-header">Actions</TableCell>
+                    <TableCell className="t-head-cell">Index</TableCell>
+                    <TableCell className="t-head-cell">First Name</TableCell>
+                    <TableCell className="t-head-cell">Last Name</TableCell>
+                    <TableCell className="t-head-cell">Email</TableCell>
+                    <TableCell className="t-head-cell">Mobile</TableCell>
+                    <TableCell className="t-head-cell">Institute</TableCell>
+                    <TableCell className="t-head-cell">CGPA</TableCell>
+                    <TableCell className="t-head-cell">Age</TableCell>
+                    <TableCell className="t-head-cell">Passout Year</TableCell>
+                    <TableCell className="t-head-cell">Actions</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
                   {bulkData.map((cand, index) => {
-                    const validation = getValidationForIndex(index);
+                    const validation = getValidationForCandidate(cand.email);
                     const isDuplicate = validation?.status === ValidationStatus.DUPLICATE;
                     const isOld = validation?.status === ValidationStatus.OLD;
                     const hasWarning = isDuplicate || isOld;
@@ -668,7 +696,15 @@ console.log("Skills data:", response.data);
                         </Box>
                       </TableCell>
                       <TableCell>
-                        <Tooltip title={validation?.comment || ""} arrow placement="top">
+                        <Tooltip
+                          title={validation?.comment || ""}
+                          arrow
+                          placement="top"
+                          slotProps={{
+                            tooltip: { className: 'g-tooltip' },
+                            arrow: { className: 'g-tooltip-arrow' },
+                          }}
+                        >
                           <span>{cand.firstName}</span>
                         </Tooltip>
                       </TableCell>
@@ -683,7 +719,7 @@ console.log("Skills data:", response.data);
                         <IconButton
                           size="small"
                           onClick={() => handleRemoveRow(index)}
-                          className="bulk-delete-btn"
+                          className="t-action-btn"
                           title="Remove row"
                         >
                           <DeleteIcon fontSize="small" />
@@ -912,8 +948,8 @@ console.log("Skills data:", response.data);
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setAddDialog(false)}>Cancel</Button>
-          <Button onClick={handleAddSingle} variant="contained" className="add-candidates-add-btn">
+          <Button variant="outlined" onClick={() => setAddDialog(false)} className="t-dialog-cancel-btn">Cancel</Button>
+          <Button onClick={handleAddSingle} variant="contained" className="t-dialog-confirm-btn">
             Add Candidate
           </Button>
         </DialogActions>
@@ -932,12 +968,47 @@ console.log("Skills data:", response.data);
               </IconButton>
             </Box>
             <Box className="error-overlay-messages">
-              {errorMessages.map((error, index) => (
-                <Box key={index} className="error-message-item">
-                  <Typography className="error-message-number">{index + 1}.</Typography>
-                  <Typography className="error-message-text">{error}</Typography>
-                </Box>
-              ))}
+              {errorMessages.map((error, index) => {
+                const candidateMatch = error.match(/^Candidate #(\d+):/);
+                const candidateIndex = candidateMatch ? parseInt(candidateMatch[1], 10) - 1 : null;
+
+                return (
+                  <Box key={index} className="error-message-item">
+                    <Typography className="error-message-number">{index + 1}.</Typography>
+                    <Typography className="error-message-text">{error}</Typography>
+                    {candidateIndex !== null && (
+                      <Tooltip title="Remove this candidate from table">
+                        <IconButton
+                          size="small"
+                          className="error-message-delete-btn"
+                          onClick={() => {
+                            setBulkData((prev) => prev.filter((_, i) => i !== candidateIndex));
+                            setErrorMessages((prev) => {
+                              const updated = prev.filter((_, i) => i !== index);
+                              if (updated.length === 0) {
+                                setShowErrorOverlay(false);
+                              }
+                              return updated;
+                            });
+                            setValidationResults((prev) => {
+                              const updated = new Map(prev);
+                              // Remove validation for the deleted candidate's tempId
+                              const deletedRow = bulkData[candidateIndex];
+                              if (deletedRow) {
+                                const tempId = `temp-${candidateIndex}`;
+                                updated.delete(tempId);
+                              }
+                              return updated;
+                            });
+                          }}
+                        >
+                          <DeleteIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                    )}
+                  </Box>
+                );
+              })}
             </Box>
           </Box>
         </Box>

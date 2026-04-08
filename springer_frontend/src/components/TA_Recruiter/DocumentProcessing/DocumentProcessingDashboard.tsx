@@ -15,7 +15,7 @@ const TABS = [
   { key: 'send-documents',   label: 'Send Links' },
   { key: 'verify-documents', label: 'Verify Docs' },
   { key: 'offers',           label: 'Offers' },
-];
+]; 
 
 const DocumentProcessingDashboard = () => {
   const [activeTab, setActiveTab] = useState('doc-types');
