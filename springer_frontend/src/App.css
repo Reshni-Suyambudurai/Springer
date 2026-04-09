@@ -23,6 +23,13 @@
   --color-red-500: #C0392B;
   --color-red-600: #A00020;
 
+  /* Yellow Palette */
+  --color-yellow-50: #fef3e8;
+  --color-yellow-100: #ffc5ae;
+  --color-yellow-500: #ea6e08;
+  --color-yellow-600: #ca5a04;
+  --color-yellow-700: #A16207;
+
   /* Grey Palette */
   --color-grey-50: #F7F8FA;
   --color-grey-100: #F5F3F0;
@@ -173,6 +180,10 @@
   --color-funnel-joined:   #3730A3;
   --color-funnel-rejected: #E05252;
   --color-funnel-dropped:  #667085;
+
+  /* ========== DRIVE MODE COLORS ========== */
+  --color-oncampus: var(--color-blue-500);
+  --color-offcampus: #7C3AED;
 
   /* ========== SHADOW & OPACITY ========== */
   --opacity-shadow-very-light: rgba(0, 0, 0, 0.04);

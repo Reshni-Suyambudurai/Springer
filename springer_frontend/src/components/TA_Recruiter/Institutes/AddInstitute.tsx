@@ -325,16 +325,6 @@ const AddInstitute: React.FC = () => {
           </Button>
 
           <Button
-            component="label"
-            startIcon={<UploadIcon />}
-            variant="contained"
-            className="add-institute-header-btn t-btn-success"
-          >
-            Upload Institutes
-            <input type="file" hidden accept=".xlsx,.xls" onChange={handleFileUpload} />
-          </Button>
-
-          <Button
             startIcon={<DownloadIcon />}
             onClick={handleDownloadFormat}
             variant="outlined"
@@ -344,6 +334,30 @@ const AddInstitute: React.FC = () => {
           </Button>
         </Box>
       </Card>
+
+      {/* Upload Drop Zone */}
+      {bulkData.length === 0 && (
+        <Card className="add-institute-upload-zone">
+          <CardContent className="add-institute-upload-zone-content">
+            <UploadIcon className="add-institute-upload-zone-icon" />
+            <Typography variant="h6" className="add-institute-upload-zone-title">
+              Upload Institutes
+            </Typography>
+            <Typography variant="body2" className="add-institute-upload-zone-subtitle">
+              Upload an Excel file (.xlsx, .xls) with institute data
+            </Typography>
+            <Button
+              variant="contained"
+              component="label"
+              startIcon={<UploadIcon />}
+              className="add-institute-upload-zone-btn t-btn-primary"
+            >
+              Choose File
+              <input type="file" hidden accept=".xlsx,.xls" onChange={handleFileUpload} />
+            </Button>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Bulk Data Table */}
       {bulkData.length > 0 && (

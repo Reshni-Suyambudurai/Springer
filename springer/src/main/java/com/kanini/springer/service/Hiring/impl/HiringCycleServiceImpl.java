@@ -1,5 +1,6 @@
 package com.kanini.springer.service.Hiring.impl;
 
+import com.kanini.springer.dto.Hiring.CycleWithDrivesResponse;
 import com.kanini.springer.dto.Hiring.HiringCycleRequest;
 import com.kanini.springer.dto.Hiring.HiringCycleResponse;
 import com.kanini.springer.dto.Hiring.HiringCycleSummaryResponse;
@@ -183,5 +184,13 @@ public class HiringCycleServiceImpl implements IHiringCycleService {
         }
         
         return cycle.getJd();
+    }
+    
+    @Override
+    @Transactional(readOnly = true)
+    public CycleWithDrivesResponse getCycleWithDrives(Long cycleId) {
+        HiringCycle cycle = cycleRepository.findByIdWithDrives(cycleId)
+                .orElseThrow(() -> new ResourceNotFoundException("Hiring cycle", "ID", cycleId));
+        return mapper.toCycleWithDrivesResponse(cycle);
     }
 }

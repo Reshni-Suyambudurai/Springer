@@ -16,6 +16,7 @@ export interface ApplicationRequest {
   candidateIds?: number[];
   filterRequest?: {
     cycleId: number;
+    driveId?: number;
     lifecycleStatus?: string;
     candidateName?: string;
     instituteName?: string;

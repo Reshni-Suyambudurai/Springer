@@ -55,14 +55,19 @@ import UploadIcon from "@mui/icons-material/Upload";
 import DownloadIcon from "@mui/icons-material/Download";
 import DeleteIcon from "@mui/icons-material/Delete";
 import CloseIcon from "@mui/icons-material/Close";
+import UploadONCampus from "./UploadONCampus";
 import "../../../css/TA_Recruiter/Candidates/AddCandidates.css";
 
 const AddCandidates: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const cycleId = (location.state as { cycleId?: number; cycleYear?: number; cycleName?: string })?.cycleId || null;
-  const cycleYear = (location.state as { cycleId?: number; cycleYear?: number; cycleName?: string })?.cycleYear;
-  const cycleName = (location.state as { cycleId?: number; cycleYear?: number; cycleName?: string })?.cycleName;
+  const navState = location.state as { cycleId?: number; cycleYear?: number; cycleName?: string; driveId?: number; driveName?: string } | null;
+  const cycleId = navState?.cycleId || null;
+  const cycleYear = navState?.cycleYear;
+  const cycleName = navState?.cycleName;
+  const driveId = navState?.driveId || null;
+  const driveName = navState?.driveName;
+  const [uploadMode, setUploadMode] = useState<"offcampus" | "oncampus">("offcampus");
   const [addDialog, setAddDialog] = useState(false);
   const [bulkData, setBulkData] = useState<CandidateRequest[]>([]);
   const [validationResults, setValidationResults] = useState<Map<string, CandidateValidationResponse>>(new Map());
@@ -76,6 +81,7 @@ const AddCandidates: React.FC = () => {
   const [singleForm, setSingleForm] = useState<CandidateRequest>({
     instituteId: 0,
     cycleId: cycleId || 0,
+    driveId: driveId || undefined,
     firstName: "",
     lastName: "",
     email: "",
@@ -210,6 +216,7 @@ console.log("Skills data:", response.data);
       setSingleForm({
         instituteId: 0,
         cycleId: cycleId || 0,
+        driveId: driveId || undefined,
         firstName: "",
         lastName: "",
         email: "",
@@ -265,6 +272,7 @@ console.log("Skills data:", response.data);
           return {
             instituteId: Number(row["Institute ID"] || row["instituteId"] || 0),
             cycleId: cycleId || 0,
+            driveId: driveId || undefined,
             firstName: (row["First Name"] || row["firstName"] || "") as string,
             lastName: (row["Last Name"] || row["lastName"] || "") as string,
             email: (row["Email"] || row["email"] || "") as string,
@@ -664,6 +672,14 @@ console.log("Skills data:", response.data);
             {cycleName} - {cycleYear}
           </Typography>
 
+          {driveName && (
+            <Typography variant="body1" className="add-candidates-drive-name">
+              {driveName}
+            </Typography>
+          )}
+        </Box>
+
+        <Box className="add-candidates-header-right">
           <Button
             variant="contained"
             startIcon={<AddIcon />}
@@ -673,29 +689,64 @@ console.log("Skills data:", response.data);
             Add Candidate
           </Button>
 
-          <Button
-            variant="contained"
-            component="label"
-            startIcon={<UploadIcon />}
-            className="add-candidates-header-btn t-btn-success"
-          >
-            Upload Candidates
-            <input type="file" hidden accept=".xlsx,.xls" onChange={handleFileUpload} />
-          </Button>
-
-          <Button
-            variant="outlined"
-            startIcon={<DownloadIcon />}
-            onClick={handleDownloadFormat}
-            className="add-candidates-header-btn t-btn-small"
-          >
-            Download Format
-          </Button>
+          <Box className="add-candidates-mode-toggle">
+            <Button
+              variant={uploadMode === "offcampus" ? "contained" : "outlined"}
+              onClick={() => setUploadMode("offcampus")}
+              className={uploadMode === "offcampus" ? "mode-btn active t-btn-primary" : "mode-btn t-btn-small"}
+            >
+              Off Campus
+            </Button>
+            <Button
+              variant={uploadMode === "oncampus" ? "contained" : "outlined"}
+              onClick={() => setUploadMode("oncampus")}
+              className={uploadMode === "oncampus" ? "mode-btn active t-btn-primary" : "mode-btn t-btn-small"}
+            >
+              On Campus
+            </Button>
+          </Box>
         </Box>
       </Card>
 
-      {/* Bulk Data Table */}
-      {bulkData.length > 0 && (
+      {/* Upload Area */}
+      {uploadMode === "offcampus" ? (
+        <>
+          {/* File Upload Zone */}
+          {bulkData.length === 0 && (
+            <Card className="add-candidates-upload-zone">
+              <CardContent className="upload-zone-content">
+                <Box className="upload-zone-top-row">
+                  <Button
+                    variant="outlined"
+                    startIcon={<DownloadIcon />}
+                    onClick={handleDownloadFormat}
+                    className="upload-zone-download-btn t-btn-small"
+                  >
+                    Download Off-Campus Template
+                  </Button>
+                </Box>
+                <UploadIcon className="upload-zone-icon" />
+                <Typography variant="h6" className="upload-zone-title">
+                  Upload Off-Campus Candidates
+                </Typography>
+                <Typography variant="body2" className="upload-zone-subtitle">
+                  Upload an Excel file (.xlsx, .xls) with candidate data
+                </Typography>
+                <Button
+                  variant="contained"
+                  component="label"
+                  startIcon={<UploadIcon />}
+                  className="upload-zone-btn t-btn-primary"
+                >
+                  Choose File
+                  <input type="file" hidden accept=".xlsx,.xls" onChange={handleFileUpload} />
+                </Button>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Bulk Data Table */}
+          {bulkData.length > 0 && (
         <Card className="add-candidates-bulk-card">
           <CardContent>
             <Box className="add-candidates-bulk-header">
@@ -808,6 +859,16 @@ console.log("Skills data:", response.data);
             </TableContainer>
           </CardContent>
         </Card>
+      )}
+        </>
+      ) : (
+        <UploadONCampus
+          cycleId={cycleId}
+          cycleYear={cycleYear}
+          cycleName={cycleName}
+          driveId={driveId}
+          driveName={driveName}
+        />
       )}
 
       {/* Add Single Candidate Dialog */}

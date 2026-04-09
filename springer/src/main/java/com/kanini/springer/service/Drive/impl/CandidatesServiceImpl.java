@@ -19,6 +19,7 @@ import com.kanini.springer.dto.Drive.CandidateValidationResponse;
 import com.kanini.springer.dto.Drive.EligibilityValidationResult;
 import com.kanini.springer.entity.Drive.Candidate;
 import com.kanini.springer.entity.Drive.CandidateSkill;
+import com.kanini.springer.entity.Drive.Drive;
 import com.kanini.springer.entity.HiringReq.HiringCycle;
 import com.kanini.springer.entity.HiringReq.Institute;
 import com.kanini.springer.entity.HiringReq.Skill;
@@ -29,6 +30,7 @@ import com.kanini.springer.entity.enums.Enums.CycleStatus;
 import com.kanini.springer.mapper.Drive.CandidateMapper;
 import com.kanini.springer.repository.Drive.CandidateSkillRepository;
 import com.kanini.springer.repository.Drive.CandidatesRepository;
+import com.kanini.springer.repository.Drive.DriveRepository;
 import com.kanini.springer.repository.Hiring.HiringCycleRepository;
 import com.kanini.springer.repository.Hiring.InstituteRepository;
 import com.kanini.springer.repository.Hiring.SkillRepository;
@@ -69,6 +71,7 @@ public class CandidatesServiceImpl implements ICandidatesService {
     private final CandidatesRepository candidatesRepository;
     private final InstituteRepository instituteRepository;
     private final HiringCycleRepository hiringCycleRepository;
+    private final DriveRepository driveRepository;
     private final CandidateMapper mapper;
     private final IOverrideService overrideService;
     private final IEligibilityRuleService eligibilityRuleService;
@@ -143,6 +146,15 @@ public class CandidatesServiceImpl implements ICandidatesService {
             HiringCycle newCycle = hiringCycleRepository.findById(request.getCycleId())
                     .orElseThrow(() -> new ResourceNotFoundException("Hiring cycle", "ID", request.getCycleId()));
             existingCandidate.setCycle(newCycle);
+            
+            // Update drive if provided
+            if (request.getDriveId() != null) {
+                Drive drive = driveRepository.findById(request.getDriveId())
+                        .orElseThrow(() -> new ResourceNotFoundException("Drive", "ID", request.getDriveId()));
+                existingCandidate.setDrive(drive);
+            } else {
+                existingCandidate.setDrive(null);
+            }
             
             // Update mutable fields with new values from the request
             existingCandidate.setFirstName(request.getFirstName());
@@ -333,6 +345,17 @@ public class CandidatesServiceImpl implements ICandidatesService {
             hiringCycleRepository.findById(cycleId).ifPresent(cycle -> cycleCache.put(cycleId, cycle));
         }
         
+        // 5) Batch fetch all drives (1 query instead of N)
+        Set<Long> allDriveIds = requests.stream()
+                .filter(r -> r.getDriveId() != null)
+                .map(CandidateRequest::getDriveId)
+                .collect(Collectors.toSet());
+        Map<Long, Drive> driveMap = new HashMap<>();
+        if (!allDriveIds.isEmpty()) {
+            driveRepository.findAllById(allDriveIds).forEach(drive ->
+                    driveMap.put(drive.getDriveId(), drive));
+        }
+        
         // Phase 1: Validate all candidates before inserting any
         List<String> validationErrors = new ArrayList<>();
         Set<String> emailsInBatch = new HashSet<>();
@@ -448,6 +471,11 @@ public class CandidatesServiceImpl implements ICandidatesService {
                 }
             }
             
+            // Validate driveId if provided (using cached drive map)
+            if (request.getDriveId() != null && !driveMap.containsKey(request.getDriveId())) {
+                validationErrors.add(candidateRef + ": Drive not found with ID: " + request.getDriveId());
+            }
+            
             // Validate required fields
             if (request.getFirstName() == null || request.getFirstName().isBlank()) {
                 validationErrors.add(candidateRef + ": First name is required");
@@ -527,6 +555,17 @@ public class CandidatesServiceImpl implements ICandidatesService {
                     throw new ResourceNotFoundException("Hiring cycle", "ID", request.getCycleId());
                 }
                 existingCandidate.setCycle(newCycle);
+            }
+            
+            // Update driveId if provided (using cached drive map)
+            if (request.getDriveId() != null) {
+                Drive drive = driveMap.get(request.getDriveId());
+                if (drive == null) {
+                    throw new ResourceNotFoundException("Drive", "ID", request.getDriveId());
+                }
+                existingCandidate.setDrive(drive);
+            } else {
+                existingCandidate.setDrive(null);
             }
             
             // Update mutable fields with new values from the request
@@ -801,11 +840,7 @@ public class CandidatesServiceImpl implements ICandidatesService {
             throw new ValidationException("Cannot move to SELECTED. Candidate must be in SHORTLISTED or SCHEDULED status, but is currently " + candidate.getApplicationStage());
         }
         
-        // Create copy for change detection
-        Candidate oldCandidate = createCandidateCopy(candidate);
-        
         // Update status
-        ApplicationStage oldStatus = candidate.getApplicationStage();
         candidate.setApplicationStage(newStatus);
         
         // Fetch username for status history
@@ -826,33 +861,6 @@ public class CandidatesServiceImpl implements ICandidatesService {
         
         // Save
         Candidate updatedCandidate = candidatesRepository.save(candidate);
-        
-        // Log override if updatedBy is provided
-        if (request.getUpdatedBy() != null) {
-            List<FieldChangeDTO> changes = new ArrayList<>();
-            FieldChangeDTO statusChange = new FieldChangeDTO();
-            statusChange.setField("applicationStage");
-            statusChange.setOld(oldStatus != null ? oldStatus.toString() : null);
-            statusChange.setNewValue(newStatus.toString());
-            changes.add(statusChange);
-            
-            ManualOverrideRequest overrideRequest = new ManualOverrideRequest();
-            overrideRequest.setEntityType("CANDIDATES");
-            overrideRequest.setEntityId(candidateId);
-            overrideRequest.setChanges(changes);
-                overrideRequest.setOverrideReason(
-                    newStatus == ApplicationStage.DROPPED && statusReason != null && !statusReason.isEmpty()
-                        ? "Dropped: " + statusReason
-                        : "Status update"
-                );
-            overrideRequest.setCreatedBy(request.getUpdatedBy());
-            
-            try {
-                overrideService.logOverride(overrideRequest);
-            } catch (Exception e) {
-                System.err.println("Error logging status override: " + e.getMessage());
-            }
-        }
         
         return mapper.toResponse(updatedCandidate);
     }

@@ -94,6 +94,7 @@ export interface CandidateFilters {
 export interface CandidateRequest {
   instituteId: number;
   cycleId?: number;
+  driveId?: number;
   firstName: string;
   lastName: string;
   email: string;

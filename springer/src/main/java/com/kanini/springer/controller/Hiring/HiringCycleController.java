@@ -1,6 +1,7 @@
 package com.kanini.springer.controller.Hiring;
 
 import com.kanini.springer.dto.Authentication.ApiResponse;
+import com.kanini.springer.dto.Hiring.CycleWithDrivesResponse;
 import com.kanini.springer.dto.Hiring.HiringCycleRequest;
 import com.kanini.springer.dto.Hiring.HiringCycleResponse;
 import com.kanini.springer.dto.Hiring.HiringCycleSummaryResponse;
@@ -64,6 +65,12 @@ public class HiringCycleController {
     public ResponseEntity<ApiResponse<List<HiringCycleSummaryResponse>>> getAllCycleSummaries() {
         List<HiringCycleSummaryResponse> responses = cycleService.getAllCycleSummaries();
         return ResponseEntity.ok(ApiResponse.success("Hiring cycle summaries retrieved successfully", responses));
+    }
+    
+    @GetMapping("/{cycleId}/with-drives")
+    public ResponseEntity<ApiResponse<CycleWithDrivesResponse>> getCycleWithDrives(@PathVariable Long cycleId) {
+        CycleWithDrivesResponse response = cycleService.getCycleWithDrives(cycleId);
+        return ResponseEntity.ok(ApiResponse.success("Cycle with drives retrieved successfully", response));
     }
     
     @PatchMapping(value = "/{cycleId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)

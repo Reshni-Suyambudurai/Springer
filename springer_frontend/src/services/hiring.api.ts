@@ -5,7 +5,7 @@ import { handleAxiosError } from "./api.error";
 import type { ApiResponse } from "../types/api.response";
 
 // Hiring-specific type imports
-import type { HiringCycleResponse, HiringCycleSummaryResponse } from "../types/TA_Recruiter/Hiring/hiringCycle.types";
+import type { HiringCycleResponse, HiringCycleSummaryResponse, CycleWithDrivesResponse } from "../types/TA_Recruiter/Hiring/hiringCycle.types";
 import type { HiringDemandRequest, HiringDemandResponse } from "../types/TA_Recruiter/Hiring/hiringDemand.types";
 import type { SkillRequest, SkillResponse } from "../types/TA_Recruiter/Hiring/skill.types";
 import type { 
@@ -155,6 +155,19 @@ export const hiringCycleApi = {
       const response = await http.get(`/hiring/cycles/${cycleId}/jd`, {
         responseType: 'blob'
       });
+      return response.data;
+    } catch (error) {
+      throw handleAxiosError(error);
+    }
+  },
+
+  /**
+   * Get cycle with drive schedules
+   * GET /api/hiring/cycles/{cycleId}/with-drives
+   */
+  async getCycleWithDrives(cycleId: number): Promise<ApiResponse<CycleWithDrivesResponse>> {
+    try {
+      const response = await http.get(`/hiring/cycles/${cycleId}/with-drives`);
       return response.data;
     } catch (error) {
       throw handleAxiosError(error);

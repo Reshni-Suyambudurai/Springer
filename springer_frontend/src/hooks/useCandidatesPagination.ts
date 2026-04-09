@@ -4,6 +4,7 @@ import type { CandidateListResponse } from '../types/TA_Recruiter/Drive/candidat
 import { showToast } from '../utils/toast';
 
 interface CandidateFilters {
+  driveId?: number;
   candidateName?: string;
   instituteName?: string;
   state?: string;
@@ -73,6 +74,7 @@ export const useCandidatesPagination = (
       // Build filter request
       const filterRequest = {
         cycleId,
+        driveId: filters.driveId || undefined,
         lifecycleStatus,
         candidateName: filters.candidateName || undefined,
         instituteName: filters.instituteName || undefined,

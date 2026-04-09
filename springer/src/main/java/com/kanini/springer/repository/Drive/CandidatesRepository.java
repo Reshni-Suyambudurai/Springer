@@ -59,7 +59,7 @@ public interface CandidatesRepository extends JpaRepository<Candidate, Long>, Jp
     /**
      * Find candidates by cycle ID with institute and skills eagerly loaded
      */
-    @Query("SELECT DISTINCT c FROM Candidate c LEFT JOIN FETCH c.institute LEFT JOIN FETCH c.cycle LEFT JOIN FETCH c.candidateSkills cs LEFT JOIN FETCH cs.skill WHERE c.cycle.cycleId = :cycleId")
+    @Query("SELECT DISTINCT c FROM Candidate c LEFT JOIN FETCH c.institute LEFT JOIN FETCH c.drive LEFT JOIN FETCH c.cycle LEFT JOIN FETCH c.candidateSkills cs LEFT JOIN FETCH cs.skill WHERE c.cycle.cycleId = :cycleId")
     List<Candidate> findByCycleIdWithDetails(@Param("cycleId") Long cycleId);
     
     /**
@@ -68,7 +68,7 @@ public interface CandidatesRepository extends JpaRepository<Candidate, Long>, Jp
     /**
      * Find all candidates with institute and skills eagerly loaded
      */
-    @Query("SELECT DISTINCT c FROM Candidate c LEFT JOIN FETCH c.institute LEFT JOIN FETCH c.candidateSkills cs LEFT JOIN FETCH cs.skill")
+    @Query("SELECT DISTINCT c FROM Candidate c LEFT JOIN FETCH c.institute LEFT JOIN FETCH c.drive LEFT JOIN FETCH c.candidateSkills cs LEFT JOIN FETCH cs.skill")
     List<Candidate> findAllWithInstitute();
     
     /**
@@ -77,7 +77,7 @@ public interface CandidatesRepository extends JpaRepository<Candidate, Long>, Jp
     /**
      * Find candidates by institute ID with institute and skills eagerly loaded
      */
-    @Query("SELECT DISTINCT c FROM Candidate c LEFT JOIN FETCH c.institute LEFT JOIN FETCH c.candidateSkills cs LEFT JOIN FETCH cs.skill WHERE c.institute.instituteId = :instituteId")
+    @Query("SELECT DISTINCT c FROM Candidate c LEFT JOIN FETCH c.institute LEFT JOIN FETCH c.drive LEFT JOIN FETCH c.candidateSkills cs LEFT JOIN FETCH cs.skill WHERE c.institute.instituteId = :instituteId")
     List<Candidate> findByInstituteIdWithInstitute(@Param("instituteId") Long instituteId);
     
     /**
@@ -86,7 +86,7 @@ public interface CandidatesRepository extends JpaRepository<Candidate, Long>, Jp
     /**
      * Find a candidate by ID with institute and skills eagerly loaded
      */
-    @Query("SELECT c FROM Candidate c LEFT JOIN FETCH c.institute LEFT JOIN FETCH c.candidateSkills cs LEFT JOIN FETCH cs.skill WHERE c.candidateId = :candidateId")
+    @Query("SELECT c FROM Candidate c LEFT JOIN FETCH c.institute LEFT JOIN FETCH c.drive LEFT JOIN FETCH c.candidateSkills cs LEFT JOIN FETCH cs.skill WHERE c.candidateId = :candidateId")
     Optional<Candidate> findByIdWithInstitute(@Param("candidateId") Long candidateId);
     
     /**
@@ -208,7 +208,7 @@ List<Candidate> findMatchingCandidates(
             @Param("lifecycleStatus") LifecycleStatus lifecycleStatus
     );
 
-    @Query("SELECT DISTINCT c FROM Candidate c LEFT JOIN FETCH c.institute LEFT JOIN FETCH c.candidateSkills cs LEFT JOIN FETCH cs.skill WHERE c.candidateId IN :candidateIds")
+    @Query("SELECT DISTINCT c FROM Candidate c LEFT JOIN FETCH c.institute LEFT JOIN FETCH c.drive LEFT JOIN FETCH c.candidateSkills cs LEFT JOIN FETCH cs.skill WHERE c.candidateId IN :candidateIds")
     List<Candidate> findByIdsWithInstitute(@Param("candidateIds") List<Long> candidateIds);
 
     // ===== Dashboard aggregate queries (single DB hit each) =====

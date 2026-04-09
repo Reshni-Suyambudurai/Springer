@@ -19,6 +19,7 @@ public class CandidateRequest {
     
     private Long instituteId; // nullable for off-campus candidates
     private Long cycleId; // nullable for candidates not yet assigned to a cycle
+    private Long driveId; // nullable - set when candidate is added through a specific drive
     private String firstName;
     private String lastName;
     private String email;

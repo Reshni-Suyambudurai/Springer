@@ -28,6 +28,13 @@
   flex: 1;
 }
 
+.add-candidates-header-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
 .add-candidates-cycle-name {
   font-weight: 600 !important;
   color: var(--color-text-primary) !important;
@@ -39,6 +46,118 @@
 }
 
 .add-candidates-header-btn { white-space: nowrap; }
+
+.add-candidates-drive-name {
+  font-weight: 500 !important;
+  color: var(--color-primary) !important;
+  white-space: nowrap;
+  padding: 6px 14px;
+  background: var(--color-primary-light);
+  border-radius: 8px;
+  border: 1px solid var(--color-blue-100);
+  font-size: var(--text-sm) !important;
+}
+
+/* ── Mode Toggle ── */
+.add-candidates-mode-toggle {
+  display: flex;
+  gap: 0;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.add-candidates-mode-toggle .mode-btn {
+  border-radius: 0 !important;
+  border: none !important;
+  min-width: 110px;
+  font-weight: 500 !important;
+  text-transform: none !important;
+  padding: 6px 16px !important;
+}
+
+.add-candidates-mode-toggle .mode-btn:first-child {
+  border-right: 1px solid var(--color-border) !important;
+}
+
+.add-candidates-mode-toggle .mode-btn.active {
+  background-color: var(--color-primary) !important;
+  color: var(--color-white) !important;
+}
+
+/* ── On-Campus Wrapper ── */
+.oncampus-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.oncampus-top-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.oncampus-institute-dropdown {
+  flex: 1;
+  max-width: 400px;
+}
+
+.oncampus-download-btn {
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* ── Upload Zone ── */
+.add-candidates-upload-zone {
+  border: 2px dashed var(--color-dropzone-border) !important;
+  border-radius: 12px !important;
+  background: var(--color-dropzone-bg) !important;
+  box-shadow: none !important;
+  transition: all 0.2s ease;
+}
+
+.add-candidates-upload-zone:hover {
+  border-color: var(--color-primary) !important;
+  background: var(--color-dropzone-hover-bg) !important;
+}
+
+.upload-zone-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px !important;
+  gap: 12px;
+  position: relative;
+}
+
+.upload-zone-top-row {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+}
+
+.upload-zone-icon {
+  font-size: 48px !important;
+  color: var(--color-primary) !important;
+  opacity: 0.6;
+}
+
+.upload-zone-title {
+  font-weight: 600 !important;
+  color: var(--color-text-primary) !important;
+}
+
+.upload-zone-subtitle {
+  color: var(--color-text-secondary) !important;
+  margin-bottom: 8px !important;
+}
+
+.upload-zone-btn {
+  margin-top: 8px !important;
+}
 
 /* ── Bulk Card ── */
 .add-candidates-bulk-card {

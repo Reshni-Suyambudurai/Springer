@@ -180,6 +180,7 @@ export const candidateApi = {
    */
   async getCandidatesWithFilters(filterRequest: {
     cycleId: number;
+    driveId?: number;
     lifecycleStatus?: string;
     candidateName?: string;
     instituteName?: string;

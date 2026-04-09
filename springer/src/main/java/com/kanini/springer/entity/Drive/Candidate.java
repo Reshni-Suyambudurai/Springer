@@ -35,6 +35,7 @@ import com.kanini.springer.entity.enums.Enums.LifecycleStatus;
     indexes = {
         @Index(name = "idx_candidate_institute_id", columnList = "institute_id"),
         @Index(name = "idx_candidate_cycle_id", columnList = "cycle_id"),
+        @Index(name = "idx_candidate_drive_id", columnList = "drive_id"),
         @Index(name = "idx_candidate_application_stage", columnList = "applicationStage"),
         @Index(name = "idx_candidate_passout_year", columnList = "passoutYear")
     }
@@ -55,6 +56,10 @@ public class Candidate {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "cycle_id")
     private HiringCycle cycle;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "drive_id")
+    private Drive drive;
 
 
     @NotBlank(message = "Candidate first name is required")

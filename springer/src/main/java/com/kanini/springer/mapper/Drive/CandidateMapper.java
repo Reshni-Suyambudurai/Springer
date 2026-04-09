@@ -6,12 +6,14 @@ import com.kanini.springer.dto.Drive.CandidateRequest;
 import com.kanini.springer.dto.Drive.CandidateResponse;
 import com.kanini.springer.entity.Drive.Candidate;
 import com.kanini.springer.entity.Drive.CandidateSkill;
+import com.kanini.springer.entity.Drive.Drive;
 import com.kanini.springer.entity.HiringReq.HiringCycle;
 import com.kanini.springer.entity.HiringReq.Institute;
 import com.kanini.springer.entity.enums.Enums.ApplicationStage;
 import com.kanini.springer.entity.enums.Enums.LifecycleStatus;
 import com.kanini.springer.repository.Hiring.HiringCycleRepository;
 import com.kanini.springer.repository.Hiring.InstituteRepository;
+import com.kanini.springer.repository.Drive.DriveRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -25,6 +27,7 @@ public class CandidateMapper {
     
     private final InstituteRepository instituteRepository;
     private final HiringCycleRepository hiringCycleRepository;
+    private final DriveRepository driveRepository;
     
     /**
      * Convert Candidate entity to CandidateResponse DTO
@@ -64,6 +67,12 @@ public class CandidateMapper {
         // Map cycle details
         if (candidate.getCycle() != null) {
             response.setCycleId(candidate.getCycle().getCycleId());
+        }
+        
+        // Map drive details
+        if (candidate.getDrive() != null) {
+            response.setDriveId(candidate.getDrive().getDriveId());
+            response.setDriveName(candidate.getDrive().getDriveName());
         }
         
         // Map applicationType enum to string
@@ -165,6 +174,13 @@ public class CandidateMapper {
             HiringCycle cycle = hiringCycleRepository.findById(request.getCycleId())
                     .orElseThrow(() -> new RuntimeException("Hiring cycle not found with ID: " + request.getCycleId()));
             candidate.setCycle(cycle);
+        }
+        
+        // Set drive if provided
+        if (request.getDriveId() != null) {
+            Drive drive = driveRepository.findById(request.getDriveId())
+                    .orElseThrow(() -> new RuntimeException("Drive not found with ID: " + request.getDriveId()));
+            candidate.setDrive(drive);
         }
         
         candidate.setFirstName(request.getFirstName());

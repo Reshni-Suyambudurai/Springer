@@ -40,6 +40,50 @@
 
 .add-institute-header-btn { white-space: nowrap; }
 
+/* ── Upload Drop Zone ── */
+.add-institute-upload-zone {
+  border: 2px dashed var(--color-dropzone-border) !important;
+  border-radius: 12px !important;
+  background: var(--color-dropzone-bg) !important;
+  box-shadow: none !important;
+  transition: all 0.2s ease;
+  margin-bottom: 20px;
+}
+
+.add-institute-upload-zone:hover {
+  border-color: var(--color-primary) !important;
+  background: var(--color-dropzone-hover-bg) !important;
+}
+
+.add-institute-upload-zone-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px !important;
+  gap: 12px;
+}
+
+.add-institute-upload-zone-icon {
+  font-size: 48px !important;
+  color: var(--color-primary) !important;
+  opacity: 0.6;
+}
+
+.add-institute-upload-zone-title {
+  font-weight: 600 !important;
+  color: var(--color-text-primary) !important;
+}
+
+.add-institute-upload-zone-subtitle {
+  color: var(--color-text-secondary) !important;
+  margin-bottom: 8px !important;
+}
+
+.add-institute-upload-zone-btn {
+  margin-top: 8px !important;
+}
+
 /* ── Bulk Card ── */
 .add-institute-bulk-card {
   border-radius: 12px;

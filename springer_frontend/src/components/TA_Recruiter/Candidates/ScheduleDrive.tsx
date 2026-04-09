@@ -2,15 +2,12 @@ import React, { useState } from "react";
 import {
   Box,
   IconButton,
-  Menu,
-  MenuItem,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
   Button,
   Typography,
-  CircularProgress,
   Tooltip,
   Chip,
 } from "@mui/material";
@@ -25,6 +22,7 @@ import type { ApplicationRequest } from "../../../types/TA_Recruiter/DriveSchedu
 
 interface ScheduleDriveProps {
   cycleId: number | null;
+  driveId: number | null;
   candidateIds: number[];
   selectMode: boolean;
   selectedCount: number;
@@ -35,6 +33,7 @@ interface ScheduleDriveProps {
 
 const ScheduleDrive: React.FC<ScheduleDriveProps> = ({
   cycleId,
+  driveId,
   candidateIds,
   selectMode,
   selectedCount,
@@ -42,8 +41,6 @@ const ScheduleDrive: React.FC<ScheduleDriveProps> = ({
   filterRequest,
   onScheduleComplete,
 }) => {
-  const [upcomingDrives, setUpcomingDrives] = useState<UpcomingDriveSummaryResponse[]>([]);
-  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [selectedDrive, setSelectedDrive] = useState<UpcomingDriveSummaryResponse | null>(null);
   const [showConfirmDialog, setShowConfirmDialog] = useState<boolean>(false);
   const [loadingDrives, setLoadingDrives] = useState<boolean>(false);
@@ -53,9 +50,9 @@ const ScheduleDrive: React.FC<ScheduleDriveProps> = ({
   const [errorMessages, setErrorMessages] = useState<string[]>([]);
   const [showErrorDialog, setShowErrorDialog] = useState<boolean>(false);
 
-  const handleOpenMenu = async (event: React.MouseEvent<HTMLElement>) => {
-    if (!cycleId) {
-      showToast("Please select a hiring cycle first", "error");
+  const handleScheduleClick = async () => {
+    if (!cycleId || !driveId) {
+      showToast("Please select a hiring cycle and drive first", "error");
       return;
     }
 
@@ -67,33 +64,29 @@ const ScheduleDrive: React.FC<ScheduleDriveProps> = ({
       return;
     }
 
-    setAnchorEl(event.currentTarget);
     setLoadingDrives(true);
 
     try {
       const response = await driveScheduleApi.getUpcomingDrivesByCycle({ cycleId });
       if (response.data && response.data.data) {
-        setUpcomingDrives(response.data.data);
-        if (response.data.data.length === 0) {
-          showToast("No upcoming drives available for this cycle", "error");
-          setAnchorEl(null);
+        const upcomingDrives = response.data.data;
+        const matchedDrive = upcomingDrives.find((d) => d.driveId === driveId);
+
+        if (!matchedDrive) {
+          showToast("The drive is in past can't schedule", "error");
+        } else {
+          setSelectedDrive(matchedDrive);
+          setBatchTimeInput("");
+          setBatchTimeError(false);
+          setShowConfirmDialog(true);
         }
       }
     } catch (error) {
       showToast("Failed to fetch upcoming drives", "error");
       console.error("Error fetching upcoming drives:", error);
-      setAnchorEl(null);
     } finally {
       setLoadingDrives(false);
     }
-  };
-
-  const handleSelectDrive = (drive: UpcomingDriveSummaryResponse) => {
-    setSelectedDrive(drive);
-    setAnchorEl(null);
-    setBatchTimeInput("");
-    setBatchTimeError(false);
-    setShowConfirmDialog(true);
   };
 
   const handleConfirm = async () => {
@@ -178,10 +171,6 @@ const ScheduleDrive: React.FC<ScheduleDriveProps> = ({
     setBatchTimeError(false);
   };
 
-  const handleCloseMenu = () => {
-    setAnchorEl(null);
-  };
-
   const handleCloseErrorDialog = () => {
     setShowErrorDialog(false);
     setErrorMessages([]);
@@ -189,44 +178,17 @@ const ScheduleDrive: React.FC<ScheduleDriveProps> = ({
 
   return (
     <>
-      <Tooltip title={`Schedule ${selectMode ? selectedCount : totalElements} candidate(s) to drive`}>
+      <Tooltip title={!driveId ? "Select a drive first" : `Schedule ${selectMode ? selectedCount : totalElements} candidate(s) to drive`}>
         <span>
           <IconButton
-            onClick={handleOpenMenu}
-            disabled={(selectMode ? candidateIds.length === 0 : totalElements === 0) || loadingDrives || scheduling}
+            onClick={handleScheduleClick}
+            disabled={!driveId || (selectMode ? candidateIds.length === 0 : totalElements === 0) || loadingDrives || scheduling}
             className="schedule-drive-btn"
           >
             <EventIcon />
           </IconButton>
         </span>
       </Tooltip>
-
-      <Menu
-        anchorEl={anchorEl}
-        open={Boolean(anchorEl)}
-        onClose={handleCloseMenu}
-        className="schedule-drive-menu"
-      >
-        {loadingDrives ? (
-          <MenuItem disabled className="schedule-drive-menu-item-loading">
-            <CircularProgress size={20} />
-            <Typography>Loading drives...</Typography>
-          </MenuItem>
-        ) : upcomingDrives.length === 0 ? (
-          <MenuItem disabled>No upcoming drives available</MenuItem>
-        ) : (
-          upcomingDrives.map((drive) => (
-            <MenuItem
-              key={drive.driveId}
-              onClick={() => handleSelectDrive(drive)}
-              className="schedule-drive-menu-item"
-            >
-              <Typography>{drive.driveName}</Typography>
-              <Typography className="schedule-drive-mode">{drive.driveMode}</Typography>
-            </MenuItem>
-          ))
-        )}
-      </Menu>
 
       <Dialog
         open={showConfirmDialog}
