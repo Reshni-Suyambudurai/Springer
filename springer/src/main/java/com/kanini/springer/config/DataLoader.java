@@ -178,7 +178,7 @@ public class DataLoader {
             createInstitute("VIT University", "TIER_1", "Tamil Nadu", "Vellore"),
             createInstitute("SRM Institute of Science and Technology", "TIER_2", "Tamil Nadu", "Chennai"),
             createInstitute("Karunya Institute of Technology", "TIER_2", "Tamil Nadu", "Coimbatore"),
-            createInstitute("CEG - College of Engineering Guindy", "TIER_1", "Tamil Nadu", "Chennai")
+            createInstitute("CEG - College of Engineering Guindy", "TIER_1", "Tamil Nadu", "Chennai"),
             createInstitute("OTHERS College", "TIER_1", "Tamil Nadu", "Chennai")
         };
 
