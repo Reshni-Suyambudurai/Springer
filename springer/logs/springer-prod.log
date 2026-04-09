@@ -1,8 +1,0 @@
-2026-04-09 23:36:25.402 [restartedMain] INFO  c.k.springer.SpringerApplication - Starting SpringerApplication using Java 25.0.2 with PID 40832 (D:\KANINI_INTERN\LeaderBoardProject\SpringerKA_Git\springer\target\classes started by ReshniSuyambudurai in D:\KANINI_INTERN\LeaderBoardProject\SpringerKA_Git\springer)
-2026-04-09 23:36:25.407 [restartedMain] INFO  c.k.springer.SpringerApplication - The following 1 profile is active: "prod"
-2026-04-09 23:36:31.681 [restartedMain] WARN  org.hibernate.orm.deprecation - HHH90000025: MySQLDialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)
-2026-04-09 23:36:40.255 [restartedMain] INFO  c.k.springer.SpringerApplication - Started SpringerApplication in 15.969 seconds (process running for 17.198)
-2026-04-09 23:36:40.262 [restartedMain] INFO  c.kanini.springer.config.DataLoader - Starting data seeding...
-2026-04-09 23:36:40.389 [restartedMain] INFO  c.kanini.springer.config.DataLoader - Data already exists. Skipping seed data loading.
-2026-04-09 23:37:07.477 [http-nio-8080-exec-2] INFO  o.s.web.servlet.DispatcherServlet - Initializing Servlet 'dispatcherServlet'
-2026-04-09 23:37:07.481 [http-nio-8080-exec-2] INFO  o.s.web.servlet.DispatcherServlet - Completed initialization in 2 ms
