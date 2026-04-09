@@ -350,15 +350,6 @@ function Sidebar() {
           </Link>
         ))}
       </nav>
-
-      {user && (
-        <div className="sidebar-user">
-          <div className="sidebar-user-avatar">
-            {user.username.charAt(0).toUpperCase()}
-          </div>
-          <div className="sidebar-user-role">{user.roleName}</div>
-        </div>
-      )}
     </aside>
   );
 }

@@ -2,8 +2,7 @@
 .add-candidates-container {
   padding: 10px;
   max-width: 100%;
-  height: 100vh;
-  overflow-y: auto;
+ 
   background-color: var(--color-surface);
 }
 
@@ -109,6 +108,21 @@
 .table-row-old .warning-dot { background-color: var(--color-success-dark); }
 .table-row-duplicate:hover td,
 .table-row-old:hover td { background-color: var(--color-hover-bg) !important; }
+
+/* ── Batch duplicate (yellow) ── */
+.table-row-batch-duplicate td { color: var(--color-warning) !important; font-weight: 600; }
+.table-row-batch-duplicate:hover td { background-color: var(--color-hover-bg) !important; }
+
+.batch-dup-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: var(--color-warning);
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+.batch-duplicate-candidate-text { color: var(--color-warning); font-weight: 600; }
 
 /* ── Bulk Table ── */
 .add-candidates-bulk-table {

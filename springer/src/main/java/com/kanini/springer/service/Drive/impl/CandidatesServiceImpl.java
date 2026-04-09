@@ -100,15 +100,20 @@ public class CandidatesServiceImpl implements ICandidatesService {
         String instituteName = institute.getInstituteName();
         
         // Check for existing candidate using comprehensive matching criteria
+        // Combine firstName + lastName with whitespace removed for fuzzy name matching
+        String fullName = (request.getFirstName() != null ? request.getFirstName() : "") +
+                          (request.getLastName() != null ? request.getLastName() : "");
+        // Normalize empty aadhaar to null so the query skips aadhaar filtering
+        String aadhaarForQuery = (request.getAadhaarNumber() != null && !request.getAadhaarNumber().isBlank())
+                ? request.getAadhaarNumber() : null;
         List<Candidate> matches = candidatesRepository.findMatchingCandidates(
-                request.getFirstName(),
-                request.getLastName(),
+                fullName,
                 instituteName,
                 request.getDegree(),
                 request.getDepartment(),
                 request.getDateOfBirth(),
                 request.getPassoutYear(),
-                request.getAadhaarNumber()
+                aadhaarForQuery
         );
         
         // If candidate exists, check cycle and provide detailed error
@@ -347,15 +352,20 @@ public class CandidatesServiceImpl implements ICandidatesService {
                 }
                 String instituteName = institute.getInstituteName();
                 
+                // Combine firstName + lastName with whitespace removed for fuzzy name matching
+                String fullName = (request.getFirstName() != null ? request.getFirstName() : "") +
+                                  (request.getLastName() != null ? request.getLastName() : "");
+                // Normalize empty aadhaar to null so the query skips aadhaar filtering
+                String aadhaarForQuery = (request.getAadhaarNumber() != null && !request.getAadhaarNumber().isBlank())
+                        ? request.getAadhaarNumber() : null;
                 List<Candidate> matches = candidatesRepository.findMatchingCandidates(
-                        request.getFirstName(),
-                        request.getLastName(),
+                        fullName,
                         instituteName,
                         request.getDegree(),
                         request.getDepartment(),
                         request.getDateOfBirth(),
                         request.getPassoutYear(),
-                        request.getAadhaarNumber()
+                        aadhaarForQuery
                 );
                 
                 if (!matches.isEmpty()) {
@@ -1070,15 +1080,20 @@ public class CandidatesServiceImpl implements ICandidatesService {
                 String instituteName = institute.getInstituteName();
                 
                 // Find matching candidates
+                // Combine firstName + lastName with whitespace removed for fuzzy name matching
+                String fullName = (req.getFirstName() != null ? req.getFirstName() : "") +
+                                  (req.getLastName() != null ? req.getLastName() : "");
+                // Normalize empty aadhaar to null so the query skips aadhaar filtering
+                String aadhaarForQuery = (req.getAadhaarNumber() != null && !req.getAadhaarNumber().isBlank())
+                        ? req.getAadhaarNumber() : null;
                 List<Candidate> matches = candidatesRepository.findMatchingCandidates(
-                        req.getFirstName(),
-                        req.getLastName(),
+                        fullName,
                         instituteName,
                         req.getDegree(),
                         req.getDepartment(),
                         req.getDateOfBirth(),
                         req.getPassoutYear(),
-                        req.getAadhaarNumber()
+                        aadhaarForQuery
                 );
                 
                 // Determine status and build comment

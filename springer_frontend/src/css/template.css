@@ -270,6 +270,14 @@
   box-shadow: 0 4px 12px var(--color-primary-shadow-28) !important;
 }
 .t-btn-primary:active { transform: translateY(0); }
+.t-btn-primary:disabled,
+.t-btn-primary.Mui-disabled {
+  background-color: var(--color-grey-350) !important;
+  color: var(--color-text-disabled) !important;
+  box-shadow: none !important;
+  cursor: not-allowed !important;
+  pointer-events: auto !important;
+}
 
 .t-btn-secondary {
   text-transform: none !important;

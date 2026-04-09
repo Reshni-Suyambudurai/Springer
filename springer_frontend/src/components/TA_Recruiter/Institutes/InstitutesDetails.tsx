@@ -275,6 +275,7 @@ const InstitutesDetails: React.FC = () => {
               <SchoolIcon className="details-info-icon" />
               <Box className="details-info-content">
                 <Typography variant="h5" className="details-institute-name">
+                  <SchoolIcon className="details-name-icon" />
                   {data.instituteName}
                 </Typography>
                 <Box className="details-badges">

@@ -69,6 +69,8 @@ const AddCandidates: React.FC = () => {
   const [isValidating, setIsValidating] = useState(false);
   const [showErrorOverlay, setShowErrorOverlay] = useState(false);
   const [errorMessages, setErrorMessages] = useState<string[]>([]);
+  const [errorEmailMap, setErrorEmailMap] = useState<Map<number, string>>(new Map());
+  const [batchDuplicateIndices, setBatchDuplicateIndices] = useState<Set<number>>(new Set());
   const [institutes, setInstitutes] = useState<InstituteResponse[]>([]);
   const [skills, setSkills] = useState<SkillResponse[]>([]);
   const [singleForm, setSingleForm] = useState<CandidateRequest>({
@@ -328,6 +330,7 @@ console.log("Skills data:", response.data);
           setShowErrorOverlay(true);
         } else {
           setBulkData(candidates);
+          setBatchDuplicateIndices(computeBatchDuplicates(candidates));
           showToast(`${candidates.length} candidates loaded from file`, "success");
           // Automatically validate candidates after loading
           validateCandidates(candidates);
@@ -472,6 +475,17 @@ console.log("Skills data:", response.data);
         // Show error overlay
         setErrorMessages(response.data.errorMessages);
         setShowErrorOverlay(true);
+        // Build snapshot mapping Candidate #N -> email for stable delete
+        const emailMap = new Map<number, string>();
+        response.data.errorMessages.forEach((msg: string) => {
+          const m = msg.match(/^Candidate\s*#(\d+):/i);
+          if (m) {
+            const num = parseInt(m[1], 10);
+            const email = bulkData[num - 1]?.email?.toLowerCase();
+            if (email) emailMap.set(num, email);
+          }
+        });
+        setErrorEmailMap(emailMap);
 
         // Show notification based on success/failure
         if (response.data.successfulInserts && response.data.successfulInserts.length > 0) {
@@ -486,6 +500,7 @@ console.log("Skills data:", response.data);
         showToast(`${response.data.successfulInserts.length} candidates uploaded successfully`, "success");
         setBulkData([]);
         setValidationResults(new Map());
+        setBatchDuplicateIndices(new Set());
       }
     } catch (error: unknown) {
       const err = error as {
@@ -497,6 +512,16 @@ console.log("Skills data:", response.data);
       if (err.data?.errorMessages?.length) {
         setErrorMessages(err.data.errorMessages);
         setShowErrorOverlay(true);
+        const emailMap = new Map<number, string>();
+        err.data.errorMessages.forEach((msg: string) => {
+          const m = msg.match(/^Candidate\s*#(\d+):/i);
+          if (m) {
+            const num = parseInt(m[1], 10);
+            const email = bulkData[num - 1]?.email?.toLowerCase();
+            if (email) emailMap.set(num, email);
+          }
+        });
+        setErrorEmailMap(emailMap);
         showToast("Bulk upload failed. See error details.", "error");
       } else {
         showToast(err.data?.message || err.message || "Upload failed", "error");
@@ -515,6 +540,7 @@ console.log("Skills data:", response.data);
     const removedEmail = bulkData[index]?.email?.toLowerCase();
     const updated = bulkData.filter((_, idx) => idx !== index);
     setBulkData(updated);
+    setBatchDuplicateIndices(computeBatchDuplicates(updated));
     
     // Remove validation entry for the deleted candidate's email
     if (removedEmail) {
@@ -567,8 +593,38 @@ console.log("Skills data:", response.data);
     );
   };
 
+  const computeBatchDuplicates = (candidates: CandidateRequest[]): Set<number> => {
+    const dupIndices = new Set<number>();
+    const emailMap = new Map<string, number[]>();
+    const aadhaarMap = new Map<string, number[]>();
+
+    candidates.forEach((cand, idx) => {
+      const email = (cand.email || "").trim().toLowerCase();
+      if (email) {
+        const indices = emailMap.get(email) || [];
+        indices.push(idx);
+        emailMap.set(email, indices);
+      }
+      const aadhaar = String(cand.aadhaarNumber || "").trim();
+      if (aadhaar) {
+        const indices = aadhaarMap.get(aadhaar) || [];
+        indices.push(idx);
+        aadhaarMap.set(aadhaar, indices);
+      }
+    });
+
+    emailMap.forEach((indices) => {
+      if (indices.length > 1) indices.slice(1).forEach((i) => dupIndices.add(i));
+    });
+    aadhaarMap.forEach((indices) => {
+      if (indices.length > 1) indices.slice(1).forEach((i) => dupIndices.add(i));
+    });
+
+    return dupIndices;
+  };
+
   const handleRemoveDuplicates = () => {
-    // Find emails marked as duplicate
+    // Find emails marked as duplicate (DB duplicates)
     const duplicateEmails = new Set<string>();
     validationResults.forEach((result, email) => {
       if (result.status === ValidationStatus.DUPLICATE) {
@@ -576,16 +632,25 @@ console.log("Skills data:", response.data);
       }
     });
 
-    if (duplicateEmails.size === 0) return;
+    // Combine DB duplicate indices and batch duplicate indices
+    const indicesToRemove = new Set<number>(batchDuplicateIndices);
+    bulkData.forEach((c, idx) => {
+      if (duplicateEmails.has(c.email.toLowerCase())) {
+        indicesToRemove.add(idx);
+      }
+    });
+
+    if (indicesToRemove.size === 0) return;
 
     // Filter out duplicate rows and remove their validation entries
-    const filtered = bulkData.filter((c) => !duplicateEmails.has(c.email.toLowerCase()));
+    const filtered = bulkData.filter((_, idx) => !indicesToRemove.has(idx));
     const newValidationResults = new Map(validationResults);
     duplicateEmails.forEach((email) => newValidationResults.delete(email));
 
     setBulkData(filtered);
     setValidationResults(newValidationResults);
-    showToast(`Removed ${duplicateEmails.size} duplicate row(s)`, "success");
+    setBatchDuplicateIndices(computeBatchDuplicates(filtered));
+    showToast(`Removed ${indicesToRemove.size} duplicate row(s)`, "success");
   };
 
   return (
@@ -639,7 +704,7 @@ console.log("Skills data:", response.data);
                 {isValidating && <span className="validation-loading"> - Validating...</span>}
               </Typography>
               <Box className="add-candidates-bulk-header-actions">
-                {hasDuplicates() && (
+                {(hasDuplicates() || batchDuplicateIndices.size > 0) && (
                   <Button
                     variant="outlined"
                     startIcon={<DeleteIcon />}
@@ -654,7 +719,7 @@ console.log("Skills data:", response.data);
                   variant="contained"
                   onClick={handleBulkUpload}
                   className="t-btn-primary"
-                  disabled={hasDuplicates() || isValidating || validationResults.size === 0}
+                  disabled={hasDuplicates() || batchDuplicateIndices.size > 0 || isValidating || validationResults.size === 0}
                 >
                   Upload to Database
                 </Button>
@@ -682,22 +747,30 @@ console.log("Skills data:", response.data);
                     const validation = getValidationForCandidate(cand.email);
                     const isDuplicate = validation?.status === ValidationStatus.DUPLICATE;
                     const isOld = validation?.status === ValidationStatus.OLD;
-                    const hasWarning = isDuplicate || isOld;
-                    const rowClassName = isDuplicate ? "table-row-duplicate" : isOld ? "table-row-old" : "";
+                    const isBatchDup = batchDuplicateIndices.has(index);
+                    const hasWarning = isDuplicate || isOld || isBatchDup;
+
+                    const rowClassName = isDuplicate
+                      ? "table-row-duplicate"
+                      : isBatchDup
+                        ? "table-row-batch-duplicate"
+                        : isOld
+                          ? "table-row-old"
+                          : "";
                     
                     return (
                     <TableRow key={index} className={rowClassName}>
                       <TableCell>
                         <Box className="index-cell-container">
                           {hasWarning && (
-                            <span className={isDuplicate ? "danger-dot" : "warning-dot"}></span>
+                            <span className={isDuplicate ? "danger-dot" : isBatchDup ? "batch-dup-dot" : "warning-dot"}></span>
                           )}
                           <span>{index + 1}</span>
                         </Box>
                       </TableCell>
                       <TableCell>
                         <Tooltip
-                          title={validation?.comment || ""}
+                          title={isBatchDup ? "Duplicate: Same email or aadhaar repeated in uploaded file" : validation?.comment || ""}
                           arrow
                           placement="top"
                           slotProps={{
@@ -705,7 +778,9 @@ console.log("Skills data:", response.data);
                             arrow: { className: 'g-tooltip-arrow' },
                           }}
                         >
-                          <span>{cand.firstName}</span>
+                          <span className={isBatchDup ? "batch-duplicate-candidate-text" : ""}>
+                            {cand.firstName}
+                          </span>
                         </Tooltip>
                       </TableCell>
                       <TableCell>{cand.lastName}</TableCell>
@@ -969,36 +1044,40 @@ console.log("Skills data:", response.data);
             </Box>
             <Box className="error-overlay-messages">
               {errorMessages.map((error, index) => {
-                const candidateMatch = error.match(/^Candidate #(\d+):/);
-                const candidateIndex = candidateMatch ? parseInt(candidateMatch[1], 10) - 1 : null;
+                const candidateMatch = error.match(/^Candidate\s*#(\d+):/i);
+                const candidateNum = candidateMatch ? parseInt(candidateMatch[1], 10) : null;
+                const email = candidateNum !== null ? errorEmailMap.get(candidateNum) : undefined;
+                // Check if this candidate still exists in the table
+                const stillExists = email
+                  ? bulkData.some((c) => c.email.toLowerCase() === email)
+                  : false;
 
                 return (
                   <Box key={index} className="error-message-item">
                     <Typography className="error-message-number">{index + 1}.</Typography>
                     <Typography className="error-message-text">{error}</Typography>
-                    {candidateIndex !== null && (
+                    {candidateNum !== null && stillExists && (
                       <Tooltip title="Remove this candidate from table">
                         <IconButton
                           size="small"
                           className="error-message-delete-btn"
                           onClick={() => {
-                            setBulkData((prev) => prev.filter((_, i) => i !== candidateIndex));
+                            // Remove by email — no index shifting issues
+                            const updated = bulkData.filter(
+                              (c) => c.email.toLowerCase() !== email
+                            );
+                            setBulkData(updated);
+                            setBatchDuplicateIndices(computeBatchDuplicates(updated));
+                            // Remove validation entry
+                            if (email) {
+                              const newVR = new Map(validationResults);
+                              newVR.delete(email);
+                              setValidationResults(newVR);
+                            }
                             setErrorMessages((prev) => {
-                              const updated = prev.filter((_, i) => i !== index);
-                              if (updated.length === 0) {
-                                setShowErrorOverlay(false);
-                              }
-                              return updated;
-                            });
-                            setValidationResults((prev) => {
-                              const updated = new Map(prev);
-                              // Remove validation for the deleted candidate's tempId
-                              const deletedRow = bulkData[candidateIndex];
-                              if (deletedRow) {
-                                const tempId = `temp-${candidateIndex}`;
-                                updated.delete(tempId);
-                              }
-                              return updated;
+                              const remaining = prev.filter((_, i) => i !== index);
+                              if (remaining.length === 0) setShowErrorOverlay(false);
+                              return remaining;
                             });
                           }}
                         >

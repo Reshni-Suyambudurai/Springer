@@ -94,17 +94,15 @@ public interface CandidatesRepository extends JpaRepository<Candidate, Long>, Jp
     @Query("SELECT c FROM Candidate c " +
        "LEFT JOIN FETCH c.institute i " +
        "LEFT JOIN FETCH c.cycle cy " +
-       "WHERE LOWER(TRIM(c.firstName)) = LOWER(TRIM(:firstName)) " +
-       "AND LOWER(TRIM(c.lastName)) = LOWER(TRIM(:lastName)) " +
+       "WHERE LOWER(REPLACE(CONCAT(COALESCE(c.firstName, ''), COALESCE(c.lastName, '')), ' ', '')) = LOWER(REPLACE(:fullName, ' ', '')) " +
        "AND i.instituteName = :instituteName " +
-       "AND c.degree = :degree " +
-       "AND c.department = :department " +
-       "AND c.dateOfBirth = :dateOfBirth " +
-       "AND c.passoutYear = :passoutYear " +
-       "AND (:aadhaarNumber IS NULL OR c.aadhaarNumber = :aadhaarNumber)")
+       "AND COALESCE(c.degree, '') = COALESCE(:degree, '') " +
+       "AND COALESCE(c.department, '') = COALESCE(:department, '') " +
+       "AND (c.dateOfBirth = :dateOfBirth OR (c.dateOfBirth IS NULL AND :dateOfBirth IS NULL)) " +
+       "AND (c.passoutYear = :passoutYear OR (c.passoutYear IS NULL AND :passoutYear IS NULL)) " +
+       "AND (:aadhaarNumber IS NULL OR c.aadhaarNumber IS NULL OR c.aadhaarNumber = :aadhaarNumber)")
 List<Candidate> findMatchingCandidates(
-        @Param("firstName") String firstName,
-        @Param("lastName") String lastName,
+        @Param("fullName") String fullName,
         @Param("instituteName") String instituteName,
         @Param("degree") String degree,
         @Param("department") String department,

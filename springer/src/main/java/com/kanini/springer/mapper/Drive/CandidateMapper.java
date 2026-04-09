@@ -136,7 +136,11 @@ public class CandidateMapper {
         candidate.setDepartment(request.getDepartment());
         candidate.setPassoutYear(request.getPassoutYear());
         candidate.setDateOfBirth(request.getDateOfBirth());
-        candidate.setAadhaarNumber(request.getAadhaarNumber());
+        candidate.setAadhaarNumber(
+            request.getAadhaarNumber() != null && !request.getAadhaarNumber().isBlank()
+                ? request.getAadhaarNumber()
+                : null
+        );
         
         // Set applicationType from request
         if (request.getApplicationType() != null) {

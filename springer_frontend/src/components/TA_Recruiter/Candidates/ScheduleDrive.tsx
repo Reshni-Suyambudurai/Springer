@@ -12,6 +12,7 @@ import {
   Typography,
   CircularProgress,
   Tooltip,
+  Chip,
 } from "@mui/material";
 import EventIcon from "@mui/icons-material/Event";
 import { driveScheduleApi, applicationApi } from "../../../services/driveschedule.api";
@@ -262,6 +263,30 @@ const ScheduleDrive: React.FC<ScheduleDriveProps> = ({
               Batch Time <span className="schedule-drive-required">*</span>
             </Typography>
             <Box className="schedule-drive-time-input-wrap">
+              {/* Existing batch times as selectable chips */}
+              {selectedDrive?.applicationsPerBatchTime &&
+                Object.keys(selectedDrive.applicationsPerBatchTime).length > 0 && (
+                  <Box className="schedule-drive-batch-chips">
+                    {Object.entries(selectedDrive.applicationsPerBatchTime).map(
+                      ([batchTime, count]) => {
+                        const time = batchTime.split("T")[1]?.substring(0, 5) || "";
+                        const isSelected = batchTimeInput === time;
+                        return (
+                          <Chip
+                            key={batchTime}
+                            label={`${time}  ·  ${count} `}
+                            size="small"
+                            onClick={() => {
+                              setBatchTimeInput(time);
+                              setBatchTimeError(false);
+                            }}
+                            className={`schedule-drive-batch-chip${isSelected ? " schedule-drive-batch-chip--selected" : ""}`}
+                          />
+                        );
+                      }
+                    )}
+                  </Box>
+                )}
               <input
                 type="time"
                 value={batchTimeInput}
