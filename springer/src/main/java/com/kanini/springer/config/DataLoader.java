@@ -179,6 +179,7 @@ public class DataLoader {
             createInstitute("SRM Institute of Science and Technology", "TIER_2", "Tamil Nadu", "Chennai"),
             createInstitute("Karunya Institute of Technology", "TIER_2", "Tamil Nadu", "Coimbatore"),
             createInstitute("CEG - College of Engineering Guindy", "TIER_1", "Tamil Nadu", "Chennai")
+            createInstitute("OTHERS College", "TIER_1", "Tamil Nadu", "Chennai")
         };
 
         instituteRepository.saveAll(java.util.Arrays.asList(institutes));
