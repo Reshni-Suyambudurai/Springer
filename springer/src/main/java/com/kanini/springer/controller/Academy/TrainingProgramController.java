@@ -1,5 +1,8 @@
 package com.kanini.springer.controller.Academy;
 
+import com.kanini.springer.dto.Academy.BatchCandidateResponse;
+import com.kanini.springer.dto.Academy.JoiningTrackerRequest;
+import com.kanini.springer.dto.Academy.JoiningTrackerResponse;
 import com.kanini.springer.dto.Academy.TrainingProgramRequest;
 import com.kanini.springer.dto.Academy.TrainingProgramResponse;
 import com.kanini.springer.dto.Authentication.ApiResponse;
@@ -87,5 +90,19 @@ public class TrainingProgramController {
         programService.deleteProgram(programId);
         return ResponseEntity.status(HttpStatus.OK)
                 .body(ApiResponse.success("Training program deleted successfully", null));
+    }
+    
+    @PostMapping("/joining-tracker/candidates")
+    public ResponseEntity<ApiResponse<List<JoiningTrackerResponse>>> getJoiningTrackerCandidates(
+            @RequestBody JoiningTrackerRequest request) {
+        List<JoiningTrackerResponse> responses = programService.getCandidatesByCycleAndStages(request);
+        return ResponseEntity.ok(ApiResponse.success("Candidates retrieved successfully", responses));
+    }
+    
+    @PostMapping("/batch-allocation/candidates")
+    public ResponseEntity<ApiResponse<List<BatchCandidateResponse>>> getBatchAllocationCandidates(
+            @RequestBody JoiningTrackerRequest request) {
+        List<BatchCandidateResponse> responses = programService.getBatchCandidatesByCycleAndStages(request);
+        return ResponseEntity.ok(ApiResponse.success("Candidates retrieved successfully", responses));
     }
 }

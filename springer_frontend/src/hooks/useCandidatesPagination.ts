@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { candidateApi } from '../services/drive.api';
-import type { CandidateResponse } from '../types/TA_Recruiter/Drive/candidate.types';
+import type { CandidateListResponse } from '../types/TA_Recruiter/Drive/candidate.types';
 import { showToast } from '../utils/toast';
 
 interface CandidateFilters {
@@ -19,7 +19,7 @@ interface CandidateFilters {
 }
 
 interface UseCandidatesPaginationReturn {
-  allCandidates: CandidateResponse[];
+  allCandidates: CandidateListResponse[];
   totalElements: number;
   candidatesLoading: boolean;
   loadingMore: boolean;
@@ -40,7 +40,7 @@ interface UseCandidatesPaginationReturn {
 export const useCandidatesPagination = (
   lifecycleStatus: 'ACTIVE' | 'CLOSED' = 'ACTIVE'
 ): UseCandidatesPaginationReturn => {
-  const [allCandidates, setAllCandidates] = useState<CandidateResponse[]>([]);
+  const [allCandidates, setAllCandidates] = useState<CandidateListResponse[]>([]);
   const [totalElements, setTotalElements] = useState<number>(0);
   const [candidatesLoading, setCandidatesLoading] = useState<boolean>(false);
   const [currentPage, setCurrentPage] = useState<number>(0);

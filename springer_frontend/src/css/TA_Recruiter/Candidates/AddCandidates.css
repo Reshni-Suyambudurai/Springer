@@ -131,6 +131,7 @@
   background: var(--color-surface);
   flex: 1;
   overflow: auto;
+  max-height: 65vh;
 }
 
 .add-candidates-bulk-table tbody tr { transition: background-color 0.2s ease; }

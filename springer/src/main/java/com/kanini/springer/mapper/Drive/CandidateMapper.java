@@ -1,5 +1,7 @@
 package com.kanini.springer.mapper.Drive;
 
+import com.kanini.springer.dto.Drive.CandidateDocResponse;
+import com.kanini.springer.dto.Drive.CandidateListResponse;
 import com.kanini.springer.dto.Drive.CandidateRequest;
 import com.kanini.springer.dto.Drive.CandidateResponse;
 import com.kanini.springer.entity.Drive.Candidate;
@@ -104,6 +106,45 @@ public class CandidateMapper {
         return candidates.stream()
                 .map(this::toResponse)
                 .collect(Collectors.toList());
+    }
+    
+    /**
+     * Convert Candidate entity to lightweight CandidateListResponse DTO
+     * Only maps the fields needed for the candidate table UI — no skills, no lazy collections.
+     */
+    public CandidateListResponse toListResponse(Candidate candidate) {
+        if (candidate == null) return null;
+        
+        CandidateListResponse r = new CandidateListResponse();
+        r.setCandidateId(candidate.getCandidateId());
+        r.setFirstName(candidate.getFirstName());
+        r.setLastName(candidate.getLastName());
+        r.setInstituteName(candidate.getInstitute() != null ? candidate.getInstitute().getInstituteName() : null);
+        r.setCgpa(candidate.getCgpa());
+        r.setHistoryOfArrears(candidate.getHistoryOfArrears());
+        r.setPassoutYear(candidate.getPassoutYear());
+        r.setApplicationStage(candidate.getApplicationStage() != null ? candidate.getApplicationStage().toString() : null);
+        r.setApplicationType(candidate.getApplicationType() != null ? candidate.getApplicationType().toString() : null);
+        r.setIsEligible(candidate.getIsEligible());
+        r.setReason(candidate.getReason());
+        return r;
+    }
+    
+    /**
+     * Convert Candidate entity to CandidateDocResponse DTO
+     * Only maps the 6 fields needed by the document processing table.
+     */
+    public CandidateDocResponse toDocResponse(Candidate candidate) {
+        if (candidate == null) return null;
+        
+        CandidateDocResponse r = new CandidateDocResponse();
+        r.setCandidateId(candidate.getCandidateId());
+        r.setFirstName(candidate.getFirstName());
+        r.setLastName(candidate.getLastName());
+        r.setEmail(candidate.getEmail());
+        r.setDepartment(candidate.getDepartment());
+        r.setApplicationStage(candidate.getApplicationStage() != null ? candidate.getApplicationStage().toString() : null);
+        return r;
     }
     
     /**

@@ -15,7 +15,7 @@ import { candidateApi } from '../../../services/drive.api';
 import { showToast } from '../../../utils/toast';
 import FilterSelect from '../../Common/FilterSelect';
 import type { DocumentTypeResponse, DocProcessingContextProps } from '../../../types/DocumentCollection/document.types';
-import type { CandidateResponse } from '../../../types/TA_Recruiter/Drive/candidate.types';
+import type { CandidateDocResponse } from '../../../types/TA_Recruiter/Drive/candidate.types';
 import '../../../css/TA_Recruiter/DocumentProcessing/SendDocumentsTab.css';
 
 const SendDocumentsTab = ({ context }: { context: DocProcessingContextProps }) => {
@@ -30,7 +30,7 @@ const SendDocumentsTab = ({ context }: { context: DocProcessingContextProps }) =
   };
 
   const [docTypes, setDocTypes] = useState<DocumentTypeResponse[]>([]);
-  const [candidates, setCandidates] = useState<CandidateResponse[]>([]);
+  const [candidates, setCandidates] = useState<CandidateDocResponse[]>([]);
   const [submissions, setSubmissions] = useState<Record<number, number>>({}); // Count of SUBMITTED documents (COLLECTED/APPROVED/REJECTED)
   const [linkSent, setLinkSent] = useState<Record<number, boolean>>({}); // Track if link was ever sent (includes PENDING)
   const [loading, setLoading] = useState(true);
@@ -61,7 +61,7 @@ const SendDocumentsTab = ({ context }: { context: DocProcessingContextProps }) =
       setLoading(true);
       const [typeRes, candRes, subRes] = await Promise.all([
         documentTypeApi.getAllTypes(),
-        candidateApi.getCandidatesByCycleId(cycleId),
+        candidateApi.getCandidatesByCycleAndStages(cycleId, ['SELECTED']),
         documentSubmissionApi.getAllSubmissions({ cycleId, size: 500 }),
       ]);
       if (typeRes.success && typeRes.data) {
@@ -69,10 +69,7 @@ const SendDocumentsTab = ({ context }: { context: DocProcessingContextProps }) =
         setSelectedDocTypeIds(new Set(typeRes.data.map(d => d.documentTypeId)));
       }
       if (candRes.success && candRes.data) {
-        // Show SELECTED, OFFERED and ACCEPTED candidates — all need documents
-        setCandidates(candRes.data.filter(c =>
-          ['SELECTED', 'OFFERED', 'ACCEPTED'].includes(c.applicationStage)
-        ));
+        setCandidates(candRes.data);
       }
       if (subRes.success && subRes.data) {
         // Track TWO things:

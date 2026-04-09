@@ -7,7 +7,9 @@ import com.kanini.springer.dto.Drive.BulkCandidateLifecycleUpdateRequest;
 import com.kanini.springer.dto.Drive.BulkCandidateLifecycleUpdateResponse;
 import com.kanini.springer.dto.Drive.BulkCandidateStatusUpdateRequest;
 import com.kanini.springer.dto.Drive.BulkCandidateStatusUpdateResponse;
+import com.kanini.springer.dto.Drive.CandidateDocResponse;
 import com.kanini.springer.dto.Drive.CandidateFilterRequest;
+import com.kanini.springer.dto.Drive.CandidateListResponse;
 import com.kanini.springer.dto.Drive.CandidateRequest;
 import com.kanini.springer.dto.Drive.CandidateResponse;
 import com.kanini.springer.dto.Drive.CandidateStatusUpdateRequest;
@@ -698,6 +700,23 @@ public class CandidatesServiceImpl implements ICandidatesService {
     }
     
     @Override
+    @Transactional(readOnly = true)
+    public List<CandidateDocResponse> getCandidatesByCycleAndStages(Long cycleId, List<String> stages) {
+        if (!hiringCycleRepository.existsById(cycleId)) {
+            throw new ResourceNotFoundException("Hiring cycle", "ID", cycleId);
+        }
+        
+        List<ApplicationStage> stageEnums = stages.stream()
+                .map(ApplicationStage::valueOf)
+                .collect(Collectors.toList());
+        
+        List<Candidate> candidates = candidatesRepository.findByCycleCycleIdAndApplicationStageIn(cycleId, stageEnums);
+        return candidates.stream()
+                .map(mapper::toDocResponse)
+                .collect(Collectors.toList());
+    }
+    
+    @Override
     @Transactional
     public CandidateResponse updateCandidate(Long candidateId, CandidateUpdateRequest request) {
         // Validate mandatory fields
@@ -775,9 +794,11 @@ public class CandidatesServiceImpl implements ICandidatesService {
             throw new ValidationException("Cannot update status to " + newStatus + ". Candidate is not eligible. Only eligible candidates can progress in recruitment.");
         }
         
-        // SELECTED is only allowed from SHORTLISTED
-        if (newStatus == ApplicationStage.SELECTED && candidate.getApplicationStage() != ApplicationStage.SHORTLISTED) {
-            throw new ValidationException("Cannot move to SELECTED. Candidate must be in SHORTLISTED status, but is currently " + candidate.getApplicationStage());
+        // SELECTED is only allowed from SHORTLISTED or SCHEDULED
+        if (newStatus == ApplicationStage.SELECTED && 
+            candidate.getApplicationStage() != ApplicationStage.SHORTLISTED && 
+            candidate.getApplicationStage() != ApplicationStage.SCHEDULED) {
+            throw new ValidationException("Cannot move to SELECTED. Candidate must be in SHORTLISTED or SCHEDULED status, but is currently " + candidate.getApplicationStage());
         }
         
         // Create copy for change detection
@@ -920,11 +941,13 @@ public class CandidatesServiceImpl implements ICandidatesService {
                     continue;
                 }
                 
-                // SELECTED is only allowed from SHORTLISTED
-                if (newStatus == ApplicationStage.SELECTED && candidate.getApplicationStage() != ApplicationStage.SHORTLISTED) {
+                // SELECTED is only allowed from SHORTLISTED or SCHEDULED
+                if (newStatus == ApplicationStage.SELECTED && 
+                    candidate.getApplicationStage() != ApplicationStage.SHORTLISTED && 
+                    candidate.getApplicationStage() != ApplicationStage.SCHEDULED) {
                     String candidateName = candidate.getFirstName() + 
                             (candidate.getLastName() != null ? " " + candidate.getLastName() : "");
-                    response.getErrorMessages().add(candidateName + " cannot move to SELECTED — must be SHORTLISTED, currently " + candidate.getApplicationStage());
+                    response.getErrorMessages().add(candidateName + " cannot move to SELECTED — must be SHORTLISTED or SCHEDULED, currently " + candidate.getApplicationStage());
                     failureCount++;
                     continue;
                 }
@@ -1265,7 +1288,7 @@ public class CandidatesServiceImpl implements ICandidatesService {
      */
     @Override
     @Transactional(readOnly = true)
-    public Page<CandidateResponse> getCandidatesWithFilters(CandidateFilterRequest filterRequest) {
+    public Page<CandidateListResponse> getCandidatesWithFilters(CandidateFilterRequest filterRequest) {
         // Build Specification from filter request
         Specification<Candidate> spec = CandidateSpecification.withFilters(filterRequest);
         
@@ -1280,8 +1303,8 @@ public class CandidatesServiceImpl implements ICandidatesService {
         // Execute query with specification
         Page<Candidate> candidatesPage = candidatesRepository.findAll(spec, pageable);
         
-        // Map to response DTOs
-        return candidatesPage.map(mapper::toResponse);
+        // Map to lightweight list response — no skills, no lazy collections
+        return candidatesPage.map(mapper::toListResponse);
     }
     
     /**

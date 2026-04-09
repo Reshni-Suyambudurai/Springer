@@ -85,7 +85,7 @@ const TAHiringCycleDetails = () => {
       ]);
       if (cycleRes.success && cycleRes.data) setCycle(cycleRes.data);
       else setError(cycleRes.message || 'Failed to load cycle.');
-      if (demandsRes.success && demandsRes.data) setDemands(demandsRes.data);
+      if (demandsRes.success && demandsRes.data) setDemands(demandsRes.data.filter(d => d.approvalStatus !== 'DRAFT'));
     } catch (err: any) {
       setError(err.message || 'Failed to load cycle details.');
     } finally {
@@ -125,7 +125,6 @@ const TAHiringCycleDetails = () => {
   const submittedCount = demands.filter(d => d.approvalStatus === 'SUBMITTED').length;
   const approvedCount  = demands.filter(d => d.approvalStatus === 'APPROVED').length;
   const rejectedCount  = demands.filter(d => d.approvalStatus === 'REJECTED').length;
-  const draftCount     = demands.filter(d => d.approvalStatus === 'DRAFT').length;
 
   return (
     <Box className="tah-hcd-page">
@@ -225,11 +224,6 @@ const TAHiringCycleDetails = () => {
                 <Box className="tah-hcd-summary-item">
                   <Typography className="tah-hcd-summary-count tah-hcd-summary-count--rejected">{rejectedCount}</Typography>
                   <Typography className="tah-hcd-summary-label">Rejected</Typography>
-                </Box>
-                <Box className="tah-hcd-summary-divider" />
-                <Box className="tah-hcd-summary-item">
-                  <Typography className="tah-hcd-summary-count tah-hcd-summary-count--draft">{draftCount}</Typography>
-                  <Typography className="tah-hcd-summary-label">Draft</Typography>
                 </Box>
               </Box>
             )}

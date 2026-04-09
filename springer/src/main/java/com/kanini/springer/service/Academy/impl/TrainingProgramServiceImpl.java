@@ -1,12 +1,18 @@
 package com.kanini.springer.service.Academy.impl;
 
+import com.kanini.springer.dto.Academy.BatchCandidateResponse;
+import com.kanini.springer.dto.Academy.JoiningTrackerRequest;
+import com.kanini.springer.dto.Academy.JoiningTrackerResponse;
 import com.kanini.springer.dto.Academy.TrainingProgramRequest;
 import com.kanini.springer.dto.Academy.TrainingProgramResponse;
 import com.kanini.springer.entity.Academy.TrainingProgram;
 import com.kanini.springer.entity.HiringReq.HiringCycle;
+import com.kanini.springer.entity.Drive.Candidate;
+import com.kanini.springer.entity.enums.Enums.ApplicationStage;
 import com.kanini.springer.exception.ResourceNotFoundException;
 import com.kanini.springer.mapper.Academy.TrainingProgramMapper;
 import com.kanini.springer.repository.Academy.TrainingProgramRepository;
+import com.kanini.springer.repository.Drive.CandidatesRepository;
 import com.kanini.springer.repository.Hiring.HiringCycleRepository;
 import com.kanini.springer.service.Academy.ITrainingProgramService;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +27,7 @@ import java.util.stream.Collectors;
 public class TrainingProgramServiceImpl implements ITrainingProgramService {
     
     private final TrainingProgramRepository programRepository;
+    private final CandidatesRepository candidatesRepository;
     private final HiringCycleRepository cycleRepository;
     private final TrainingProgramMapper mapper;
     
@@ -135,5 +142,59 @@ public class TrainingProgramServiceImpl implements ITrainingProgramService {
         
         program.setStatus(false); // Soft delete
         programRepository.save(program);
+    }
+    
+    @Override
+    @Transactional(readOnly = true)
+    public List<JoiningTrackerResponse> getCandidatesByCycleAndStages(JoiningTrackerRequest request) {
+        if (!cycleRepository.existsById(request.getCycleId())) {
+            throw new ResourceNotFoundException("Hiring Cycle not found with ID: " + request.getCycleId());
+        }
+        
+        List<ApplicationStage> stageEnums = request.getApplicationStages().stream()
+                .map(ApplicationStage::valueOf)
+                .collect(Collectors.toList());
+        
+        List<Candidate> candidates = candidatesRepository.findByCycleCycleIdAndApplicationStageIn(
+                request.getCycleId(), stageEnums);
+        
+        return candidates.stream().map(c -> new JoiningTrackerResponse(
+                c.getCandidateId(),
+                c.getFirstName(),
+                c.getLastName(),
+                c.getEmail(),
+                c.getInstitute() != null ? c.getInstitute().getInstituteName() : null,
+                c.getMobile(),
+                c.getDepartment(),
+                c.getDegree(),
+                c.getCycle() != null ? c.getCycle().getCycleId() : null,
+                c.getApplicationStage() != null ? c.getApplicationStage().toString() : null,
+                c.getUpdatedAt()
+        )).collect(Collectors.toList());
+    }
+    
+    @Override
+    @Transactional(readOnly = true)
+    public List<BatchCandidateResponse> getBatchCandidatesByCycleAndStages(JoiningTrackerRequest request) {
+        if (!cycleRepository.existsById(request.getCycleId())) {
+            throw new ResourceNotFoundException("Hiring Cycle not found with ID: " + request.getCycleId());
+        }
+        
+        List<ApplicationStage> stageEnums = request.getApplicationStages().stream()
+                .map(ApplicationStage::valueOf)
+                .collect(Collectors.toList());
+        
+        List<Candidate> candidates = candidatesRepository.findByCycleCycleIdAndApplicationStageIn(
+                request.getCycleId(), stageEnums);
+        
+        return candidates.stream().map(c -> new BatchCandidateResponse(
+                c.getCandidateId(),
+                c.getFirstName(),
+                c.getLastName(),
+                c.getEmail(),
+                c.getDepartment(),
+                c.getCgpa(),
+                c.getApplicationStage() != null ? c.getApplicationStage().toString() : null
+        )).collect(Collectors.toList());
     }
 }

@@ -727,7 +727,7 @@ console.log("Skills data:", response.data);
             </Box>
 
             <TableContainer component={Paper} className="add-candidates-bulk-table">
-              <Table>
+              <Table stickyHeader>
                 <TableHead>
                   <TableRow>
                     <TableCell className="t-head-cell">Index</TableCell>

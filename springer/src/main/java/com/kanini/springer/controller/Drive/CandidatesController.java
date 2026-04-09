@@ -6,7 +6,9 @@ import com.kanini.springer.dto.Drive.BulkCandidateLifecycleUpdateRequest;
 import com.kanini.springer.dto.Drive.BulkCandidateLifecycleUpdateResponse;
 import com.kanini.springer.dto.Drive.BulkCandidateStatusUpdateRequest;
 import com.kanini.springer.dto.Drive.BulkCandidateStatusUpdateResponse;
+import com.kanini.springer.dto.Drive.CandidateDocResponse;
 import com.kanini.springer.dto.Drive.CandidateFilterRequest;
+import com.kanini.springer.dto.Drive.CandidateListResponse;
 import com.kanini.springer.dto.Drive.CandidateRequest;
 import com.kanini.springer.dto.Drive.CandidateResponse;
 import com.kanini.springer.dto.Drive.CandidateStatusUpdateRequest;
@@ -121,7 +123,7 @@ public class CandidatesController {
                description = "Advanced filtering endpoint supporting multiple criteria including name, institute, location, " +
                             "degree, department, eligibility, application type/stage, skills, and custom sorting. " +
                             "Optimized with server-side filtering for large datasets.")
-    public ResponseEntity<ApiResponse<Page<CandidateResponse>>> getCandidatesWithFilters(
+    public ResponseEntity<ApiResponse<Page<CandidateListResponse>>> getCandidatesWithFilters(
             @RequestBody CandidateFilterRequest filterRequest) {
         
         // Set defaults if not provided
@@ -139,7 +141,7 @@ public class CandidatesController {
         }
         
         // Fetch filtered and paginated candidates
-        Page<CandidateResponse> candidatesPage = candidatesService.getCandidatesWithFilters(filterRequest);
+        Page<CandidateListResponse> candidatesPage = candidatesService.getCandidatesWithFilters(filterRequest);
         
         return ResponseEntity.ok(new ApiResponse<>(true, "Candidates retrieved successfully", candidatesPage));
     }
@@ -177,6 +179,16 @@ public class CandidatesController {
     public ResponseEntity<ApiResponse<List<CandidateResponse>>> getCandidatesByCycleId(
             @PathVariable("cycleId") Long cycleId) {
         List<CandidateResponse> responses = candidatesService.getCandidatesByCycleId(cycleId);
+        return ResponseEntity.ok(new ApiResponse<>(true, "Candidates retrieved successfully", responses));
+    }
+    
+    @GetMapping("/cycle/{cycleId}/stages")
+    @Operation(summary = "Get candidates by cycle and stages", 
+               description = "Retrieves lightweight candidate data for specific application stages within a cycle")
+    public ResponseEntity<ApiResponse<List<CandidateDocResponse>>> getCandidatesByCycleAndStages(
+            @PathVariable("cycleId") Long cycleId,
+            @RequestParam List<String> stages) {
+        List<CandidateDocResponse> responses = candidatesService.getCandidatesByCycleAndStages(cycleId, stages);
         return ResponseEntity.ok(new ApiResponse<>(true, "Candidates retrieved successfully", responses));
     }
     

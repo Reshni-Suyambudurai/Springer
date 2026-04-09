@@ -374,7 +374,7 @@ const AddInstitute: React.FC = () => {
             </Box>
 
             <TableContainer component={Paper} className="add-institute-bulk-table">
-              <Table>
+              <Table stickyHeader>
                 <TableHead>
                   <TableRow>
                     <TableCell className="t-head-cell">Institute Name</TableCell>

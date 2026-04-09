@@ -6,7 +6,6 @@ import com.kanini.springer.entity.enums.Enums.LifecycleStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
-import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
@@ -20,12 +19,11 @@ import java.util.Optional;
 public interface CandidatesRepository extends JpaRepository<Candidate, Long>, JpaSpecificationExecutor<Candidate> {
     
     /**
-     * Override findAll with Specification and Pageable to use EntityGraph
-     * This prevents N+1 queries when using dynamic filters with pagination
-     * Batch fetches institute, cycle, and skills in a single query
+     * Override findAll with Specification and Pageable.
+     * N+1 is prevented via @BatchSize on entity relationships instead of @EntityGraph,
+     * because EntityGraph with collection joins forces Hibernate to do in-memory pagination.
      */
     @Override
-    @EntityGraph(attributePaths = {"institute", "cycle", "candidateSkills", "candidateSkills.skill"})
     Page<Candidate> findAll(Specification<Candidate> spec, Pageable pageable);
     
     /**
@@ -52,6 +50,11 @@ public interface CandidatesRepository extends JpaRepository<Candidate, Long>, Jp
      * Find candidates by cycle ID
      */
     List<Candidate> findByCycleCycleId(Long cycleId);
+
+    /**
+     * Find candidates by cycle ID and application stages (lightweight — no joins needed)
+     */
+    List<Candidate> findByCycleCycleIdAndApplicationStageIn(Long cycleId, List<ApplicationStage> stages);
     
     /**
      * Find candidates by cycle ID with institute and skills eagerly loaded
@@ -128,17 +131,13 @@ List<Candidate> findMatchingCandidates(
     /**
      * Find all active candidates with pagination filtered by cycle
      * Fetches candidates with lifecycleStatus = ACTIVE and specific cycleId
-     * Uses @EntityGraph to batch-fetch related entities without in-memory pagination
-     * 
-     * NOTE: Removed collection fetch (candidateSkills) from query to avoid HHH90003004 warning
-     * and InvalidDataAccessApiUsageException. Skills are fetched via @EntityGraph batch fetching.
+     * N+1 is prevented via @BatchSize on entity relationships.
      * 
      * @param cycleId Cycle ID to filter candidates
      * @param lifecycleStatus Lifecycle status filter (ACTIVE)
      * @param pageable Pagination and sorting information
      * @return Page of candidates with institute and cycle data
      */
-    @EntityGraph(attributePaths = {"institute", "cycle", "candidateSkills", "candidateSkills.skill"})
     @Query("SELECT c FROM Candidate c " +
            "WHERE c.cycle.cycleId = :cycleId " +
            "AND c.lifecycleStatus = :lifecycleStatus")

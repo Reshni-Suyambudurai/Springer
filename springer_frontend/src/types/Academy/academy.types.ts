@@ -220,6 +220,21 @@ export interface ExcelUploadResponse {
 
 // ==================== JOINING TRACKER ====================
 
+export interface JoiningTrackerRequest {
+  cycleId: number;
+  applicationStages: string[];
+}
+
+export interface BatchCandidateResponse {
+  candidateId: number;
+  firstName: string;
+  lastName: string;
+  email: string;
+  department: string;
+  cgpa: number;
+  applicationStage: string;
+}
+
 export interface JoiningTrackerCandidate {
   candidateId: number;
   firstName: string;

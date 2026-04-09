@@ -121,8 +121,8 @@ public class DataLoader {
         User[] users = {
             createUser("Sudha", "sudha@kanini.com", "password123", "Talent Acquisition", "Chennai", taHeadRole),
             createUser("Mozhi", "mozhi@kanini.com", "password123", "Talent Acquisition", "Bangalore", taRecruiterRole),
-            createUser("Priya", "priya@kanini.com", "password123", "Product Engineering", "Chennai", hiringManagerRole),
-            createUser("Soundharya", "soundharya@kanini.com", "password123", "HR & Analytics", "Bangalore", hiringManagerRole),
+            createUser("Priya", "priya@kanini.com", "password123", "Talent Acquisition", "Chennai", taRecruiterRole),
+            createUser("Parthiban", "parthiban@kanini.com", "password123", "Product Engineering", "Bangalore", hiringManagerRole),
             createUser("Ramesh", "ramesh@kanini.com", "password123", "Product Engineering", "Coimbatore", membersRole),
             createUser("Reshni", "reshni@kanini.com", "password123", "Data Analytics & AI", "Coimbatore", adminRole),
             createUser("Lavanya", "lavanya@kanini.com", "password123", "Data Analytics & AI", "Coimbatore", trainingCoordinatorRole)

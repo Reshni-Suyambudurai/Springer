@@ -2,6 +2,7 @@ package com.kanini.springer.entity.Drive;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
+import org.hibernate.annotations.BatchSize;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -54,6 +55,7 @@ public class Candidate {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "cycle_id")
     private HiringCycle cycle;
+
 
     @NotBlank(message = "Candidate first name is required")
     @Pattern(regexp = "^[a-zA-Z\\s.]+$", message = "First name should contain only letters")
@@ -108,9 +110,11 @@ public class Candidate {
 
     private LocalDateTime createdAt;
 
+    @BatchSize(size = 20)
     @OneToMany(mappedBy = "candidate", cascade = CascadeType.ALL)
     private List<CandidateSkill> candidateSkills;
 
+    @BatchSize(size = 20)
     @OneToMany(mappedBy = "candidate", cascade = CascadeType.ALL)
     private List<Application> applications;
 

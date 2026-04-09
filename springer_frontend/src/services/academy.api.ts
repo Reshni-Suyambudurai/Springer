@@ -20,6 +20,9 @@ import type {
   TrainingScoreResponse,
   UserSummary,
   JoiningStatusUpdateRequest,
+  JoiningTrackerRequest,
+  JoiningTrackerCandidate,
+  BatchCandidateResponse,
   ExcelUploadResponse,
 } from '../types/Academy/academy.types';
 import type { CandidateResponse } from '../types/TA_Recruiter/Drive/candidate.types';
@@ -467,24 +470,10 @@ export const excelUploadApi = {
 // ==================== JOINING TRACKER APIs ====================
 export const joiningTrackerApi = {
 
-  async getCandidatesByCycle(cycleId: number): Promise<ApiResponse<CandidateResponse[]>> {
+  async getCandidatesByCycleAndStages(request: JoiningTrackerRequest): Promise<ApiResponse<JoiningTrackerCandidate[]>> {
     try {
-      const response = await http.get(`/candidates/cycle/${cycleId}`);
+      const response = await http.post('/academy/programs/joining-tracker/candidates', request);
       return response.data;
-    } catch (error) {
-      throw handleAxiosError(error);
-    }
-  },
-
-  async getAcceptedCandidatesByCycle(cycleId: number): Promise<ApiResponse<CandidateResponse[]>> {
-    try {
-      const response = await this.getCandidatesByCycle(cycleId);
-      const all: CandidateResponse[] = response.data ?? [];
-      return {
-        success: true,
-        message: 'Fetched',
-        data: all.filter(c => c.applicationStage === 'ACCEPTED'),
-      };
     } catch (error) {
       throw handleAxiosError(error);
     }
@@ -493,6 +482,18 @@ export const joiningTrackerApi = {
   async updateJoiningStatus(candidateId: number, data: JoiningStatusUpdateRequest): Promise<ApiResponse<CandidateResponse>> {
     try {
       const response = await http.patch(`/candidates/${candidateId}/status`, data);
+      return response.data;
+    } catch (error) {
+      throw handleAxiosError(error);
+    }
+  },
+};
+
+// ==================== BATCH ALLOCATION CANDIDATE APIs ====================
+export const batchCandidateApi = {
+  async getCandidatesByCycleAndStages(request: JoiningTrackerRequest): Promise<ApiResponse<BatchCandidateResponse[]>> {
+    try {
+      const response = await http.post('/academy/programs/batch-allocation/candidates', request);
       return response.data;
     } catch (error) {
       throw handleAxiosError(error);

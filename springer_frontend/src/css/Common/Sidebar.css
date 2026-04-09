@@ -66,6 +66,11 @@
   transition: color 0.2s ease, transform 0.2s ease;
 }
 
+.sidebar-icon svg {
+  width: 28px;
+  height: 28px;
+}
+
 .sidebar-link:hover .sidebar-icon { color: var(--color-primary-dark); transform: scale(1.1); }
 .sidebar-link.active .sidebar-icon { color: var(--color-primary); transform: scale(1.1); }
 
