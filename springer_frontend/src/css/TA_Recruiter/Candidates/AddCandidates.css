@@ -222,14 +222,14 @@
 }
 
 /* ── Row status coloring ── */
-.table-row-duplicate td { color: var(--color-error-delete) !important; font-weight: 600; }
+.table-row-duplicate td { color: var(--color-error-delete) !important; font-weight: 600; background-color: var(--color-error-light) !important; }
 .table-row-old td { color: var(--color-success-dark) !important; font-weight: 600; }
 .table-row-old .warning-dot { background-color: var(--color-success-dark); }
 .table-row-duplicate:hover td,
 .table-row-old:hover td { background-color: var(--color-hover-bg) !important; }
 
-/* ── Batch duplicate (yellow) ── */
-.table-row-batch-duplicate td { color: var(--color-warning) !important; font-weight: 600; }
+/* ── Batch duplicate (orange) ── */
+.table-row-batch-duplicate td { color: var(--color-yellow-500) !important; font-weight: 600; background-color: var(--color-yellow-50) !important; }
 .table-row-batch-duplicate:hover td { background-color: var(--color-hover-bg) !important; }
 
 .batch-dup-dot {

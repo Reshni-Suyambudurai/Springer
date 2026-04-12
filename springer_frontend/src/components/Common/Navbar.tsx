@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { tokenstore } from '../../auth/tokenstore';
 import { notificationApi } from '../../services/notification.api';
 import type { NotificationResponse } from '../../types/notification.types';
-import kaniniLogo from '../../assets/kanini_Logo.png';
 import '../../css/Common/Navbar.css';
 
 function Navbar() {

@@ -30,6 +30,20 @@
   --color-yellow-600: #ca5a04;
   --color-yellow-700: #A16207;
 
+  /* Purple Palette */
+  --color-purple-50: #F5F3FF;
+  --color-purple-100: #EDE9FE;
+  --color-purple-500: #8B5CF6;
+  --color-purple-600: #7C3AED;
+  --color-purple-700: #6D28D9;
+
+  /* Pink Palette */
+  --color-pink-50: #FDF2F8;
+  --color-pink-100: #FCE7F3;
+  --color-pink-500: #EC4899;
+  --color-pink-600: #DB2777;
+  --color-pink-700: #BE185D;
+
   /* Grey Palette */
   --color-grey-50: #F7F8FA;
   --color-grey-100: #F5F3F0;

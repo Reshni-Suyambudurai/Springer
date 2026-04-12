@@ -39,6 +39,7 @@ export interface DriveInfo {
   driveId: number;
   driveName: string;
   mode: string;
+  instituteName?: string;
 }
 
 // For creating/updating cycle with form data

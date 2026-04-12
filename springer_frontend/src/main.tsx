@@ -1,4 +1,3 @@
-import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
 import { SnackbarProvider, closeSnackbar } from 'notistack'
@@ -12,12 +11,11 @@ import App from './App.tsx'
 
 const muiTheme = createTheme({
   typography: {
-    fontFamily: "'Inter', 'Segoe UI', 'Roboto', sans-serif",
+    fontFamily: "'Inter', 'Segoe UI', Arial, sans-serif",
   },
 });
 
 createRoot(document.getElementById('root')!).render(
-  <StrictMode>
     <BrowserRouter>
       <StyledEngineProvider injectFirst>
         <MuiThemeProvider theme={muiTheme}>
@@ -50,5 +48,4 @@ createRoot(document.getElementById('root')!).render(
         </MuiThemeProvider>
       </StyledEngineProvider>
     </BrowserRouter>
-  </StrictMode>
 )

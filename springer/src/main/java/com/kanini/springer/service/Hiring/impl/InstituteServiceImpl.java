@@ -205,7 +205,7 @@ public class InstituteServiceImpl implements IInstituteService {
     @Override
     @Transactional(readOnly = true)
     public List<InstituteResponse> getAllInstitutes() {
-        return instituteRepository.findAll().stream()
+        return instituteRepository.findAllWithPrograms().stream()
                 .map(mapper::toResponse)
                 .collect(Collectors.toList());
     }

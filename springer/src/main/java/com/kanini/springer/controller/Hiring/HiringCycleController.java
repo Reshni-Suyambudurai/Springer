@@ -67,10 +67,10 @@ public class HiringCycleController {
         return ResponseEntity.ok(ApiResponse.success("Hiring cycle summaries retrieved successfully", responses));
     }
     
-    @GetMapping("/{cycleId}/with-drives")
-    public ResponseEntity<ApiResponse<CycleWithDrivesResponse>> getCycleWithDrives(@PathVariable Long cycleId) {
-        CycleWithDrivesResponse response = cycleService.getCycleWithDrives(cycleId);
-        return ResponseEntity.ok(ApiResponse.success("Cycle with drives retrieved successfully", response));
+    @GetMapping("/with-drives")
+    public ResponseEntity<ApiResponse<List<CycleWithDrivesResponse>>> getAllCyclesWithDrives() {
+        List<CycleWithDrivesResponse> responses = cycleService.getAllCyclesWithDrives();
+        return ResponseEntity.ok(ApiResponse.success("All cycles with drives retrieved successfully", responses));
     }
     
     @PatchMapping(value = "/{cycleId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)

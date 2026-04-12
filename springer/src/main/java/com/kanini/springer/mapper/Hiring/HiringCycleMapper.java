@@ -33,11 +33,16 @@ public class HiringCycleMapper {
         
         if (cycle.getDrives() != null && !cycle.getDrives().isEmpty()) {
             response.setDrives(cycle.getDrives().stream()
-                    .map(drive -> new CycleWithDrivesResponse.DriveInfo(
-                            drive.getDriveId(),
-                            drive.getDriveName(),
-                            drive.getDriveMode() != null ? drive.getDriveMode().toString() : null
-                    ))
+                    .map(drive -> {
+                        CycleWithDrivesResponse.DriveInfo info = new CycleWithDrivesResponse.DriveInfo();
+                        info.setDriveId(drive.getDriveId());
+                        info.setDriveName(drive.getDriveName());
+                        info.setMode(drive.getDriveMode() != null ? drive.getDriveMode().toString() : null);
+                        if (drive.getInstitute() != null) {
+                            info.setInstituteName(drive.getInstitute().getInstituteName());
+                        }
+                        return info;
+                    })
                     .collect(Collectors.toList()));
         } else {
             response.setDrives(new ArrayList<>());

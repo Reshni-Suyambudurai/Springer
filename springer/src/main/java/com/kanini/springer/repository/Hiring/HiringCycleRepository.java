@@ -4,7 +4,6 @@ import com.kanini.springer.entity.HiringReq.HiringCycle;
 import com.kanini.springer.entity.enums.Enums.CycleStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -16,6 +15,6 @@ public interface HiringCycleRepository extends JpaRepository<HiringCycle, Long> 
     Optional<HiringCycle> findByCycleYear(Integer cycleYear);
     List<HiringCycle> findByStatusOrderByCycleYearDesc(CycleStatus status);
     
-    @Query("SELECT c FROM HiringCycle c LEFT JOIN FETCH c.drives WHERE c.cycleId = :cycleId")
-    Optional<HiringCycle> findByIdWithDrives(@Param("cycleId") Long cycleId);
+    @Query("SELECT DISTINCT c FROM HiringCycle c LEFT JOIN FETCH c.drives d LEFT JOIN FETCH d.institute ORDER BY c.cycleYear DESC")
+    List<HiringCycle> findAllWithDrivesAndInstitutes();
 }

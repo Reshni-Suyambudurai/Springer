@@ -27,5 +27,5 @@ public interface IHiringCycleService {
     
     byte[] getJdByCycleId(Long cycleId);
     
-    CycleWithDrivesResponse getCycleWithDrives(Long cycleId);
+    List<CycleWithDrivesResponse> getAllCyclesWithDrives();
 }

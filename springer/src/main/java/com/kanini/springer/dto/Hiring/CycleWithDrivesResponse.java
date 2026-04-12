@@ -24,5 +24,6 @@ public class CycleWithDrivesResponse {
         private Long driveId;
         private String driveName;
         private String mode;
+        private String instituteName; // populated for ON_CAMPUS drives
     }
 }

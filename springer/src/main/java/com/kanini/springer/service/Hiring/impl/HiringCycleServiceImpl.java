@@ -188,9 +188,10 @@ public class HiringCycleServiceImpl implements IHiringCycleService {
     
     @Override
     @Transactional(readOnly = true)
-    public CycleWithDrivesResponse getCycleWithDrives(Long cycleId) {
-        HiringCycle cycle = cycleRepository.findByIdWithDrives(cycleId)
-                .orElseThrow(() -> new ResourceNotFoundException("Hiring cycle", "ID", cycleId));
-        return mapper.toCycleWithDrivesResponse(cycle);
+    public List<CycleWithDrivesResponse> getAllCyclesWithDrives() {
+        List<HiringCycle> cycles = cycleRepository.findAllWithDrivesAndInstitutes();
+        return cycles.stream()
+                .map(mapper::toCycleWithDrivesResponse)
+                .collect(Collectors.toList());
     }
 }

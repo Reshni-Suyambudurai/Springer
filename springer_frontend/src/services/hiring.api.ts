@@ -162,12 +162,12 @@ export const hiringCycleApi = {
   },
 
   /**
-   * Get cycle with drive schedules
-   * GET /api/hiring/cycles/{cycleId}/with-drives
+   * Get all cycles with their drives
+   * GET /api/hiring/cycles/with-drives
    */
-  async getCycleWithDrives(cycleId: number): Promise<ApiResponse<CycleWithDrivesResponse>> {
+  async getAllCyclesWithDrives(): Promise<ApiResponse<CycleWithDrivesResponse[]>> {
     try {
-      const response = await http.get(`/hiring/cycles/${cycleId}/with-drives`);
+      const response = await http.get(`/hiring/cycles/with-drives`);
       return response.data;
     } catch (error) {
       throw handleAxiosError(error);

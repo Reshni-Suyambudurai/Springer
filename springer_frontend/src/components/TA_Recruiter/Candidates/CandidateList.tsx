@@ -185,18 +185,9 @@ const CandidateList: React.FC = () => {
 
   const fetchCycles = async () => {
     try {
-      const summaries = await hiringCycleApi.getAllCycleSummaries();
-      if (summaries.data) {
-        const sortedIds = summaries.data
-          .sort((a, b) => b.cycleYear - a.cycleYear)
-          .map((s) => s.cycleId);
-
-        // Fetch each cycle with drives
-        const cyclePromises = sortedIds.map((id) => hiringCycleApi.getCycleWithDrives(id));
-        const results = await Promise.all(cyclePromises);
-        const cyclesWithDrives = results
-          .filter((r) => r.data)
-          .map((r) => r.data!);
+      const response = await hiringCycleApi.getAllCyclesWithDrives();
+      if (response.data) {
+        const cyclesWithDrives = response.data;
 
         setCycles(cyclesWithDrives);
         if (cyclesWithDrives.length > 0) {
@@ -254,6 +245,7 @@ const CandidateList: React.FC = () => {
         cycleName: selectedCycleData?.cycleName,
         driveId: selectedDrive || undefined,
         driveName: selectedDriveData?.driveName || undefined,
+        instituteName: selectedDriveData?.instituteName || undefined,
       } 
     });
   };
