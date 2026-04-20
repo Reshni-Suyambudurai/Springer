@@ -4,14 +4,17 @@ import com.kanini.springer.dto.Academy.AttendanceMarkRequest;
 import com.kanini.springer.dto.Academy.AttendanceResponse;
 import com.kanini.springer.dto.Academy.AttendanceStatsResponse;
 import com.kanini.springer.dto.Academy.BulkAttendanceMarkRequest;
+import com.kanini.springer.dto.Academy.ExcelUploadResponse;
 import com.kanini.springer.dto.Authentication.ApiResponse;
 import com.kanini.springer.service.Academy.IAttendanceService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -45,5 +48,23 @@ public class AttendanceController {
         AttendanceStatsResponse response = attendanceService.getAttendanceSummary(studentId);
         return ResponseEntity.status(HttpStatus.OK)
                 .body(ApiResponse.success("Attendance summary retrieved successfully", response));
+    }
+
+    @GetMapping("/{studentId}/records")
+    public ResponseEntity<ApiResponse<List<AttendanceResponse>>> getAttendanceRecords(
+            @PathVariable Long studentId) {
+        List<AttendanceResponse> response = attendanceService.getAttendanceRecords(studentId);
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(ApiResponse.success("Attendance records retrieved successfully", response));
+    }
+
+    @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ApiResponse<ExcelUploadResponse>> uploadAttendance(
+            @RequestPart("file") MultipartFile file,
+            @RequestParam Integer programId,
+            @RequestParam Integer batchNumber) {
+        ExcelUploadResponse response = attendanceService.uploadAttendanceFromExcel(file, programId, batchNumber);
+        String message = response.getSavedCount() + " record(s) saved, " + response.getFailedCount() + " failed out of " + response.getTotalRows();
+        return ResponseEntity.ok(ApiResponse.success(message, response));
     }
 }

@@ -1,0 +1,460 @@
+/* ===== ACADEMY CALENDAR — prefix: acal- ===== */
+
+/* Container — fits inside Academy Dashboard tab content area */
+.acal-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  gap: 8px;
+  background-color: var(--color-bg-secondary);
+  padding: 8px;
+  overflow: hidden;
+  box-sizing: border-box;
+  min-height: 0;
+}
+
+/* Header */
+.acal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: relative;
+  padding: 10px 20px;
+  margin: 0;
+  background: var(--color-surface);
+  box-shadow: 0 1px 3px 0 var(--opacity-shadow-light);
+  border-radius: 12px;
+  gap: 16px;
+  border: 1px solid var(--color-card-border);
+  flex-shrink: 0;
+}
+
+.acal-header-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  z-index: 1;
+}
+
+/* Year dropdown — same as drive-calendar-year-dropdown */
+.acal-year-select { min-width: 100px; }
+
+.acal-year-dropdown {
+  background-color: var(--color-primary) !important;
+  color: var(--color-white) !important;
+  border: 1px solid var(--color-primary) !important;
+  border-radius: 6px !important;
+  font-weight: 700 !important;
+  font-size: 16px !important;
+}
+
+.acal-year-dropdown .MuiSelect-select { padding: 6px 12px !important; text-align: center !important; }
+.acal-year-dropdown .MuiOutlinedInput-notchedOutline { border: none !important; }
+.acal-year-dropdown .MuiSelect-icon { color: var(--color-white) !important; }
+
+/* Nav controls */
+.acal-nav-controls { display: flex; align-items: center; gap: 12px; }
+.acal-nav-buttons  { display: flex; gap: 4px; }
+
+.acal-nav-btn {
+  color: var(--color-text-primary) !important;
+  border: 1px solid var(--color-border) !important;
+  border-radius: 6px !important;
+}
+
+.acal-nav-btn:hover { background-color: var(--color-bg-secondary) !important; }
+
+.acal-today-btn {
+  color: var(--color-primary) !important;
+  border-color: var(--color-primary) !important;
+  text-transform: none !important;
+  font-weight: 600 !important;
+  padding: 6px 16px !important;
+  border-radius: 6px !important;
+}
+
+.acal-today-btn:hover {
+  background-color: var(--color-primary) !important;
+  color: var(--color-white) !important;
+}
+
+.acal-month-year {
+  font-weight: 700 !important;
+  color: var(--color-text-primary) !important;
+  min-width: 180px;
+  font-size: var(--text-md) !important;
+}
+
+/* Center title — exact same as drive-calendar-header-center */
+.acal-header-center {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  text-align: center;
+}
+
+.acal-title {
+  font-weight: 700 !important;
+  color: var(--color-text-primary) !important;
+  font-size: var(--text-lg) !important;
+}
+
+/* Right side */
+.acal-header-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  z-index: 1;
+}
+
+/* Program filter */
+.acal-program-select { min-width: 180px !important; }
+.acal-program-select .MuiOutlinedInput-root.Mui-focused fieldset { border-color: var(--color-primary) !important; }
+.acal-program-select .MuiInputLabel-root.Mui-focused { color: var(--color-primary) !important; }
+
+/* Legend — same as drive-calendar-legend */
+.acal-legend { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; }
+
+.acal-legend-item { display: flex; align-items: center; gap: 6px; }
+
+.acal-legend-color {
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+.acal-legend-batch     { background-color: var(--color-primary); opacity: 0.8; }
+.acal-legend-active    { background-color: var(--color-green); }
+.acal-legend-planned   { background-color: var(--color-grey-400); }
+.acal-legend-completed { background-color: var(--color-success-dark); }
+.acal-legend-present   { background-color: var(--color-success-dark); }
+.acal-legend-absent    { background-color: var(--color-error); }
+
+/* Loading */
+.acal-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 60px 20px;
+  background: var(--color-surface);
+  border-radius: 12px;
+  border: 1px solid var(--color-card-border);
+  flex: 1;
+  min-height: 0;
+}
+
+/* Grid container */
+.acal-grid-container {
+  display: grid;
+  grid-template-rows: auto 1fr;
+  background: var(--color-surface);
+  box-shadow: var(--shadow-card);
+  border-radius: 12px;
+  padding: 0;
+  margin: 0;
+  overflow: hidden;
+  flex: 1;
+  min-height: 0;
+  border: 1px solid var(--color-card-border);
+}
+
+/* Weekday header — exact same as drive-calendar-weekday-header */
+.acal-weekday-header {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 0;
+  background-color: var(--color-bg-table-header);
+  border-bottom: 2px solid var(--color-primary);
+  margin: 0;
+}
+
+.acal-weekday-cell {
+  background-color: var(--color-bg-table-header);
+  padding: 8px;
+  text-align: center;
+  border-right: 1px solid var(--color-border-table);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+}
+
+.acal-weekday-cell:last-child { border-right: none; }
+
+.acal-weekday-label {
+  font-weight: 700 !important;
+  color: var(--color-grey-600) !important;
+  font-size: var(--text-xs) !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.75px !important;
+}
+
+/* Calendar grid */
+.acal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  grid-auto-rows: minmax(72px, 1fr);
+  gap: 0;
+  background-color: var(--color-surface);
+  overflow: auto;
+  height: 100%;
+}
+
+/* Day cell */
+.acal-day-cell {
+  background-color: var(--color-surface);
+  padding: 6px 8px;
+  min-height: 72px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  transition: background 0.15s ease;
+  border-right: 1px solid var(--color-border-table);
+  border-bottom: 1px solid var(--color-border-table);
+  box-sizing: border-box;
+}
+
+.acal-day-cell:nth-child(7n) { border-right: none; }
+
+.acal-day-cell:hover {
+  border: 2px solid var(--color-primary) !important;
+  z-index: 10;
+  background-color: var(--color-primary-hover-4);
+}
+
+.acal-day-cell:has(.acal-event:hover) {
+  border: 2px solid var(--color-primary) !important;
+  z-index: 10;
+}
+
+.acal-day-cell--empty {
+  background-color: var(--color-bg-secondary);
+  opacity: 0.4;
+}
+
+.acal-day-cell--today {
+  background-color: var(--color-primary-light) !important;
+  border: 2px solid var(--color-primary) !important;
+  box-shadow: inset 0 0 0 1px var(--color-primary-shadow-8);
+}
+
+/* Day number — exact same as drive-calendar-day-number */
+.acal-day-number {
+  font-weight: 600 !important;
+  color: var(--color-text-primary) !important;
+  margin-bottom: 4px !important;
+  font-size: 14px !important;
+  text-align: left;
+  padding: 2px 5px;
+  border-radius: 4px;
+  align-self: flex-start;
+  line-height: 1.4;
+}
+
+.acal-day-cell--today .acal-day-number {
+  color: var(--color-white) !important;
+  background-color: var(--color-primary) !important;
+  font-weight: 700 !important;
+  padding: 3px 8px;
+}
+
+/* Events container — exact same as drive-calendar-events */
+.acal-events {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  overflow-y: auto;
+  flex: 1;
+  padding-right: 2px;
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+}
+
+.acal-events::-webkit-scrollbar { width: 4px; }
+.acal-events::-webkit-scrollbar-track { background: transparent; }
+.acal-events::-webkit-scrollbar-thumb { background: var(--color-primary-shadow-8); border-radius: 4px; }
+
+.acal-day-cell:hover .acal-events { scrollbar-width: none; }
+.acal-day-cell:hover .acal-events::-webkit-scrollbar { display: none; }
+
+/* Individual event — exact same as drive-calendar-event */
+.acal-event {
+  padding: 4px 7px;
+  border-radius: 5px;
+  cursor: default;
+  transition: all 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  position: relative;
+  border-left: 3px solid transparent;
+}
+
+.acal-event:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.12);
+}
+
+.acal-event::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 2px;
+  background: currentColor;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.acal-event:hover::after { opacity: 0.3; }
+
+/* Event type colors — same pattern as drive-event-oncampus/offcampus */
+.acal-event--batch {
+  background-color: rgba(15, 76, 129, 0.1);
+  border: 1px solid rgba(15, 76, 129, 0.3);
+  border-left: 4px solid var(--color-primary);
+  color: var(--color-primary);
+}
+.acal-event--batch:hover {
+  background-color: rgba(15, 76, 129, 0.18);
+  box-shadow: 0 0 0 1px rgba(15, 76, 129, 0.25);
+}
+
+.acal-event--planned {
+  background-color: var(--color-grey-150);
+  border: 1px solid var(--color-grey-300);
+  border-left: 4px solid var(--color-grey-450);
+  color: var(--color-grey-600);
+}
+.acal-event--planned:hover { background-color: var(--color-grey-200); }
+
+.acal-event--active {
+  background-color: rgba(34, 197, 94, 0.1);
+  border: 1px solid rgba(34, 197, 94, 0.35);
+  border-left: 4px solid var(--color-green);
+  color: var(--color-success-dark);
+}
+.acal-event--active:hover {
+  background-color: rgba(34, 197, 94, 0.18);
+  box-shadow: 0 0 0 1px rgba(34, 197, 94, 0.25);
+}
+
+.acal-event--completed {
+  background-color: var(--color-success-light);
+  border: 1px solid var(--color-success-border);
+  border-left: 4px solid var(--color-success-dark);
+  color: var(--color-success-dark);
+}
+.acal-event--completed:hover { background-color: rgba(2, 122, 72, 0.12); }
+
+.acal-event--cancelled {
+  background-color: var(--color-error-light);
+  border: 1px solid var(--color-error-border);
+  border-left: 4px solid var(--color-error);
+  color: var(--color-error-dark);
+}
+.acal-event--cancelled:hover { background-color: rgba(192, 57, 43, 0.12); }
+
+/* Attendance dots */
+.acal-att-row {
+  display: flex;
+  gap: 3px;
+  margin-bottom: 2px;
+}
+
+.acal-att-pill {
+  flex: 1;
+  padding: 2px 5px;
+  border-radius: 4px;
+  font-size: 10px !important;
+  font-weight: 700 !important;
+  text-align: center;
+  line-height: 1.4;
+}
+
+.acal-att-pill--present {
+  background-color: var(--color-success-light);
+  color: var(--color-success-dark);
+  border: 1px solid var(--color-success-border);
+}
+
+.acal-att-pill--absent {
+  background-color: var(--color-error-light);
+  color: var(--color-error-dark);
+  border: 1px solid var(--color-error-border);
+}
+
+/* Event text — same as drive-event-name / drive-event-status */
+.acal-event-name {
+  font-weight: 600 !important;
+  font-size: 11px !important;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.4;
+  color: inherit !important;
+}
+
+.acal-event-sub {
+  font-weight: 500 !important;
+  font-size: 9px !important;
+  opacity: 0.75;
+  line-height: 1.3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: inherit !important;
+}
+
+/* More indicator — same as drive-calendar-more */
+.acal-more {
+  color: var(--color-primary) !important;
+  font-weight: 600 !important;
+  font-size: 10px !important;
+  padding: 2px 6px;
+  text-align: center;
+  border-radius: 4px;
+  transition: background-color 0.2s ease;
+}
+
+.acal-more:hover { background-color: var(--color-primary-light); }
+
+/* Empty state */
+.acal-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 60px;
+  background: var(--color-surface);
+  border-radius: 12px;
+  border: 1px solid var(--color-card-border);
+}
+
+/* Responsive */
+@media (max-width: 1280px) {
+  .acal-grid { grid-auto-rows: minmax(64px, 1fr); }
+  .acal-day-cell { min-height: 64px; padding: 4px 6px; }
+  .acal-header { padding: 8px 14px; }
+  .acal-header-left { gap: 10px; }
+  .acal-nav-controls { gap: 8px; }
+}
+
+@media (max-width: 768px) {
+  .acal-container { padding: 6px; gap: 6px; }
+  .acal-header { flex-direction: column; gap: 10px; align-items: flex-start; padding: 10px 14px; }
+  .acal-header-center { position: static; transform: none; width: 100%; }
+  .acal-header-right { width: 100%; justify-content: space-between; flex-wrap: wrap; }
+  .acal-legend { flex-wrap: wrap; gap: 6px; }
+  .acal-grid { grid-auto-rows: minmax(56px, 1fr); }
+  .acal-day-cell { min-height: 56px; padding: 3px 4px; }
+  .acal-weekday-cell { padding: 6px 4px; }
+  .acal-event-name { font-size: 10px !important; }
+  .acal-event-sub { display: none; }
+}

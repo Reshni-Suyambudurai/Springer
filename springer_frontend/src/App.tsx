@@ -29,10 +29,10 @@ import DriveCycle from './components/TA_Recruiter/DriveProcess/DriveCycle'
 import DriveList from './components/TA_Recruiter/DriveProcess/DriveList'
 import DriveDetails from './components/TA_Recruiter/DriveProcess/DriveDetails'
 import DriveCandidates from './components/TA_Recruiter/DriveProcess/DriveCandidates'
-import AddScores from './components/TA_Recruiter/DriveProcess/AddScores/AddScores'
+import PanelAllocation from './components/TA_Recruiter/DriveProcess/PanelAllocation'
 import AddRound1 from './components/TA_Recruiter/DriveProcess/AddScores/AddRound1'
-import AddRound2 from './components/TA_Recruiter/DriveProcess/AddScores/AddRound2'
-import AddRound3 from './components/TA_Recruiter/DriveProcess/AddScores/AddRound3'
+
+import ApplicationHistory from './components/TA_Recruiter/DriveProcess/ApplicationHistory'
 
 // Document Processing
 import DocumentProcessingDashboard from './components/TA_Recruiter/DocumentProcessing/DocumentProcessingDashboard'
@@ -55,6 +55,9 @@ import HiringDemandDetails from './components/HiringManager/HiringDemand/HiringD
 
 // Panel
 import DashboardPM from './components/Panel_Member/DashboardPM'
+import PanelAssignments from './components/Panel_Member/PanelAllocation'
+import PanelScoring from './components/Panel_Member/PanelScoring'
+import AllocationHistory from './components/Panel_Member/AllocationHistory'
 
 // Admin
 import AdminDashboard from './components/Admin/AdminDashboard'
@@ -129,10 +132,10 @@ function App() {
           <Route path="/drive-process/drive-list/:cycleId" element={<DriveList />} />
           <Route path="/drive-process/drive-details/:driveId" element={<DriveDetails />} />
           <Route path="/drive-process/drive-candidates/:driveId" element={<DriveCandidates />} />
-          <Route path="/drive-process/add-scores/:driveId" element={<AddScores />} />
+          <Route path="/drive-process/panel-allocation/:driveId" element={<PanelAllocation />} />
           <Route path="/drive-process/add-scores/:driveId/round1" element={<AddRound1 />} />
-          <Route path="/drive-process/add-scores/:driveId/round2" element={<AddRound2 />} />
-          <Route path="/drive-process/add-scores/:driveId/round3" element={<AddRound3 />} />
+
+          <Route path="/drive-process/application-history" element={<ApplicationHistory />} />
 
           {/* Settings */}
           <Route path="/ta-recruiter/settings" element={<Settings />} />
@@ -154,6 +157,9 @@ function App() {
         {/* MEMBERS */}
         <Route element={<ProtectedRoute allowedRoles={['MEMBERS']} />}>
           <Route path="/members/dashboard" element={<DashboardPM />} />
+          <Route path="/members/panel-assignments" element={<PanelAssignments />} />
+          <Route path="/members/panel-scoring" element={<PanelScoring />} />
+          <Route path="/members/panel-history" element={<AllocationHistory />} />
         </Route>
 
         {/* ADMIN */}

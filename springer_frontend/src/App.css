@@ -23,6 +23,27 @@
   --color-red-500: #C0392B;
   --color-red-600: #A00020;
 
+  /* Yellow Palette */
+  --color-yellow-50: #fef3e8;
+  --color-yellow-100: #ffc5ae;
+  --color-yellow-500: #ea6e08;
+  --color-yellow-600: #ca5a04;
+  --color-yellow-700: #A16207;
+
+  /* Purple Palette */
+  --color-purple-50: #F5F3FF;
+  --color-purple-100: #EDE9FE;
+  --color-purple-500: #8B5CF6;
+  --color-purple-600: #7C3AED;
+  --color-purple-700: #6D28D9;
+
+  /* Pink Palette */
+  --color-pink-50: #FDF2F8;
+  --color-pink-100: #FCE7F3;
+  --color-pink-500: #EC4899;
+  --color-pink-600: #DB2777;
+  --color-pink-700: #BE185D;
+
   /* Grey Palette */
   --color-grey-50: #F7F8FA;
   --color-grey-100: #F5F3F0;
@@ -55,6 +76,7 @@
   --color-primary: var(--color-blue-500);
   --color-primary-dark: var(--color-blue-600);
   --color-primary-light: var(--color-blue-50);
+  --color-primary-hover: var(--color-blue-700);
   --color-primary-hover-4: rgba(15, 76, 129, 0.04);
   --color-primary-hover-6: rgba(15, 76, 129, 0.06);
   --color-primary-hover-14: rgba(15, 76, 129, 0.14);
@@ -174,6 +196,10 @@
   --color-funnel-rejected: #E05252;
   --color-funnel-dropped:  #667085;
 
+  /* ========== DRIVE MODE COLORS ========== */
+  --color-oncampus: var(--color-blue-500);
+  --color-offcampus: #7C3AED;
+
   /* ========== SHADOW & OPACITY ========== */
   --opacity-shadow-very-light: rgba(0, 0, 0, 0.04);
   --opacity-shadow-light: rgba(0, 0, 0, 0.05);
@@ -268,6 +294,7 @@
   --color-primary: #5ba3d6;
   --color-primary-dark: #4a8dc4;
   --color-primary-light: #1a2f4d;
+  --color-primary-hover: rgba(9, 67, 108, 0.853);
   --color-primary-hover-4: rgba(91, 163, 214, 0.04);
   --color-primary-hover-6: rgba(91, 163, 214, 0.06);
   --color-primary-hover-14: rgba(91, 163, 214, 0.14);

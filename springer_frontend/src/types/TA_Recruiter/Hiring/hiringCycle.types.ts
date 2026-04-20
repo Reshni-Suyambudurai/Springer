@@ -27,6 +27,21 @@ export interface HiringCycleSummaryResponse {
   status :string;
 }
 
+export interface CycleWithDrivesResponse {
+  cycleId: number;
+  cycleName: string;
+  cycleYear: number;
+  status: string;
+  drives: DriveInfo[];
+}
+
+export interface DriveInfo {
+  driveId: number;
+  driveName: string;
+  mode: string;
+  instituteName?: string;
+}
+
 // For creating/updating cycle with form data
 export interface HiringCycleFormData {
   cycleYear: number;

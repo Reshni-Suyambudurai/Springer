@@ -1,16 +1,76 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { tokenstore } from '../../auth/tokenstore';
+import { notificationApi } from '../../services/notification.api';
+import type { NotificationResponse } from '../../types/notification.types';
 import '../../css/Common/Navbar.css';
 
 function Navbar() {
     const [showProfile, setShowProfile] = useState(false);
     const [theme, setTheme] = useState<'light' | 'dark'>(tokenstore.getTheme());
-    const [notifications] = useState(0); // example unread count
+    const [notifications, setNotifications] = useState<NotificationResponse[]>([]);
+    const [showNotifications, setShowNotifications] = useState(false);
     const profileRef = useRef<HTMLDivElement>(null);
+    const notifRef = useRef<HTMLDivElement>(null);
+    const wsRef = useRef<WebSocket | null>(null);
     const navigate = useNavigate();
-
     const user = tokenstore.getUser();
+
+    const unreadCount = notifications.filter(n => !n.isRead).length;
+
+    // Load existing notifications from REST API
+    const loadNotifications = useCallback(async () => {
+        if (!user?.userId) return;
+        try {
+            const res = await notificationApi.getNotifications(user.userId);
+            if (res.success && res.data) setNotifications(res.data);
+        } catch { /* silent */ }
+    }, [user?.userId]);
+
+    // Connect WebSocket on mount
+    useEffect(() => {
+        if (!user?.userId) return;
+        loadNotifications();
+
+        const ws = new WebSocket(`ws://localhost:8080/ws/notifications?userId=${user.userId}`);
+        wsRef.current = ws;
+
+        ws.onmessage = (event) => {
+            try {
+                const newNotif: NotificationResponse = JSON.parse(event.data);
+                setNotifications(prev => [newNotif, ...prev]);
+            } catch { /* ignore parse errors */ }
+        };
+
+        ws.onerror = () => { /* silent — user still gets notifications via REST */ };
+
+        return () => { ws.close(); };
+    }, [user?.userId]);
+
+    const handleMarkAsRead = async (notificationId: number) => {
+        try {
+            await notificationApi.markAsRead(notificationId);
+            setNotifications(prev =>
+                prev.map(n => n.notificationId === notificationId ? { ...n, isRead: true } : n)
+            );
+        } catch { /* silent */ }
+    };
+
+    const handleMarkAllRead = async () => {
+        const unread = notifications.filter(n => !n.isRead);
+        await Promise.allSettled(unread.map(n => notificationApi.markAsRead(n.notificationId)));
+        setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+    };
+
+    const formatTime = (iso: string) => {
+        const diff = Date.now() - new Date(iso).getTime();
+        const mins = Math.floor(diff / 60000);
+        if (mins < 1) return 'Just now';
+        if (mins < 60) return `${mins}m ago`;
+        const hrs = Math.floor(mins / 60);
+        if (hrs < 24) return `${hrs}h ago`;
+        return `${Math.floor(hrs / 24)}d ago`;
+    };
 
     useEffect(() => {
         document.documentElement.setAttribute('data-theme', theme);
@@ -21,16 +81,13 @@ function Navbar() {
             if (profileRef.current && !profileRef.current.contains(event.target as Node)) {
                 setShowProfile(false);
             }
+            if (notifRef.current && !notifRef.current.contains(event.target as Node)) {
+                setShowNotifications(false);
+            }
         };
-
-        if (showProfile) {
-            document.addEventListener('mousedown', handleClickOutside);
-        }
-
-        return () => {
-            document.removeEventListener('mousedown', handleClickOutside);
-        };
-    }, [showProfile]);
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
 
     const toggleTheme = () => {
         const newTheme = theme === 'light' ? 'dark' : 'light';
@@ -97,50 +154,64 @@ function Navbar() {
                         )}
                     </button>
 
-                    <button
-                        className="navbar-icon-btn"
-                        aria-label="Notifications"
-                        title="Notifications"
-                    >
-                        <svg
-                            width="20"
-                            height="20"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
+                    <div className="navbar-notif" ref={notifRef}>
+                        <button
+                            className="navbar-icon-btn"
+                            aria-label="Notifications"
+                            title="Notifications"
+                            onClick={() => setShowNotifications(!showNotifications)}
                         >
-                            <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 7h18s-3 0-3-7" />
-                            <path d="M13.73 21a2 2 0 0 1-3.46 0" />
-                        </svg>
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 7h18s-3 0-3-7" />
+                                <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+                            </svg>
+                            {unreadCount > 0 && (
+                                <span className="notification-badge">{unreadCount > 9 ? '9+' : unreadCount}</span>
+                            )}
+                        </button>
 
-                        {notifications > 0 && (
-                            <span className="notification-badge">{notifications}</span>
+                        {showNotifications && (
+                            <div className="notif-dropdown">
+                                <div className="notif-dropdown-header">
+                                    <span className="notif-dropdown-title">Notifications</span>
+                                    {unreadCount > 0 && (
+                                        <button className="notif-mark-all" onClick={handleMarkAllRead}>Mark all read</button>
+                                    )}
+                                </div>
+                                <div className="notif-dropdown-list">
+                                    {notifications.length === 0 ? (
+                                        <div className="notif-empty">No notifications yet</div>
+                                    ) : (
+                                        notifications.slice(0, 10).map(n => (
+                                            <div
+                                                key={n.notificationId}
+                                                className={`notif-item ${!n.isRead ? 'notif-item--unread' : ''}`}
+                                                onClick={() => handleMarkAsRead(n.notificationId)}
+                                            >
+                                                <div className="notif-item-icon">
+                                                    {n.type === 'COURSE_ASSIGNMENT' ? '📚' : '🔔'}
+                                                </div>
+                                                <div className="notif-item-body">
+                                                    <p className="notif-item-msg">{n.message}</p>
+                                                    <span className="notif-item-time">{formatTime(n.createdAt)}</span>
+                                                </div>
+                                                {!n.isRead && <span className="notif-item-dot" />}
+                                            </div>
+                                        ))
+                                    )}
+                                </div>
+                            </div>
                         )}
-                    </button>
+                    </div>
 
                     <div className="navbar-profile" ref={profileRef}>
                         <button
-                            className="navbar-icon-btn profile-btn"
+                            className="navbar-profile-avatar-btn"
                             onClick={() => setShowProfile(!showProfile)}
                             aria-label="Profile menu"
                             title="Profile"
                         >
-                            <svg
-                                width="20"
-                                height="20"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="2"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                            >
-                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-                                <circle cx="12" cy="7" r="4" />
-                            </svg>
+                            {user?.username.charAt(0).toUpperCase()}
                         </button>
 
                         {showProfile && user && (

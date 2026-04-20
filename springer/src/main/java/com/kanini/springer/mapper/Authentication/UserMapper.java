@@ -22,6 +22,8 @@ public class UserMapper {
             response.setRoleId(user.getRole().getRoleId());
             response.setRoleName(user.getRole().getRoleName().toString());
         }
+
+        response.setIsActive(user.getIsActive());
         
         return response;
     }

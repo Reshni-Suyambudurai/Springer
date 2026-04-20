@@ -12,15 +12,15 @@ import {
   CheckCircle as CheckCircleIcon,
   Edit as EditIcon,
   GroupAdd as GroupAddIcon,
+  CalendarMonth as CalendarIcon,
 } from '@mui/icons-material';
-import { batchAllocationApi, trainingProgramApi } from '../../../services/academy.api';
-import { candidateApi } from '../../../services/drive.api';
+import { batchAllocationApi, trainingProgramApi, batchScheduleApi, batchCandidateApi } from '../../../services/academy.api';
 import { showToast } from '../../../utils/toast';
 import type {
   BatchAllocationResponse, BatchAllocationRequest,
   TrainingProgramResponse, AcademyContextProps,
+  BatchScheduleResponse, BatchCandidateResponse,
 } from '../../../types/Academy/academy.types';
-import type { CandidateResponse } from '../../../types/TA_Recruiter/Drive/candidate.types';
 import FilterSelect from '../../Common/FilterSelect';
 import '../../../css/Academy/TrainingCoordinator/BatchAllocationsList.css';
 
@@ -37,6 +37,7 @@ const BatchAllocationsList = ({ context }: { context: AcademyContextProps }) => 
 
   const [allocations, setAllocations] = useState<BatchAllocationResponse[]>([]);
   const [allPrograms, setAllPrograms] = useState<TrainingProgramResponse[]>([]);
+  const [batchSchedules, setBatchSchedules] = useState<BatchScheduleResponse[]>([]);
   const [loading, setLoading] = useState(true);
 
   const [filterProgram, setFilterProgram] = useState('all');
@@ -48,7 +49,7 @@ const BatchAllocationsList = ({ context }: { context: AcademyContextProps }) => 
   // Bulk allocation dialog
   const [bulkDialogOpen, setBulkDialogOpen] = useState(false);
   const [selectedProgramId, setSelectedProgramId] = useState(0);
-  const [candidates, setCandidates] = useState<CandidateResponse[]>([]);
+  const [candidates, setCandidates] = useState<BatchCandidateResponse[]>([]);
   const [loadingCandidates, setLoadingCandidates] = useState(false);
   // Per-candidate batch selection: candidateId -> batchNumber
   const [candidateBatchMap, setCandidateBatchMap] = useState<Record<number, number>>({});
@@ -68,6 +69,14 @@ const BatchAllocationsList = ({ context }: { context: AcademyContextProps }) => 
   const [deactivateDialogOpen, setDeactivateDialogOpen] = useState(false);
   const [deactivateStudentId, setDeactivateStudentId] = useState<number | null>(null);
 
+  // Batch schedule dialog
+  const [scheduleDialogOpen, setScheduleDialogOpen] = useState(false);
+  const [scheduleProgramId, setScheduleProgramId] = useState(0);
+  const [scheduleBatchNo, setScheduleBatchNo] = useState(0);
+  const [scheduleStartDate, setScheduleStartDate] = useState('');
+  const [scheduleEndDate, setScheduleEndDate] = useState('');
+  const [scheduleSaving, setScheduleSaving] = useState(false);
+
   useEffect(() => { fetchData(); }, [programYear]);
 
   const fetchData = async () => {
@@ -78,7 +87,20 @@ const BatchAllocationsList = ({ context }: { context: AcademyContextProps }) => 
         trainingProgramApi.getAllPrograms(),
       ]);
       if (allocRes.success && allocRes.data) setAllocations(allocRes.data);
-      if (progRes.success && progRes.data) setAllPrograms(progRes.data);
+      if (progRes.success && progRes.data) {
+        setAllPrograms(progRes.data);
+        // Fetch batch schedules for all programs
+        const scheduleResults = await Promise.allSettled(
+          progRes.data.map(p => batchScheduleApi.getByProgram(p.programId))
+        );
+        const allSchedules: BatchScheduleResponse[] = [];
+        scheduleResults.forEach(r => {
+          if (r.status === 'fulfilled' && r.value.success && r.value.data) {
+            allSchedules.push(...r.value.data);
+          }
+        });
+        setBatchSchedules(allSchedules);
+      }
     } catch (err: any) {
       showToast(err.message || 'Failed to load data', 'error');
     } finally {
@@ -104,16 +126,16 @@ const BatchAllocationsList = ({ context }: { context: AcademyContextProps }) => 
 
     try {
       setLoadingCandidates(true);
-      const res = await candidateApi.getCandidatesByCycleId(prog.cycleId);
+      const res = await batchCandidateApi.getCandidatesByCycleAndStages({
+        cycleId: prog.cycleId,
+        applicationStages: ['JOINED'],
+      });
       if (res.success && res.data) {
-        // Only JOINED or OFFERED — not yet allocated to this program
+        // Exclude candidates already allocated to this program
         const allocatedIds = new Set(
           allocations.filter(a => a.programId === programId).map(a => a.candidateId)
         );
-        const eligible = res.data.filter(c =>
-          c.applicationStage === 'JOINED' &&
-          !allocatedIds.has(c.candidateId)
-        );
+        const eligible = res.data.filter(c => !allocatedIds.has(c.candidateId));
         setCandidates(eligible);
         // Default all to batch 1
         const defaultMap: Record<number, number> = {};
@@ -192,6 +214,24 @@ const BatchAllocationsList = ({ context }: { context: AcademyContextProps }) => 
     setSelectedCandidateIds(new Set());
     setCandidateSearch('');
     setBulkDialogOpen(true);
+  };
+
+  const openScheduleManager = () => {
+    const nextProgramId = filterProgram !== 'all' ? Number(filterProgram) : 0;
+    const nextBatchNo = filterBatch !== 'all' ? Number(filterBatch) : 0;
+    setScheduleProgramId(nextProgramId);
+    setScheduleBatchNo(nextBatchNo);
+
+    if (nextProgramId > 0 && nextBatchNo > 0) {
+      const existing = getBatchSchedule(nextProgramId, nextBatchNo);
+      setScheduleStartDate(existing?.startDate ?? '');
+      setScheduleEndDate(existing?.endDate ?? '');
+    } else {
+      setScheduleStartDate('');
+      setScheduleEndDate('');
+    }
+
+    setScheduleDialogOpen(true);
   };
 
   // Table filters — scope allocations to year-filtered programs
@@ -275,6 +315,56 @@ const BatchAllocationsList = ({ context }: { context: AcademyContextProps }) => 
   const getProgramName = (id: number) =>
     allPrograms.find(p => p.programId === id)?.programName ?? `Program ${id}`;
 
+  const getBatchSchedule = (programId: number, batchNumber: number) =>
+    batchSchedules.find(s => s.programId === programId && s.batchNumber === batchNumber);
+
+  const handleScheduleProgramChange = (programId: number) => {
+    setScheduleProgramId(programId);
+    setScheduleBatchNo(0);
+    setScheduleStartDate('');
+    setScheduleEndDate('');
+  };
+
+  const handleScheduleBatchChange = (batchNo: number) => {
+    setScheduleBatchNo(batchNo);
+    if (!scheduleProgramId || !batchNo) {
+      setScheduleStartDate('');
+      setScheduleEndDate('');
+      return;
+    }
+
+    const existing = getBatchSchedule(scheduleProgramId, batchNo);
+    setScheduleStartDate(existing?.startDate ?? '');
+    setScheduleEndDate(existing?.endDate ?? '');
+  };
+
+  const formatDate = (d: string | null | undefined) =>
+    d ? new Date(d).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : '—';
+
+  const handleSaveSchedule = async () => {
+    if (!scheduleProgramId || !scheduleBatchNo) { showToast('Select a program and batch', 'error'); return; }
+    if (!scheduleStartDate || !scheduleEndDate) { showToast('Start date and end date are required', 'error'); return; }
+    if (scheduleEndDate < scheduleStartDate) { showToast('End date cannot be before start date', 'error'); return; }
+    try {
+      setScheduleSaving(true);
+      const res = await batchScheduleApi.saveOrUpdate({
+        programId: scheduleProgramId,
+        batchNumber: scheduleBatchNo,
+        startDate: scheduleStartDate,
+        endDate: scheduleEndDate,
+      });
+      if (res.success) {
+        showToast(`Batch ${scheduleBatchNo} schedule saved successfully`, 'success');
+        setScheduleDialogOpen(false);
+        fetchData();
+      }
+    } catch (err: any) {
+      showToast(err.message || 'Failed to save batch schedule', 'error');
+    } finally {
+      setScheduleSaving(false);
+    }
+  };
+
   const getAttendanceFillClass = (pct: number) => {
     if (pct < 50) return 'ba-attendance-bar-fill ba-attendance-bar-fill--low';
     if (pct < 75) return 'ba-attendance-bar-fill ba-attendance-bar-fill--mid';
@@ -283,6 +373,7 @@ const BatchAllocationsList = ({ context }: { context: AcademyContextProps }) => 
 
   const selectedProgram = allPrograms.find(p => p.programId === selectedProgramId);
   const batchOptions = getBatchOptions(selectedProgramId);
+  const scheduleBatchOptions = getBatchOptions(scheduleProgramId);
 
   return (
     <Box className="ba-page">
@@ -312,6 +403,14 @@ const BatchAllocationsList = ({ context }: { context: AcademyContextProps }) => 
             </FilterSelect>
             <Box className="ba-filter-spacer" />
             <Button
+              variant="outlined"
+              startIcon={<CalendarIcon />}
+              onClick={openScheduleManager}
+              className="ba-secondary-button"
+            >
+              Manage Batch Dates
+            </Button>
+            <Button
               variant="contained"
               startIcon={<GroupAddIcon />}
               onClick={openBulkDialog}
@@ -339,6 +438,7 @@ const BatchAllocationsList = ({ context }: { context: AcademyContextProps }) => 
                       <TableCell className="ba-table-head-cell">Candidate</TableCell>
                       <TableCell className="ba-table-head-cell">Program</TableCell>
                       <TableCell className="ba-table-head-cell">Batch</TableCell>
+                      <TableCell className="ba-table-head-cell">Batch Dates</TableCell>
                       <TableCell className="ba-table-head-cell">Attendance</TableCell>
                       <TableCell className="ba-table-head-cell">Performance</TableCell>
                       <TableCell className="ba-table-head-cell">Status</TableCell>
@@ -348,7 +448,7 @@ const BatchAllocationsList = ({ context }: { context: AcademyContextProps }) => 
                   <TableBody>
                     {paginated.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={7} className="ba-empty-cell">
+                        <TableCell colSpan={8} className="ba-empty-cell">
                           <PersonIcon className="ba-empty-icon" />
                           <Typography className="ba-empty-text">No allocations found</Typography>
                         </TableCell>
@@ -381,6 +481,19 @@ const BatchAllocationsList = ({ context }: { context: AcademyContextProps }) => 
                           <Chip label={`Batch ${alloc.batchNumber}`} size="small" variant="outlined" className="ba-batch-chip" />
                         </TableCell>
                         <TableCell className="ba-table-cell">
+                          {(() => {
+                            const sched = getBatchSchedule(alloc.programId, alloc.batchNumber);
+                            return sched ? (
+                              <Box>
+                                <Typography className="ba-row-secondary">{formatDate(sched.startDate)}</Typography>
+                                <Typography className="ba-row-secondary">{formatDate(sched.endDate)}</Typography>
+                              </Box>
+                            ) : (
+                              <Typography className="ba-row-secondary" sx={{ color: 'var(--color-warning) !important' }}>Not set</Typography>
+                            );
+                          })()}
+                        </TableCell>
+                        <TableCell className="ba-table-cell">
                           <Box className="ba-attendance-wrap">
                             <Box className="ba-attendance-bar-bg">
                               <Box
@@ -392,6 +505,14 @@ const BatchAllocationsList = ({ context }: { context: AcademyContextProps }) => 
                               {Number(alloc.attendancePercentage).toFixed(1)}%
                             </Typography>
                           </Box>
+                          {alloc.overallWeightedScore != null && (
+                            <Typography className="ba-row-secondary" sx={{ fontSize: 'var(--text-xs)', mt: 0.5, color:
+                              Number(alloc.overallWeightedScore) >= 70 ? 'var(--color-success)' :
+                              Number(alloc.overallWeightedScore) >= 50 ? 'var(--color-warning)' : 'var(--color-error)'
+                            }}>
+                              Score: {Number(alloc.overallWeightedScore).toFixed(1)}%
+                            </Typography>
+                          )}
                         </TableCell>
                         <TableCell className="ba-table-cell">
                           {alloc.performance ? (
@@ -468,7 +589,7 @@ const BatchAllocationsList = ({ context }: { context: AcademyContextProps }) => 
               className="ba-dialog-field"
             >
               {yearPrograms.length === 0 && <MenuItem disabled value="">No programs found</MenuItem>}
-              {yearPrograms.map(p => (
+              {yearPrograms.filter(p => p.status === true).map(p => (
                 <MenuItem key={p.programId} value={p.programId}>
                   {p.programName} ({p.programYear})
                 </MenuItem>
@@ -503,6 +624,9 @@ const BatchAllocationsList = ({ context }: { context: AcademyContextProps }) => 
                   <Box className="ba-no-candidates">
                     <Typography className="ba-empty-text">
                       No JOINED candidates found for this program's hiring cycle.
+                    </Typography>
+                    <Typography className="ba-empty-text" sx={{ fontSize: 'var(--text-xs)', mt: 0.5 }}>
+                      Go to the Joining Tracker tab and mark accepted candidates as Joined first.
                     </Typography>
                   </Box>
                 ) : (
@@ -620,6 +744,9 @@ const BatchAllocationsList = ({ context }: { context: AcademyContextProps }) => 
         <DialogTitle className="ba-dialog-title">Edit Allocation</DialogTitle>
         <DialogContent>
           <Stack spacing={2} sx={{ mt: 1 }}>
+            <Typography sx={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-secondary)' }}>
+              Batch reassignment is allowed only before attendance or training scores are recorded. This prevents mixing batch history in a live project.
+            </Typography>
             <TextField
               select label="Batch Number *" size="small" fullWidth
               value={editBatchNumber}
@@ -665,6 +792,65 @@ const BatchAllocationsList = ({ context }: { context: AcademyContextProps }) => 
           <Button variant="contained" onClick={confirmDeactivate}
             sx={{ background: 'var(--color-error) !important', textTransform: 'none', fontWeight: 600 }}>
             Deactivate
+          </Button>
+        </DialogActions>
+      </Dialog>
+      {/* Batch Schedule Dialog */}
+      <Dialog open={scheduleDialogOpen} onClose={() => setScheduleDialogOpen(false)} maxWidth="xs" fullWidth>
+        <DialogTitle className="ba-dialog-title">
+          Manage Batch Dates
+        </DialogTitle>
+        <DialogContent>
+          <Stack spacing={2} sx={{ mt: 1 }}>
+            <Typography sx={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-secondary)' }}>
+              Batch dates are maintained once per batch, not per candidate. Select a program and batch, then save the shared start and end dates.
+            </Typography>
+            <TextField
+              select label="Program *" size="small" fullWidth
+              value={scheduleProgramId || ''}
+              onChange={e => handleScheduleProgramChange(Number(e.target.value))}
+              className="ba-dialog-field"
+            >
+              <MenuItem value="">— Select Program —</MenuItem>
+              {yearPrograms.filter(p => p.status === true).map(p => (
+                <MenuItem key={p.programId} value={p.programId}>{p.programName}</MenuItem>
+              ))}
+            </TextField>
+            <TextField
+              select label="Batch *" size="small" fullWidth
+              value={scheduleBatchNo || ''}
+              disabled={!scheduleProgramId}
+              onChange={e => handleScheduleBatchChange(Number(e.target.value))}
+              className="ba-dialog-field"
+            >
+              <MenuItem value="">— Select Batch —</MenuItem>
+              {scheduleBatchOptions.map(b => (
+                <MenuItem key={b} value={b}>Batch {b}</MenuItem>
+              ))}
+            </TextField>
+            <TextField
+              label="Batch Start Date *" type="date" size="small" fullWidth
+              value={scheduleStartDate}
+              onChange={e => setScheduleStartDate(e.target.value)}
+              disabled={!scheduleProgramId || !scheduleBatchNo}
+              InputLabelProps={{ shrink: true }}
+              className="ba-dialog-field"
+            />
+            <TextField
+              label="Batch End Date *" type="date" size="small" fullWidth
+              value={scheduleEndDate}
+              onChange={e => setScheduleEndDate(e.target.value)}
+              disabled={!scheduleProgramId || !scheduleBatchNo}
+              inputProps={{ min: scheduleStartDate }}
+              InputLabelProps={{ shrink: true }}
+              className="ba-dialog-field"
+            />
+          </Stack>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button onClick={() => setScheduleDialogOpen(false)} className="ba-dialog-cancel-btn">Cancel</Button>
+          <Button variant="contained" onClick={handleSaveSchedule} disabled={scheduleSaving} className="ba-dialog-submit-btn">
+            {scheduleSaving ? 'Saving...' : 'Save Batch Dates'}
           </Button>
         </DialogActions>
       </Dialog>

@@ -16,6 +16,8 @@ import type {
 import type { 
   CandidateRequest, 
   CandidateResponse,
+  CandidateDocResponse,
+  CandidateListResponse,
   CandidateUpdateRequest,
   CandidateStatusUpdateRequest,
   BulkCandidateStatusUpdateRequest,
@@ -178,6 +180,7 @@ export const candidateApi = {
    */
   async getCandidatesWithFilters(filterRequest: {
     cycleId: number;
+    driveId?: number;
     lifecycleStatus?: string;
     candidateName?: string;
     instituteName?: string;
@@ -193,7 +196,7 @@ export const candidateApi = {
     sortDirection?: 'ASC' | 'DESC';
     page?: number;
     size?: number;
-  }): Promise<ApiResponse<Page<CandidateResponse>>> {
+  }): Promise<ApiResponse<Page<CandidateListResponse>>> {
     try {
       const response = await http.post('/candidates/filter', filterRequest);
       return response.data;
@@ -235,6 +238,21 @@ export const candidateApi = {
   async getCandidatesByCycleId(cycleId: number): Promise<ApiResponse<CandidateResponse[]>> {
     try {
       const response = await http.get(`/candidates/cycle/${cycleId}`);
+      return response.data;
+    } catch (error) {
+      throw handleAxiosError(error);
+    }
+  },
+
+  /**
+   * Get candidates by cycle ID and application stages (lightweight)
+   * GET /api/candidates/cycle/{cycleId}/stages?stages=SELECTED&stages=OFFERED
+   */
+  async getCandidatesByCycleAndStages(cycleId: number, stages: string[]): Promise<ApiResponse<CandidateDocResponse[]>> {
+    try {
+      const params = new URLSearchParams();
+      stages.forEach(s => params.append('stages', s));
+      const response = await http.get(`/candidates/cycle/${cycleId}/stages?${params.toString()}`);
       return response.data;
     } catch (error) {
       throw handleAxiosError(error);

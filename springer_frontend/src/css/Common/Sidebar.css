@@ -30,7 +30,7 @@
   overflow: hidden;
   color: var(--color-text-secondary);
   text-decoration: none;
-  font-size: 0.6rem;
+  font-size: 0.7rem;
   font-weight: 500;
   transition: background-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
   border-bottom: 3px solid transparent;
@@ -57,8 +57,8 @@
 
 .sidebar-icon {
   flex-shrink: 0;
-  width: 22px;
-  height: 22px;
+  width: 40px;
+  height: 26px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -66,11 +66,16 @@
   transition: color 0.2s ease, transform 0.2s ease;
 }
 
+.sidebar-icon svg {
+  width: 28px;
+  height: 28px;
+}
+
 .sidebar-link:hover .sidebar-icon { color: var(--color-primary-dark); transform: scale(1.1); }
 .sidebar-link.active .sidebar-icon { color: var(--color-primary); transform: scale(1.1); }
 
 .sidebar-text {
-  font-size: 0.6rem;
+  font-size: 0.7rem;
   white-space: normal;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -86,43 +91,6 @@
 
 .sidebar-link:hover .sidebar-text { color: var(--color-primary); }
 .sidebar-link.active .sidebar-text { color: var(--color-primary); }
-
-.sidebar-user {
-  margin-top: auto;
-  padding: 0.75rem 0.5rem;
-  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
-  border-top: 1px solid var(--color-border);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.25rem;
-}
-
-.sidebar-user-avatar {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background-color: var(--opacity-white-highlight);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1rem;
-  font-weight: 700;
-  color: white;
-  border: 2px solid var(--opacity-white-strong);
-  flex-shrink: 0;
-}
-
-.sidebar-user-role {
-  font-size: 0.45rem;
-  font-weight: 600;
-  color: var(--opacity-white-very-light);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 60px;
-  text-align: center;
-}
 
 .sidebar::-webkit-scrollbar { width: 4px; }
 .sidebar::-webkit-scrollbar-track { background: transparent; }

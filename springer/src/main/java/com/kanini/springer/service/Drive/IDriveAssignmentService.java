@@ -64,4 +64,20 @@ public interface IDriveAssignmentService {
      * @return BulkDriveAssignmentResponse with results
      */
     BulkDriveAssignmentResponse bulkDeleteAssignments(BulkDeleteAssignmentRequest request);
+
+    /**
+     * Get panel allocation status for candidates in a specific drive + round
+     * Returns per-candidate: assigned panel member (if any) + whether evaluation exists (lock flag)
+     */
+    List<PanelAllocationStatusResponse> getAllocationStatus(Long driveId, Integer roundNo, List<Long> applicationIds);
+
+    /**
+     * Get active assignments for a specific panel member (userId) in a drive
+     */
+    List<DriveAssignmentResponse> getAssignmentsByUserId(Long userId, Long driveId);
+
+    /**
+     * Get active assignments for a specific panel member by userId and statuses (comma-separated)
+     */
+    List<DriveAssignmentResponse> getAssignmentsByUserIdAndStatus(Long userId, String statuses);
 }

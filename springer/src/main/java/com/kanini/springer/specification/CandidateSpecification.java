@@ -26,6 +26,11 @@ public class CandidateSpecification {
                 predicates.add(criteriaBuilder.equal(root.get("cycle").get("cycleId"), filterRequest.getCycleId()));
             }
 
+            // Drive ID filter (Indexed)
+            if (filterRequest.getDriveId() != null) {
+                predicates.add(criteriaBuilder.equal(root.get("drive").get("driveId"), filterRequest.getDriveId()));
+            }
+
             // Lifecycle Status filter (Indexed)
             if (filterRequest.getLifecycleStatus() != null && !filterRequest.getLifecycleStatus().isEmpty()) {
                 try {

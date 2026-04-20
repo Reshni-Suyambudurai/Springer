@@ -39,7 +39,11 @@ public class Notification {
     
     @Column(columnDefinition = "TEXT")
     private String message;
-    
+
+    private String type; // COURSE_ASSIGNMENT, GENERAL
+
+    private Boolean isRead = false;
+
     private LocalDateTime createdAt;
     
     @PrePersist

@@ -32,14 +32,18 @@ public class UserServiceImp implements IUserService {
     @Override
     @Transactional(readOnly = true)
     public LoginResponse authenticate(String email, String password) {
-        // Find user by email with role eagerly fetched
-        User user = userRepository.findByEmailWithRole(email)
-                .orElseThrow(() -> new ValidationException("Invalid email or password"));
+        // Find all users with this email (same email can have different roles/passwords)
+        List<User> users = userRepository.findAllByEmailWithRole(email);
         
-        // Check password (Note: In production, use password encoder)
-        if (!user.getPassword().equals(password)) {
+        if (users.isEmpty()) {
             throw new ValidationException("Invalid email or password");
         }
+        
+        // Match by password to pick the correct account
+        User user = users.stream()
+                .filter(u -> u.getPassword().equals(password))
+                .findFirst()
+                .orElseThrow(() -> new ValidationException("Invalid email or password"));
         
         // Check if user is active
         if (!user.getIsActive()) {

@@ -341,8 +341,12 @@
 }
 
 .bc-status-chip { font-size: var(--text-xs) !important; font-weight: 600 !important; border-radius: 6px !important; flex-shrink: 0; }
-.bc-status-chip--planned { color: var(--color-info-dark) !important; border-color: var(--color-blue-100) !important; background-color: var(--color-info-light) !important; }
-.bc-status-chip--active  { color: var(--color-success-dark) !important; border-color: var(--color-success-border) !important; background-color: var(--color-success-light) !important; }
+.bc-status-chip--planned   { color: var(--color-info-dark) !important; border-color: var(--color-blue-100) !important; background-color: var(--color-info-light) !important; }
+.bc-status-chip--active    { color: var(--color-success-dark) !important; border-color: var(--color-success-border) !important; background-color: var(--color-success-light) !important; }
+.bc-status-chip--completed { color: var(--color-primary) !important; border-color: var(--color-blue-100) !important; background-color: var(--color-primary-light) !important; }
+.bc-status-chip--cancelled { color: var(--color-error-dark) !important; border-color: var(--color-error-border) !important; background-color: var(--color-error-light) !important; }
+
+.bc-action-icon { font-size: 18px !important; color: var(--color-primary) !important; }
 
 /* ── Batch Tiles (in dialog) ── */
 .bc-program-group { display: flex; flex-direction: column; gap: 6px; }

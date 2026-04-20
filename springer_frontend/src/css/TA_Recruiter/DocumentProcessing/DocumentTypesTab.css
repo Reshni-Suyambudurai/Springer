@@ -70,6 +70,45 @@
   box-shadow: 0 4px 12px var(--color-primary-shadow-28) !important;
 }
 
+/* ── Filter Section ── */
+.dtt-filter-section {
+  flex-shrink: 0;
+  padding: 10px 24px;
+  background-color: var(--color-surface);
+}
+
+.dtt-filter-row {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.dtt-search-field {
+  width: 280px;
+}
+
+.dtt-search-field .MuiOutlinedInput-root:hover {
+  background-color: var(--color-primary-hover-6);
+}
+
+.dtt-search-field .MuiOutlinedInput-root.Mui-focused {
+  background-color: var(--color-primary-hover-4);
+}
+
+.dtt-search-field .MuiOutlinedInput-root.Mui-focused fieldset {
+  border-color: var(--color-primary);
+}
+
+.dtt-search-icon {
+  color: var(--color-primary) !important;
+}
+
+.dtt-filter-spacer {
+  flex-grow: 1;
+}
+
 /* ── Separator ── */
 .dtt-separator {
   border-top: 1px solid var(--color-grey-200);

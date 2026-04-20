@@ -72,11 +72,34 @@
 
 /* ── Dropdowns ── */
 .cycle-dropdown { flex: 1; max-width: 200px; }
+.drive-dropdown { flex: 1; max-width: 200px; }
 .bulk-status-dropdown { flex: 1; max-width: 200px; }
 
 /* ── Cycle Status Colors ── */
 .cycle-status-open { color: var(--color-success-dark) !important; font-weight: 600 !important; }
 .cycle-status-closed { color: var(--color-error-delete) !important; font-weight: 600 !important; }
+
+/* ── Drive Mode Dot ── */
+.drive-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.drive-mode-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.drive-mode-dot.oncampus {
+  background-color: var(--color-oncampus);
+}
+
+.drive-mode-dot.offcampus {
+  background-color: var(--color-offcampus);
+}
 
 /* ── Select btn active state ── */
 .select-all-btn.active {
@@ -194,15 +217,15 @@
 }
 
 .cl-status-applied    { border-color: var(--color-warning); background-color: var(--color-warning-bg); color: var(--color-warning-text); }
-.cl-status-shortlisted { border-color: var(--color-warning); background-color: var(--color-warning-bg); color: var(--color-warning-text); }
+.cl-status-shortlisted { border-color: var(--color-yellow-500); background-color: var(--color-yellow-50); color: var(--color-yellow-700); }
 .cl-status-invited    { border-color: var(--color-info-dark); background-color: var(--color-info-light); color: var(--color-info-dark); }
 .cl-status-scheduled  { border-color: var(--color-info-dark); background-color: var(--color-info-light); color: var(--color-info-dark); }
 .cl-status-selected   { border-color: var(--color-success-border); background-color: var(--color-success-light); color: var(--color-success-dark); }
-.cl-status-offered    { border-color: var(--color-blue-100); background-color: var(--color-primary-light); color: var(--color-primary); }
+.cl-status-offered    { border-color: var(--color-purple-500); background-color: var(--color-purple-50); color: var(--color-purple-700); }
 .cl-status-joined     { border-color: var(--color-blue-100); background-color: var(--color-primary-light); color: var(--color-primary); }
 .cl-status-rejected   { border-color: var(--color-error-border); background-color: var(--color-error-light); color: var(--color-error-dark); }
 .cl-status-accepted   { border-color: var(--color-success-border); background-color: var(--color-success-light); color: var(--color-success-dark); }
-.cl-status-dropped    { border-color: var(--color-grey-350); background-color: var(--color-inactive-bg); color: var(--color-grey-550); }
+.cl-status-dropped    { border-color: var(--color-pink-500); background-color: var(--color-pink-50); color: var(--color-pink-700); }
 
 /* ── Type Badge ── */
 .cl-type-premium  { border-color: var(--color-warning); background-color: var(--color-warning-bg); color: var(--color-warning-text); }

@@ -16,6 +16,7 @@ export interface DocumentLinkRequest {
   candidateId: number;
   cycleId: number;
   requiredDocumentTypeIds: number[];
+  submissionDeadline?: string;
 }
 
 export interface DocumentLinkResponse {
@@ -29,6 +30,7 @@ export interface BulkDocumentLinkRequest {
   candidateIds: number[];
   cycleId: number;
   documentTypeIds: number[];
+  submissionDeadline?: string;
 }
 
 // ==================== DOCUMENT SUBMISSION ====================
@@ -202,6 +204,7 @@ export interface CandidateWithDocs {
 // ==================== DOCUMENT SUBMISSION STATUS (public page) ====================
 
 export interface DocumentStatusDTO {
+  documentId?: number;
   documentTypeId: number;
   documentType: string;
   required: boolean;

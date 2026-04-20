@@ -1,7 +1,9 @@
 package com.kanini.springer.config;
 
 import com.kanini.springer.entity.HiringReq.*;
+import com.kanini.springer.entity.Drive.RoundTemplate;
 import com.kanini.springer.entity.enums.Enums.*;
+import com.kanini.springer.entity.utils.EmailTemplate;
 import com.kanini.springer.repository.Hiring.HiringCycleRepository;
 import com.kanini.springer.repository.Hiring.InstituteRepository;
 import com.kanini.springer.repository.Hiring.InstituteProgramRepository;
@@ -9,6 +11,8 @@ import com.kanini.springer.repository.Hiring.ProgramRepository;
 import com.kanini.springer.repository.Hiring.RoleRepository;
 import com.kanini.springer.repository.Hiring.SkillRepository;
 import com.kanini.springer.repository.Hiring.UserRepository;
+import com.kanini.springer.repository.Drive.RoundTemplateRepository;
+import com.kanini.springer.repository.EmailTemplateRepository;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -35,12 +39,25 @@ public class DataLoader {
     private final SkillRepository skillRepository;
     private final ProgramRepository programRepository;
     private final InstituteProgramRepository instituteProgramRepository;
+    private final EmailTemplateRepository emailTemplateRepository;
+    private final RoundTemplateRepository roundTemplateRepository;
 
     @Bean
     @Transactional
     public CommandLineRunner loadData() {
         return args -> {
             log.info("Starting data seeding...");
+
+            // Seed email templates independently so they can be restored
+            // even when other master data already exists.
+            if (emailTemplateRepository.count() == 0) {
+                seedEmailTemplates();
+            }
+
+            // Seed round templates independently
+            if (roundTemplateRepository.count() == 0) {
+                seedRoundTemplates();
+            }
 
             // Check if data already exists
             if (roleRepository.count() > 0) {
@@ -112,9 +129,12 @@ public class DataLoader {
         User[] users = {
             createUser("Sudha", "sudha@kanini.com", "password123", "Talent Acquisition", "Chennai", taHeadRole),
             createUser("Mozhi", "mozhi@kanini.com", "password123", "Talent Acquisition", "Bangalore", taRecruiterRole),
-            createUser("Priya", "priya@kanini.com", "password123", "Product Engineering", "Chennai", hiringManagerRole),
-            createUser("Soundharya", "soundharya@kanini.com", "password123", "HR & Analytics", "Bangalore", hiringManagerRole),
+            createUser("Priya", "priya@kanini.com", "password123", "Talent Acquisition", "Chennai", taRecruiterRole),
+            createUser("Parthiban", "parthiban@kanini.com", "password123", "Product Engineering", "Bangalore", hiringManagerRole),
             createUser("Ramesh", "ramesh@kanini.com", "password123", "Product Engineering", "Coimbatore", membersRole),
+              createUser("Priya Rajagopalan", "priya@kanini.com", "password@123", "Product Engineering", "Coimbatore", membersRole),
+                createUser("Mozhiarasan", "mozhi@kanini.com", "password@123", "Product Engineering", "Coimbatore", membersRole),
+                  createUser("Praveen Kumar", "praveen@kanini.com", "password123", "Product Engineering", "Coimbatore", membersRole),
             createUser("Reshni", "reshni@kanini.com", "password123", "Data Analytics & AI", "Coimbatore", adminRole),
             createUser("Lavanya", "lavanya@kanini.com", "password123", "Data Analytics & AI", "Coimbatore", trainingCoordinatorRole)
         };
@@ -169,7 +189,8 @@ public class DataLoader {
             createInstitute("VIT University", "TIER_1", "Tamil Nadu", "Vellore"),
             createInstitute("SRM Institute of Science and Technology", "TIER_2", "Tamil Nadu", "Chennai"),
             createInstitute("Karunya Institute of Technology", "TIER_2", "Tamil Nadu", "Coimbatore"),
-            createInstitute("CEG - College of Engineering Guindy", "TIER_1", "Tamil Nadu", "Chennai")
+            createInstitute("CEG - College of Engineering Guindy", "TIER_1", "Tamil Nadu", "Chennai"),
+            createInstitute("OTHERS College", "TIER_1", "Tamil Nadu", "Chennai")
         };
 
         instituteRepository.saveAll(java.util.Arrays.asList(institutes));
@@ -314,5 +335,228 @@ public class DataLoader {
                 }
             }
         }
+    }
+
+    private void seedRoundTemplates() {
+        log.info("Seeding round templates...");
+
+        User createdBy = userRepository.findById(2L).orElse(null);
+
+        // Round 1: Aptitude
+        RoundTemplate aptitude = new RoundTemplate();
+        aptitude.setRoundNo(1);
+        aptitude.setRoundName("Aptitude Round");
+        aptitude.setOutoffScore(120);
+        aptitude.setMinScore(80);
+        aptitude.setWeightage(40);
+        aptitude.setSections("[{\"sectionName\":\"Technical\",\"outOf\":30},{\"sectionName\":\"Aptitude\",\"outOf\":20},{\"sectionName\":\"Verbal\",\"outOf\":20},{\"sectionName\":\"Logical\",\"outOf\":20},{\"sectionName\":\"Coding\",\"outOf\":30}]");
+        aptitude.setIsActive(true);
+        aptitude.setCreatedAt(LocalDateTime.now());
+        aptitude.setCreatedBy(createdBy);
+
+        // Round 2: Communication
+        RoundTemplate communication = new RoundTemplate();
+        communication.setRoundNo(2);
+        communication.setRoundName("Communication Round");
+        communication.setOutoffScore(100);
+        communication.setMinScore(70);
+        communication.setWeightage(40);
+        communication.setSections("[{\"sectionName\":\"Listening\",\"outOf\":30},{\"sectionName\":\"Writing\",\"outOf\":30},{\"sectionName\":\"Speaking\",\"outOf\":40}]");
+        communication.setIsActive(true);
+        communication.setCreatedAt(LocalDateTime.now());
+        communication.setCreatedBy(createdBy);
+
+        // Round 3: Technical
+        RoundTemplate technical = new RoundTemplate();
+        technical.setRoundNo(3);
+        technical.setRoundName("Technical Round");
+        technical.setOutoffScore(100);
+        technical.setMinScore(70);
+        technical.setWeightage(30);
+        technical.setSections("[{\"sectionName\":\"Problem_Solving\",\"outOf\":30},{\"sectionName\":\"Coding_Proficiency\",\"outOf\":30},{\"sectionName\":\"Communication_Skill\",\"outOf\":40}]");
+        technical.setIsActive(true);
+        technical.setCreatedAt(LocalDateTime.now());
+        technical.setCreatedBy(createdBy);
+
+        roundTemplateRepository.saveAll(java.util.Arrays.asList(aptitude, communication, technical));
+        log.info("Seeded 3 round templates");
+    }
+
+    private void seedEmailTemplates() {
+        log.info("Seeding email templates...");
+
+        // ── Document Submission Link ──────────────────────────────────────────
+        EmailTemplate submissionTemplate = new EmailTemplate();
+        submissionTemplate.setTemplateName("DOCUMENT_SUBMISSION_LINK");
+        submissionTemplate.setSubject("Action Required: Submit Your Documents \u2013 Kanini Software Solutions");
+        submissionTemplate.setBody(
+            "<!DOCTYPE html>" +
+            "<html lang='en'><head><meta charset='UTF-8'><meta name='viewport' content='width=device-width,initial-scale=1.0'>" +
+            "<title>Document Submission</title></head>" +
+            "<body style='margin:0;padding:0;background-color:#f0f2f5;font-family:Arial,Helvetica,sans-serif;'>" +
+            "<table width='100%' cellpadding='0' cellspacing='0' style='background-color:#f0f2f5;padding:40px 20px;'>" +
+            "<tr><td align='center'>" +
+            "<table width='600' cellpadding='0' cellspacing='0' style='background:#ffffff;border-radius:8px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,0.1);'>" +
+
+            "<!-- Header -->" +
+            "<tr><td style='background:#0F4C81;padding:28px 40px;'>" +
+            "<table width='100%' cellpadding='0' cellspacing='0'><tr>" +
+            "<td><img src='cid-right-logo' alt='Kanini Software Solutions' style='height:36px;display:block;'></td>" +
+            "<td align='right' style='color:rgba(255,255,255,0.7);font-size:12px;'>Talent Acquisition</td>" +
+            "</tr></table>" +
+            "</td></tr>" +
+
+            "<!-- Body -->" +
+            "<tr><td style='padding:40px 40px 32px;'>" +
+            "<p style='margin:0 0 8px;font-size:13px;color:#6B7280;text-transform:uppercase;letter-spacing:0.5px;font-weight:600;'>Document Submission Request</p>" +
+            "<h2 style='margin:0 0 24px;font-size:22px;color:#111827;font-weight:700;line-height:1.3;'>Hello, {{CANDIDATE_NAME}}</h2>" +
+            "<p style='margin:0 0 20px;font-size:15px;color:#374151;line-height:1.7;'>" +
+            "Congratulations on your selection at <strong>Kanini Software Solutions</strong>. As part of your onboarding process, we kindly request you to submit the following documents at your earliest convenience." +
+            "</p>" +
+
+            "<!-- Document List -->" +
+            "<table width='100%' cellpadding='0' cellspacing='0' style='background:#F9FAFB;border:1px solid #E5E7EB;border-radius:6px;margin:0 0 28px;'>" +
+            "<tr><td style='padding:16px 20px;border-bottom:1px solid #E5E7EB;'>" +
+            "<p style='margin:0;font-size:12px;font-weight:700;color:#6B7280;text-transform:uppercase;letter-spacing:0.5px;'>Required Documents</p>" +
+            "</td></tr>" +
+            "<tr><td style='padding:16px 20px;'>" +
+            "<ul style='margin:0;padding-left:20px;font-size:14px;color:#374151;line-height:2;'>{{DOCUMENT_LIST}}</ul>" +
+            "</td></tr></table>" +
+
+            "<!-- CTA Button -->" +
+            "<table cellpadding='0' cellspacing='0' style='margin:0 0 28px;'>" +
+            "<tr><td style='background:#0F4C81;border-radius:6px;'>" +
+            "<a href='{{SUBMISSION_LINK}}' style='display:inline-block;padding:14px 32px;font-size:15px;font-weight:700;color:#ffffff;text-decoration:none;letter-spacing:0.3px;'>Submit Documents &rarr;</a>" +
+            "</td></tr></table>" +
+
+            "<!-- Deadline -->" +
+            "<table width='100%' cellpadding='0' cellspacing='0' style='background:#FEF3C7;border:1px solid #FCD34D;border-radius:6px;margin:0 0 28px;'>" +
+            "<tr><td style='padding:12px 16px;'>" +
+            "<p style='margin:0;font-size:13px;color:#92400E;'>" +
+            "<strong>&#9888; Submission Deadline:</strong>&nbsp;{{DEADLINE_DATE}}" +
+            "</p></td></tr></table>" +
+
+            "<p style='margin:0 0 8px;font-size:14px;color:#374151;line-height:1.7;'>" +
+            "If you face any issues accessing the link or have questions, please reach out to us at " +
+            "<a href='mailto:hrops.india@kanini.com' style='color:#0F4C81;text-decoration:none;font-weight:600;'>hrops.india@kanini.com</a>." +
+            "</p>" +
+            "<p style='margin:24px 0 0;font-size:14px;color:#374151;'>Warm regards,</p>" +
+            "</td></tr>" +
+
+            "<!-- Signature -->" +
+            "<tr><td style='padding:0 40px 32px;'>" +
+            "<img src='cid-signature' alt='HR Team Signature' style='height:60px;display:block;'>" +
+            "</td></tr>" +
+
+            "<!-- Footer -->" +
+            "<tr><td style='background:#F9FAFB;border-top:1px solid #E5E7EB;padding:20px 40px;'>" +
+            "<table width='100%' cellpadding='0' cellspacing='0'><tr>" +
+            "<td style='font-size:11px;color:#9CA3AF;line-height:1.6;'>" +
+            "This is an automated message from <strong>Springer</strong> &ndash; Kanini HRMS.<br>" +
+            "Please do not reply to this email. For assistance, contact <a href='mailto:hrops.india@kanini.com' style='color:#6B7280;'>hrops.india@kanini.com</a>" +
+            "</td>" +
+            "<td align='right' style='font-size:11px;color:#9CA3AF;white-space:nowrap;'>" +
+            "&copy; 2026 Kanini Software Solutions" +
+            "</td></tr></table>" +
+            "</td></tr>" +
+
+            "</table>" +
+            "</td></tr></table>" +
+            "</body></html>"
+        );
+        saveOrUpdateTemplate(submissionTemplate);
+
+        // ── Document Rejection ────────────────────────────────────────────────
+        EmailTemplate rejectionTemplate = new EmailTemplate();
+        rejectionTemplate.setTemplateName("DOCUMENT_REJECTION");
+        rejectionTemplate.setSubject("Document Resubmission Required \u2013 Kanini Software Solutions");
+        rejectionTemplate.setBody(
+            "<!DOCTYPE html>" +
+            "<html lang='en'><head><meta charset='UTF-8'><meta name='viewport' content='width=device-width,initial-scale=1.0'>" +
+            "<title>Document Resubmission</title></head>" +
+            "<body style='margin:0;padding:0;background-color:#f0f2f5;font-family:Arial,Helvetica,sans-serif;'>" +
+            "<table width='100%' cellpadding='0' cellspacing='0' style='background-color:#f0f2f5;padding:40px 20px;'>" +
+            "<tr><td align='center'>" +
+            "<table width='600' cellpadding='0' cellspacing='0' style='background:#ffffff;border-radius:8px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,0.1);'>" +
+
+            "<!-- Header -->" +
+            "<tr><td style='background:#0F4C81;padding:28px 40px;'>" +
+            "<table width='100%' cellpadding='0' cellspacing='0'><tr>" +
+            "<td><img src='cid-right-logo' alt='Kanini Software Solutions' style='height:36px;display:block;'></td>" +
+            "<td align='right' style='color:rgba(255,255,255,0.7);font-size:12px;'>Talent Acquisition</td>" +
+            "</tr></table>" +
+            "</td></tr>" +
+
+            "<!-- Body -->" +
+            "<tr><td style='padding:40px 40px 32px;'>" +
+            "<p style='margin:0 0 8px;font-size:13px;color:#6B7280;text-transform:uppercase;letter-spacing:0.5px;font-weight:600;'>Document Review Update</p>" +
+            "<h2 style='margin:0 0 24px;font-size:22px;color:#111827;font-weight:700;line-height:1.3;'>Hello, {{CANDIDATE_NAME}}</h2>" +
+            "<p style='margin:0 0 24px;font-size:15px;color:#374151;line-height:1.7;'>" +
+            "Thank you for submitting your documents. After review, we found that the following document requires resubmission." +
+            "</p>" +
+
+            "<!-- Rejected Document -->" +
+            "<table width='100%' cellpadding='0' cellspacing='0' style='background:#FEF2F2;border:1px solid #FECACA;border-radius:6px;margin:0 0 20px;'>" +
+            "<tr><td style='padding:16px 20px;border-bottom:1px solid #FECACA;'>" +
+            "<p style='margin:0;font-size:12px;font-weight:700;color:#991B1B;text-transform:uppercase;letter-spacing:0.5px;'>Document Rejected</p>" +
+            "</td></tr>" +
+            "<tr><td style='padding:16px 20px;'>" +
+            "<p style='margin:0 0 4px;font-size:15px;font-weight:700;color:#111827;'>{{DOCUMENT_TYPE}}</p>" +
+            "</td></tr></table>" +
+
+            "<!-- Reason -->" +
+            "<table width='100%' cellpadding='0' cellspacing='0' style='background:#F9FAFB;border:1px solid #E5E7EB;border-left:4px solid #6B7280;border-radius:0 6px 6px 0;margin:0 0 28px;'>" +
+            "<tr><td style='padding:16px 20px;'>" +
+            "<p style='margin:0 0 4px;font-size:12px;font-weight:700;color:#6B7280;text-transform:uppercase;letter-spacing:0.5px;'>Reason for Rejection</p>" +
+            "<p style='margin:0;font-size:14px;color:#374151;line-height:1.6;'>{{REJECTION_REASON}}</p>" +
+            "</td></tr></table>" +
+
+            "<!-- CTA Button -->" +
+            "<p style='margin:0 0 16px;font-size:14px;color:#374151;'>Please upload a corrected version using the button below:</p>" +
+            "<table cellpadding='0' cellspacing='0' style='margin:0 0 28px;'>" +
+            "<tr><td style='background:#0F4C81;border-radius:6px;'>" +
+            "<a href='{{RESUBMIT_LINK}}' style='display:inline-block;padding:14px 32px;font-size:15px;font-weight:700;color:#ffffff;text-decoration:none;letter-spacing:0.3px;'>Resubmit Document &rarr;</a>" +
+            "</td></tr></table>" +
+
+            "<p style='margin:0 0 8px;font-size:14px;color:#374151;line-height:1.7;'>" +
+            "For any queries, please contact us at " +
+            "<a href='mailto:hrops.india@kanini.com' style='color:#0F4C81;text-decoration:none;font-weight:600;'>hrops.india@kanini.com</a>." +
+            "</p>" +
+            "<p style='margin:24px 0 0;font-size:14px;color:#374151;'>Warm regards,</p>" +
+            "</td></tr>" +
+
+            "<!-- Signature -->" +
+            "<tr><td style='padding:0 40px 32px;'>" +
+            "<img src='cid-signature' alt='HR Team Signature' style='height:60px;display:block;'>" +
+            "</td></tr>" +
+
+            "<!-- Footer -->" +
+            "<tr><td style='background:#F9FAFB;border-top:1px solid #E5E7EB;padding:20px 40px;'>" +
+            "<table width='100%' cellpadding='0' cellspacing='0'><tr>" +
+            "<td style='font-size:11px;color:#9CA3AF;line-height:1.6;'>" +
+            "This is an automated message from <strong>Springer</strong> &ndash; Kanini HRMS.<br>" +
+            "Please do not reply to this email. For assistance, contact <a href='mailto:hrops.india@kanini.com' style='color:#6B7280;'>hrops.india@kanini.com</a>" +
+            "</td>" +
+            "<td align='right' style='font-size:11px;color:#9CA3AF;white-space:nowrap;'>" +
+            "&copy; 2026 Kanini Software Solutions" +
+            "</td></tr></table>" +
+            "</td></tr>" +
+
+            "</table>" +
+            "</td></tr></table>" +
+            "</body></html>"
+        );
+        saveOrUpdateTemplate(rejectionTemplate);
+
+        log.info("Email templates are seeded/updated successfully");
+    }
+
+    private void saveOrUpdateTemplate(EmailTemplate template) {
+        emailTemplateRepository.findByTemplateName(template.getTemplateName())
+                .ifPresentOrElse(existing -> {
+                    existing.setSubject(template.getSubject());
+                    existing.setBody(template.getBody());
+                    emailTemplateRepository.save(existing);
+                }, () -> emailTemplateRepository.save(template));
     }
 }

@@ -62,10 +62,32 @@ const VerifyDocumentsTab = ({ context }: { context: DocProcessingContextProps })
       setLoading(true);
       const [subRes, candRes] = await Promise.all([
         documentSubmissionApi.getAllSubmissions({ cycleId, size: 500 }),
-        candidateApi.getCandidatesByCycleId(cycleId),
+        candidateApi.getCandidatesByCycleAndStages(cycleId, ['SELECTED']),
       ]);
       const submissions = (subRes.success && subRes.data) ? subRes.data : [];
       const candidates = (candRes.success && candRes.data) ? candRes.data : [];
+
+      // Status priority: keep the most meaningful status per document type per candidate
+      const STATUS_PRIORITY: Record<string, number> = { APPROVED: 4, COLLECTED: 3, REJECTED: 2, PENDING: 1 };
+
+      const deduplicateDocs = (docs: DocumentSubmissionResponse[]): DocumentSubmissionResponse[] => {
+        const map = new Map<string, DocumentSubmissionResponse>();
+        docs.forEach(doc => {
+          const key = doc.documentType;
+          const existing = map.get(key);
+          if (!existing) {
+            map.set(key, doc);
+          } else {
+            const currentPriority  = STATUS_PRIORITY[doc.verificationStatus]  || 0;
+            const existingPriority = STATUS_PRIORITY[existing.verificationStatus] || 0;
+            const isNewer = new Date(doc.uploadedAt || 0).getTime() > new Date(existing.uploadedAt || 0).getTime();
+            if (currentPriority > existingPriority || (currentPriority === existingPriority && isNewer)) {
+              map.set(key, doc);
+            }
+          }
+        });
+        return Array.from(map.values());
+      };
 
       const grouped: Record<number, DocumentSubmissionResponse[]> = {};
       submissions.forEach(s => {
@@ -73,11 +95,12 @@ const VerifyDocumentsTab = ({ context }: { context: DocProcessingContextProps })
         grouped[s.candidateId].push(s);
       });
 
-      const result: CandidateWithDocs[] = Object.entries(grouped).map(([candidateId, docs]) => {
+      const result: CandidateWithDocs[] = Object.entries(grouped).map(([candidateId, rawDocs]) => {
+        const docs = deduplicateDocs(rawDocs);
         const found = candidates.find(c => c.candidateId === Number(candidateId));
         const candidate = found
           ? { candidateId: found.candidateId, firstName: found.firstName, lastName: found.lastName, email: found.email, department: found.department, applicationStage: found.applicationStage }
-          : { candidateId: Number(candidateId), firstName: 'Candidate', lastName: `#${candidateId}`, email: '', department: '' };
+          : { candidateId: Number(candidateId), firstName: 'Candidate', lastName: `#${candidateId}`, email: '', department: '', applicationStage: 'UNKNOWN' };
         return {
           candidate, docs,
           approvedCount: docs.filter(d => d.verificationStatus === 'APPROVED').length,
@@ -308,7 +331,14 @@ const VerifyDocumentsTab = ({ context }: { context: DocProcessingContextProps })
                                       size="small"
                                       title="View Document"
                                       className="vdt-action-view"
-                                      onClick={() => window.open(documentSubmissionApi.getFileUrl(doc.documentId), '_blank')}
+                                      onClick={async () => {
+                                        try {
+                                          await documentSubmissionApi.openFile(doc.documentId);
+                                        } catch (error) {
+                                          const message = error instanceof Error ? error.message : 'Failed to open document';
+                                          showToast(message, 'error');
+                                        }
+                                      }}
                                     >
                                       <ViewIcon fontSize="small" />
                                     </IconButton>

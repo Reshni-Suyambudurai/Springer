@@ -7,7 +7,9 @@ import com.kanini.springer.dto.Drive.BulkCandidateLifecycleUpdateRequest;
 import com.kanini.springer.dto.Drive.BulkCandidateLifecycleUpdateResponse;
 import com.kanini.springer.dto.Drive.BulkCandidateStatusUpdateRequest;
 import com.kanini.springer.dto.Drive.BulkCandidateStatusUpdateResponse;
+import com.kanini.springer.dto.Drive.CandidateDocResponse;
 import com.kanini.springer.dto.Drive.CandidateFilterRequest;
+import com.kanini.springer.dto.Drive.CandidateListResponse;
 import com.kanini.springer.dto.Drive.CandidateRequest;
 import com.kanini.springer.dto.Drive.CandidateResponse;
 import com.kanini.springer.dto.Drive.CandidateStatusUpdateRequest;
@@ -17,6 +19,7 @@ import com.kanini.springer.dto.Drive.CandidateValidationResponse;
 import com.kanini.springer.dto.Drive.EligibilityValidationResult;
 import com.kanini.springer.entity.Drive.Candidate;
 import com.kanini.springer.entity.Drive.CandidateSkill;
+import com.kanini.springer.entity.Drive.Drive;
 import com.kanini.springer.entity.HiringReq.HiringCycle;
 import com.kanini.springer.entity.HiringReq.Institute;
 import com.kanini.springer.entity.HiringReq.Skill;
@@ -27,6 +30,7 @@ import com.kanini.springer.entity.enums.Enums.CycleStatus;
 import com.kanini.springer.mapper.Drive.CandidateMapper;
 import com.kanini.springer.repository.Drive.CandidateSkillRepository;
 import com.kanini.springer.repository.Drive.CandidatesRepository;
+import com.kanini.springer.repository.Drive.DriveRepository;
 import com.kanini.springer.repository.Hiring.HiringCycleRepository;
 import com.kanini.springer.repository.Hiring.InstituteRepository;
 import com.kanini.springer.repository.Hiring.SkillRepository;
@@ -67,6 +71,7 @@ public class CandidatesServiceImpl implements ICandidatesService {
     private final CandidatesRepository candidatesRepository;
     private final InstituteRepository instituteRepository;
     private final HiringCycleRepository hiringCycleRepository;
+    private final DriveRepository driveRepository;
     private final CandidateMapper mapper;
     private final IOverrideService overrideService;
     private final IEligibilityRuleService eligibilityRuleService;
@@ -100,15 +105,20 @@ public class CandidatesServiceImpl implements ICandidatesService {
         String instituteName = institute.getInstituteName();
         
         // Check for existing candidate using comprehensive matching criteria
+        // Combine firstName + lastName with whitespace removed for fuzzy name matching
+        String fullName = (request.getFirstName() != null ? request.getFirstName() : "") +
+                          (request.getLastName() != null ? request.getLastName() : "");
+        // Normalize empty aadhaar to null so the query skips aadhaar filtering
+        String aadhaarForQuery = (request.getAadhaarNumber() != null && !request.getAadhaarNumber().isBlank())
+                ? request.getAadhaarNumber() : null;
         List<Candidate> matches = candidatesRepository.findMatchingCandidates(
-                request.getFirstName(),
-                request.getLastName(),
+                fullName,
                 instituteName,
                 request.getDegree(),
                 request.getDepartment(),
                 request.getDateOfBirth(),
                 request.getPassoutYear(),
-                request.getAadhaarNumber()
+                aadhaarForQuery
         );
         
         // If candidate exists, check cycle and provide detailed error
@@ -136,6 +146,15 @@ public class CandidatesServiceImpl implements ICandidatesService {
             HiringCycle newCycle = hiringCycleRepository.findById(request.getCycleId())
                     .orElseThrow(() -> new ResourceNotFoundException("Hiring cycle", "ID", request.getCycleId()));
             existingCandidate.setCycle(newCycle);
+            
+            // Update drive if provided
+            if (request.getDriveId() != null) {
+                Drive drive = driveRepository.findById(request.getDriveId())
+                        .orElseThrow(() -> new ResourceNotFoundException("Drive", "ID", request.getDriveId()));
+                existingCandidate.setDrive(drive);
+            } else {
+                existingCandidate.setDrive(null);
+            }
             
             // Update mutable fields with new values from the request
             existingCandidate.setFirstName(request.getFirstName());
@@ -326,6 +345,17 @@ public class CandidatesServiceImpl implements ICandidatesService {
             hiringCycleRepository.findById(cycleId).ifPresent(cycle -> cycleCache.put(cycleId, cycle));
         }
         
+        // 5) Batch fetch all drives (1 query instead of N)
+        Set<Long> allDriveIds = requests.stream()
+                .filter(r -> r.getDriveId() != null)
+                .map(CandidateRequest::getDriveId)
+                .collect(Collectors.toSet());
+        Map<Long, Drive> driveMap = new HashMap<>();
+        if (!allDriveIds.isEmpty()) {
+            driveRepository.findAllById(allDriveIds).forEach(drive ->
+                    driveMap.put(drive.getDriveId(), drive));
+        }
+        
         // Phase 1: Validate all candidates before inserting any
         List<String> validationErrors = new ArrayList<>();
         Set<String> emailsInBatch = new HashSet<>();
@@ -347,15 +377,20 @@ public class CandidatesServiceImpl implements ICandidatesService {
                 }
                 String instituteName = institute.getInstituteName();
                 
+                // Combine firstName + lastName with whitespace removed for fuzzy name matching
+                String fullName = (request.getFirstName() != null ? request.getFirstName() : "") +
+                                  (request.getLastName() != null ? request.getLastName() : "");
+                // Normalize empty aadhaar to null so the query skips aadhaar filtering
+                String aadhaarForQuery = (request.getAadhaarNumber() != null && !request.getAadhaarNumber().isBlank())
+                        ? request.getAadhaarNumber() : null;
                 List<Candidate> matches = candidatesRepository.findMatchingCandidates(
-                        request.getFirstName(),
-                        request.getLastName(),
+                        fullName,
                         instituteName,
                         request.getDegree(),
                         request.getDepartment(),
                         request.getDateOfBirth(),
                         request.getPassoutYear(),
-                        request.getAadhaarNumber()
+                        aadhaarForQuery
                 );
                 
                 if (!matches.isEmpty()) {
@@ -434,6 +469,11 @@ public class CandidatesServiceImpl implements ICandidatesService {
                 } else if (cycle.getStatus() != CycleStatus.OPEN) {
                     validationErrors.add(candidateRef + ": Cannot add candidates to cycle " + request.getCycleId() + ". Cycle status is " + cycle.getStatus() + ". Only OPEN cycles accept new candidates.");
                 }
+            }
+            
+            // Validate driveId if provided (using cached drive map)
+            if (request.getDriveId() != null && !driveMap.containsKey(request.getDriveId())) {
+                validationErrors.add(candidateRef + ": Drive not found with ID: " + request.getDriveId());
             }
             
             // Validate required fields
@@ -515,6 +555,17 @@ public class CandidatesServiceImpl implements ICandidatesService {
                     throw new ResourceNotFoundException("Hiring cycle", "ID", request.getCycleId());
                 }
                 existingCandidate.setCycle(newCycle);
+            }
+            
+            // Update driveId if provided (using cached drive map)
+            if (request.getDriveId() != null) {
+                Drive drive = driveMap.get(request.getDriveId());
+                if (drive == null) {
+                    throw new ResourceNotFoundException("Drive", "ID", request.getDriveId());
+                }
+                existingCandidate.setDrive(drive);
+            } else {
+                existingCandidate.setDrive(null);
             }
             
             // Update mutable fields with new values from the request
@@ -688,6 +739,23 @@ public class CandidatesServiceImpl implements ICandidatesService {
     }
     
     @Override
+    @Transactional(readOnly = true)
+    public List<CandidateDocResponse> getCandidatesByCycleAndStages(Long cycleId, List<String> stages) {
+        if (!hiringCycleRepository.existsById(cycleId)) {
+            throw new ResourceNotFoundException("Hiring cycle", "ID", cycleId);
+        }
+        
+        List<ApplicationStage> stageEnums = stages.stream()
+                .map(ApplicationStage::valueOf)
+                .collect(Collectors.toList());
+        
+        List<Candidate> candidates = candidatesRepository.findByCycleCycleIdAndApplicationStageIn(cycleId, stageEnums);
+        return candidates.stream()
+                .map(mapper::toDocResponse)
+                .collect(Collectors.toList());
+    }
+    
+    @Override
     @Transactional
     public CandidateResponse updateCandidate(Long candidateId, CandidateUpdateRequest request) {
         // Validate mandatory fields
@@ -750,6 +818,11 @@ public class CandidatesServiceImpl implements ICandidatesService {
         
         // Parse the new status
         ApplicationStage newStatus = ApplicationStage.valueOf(request.getStatus());
+
+        String statusReason = request.getReason() != null ? request.getReason().trim() : null;
+        if (newStatus == ApplicationStage.DROPPED && (statusReason == null || statusReason.isEmpty())) {
+            throw new ValidationException("Reason is required when marking candidate as DROPPED");
+        }
         
         // Ineligible candidates cannot be moved to progression statuses
         if (!candidate.getIsEligible() && 
@@ -760,16 +833,14 @@ public class CandidatesServiceImpl implements ICandidatesService {
             throw new ValidationException("Cannot update status to " + newStatus + ". Candidate is not eligible. Only eligible candidates can progress in recruitment.");
         }
         
-        // SELECTED is only allowed from SHORTLISTED
-        if (newStatus == ApplicationStage.SELECTED && candidate.getApplicationStage() != ApplicationStage.SHORTLISTED) {
-            throw new ValidationException("Cannot move to SELECTED. Candidate must be in SHORTLISTED status, but is currently " + candidate.getApplicationStage());
+        // SELECTED is only allowed from SHORTLISTED or SCHEDULED
+        if (newStatus == ApplicationStage.SELECTED && 
+            candidate.getApplicationStage() != ApplicationStage.SHORTLISTED && 
+            candidate.getApplicationStage() != ApplicationStage.SCHEDULED) {
+            throw new ValidationException("Cannot move to SELECTED. Candidate must be in SHORTLISTED or SCHEDULED status, but is currently " + candidate.getApplicationStage());
         }
         
-        // Create copy for change detection
-        Candidate oldCandidate = createCandidateCopy(candidate);
-        
         // Update status
-        ApplicationStage oldStatus = candidate.getApplicationStage();
         candidate.setApplicationStage(newStatus);
         
         // Fetch username for status history
@@ -781,34 +852,15 @@ public class CandidatesServiceImpl implements ICandidatesService {
             }
         }
         
-        // Append to statusHistory
-        appendStatusHistory(candidate, newStatus, userName);
+        // Append to statusHistory; include drop reason for audit readability
+        String historyActor = userName;
+        if (newStatus == ApplicationStage.DROPPED && statusReason != null && !statusReason.isEmpty()) {
+            historyActor = userName + " (Reason: " + statusReason + ")";
+        }
+        appendStatusHistory(candidate, newStatus, historyActor);
         
         // Save
         Candidate updatedCandidate = candidatesRepository.save(candidate);
-        
-        // Log override if updatedBy is provided
-        if (request.getUpdatedBy() != null) {
-            List<FieldChangeDTO> changes = new ArrayList<>();
-            FieldChangeDTO statusChange = new FieldChangeDTO();
-            statusChange.setField("applicationStage");
-            statusChange.setOld(oldStatus != null ? oldStatus.toString() : null);
-            statusChange.setNewValue(newStatus.toString());
-            changes.add(statusChange);
-            
-            ManualOverrideRequest overrideRequest = new ManualOverrideRequest();
-            overrideRequest.setEntityType("CANDIDATES");
-            overrideRequest.setEntityId(candidateId);
-            overrideRequest.setChanges(changes);
-            overrideRequest.setOverrideReason("Status update");
-            overrideRequest.setCreatedBy(request.getUpdatedBy());
-            
-            try {
-                overrideService.logOverride(overrideRequest);
-            } catch (Exception e) {
-                System.err.println("Error logging status override: " + e.getMessage());
-            }
-        }
         
         return mapper.toResponse(updatedCandidate);
     }
@@ -897,11 +949,13 @@ public class CandidatesServiceImpl implements ICandidatesService {
                     continue;
                 }
                 
-                // SELECTED is only allowed from SHORTLISTED
-                if (newStatus == ApplicationStage.SELECTED && candidate.getApplicationStage() != ApplicationStage.SHORTLISTED) {
+                // SELECTED is only allowed from SHORTLISTED or SCHEDULED
+                if (newStatus == ApplicationStage.SELECTED && 
+                    candidate.getApplicationStage() != ApplicationStage.SHORTLISTED && 
+                    candidate.getApplicationStage() != ApplicationStage.SCHEDULED) {
                     String candidateName = candidate.getFirstName() + 
                             (candidate.getLastName() != null ? " " + candidate.getLastName() : "");
-                    response.getErrorMessages().add(candidateName + " cannot move to SELECTED — must be SHORTLISTED, currently " + candidate.getApplicationStage());
+                    response.getErrorMessages().add(candidateName + " cannot move to SELECTED — must be SHORTLISTED or SCHEDULED, currently " + candidate.getApplicationStage());
                     failureCount++;
                     continue;
                 }
@@ -1057,15 +1111,20 @@ public class CandidatesServiceImpl implements ICandidatesService {
                 String instituteName = institute.getInstituteName();
                 
                 // Find matching candidates
+                // Combine firstName + lastName with whitespace removed for fuzzy name matching
+                String fullName = (req.getFirstName() != null ? req.getFirstName() : "") +
+                                  (req.getLastName() != null ? req.getLastName() : "");
+                // Normalize empty aadhaar to null so the query skips aadhaar filtering
+                String aadhaarForQuery = (req.getAadhaarNumber() != null && !req.getAadhaarNumber().isBlank())
+                        ? req.getAadhaarNumber() : null;
                 List<Candidate> matches = candidatesRepository.findMatchingCandidates(
-                        req.getFirstName(),
-                        req.getLastName(),
+                        fullName,
                         instituteName,
                         req.getDegree(),
                         req.getDepartment(),
                         req.getDateOfBirth(),
                         req.getPassoutYear(),
-                        req.getAadhaarNumber()
+                        aadhaarForQuery
                 );
                 
                 // Determine status and build comment
@@ -1237,7 +1296,7 @@ public class CandidatesServiceImpl implements ICandidatesService {
      */
     @Override
     @Transactional(readOnly = true)
-    public Page<CandidateResponse> getCandidatesWithFilters(CandidateFilterRequest filterRequest) {
+    public Page<CandidateListResponse> getCandidatesWithFilters(CandidateFilterRequest filterRequest) {
         // Build Specification from filter request
         Specification<Candidate> spec = CandidateSpecification.withFilters(filterRequest);
         
@@ -1252,8 +1311,8 @@ public class CandidatesServiceImpl implements ICandidatesService {
         // Execute query with specification
         Page<Candidate> candidatesPage = candidatesRepository.findAll(spec, pageable);
         
-        // Map to response DTOs
-        return candidatesPage.map(mapper::toResponse);
+        // Map to lightweight list response — no skills, no lazy collections
+        return candidatesPage.map(mapper::toListResponse);
     }
     
     /**

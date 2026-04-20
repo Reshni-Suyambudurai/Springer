@@ -189,14 +189,29 @@ public class DriveScheduleServiceImpl implements IDriveScheduleService {
             java.time.LocalDate.now()
         );
         
-        // Map to summary response DTOs
+        DateTimeFormatter formatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
+        
+        // Map to summary response DTOs with batch time counts
         return upcomingDrives.stream()
-            .map(drive -> new UpcomingDriveSummaryResponse(
-                drive.getDriveId(),
-                drive.getDriveName(),
-                drive.getDriveMode(),
-                drive.getStartDate()
-            ))
+            .map(drive -> {
+                // Reuse existing repo method for batch time grouping
+                List<Object[]> grouped = applicationRepository.countApplicationsGroupedByBatchTime(drive.getDriveId());
+                Map<String, Long> batchTimeMap = new LinkedHashMap<>();
+                for (Object[] row : grouped) {
+                    if (row[0] != null) {
+                        String key = ((LocalDateTime) row[0]).format(formatter);
+                        Long count = ((Number) row[1]).longValue();
+                        batchTimeMap.put(key, count);
+                    }
+                }
+                return new UpcomingDriveSummaryResponse(
+                    drive.getDriveId(),
+                    drive.getDriveName(),
+                    drive.getDriveMode(),
+                    drive.getStartDate(),
+                    batchTimeMap
+                );
+            })
             .collect(Collectors.toList());
     }
     

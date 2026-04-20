@@ -8,18 +8,27 @@ import java.util.List;
 
 /**
  * Request DTO for bulk creating drive assignments
- * Multiple applicationIds with same driveId, userId, and roundConfigId
+ * Common fields (driveId, status, isActive, createdBy) + list of {applicationId, userId} pairs
  */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 public class BulkDriveAssignmentRequest {
     
-    private Long driveId;           // required - common for all
-    private Long userId;            // required - common for all
-    private Long roundConfigId;     // required - which round template these assignments are for
-    private List<Long> applicationIds; // required - multiple applications
-    private String status;          // optional - default PLANNED
-    private Boolean isActive;       // optional - default true
-    private Long createdBy;         // required - userId
+    private Long driveId;                   // required - common for all
+    private Long roundConfigId;             // optional - which round template (takes priority)
+    private Integer roundNo;                // optional - resolve to roundConfigId if roundConfigId is null
+    private String status;                  // optional - default PLANNED
+    private Boolean isActive;               // optional - default true
+    private Long createdBy;                 // required - userId
+    private List<AssignmentEntry> entries;  // required - list of {applicationId, userId} pairs
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class AssignmentEntry {
+        private Long applicationId;
+        private Long userId;
+        private Long replaceUserId;  // optional — if set, find existing assignment for this user and replace with userId
+    }
 }

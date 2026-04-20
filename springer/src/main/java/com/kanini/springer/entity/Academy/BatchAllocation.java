@@ -48,7 +48,12 @@ public class BatchAllocation {
     
     @Column(precision = 5, scale = 2)//precision = total digits, scale = digits after decimal   
     private BigDecimal attendancePercentage;
-    
+
+    // Weighted average score across all completed courses (auto-calculated on each score save)
+    // Formula: sum(score_i × weight_i) / sum(weight_i) — normalized so weights need not sum to 100
+    @Column(precision = 5, scale = 2)
+    private BigDecimal overallWeightedScore;
+
     private Boolean isActive; // true=in training
     
     @Enumerated(EnumType.STRING)

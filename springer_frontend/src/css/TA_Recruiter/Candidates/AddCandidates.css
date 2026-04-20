@@ -2,8 +2,7 @@
 .add-candidates-container {
   padding: 10px;
   max-width: 100%;
-  height: 100vh;
-  overflow-y: auto;
+ 
   background-color: var(--color-surface);
 }
 
@@ -29,6 +28,13 @@
   flex: 1;
 }
 
+.add-candidates-header-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
 .add-candidates-cycle-name {
   font-weight: 600 !important;
   color: var(--color-text-primary) !important;
@@ -40,6 +46,118 @@
 }
 
 .add-candidates-header-btn { white-space: nowrap; }
+
+.add-candidates-drive-name {
+  font-weight: 500 !important;
+  color: var(--color-primary) !important;
+  white-space: nowrap;
+  padding: 6px 14px;
+  background: var(--color-primary-light);
+  border-radius: 8px;
+  border: 1px solid var(--color-blue-100);
+  font-size: var(--text-sm) !important;
+}
+
+/* ── Mode Toggle ── */
+.add-candidates-mode-toggle {
+  display: flex;
+  gap: 0;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.add-candidates-mode-toggle .mode-btn {
+  border-radius: 0 !important;
+  border: none !important;
+  min-width: 110px;
+  font-weight: 500 !important;
+  text-transform: none !important;
+  padding: 6px 16px !important;
+}
+
+.add-candidates-mode-toggle .mode-btn:first-child {
+  border-right: 1px solid var(--color-border) !important;
+}
+
+.add-candidates-mode-toggle .mode-btn.active {
+  background-color: var(--color-primary) !important;
+  color: var(--color-white) !important;
+}
+
+/* ── On-Campus Wrapper ── */
+.oncampus-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.oncampus-top-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.oncampus-institute-dropdown {
+  flex: 1;
+  max-width: 400px;
+}
+
+.oncampus-download-btn {
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* ── Upload Zone ── */
+.add-candidates-upload-zone {
+  border: 2px dashed var(--color-dropzone-border) !important;
+  border-radius: 12px !important;
+  background: var(--color-dropzone-bg) !important;
+  box-shadow: none !important;
+  transition: all 0.2s ease;
+}
+
+.add-candidates-upload-zone:hover {
+  border-color: var(--color-primary) !important;
+  background: var(--color-dropzone-hover-bg) !important;
+}
+
+.upload-zone-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px !important;
+  gap: 12px;
+  position: relative;
+}
+
+.upload-zone-top-row {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+}
+
+.upload-zone-icon {
+  font-size: 48px !important;
+  color: var(--color-primary) !important;
+  opacity: 0.6;
+}
+
+.upload-zone-title {
+  font-weight: 600 !important;
+  color: var(--color-text-primary) !important;
+}
+
+.upload-zone-subtitle {
+  color: var(--color-text-secondary) !important;
+  margin-bottom: 8px !important;
+}
+
+.upload-zone-btn {
+  margin-top: 8px !important;
+}
 
 /* ── Bulk Card ── */
 .add-candidates-bulk-card {
@@ -104,11 +222,26 @@
 }
 
 /* ── Row status coloring ── */
-.table-row-duplicate td { color: var(--color-error-delete) !important; font-weight: 600; }
+.table-row-duplicate td { color: var(--color-error-delete) !important; font-weight: 600; background-color: var(--color-error-light) !important; }
 .table-row-old td { color: var(--color-success-dark) !important; font-weight: 600; }
 .table-row-old .warning-dot { background-color: var(--color-success-dark); }
 .table-row-duplicate:hover td,
 .table-row-old:hover td { background-color: var(--color-hover-bg) !important; }
+
+/* ── Batch duplicate (orange) ── */
+.table-row-batch-duplicate td { color: var(--color-yellow-500) !important; font-weight: 600; background-color: var(--color-yellow-50) !important; }
+.table-row-batch-duplicate:hover td { background-color: var(--color-hover-bg) !important; }
+
+.batch-dup-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: var(--color-warning);
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+.batch-duplicate-candidate-text { color: var(--color-warning); font-weight: 600; }
 
 /* ── Bulk Table ── */
 .add-candidates-bulk-table {
@@ -117,6 +250,7 @@
   background: var(--color-surface);
   flex: 1;
   overflow: auto;
+  max-height: 65vh;
 }
 
 .add-candidates-bulk-table tbody tr { transition: background-color 0.2s ease; }
@@ -148,6 +282,15 @@
 .add-candidates-form .MuiInputBase-input { color: var(--color-text-primary); }
 .add-candidates-form .MuiOutlinedInput-notchedOutline { border-color: var(--color-border); }
 .add-candidates-form .MuiInputBase-root.Mui-focused .MuiOutlinedInput-notchedOutline { border-color: var(--color-primary); }
+
+/* ── Field Error Highlight ── */
+.add-candidates-form .ac-field-error .MuiOutlinedInput-notchedOutline {
+  border-color: var(--color-error) !important;
+  border-width: 2px;
+}
+.add-candidates-form .ac-field-error .MuiInputLabel-root {
+  color: var(--color-error) !important;
+}
 
 /* ── Error Overlay ── */
 .error-overlay {

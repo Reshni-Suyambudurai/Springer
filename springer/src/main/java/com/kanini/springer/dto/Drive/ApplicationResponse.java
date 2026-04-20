@@ -29,4 +29,6 @@ public class ApplicationResponse {
     private LocalDateTime updatedAt;
     private Long updatedBy;
     private String updatedByName;
+    private String evaluationStatus;
+    private Long latestRoundConfigId;
 }

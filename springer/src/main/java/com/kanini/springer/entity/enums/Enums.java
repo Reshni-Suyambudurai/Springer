@@ -133,8 +133,9 @@ public class Enums {
         DRAFT,
         SELECTED,
         REJECTED,
-        CANCELLED
-    }
+        CANCELLED,
+        HOLD
+    } 
 
     // Evaluation status
     public enum EvaluationStatus {
@@ -142,7 +143,8 @@ public class Enums {
         PASS,
         FAIL,
         ABSENT,
-        HOLD
+        HOLD,
+        SKIP
     }
 
     // Document types
@@ -190,6 +192,18 @@ public class Enums {
         PROJECT_READY
     }
 
+    // Training program locations
+    public enum TrainingLocation {
+        CHENNAI,
+        BANGALORE,
+        HYDERABAD,
+        PUNE,
+        MUMBAI,
+        DELHI,
+        COIMBATORE,
+        REMOTE
+    }
+
     // Training score status
     public enum ScoreStatus {
         EXCELLENT,
@@ -234,6 +248,7 @@ public class Enums {
         DOCUMENT_SUBMISSIONS,
         OFFER_LETTERS,
         TRAINING_COURSES,
-        TRAINING_SCORES
+        TRAINING_SCORES,
+        APPLICATIONS
     }
 }

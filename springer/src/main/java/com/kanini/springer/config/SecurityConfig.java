@@ -37,6 +37,9 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/auth/**").permitAll() // Allow login without authentication
                 .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html", "/swagger-resources/**", "/webjars/**").permitAll() // Allow Swagger UI
+                // Candidate-facing document endpoints — authenticated by JWT token in URL, not session login
+                .requestMatchers("/api/documents/submission-status").permitAll()
+                .requestMatchers("/api/documents/submissions").permitAll()
                 .anyRequest().authenticated() // All other requests require authentication
             )
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);

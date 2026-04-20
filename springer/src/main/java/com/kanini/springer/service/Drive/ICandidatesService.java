@@ -5,7 +5,9 @@ import com.kanini.springer.dto.Drive.BulkCandidateLifecycleUpdateRequest;
 import com.kanini.springer.dto.Drive.BulkCandidateLifecycleUpdateResponse;
 import com.kanini.springer.dto.Drive.BulkCandidateStatusUpdateRequest;
 import com.kanini.springer.dto.Drive.BulkCandidateStatusUpdateResponse;
+import com.kanini.springer.dto.Drive.CandidateDocResponse;
 import com.kanini.springer.dto.Drive.CandidateFilterRequest;
+import com.kanini.springer.dto.Drive.CandidateListResponse;
 import com.kanini.springer.dto.Drive.CandidateRequest;
 import com.kanini.springer.dto.Drive.CandidateResponse;
 import com.kanini.springer.dto.Drive.CandidateStatusUpdateRequest;
@@ -53,6 +55,11 @@ public interface ICandidatesService {
      * Get all candidates by cycle ID with institute details
      */
     List<CandidateResponse> getCandidatesByCycleId(Long cycleId);
+    
+    /**
+     * Get candidates by cycle ID and application stages (lightweight for document processing)
+     */
+    List<CandidateDocResponse> getCandidatesByCycleAndStages(Long cycleId, List<String> stages);
     
     /**
      * Update candidate (with manual override logging)
@@ -114,7 +121,7 @@ public interface ICandidatesService {
      * @param filterRequest Filter criteria and pagination info
      * @return Page of candidates matching the filter criteria
      */
-    Page<CandidateResponse> getCandidatesWithFilters(CandidateFilterRequest filterRequest);
+    Page<CandidateListResponse> getCandidatesWithFilters(CandidateFilterRequest filterRequest);
     
     /**
      * Get distinct filter options for a specific cycle with ACTIVE lifecycle status

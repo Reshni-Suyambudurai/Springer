@@ -11,7 +11,6 @@ import {
   CheckCircle as ApproveIcon,
   Cancel as RejectIcon,
   OpenInNew as OpenInNewIcon,
-  Edit as EditIcon,
 } from '@mui/icons-material';
 import { useNavigate, useParams } from 'react-router-dom';
 import { hiringCycleApi, hiringDemandApi } from '../../../services/hiring.api';
@@ -54,17 +53,6 @@ const TAHiringCycleDetails = () => {
   const [editForm, setEditForm] = useState({ cycleYear: '', cycleName: '', compensationBand: '', budget: '' });
   const [editSaving, setEditSaving] = useState(false);
 
-  const openEdit = () => {
-    if (!cycle) return;
-    setEditForm({
-      cycleYear: String(cycle.cycleYear),
-      cycleName: cycle.cycleName,
-      compensationBand: cycle.compensationBand ? String(cycle.compensationBand) : '',
-      budget: cycle.budget ? String(cycle.budget) : '',
-    });
-    setEditOpen(true);
-  };
-
   const handleEditSave = async () => {
     if (!editForm.cycleName.trim()) return showToast('Cycle name is required', 'error');
     if (!editForm.cycleYear || isNaN(Number(editForm.cycleYear))) return showToast('Valid year is required', 'error');
@@ -97,7 +85,7 @@ const TAHiringCycleDetails = () => {
       ]);
       if (cycleRes.success && cycleRes.data) setCycle(cycleRes.data);
       else setError(cycleRes.message || 'Failed to load cycle.');
-      if (demandsRes.success && demandsRes.data) setDemands(demandsRes.data);
+      if (demandsRes.success && demandsRes.data) setDemands(demandsRes.data.filter(d => d.approvalStatus !== 'DRAFT'));
     } catch (err: any) {
       setError(err.message || 'Failed to load cycle details.');
     } finally {
@@ -137,7 +125,6 @@ const TAHiringCycleDetails = () => {
   const submittedCount = demands.filter(d => d.approvalStatus === 'SUBMITTED').length;
   const approvedCount  = demands.filter(d => d.approvalStatus === 'APPROVED').length;
   const rejectedCount  = demands.filter(d => d.approvalStatus === 'REJECTED').length;
-  const draftCount     = demands.filter(d => d.approvalStatus === 'DRAFT').length;
 
   return (
     <Box className="tah-hcd-page">
@@ -237,11 +224,6 @@ const TAHiringCycleDetails = () => {
                 <Box className="tah-hcd-summary-item">
                   <Typography className="tah-hcd-summary-count tah-hcd-summary-count--rejected">{rejectedCount}</Typography>
                   <Typography className="tah-hcd-summary-label">Rejected</Typography>
-                </Box>
-                <Box className="tah-hcd-summary-divider" />
-                <Box className="tah-hcd-summary-item">
-                  <Typography className="tah-hcd-summary-count tah-hcd-summary-count--draft">{draftCount}</Typography>
-                  <Typography className="tah-hcd-summary-label">Draft</Typography>
                 </Box>
               </Box>
             )}

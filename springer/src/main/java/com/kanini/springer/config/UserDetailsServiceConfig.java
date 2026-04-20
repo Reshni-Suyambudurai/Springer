@@ -21,9 +21,12 @@ public class UserDetailsServiceConfig {
     @Bean
     public UserDetailsService userDetailsService() {
         return email -> {
-            // Find user in database with role eagerly fetched
-            var user = userRepository.findByEmailWithRole(email)
-                    .orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + email));
+            // Fallback: pick first match by email (used only by Spring Security internals, not JWT filter)
+            var users = userRepository.findAllByEmailWithRole(email);
+            if (users.isEmpty()) {
+                throw new UsernameNotFoundException("User not found with email: " + email);
+            }
+            var user = users.get(0);
             
             // Convert to Spring Security's UserDetails format
             return org.springframework.security.core.userdetails.User

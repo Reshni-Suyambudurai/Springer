@@ -7,8 +7,6 @@ import {
 import ViewListIcon from '@mui/icons-material/ViewList';
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
-import ToggleOnIcon from '@mui/icons-material/ToggleOn';
-import ToggleOffIcon from '@mui/icons-material/ToggleOff';
 import CloseIcon from '@mui/icons-material/Close';
 import BackButton from '../../Common/BackButton';
 import { useNavigate } from 'react-router-dom';
@@ -65,13 +63,6 @@ const RoundTemplateManagement = () => {
     setForm({ roundNo: String(t.roundNo), roundName: t.roundName, outoffScore: String(t.outoffScore), minScore: String(t.minScore), weightage: String(t.weightage) });
     setSections(t.sections.length ? [...t.sections] : []);
     setDialogOpen(true);
-  };
-
-  const toggleStatus = async (t: Template) => {
-    try {
-      const res = await roundTemplateApi.deleteRoundTemplate(t.roundConfigId);
-      if (res.success) { showToast(`Template ${t.isActive ? 'deactivated' : 'activated'}`, 'success'); fetchTemplates(); }
-    } catch { showToast('Failed to update status', 'error'); }
   };
 
   const validate = () => {
@@ -187,10 +178,6 @@ const RoundTemplateManagement = () => {
                     <Stack direction="row" gap={0.5}>
                       <IconButton size="small" className="t-action-btn" onClick={() => openEdit(t)} title="Edit">
                         <EditIcon fontSize="small" />
-                      </IconButton>
-                      <IconButton size="small" className="t-action-btn" onClick={() => toggleStatus(t)}
-                        title={t.isActive ? 'Deactivate' : 'Activate'}>
-                        {t.isActive ? <ToggleOnIcon fontSize="small" sx={{ color: 'var(--color-success)' }} /> : <ToggleOffIcon fontSize="small" />}
                       </IconButton>
                     </Stack>
                   </Box>

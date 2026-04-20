@@ -40,6 +40,13 @@ public class DocumentLinkServiceImpl implements IDocumentLinkService {
     @Transactional
     public DocumentLinkResponse generateSubmissionLink(Long candidateId, Long cycleId,
             List<Long> documentTypeIds) {
+        return generateSubmissionLink(candidateId, cycleId, documentTypeIds, null);
+        }
+
+        @Override
+        @Transactional
+        public DocumentLinkResponse generateSubmissionLink(Long candidateId, Long cycleId,
+            List<Long> documentTypeIds, LocalDateTime submissionDeadline) {
 
         Candidate candidate = candidateRepository.findById(candidateId)
             .orElseThrow(() -> new ResourceNotFoundException("Candidate not found with ID: " + candidateId));
@@ -55,8 +62,10 @@ public class DocumentLinkServiceImpl implements IDocumentLinkService {
             throw new ValidationException("Cannot send submission link: Hiring cycle " + cycleId + " is not OPEN. Current status: " + cycle.getStatus());
         }
 
+        LocalDateTime expiryDate = resolveSubmissionDeadline(submissionDeadline);
+
         String linkId = UUID.randomUUID().toString();
-        String token = tokenService.generateToken(candidateId, cycleId, "INITIAL_SUBMISSION", 7, candidate.getEmail());
+        String token = tokenService.generateToken(candidateId, cycleId, "INITIAL_SUBMISSION", expiryDate, candidate.getEmail());
         String submissionLink = buildSubmissionLink(token);
 
         List<RequiredDocumentDTO> requiredDocs = documentTypeIds.stream()
@@ -84,8 +93,6 @@ public class DocumentLinkServiceImpl implements IDocumentLinkService {
                 );
             })
             .collect(Collectors.toList());
-
-        LocalDateTime expiryDate = LocalDateTime.now().plusDays(7);
 
         DocumentLinkResponse response = new DocumentLinkResponse(
             linkId,
@@ -202,8 +209,15 @@ public class DocumentLinkServiceImpl implements IDocumentLinkService {
     @Transactional
     public boolean sendInitialSubmissionLink(Long candidateId, Long cycleId,
             List<Long> documentTypeIds) {
+        return sendInitialSubmissionLink(candidateId, cycleId, documentTypeIds, null);
+    }
+
+    @Override
+    @Transactional
+    public boolean sendInitialSubmissionLink(Long candidateId, Long cycleId,
+            List<Long> documentTypeIds, LocalDateTime submissionDeadline) {
         try {
-            generateSubmissionLink(candidateId, cycleId, documentTypeIds);
+            generateSubmissionLink(candidateId, cycleId, documentTypeIds, submissionDeadline);
             return true;
         } catch (Exception e) {
             log.error("Failed to send initial submission link: {}", e.getMessage(), e);
@@ -241,21 +255,48 @@ public class DocumentLinkServiceImpl implements IDocumentLinkService {
 
     @Override
     @Transactional
-    public boolean resendSubmissionLink(Long candidateId, Long cycleId) {
+    public boolean resendSubmissionLink(Long candidateId, Long cycleId, java.util.List<Long> documentTypeIds) {
+        return resendSubmissionLink(candidateId, cycleId, documentTypeIds, null);
+        }
+
+        @Override
+        @Transactional
+        public boolean resendSubmissionLink(Long candidateId, Long cycleId, java.util.List<Long> documentTypeIds,
+            LocalDateTime submissionDeadline) {
         try {
+            // Get documents that need action: PENDING (not uploaded) or REJECTED (resubmit needed)
             List<DocumentSubmission> existingSubmissions = documentSubmissionRepository
-                .findByCandidateIdAndCycleId(candidateId, cycleId);
-            
-            List<Long> docTypeIds = existingSubmissions.stream()
-                .map(submission -> submission.getDocumentType().getDocumentTypeId())
+                .findByCandidateIdAndCycleId(candidateId, cycleId)
+                .stream()
+                .filter(s -> s.getVerificationStatus() == Enums.VerificationStatus.PENDING 
+                          || s.getVerificationStatus() == Enums.VerificationStatus.REJECTED)
                 .collect(Collectors.toList());
             
+            // If specific document types provided, filter to only those
+            List<Long> docTypeIds;
+            if (documentTypeIds != null && !documentTypeIds.isEmpty()) {
+                Set<Long> selectedTypeIds = new HashSet<>(documentTypeIds);
+                docTypeIds = existingSubmissions.stream()
+                    .map(submission -> submission.getDocumentType().getDocumentTypeId())
+                    .filter(selectedTypeIds::contains)
+                    .collect(Collectors.toList());
+                log.info("Resending with {} out of {} selected document types", 
+                    docTypeIds.size(), documentTypeIds.size());
+            } else {
+                // If no specific types provided, use all PENDING/REJECTED
+                docTypeIds = existingSubmissions.stream()
+                    .map(submission -> submission.getDocumentType().getDocumentTypeId())
+                    .collect(Collectors.toList());
+            }
+            
             if (docTypeIds.isEmpty()) {
-                log.warn("No submissions found for candidate {} in cycle {}", candidateId, cycleId);
+                log.warn("No documents to resend for candidate {} in cycle {}", candidateId, cycleId);
                 return false;
             }
             
-            return sendInitialSubmissionLink(candidateId, cycleId, docTypeIds);
+            log.info("Resending submission link for candidate {} in cycle {} with {} documents", 
+                candidateId, cycleId, docTypeIds.size());
+            return sendInitialSubmissionLink(candidateId, cycleId, docTypeIds, submissionDeadline);
         } catch (Exception e) {
             log.error("Failed to resend submission link: {}", e.getMessage(), e);
             return false;
@@ -266,6 +307,13 @@ public class DocumentLinkServiceImpl implements IDocumentLinkService {
     @Transactional
     public java.util.Map<Long, String> sendBulkSubmissionLinks(List<Long> candidateIds,
             Long cycleId, List<Long> documentTypeIds) {
+        return sendBulkSubmissionLinks(candidateIds, cycleId, documentTypeIds, null);
+        }
+
+        @Override
+        @Transactional
+        public java.util.Map<Long, String> sendBulkSubmissionLinks(List<Long> candidateIds,
+            Long cycleId, List<Long> documentTypeIds, LocalDateTime submissionDeadline) {
 
         // Validate cycle once for all candidates
         HiringCycle cycle = cycleRepository.findById(cycleId)
@@ -280,7 +328,7 @@ public class DocumentLinkServiceImpl implements IDocumentLinkService {
 
         for (Long candidateId : candidateIds) {
             try {
-                generateSubmissionLink(candidateId, cycleId, documentTypeIds);
+                generateSubmissionLink(candidateId, cycleId, documentTypeIds, submissionDeadline);
                 results.put(candidateId, "SUCCESS");
                 log.info("Bulk: sent submission link to candidate {}", candidateId);
             } catch (ResourceNotFoundException e) {
@@ -302,6 +350,15 @@ public class DocumentLinkServiceImpl implements IDocumentLinkService {
 
     @Value("${app.frontend.url}")
     private String frontendUrl;
+
+    private LocalDateTime resolveSubmissionDeadline(LocalDateTime submissionDeadline) {
+        LocalDateTime fallback = LocalDateTime.now().plusDays(7);
+        if (submissionDeadline == null) return fallback;
+        if (!submissionDeadline.isAfter(LocalDateTime.now())) {
+            throw new ValidationException("Submission deadline must be in the future");
+        }
+        return submissionDeadline;
+    }
 
     private String buildSubmissionLink(String token) {
         return frontendUrl + "/documents/submit?token=" + token;

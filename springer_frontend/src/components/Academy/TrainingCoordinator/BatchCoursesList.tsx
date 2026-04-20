@@ -8,55 +8,89 @@ import {
 import {
   Add as AddIcon, Link as LinkIcon,
   LinkOff as LinkOffIcon, MenuBook as MenuBookIcon,
-  CheckCircle as CheckCircleIcon,
+  CheckCircle as CheckCircleIcon, PlayArrow as PlayArrowIcon,
 } from '@mui/icons-material';
-import { batchCourseApi, trainingCourseApi } from '../../../services/academy.api';
+import { batchCourseApi, trainingCourseApi, userApi } from '../../../services/academy.api';
 import { hiringCycleApi } from '../../../services/hiring.api';
 import { showToast } from '../../../utils/toast';
 import type {
-  BatchCourseResponse, TrainingCourseResponse, AcademyContextProps,
+  BatchCourseResponse, BatchCourseRequest, TrainingCourseResponse,
+  AcademyContextProps, UserSummary,
 } from '../../../types/Academy/academy.types';
 import type { HiringCycleResponse } from '../../../types/TA_Recruiter/Hiring/hiringCycle.types';
 import FilterSelect from '../../Common/FilterSelect';
 import '../../../css/Academy/TrainingCoordinator/BatchCoursesList.css';
+
+const STATUS_CLASS: Record<string, string> = {
+  PLANNED:   'bc-status-chip bc-status-chip--planned',
+  ACTIVE:    'bc-status-chip bc-status-chip--active',
+  COMPLETED: 'bc-status-chip bc-status-chip--completed',
+  CANCELLED: 'bc-status-chip bc-status-chip--cancelled',
+};
+
+const NEXT_STATUS: Record<string, string> = {
+  PLANNED: 'ACTIVE',
+  ACTIVE:  'COMPLETED',
+};
+
+const EMPTY_LINK_FORM = {
+  startDate: '', endDate: '', conductedBy: 0, status: 'PLANNED',
+};
 
 const BatchCoursesList = ({ context }: { context: AcademyContextProps }) => {
   const { programYear, programs: yearPrograms } = context;
 
   const [batchCourses, setBatchCourses] = useState<BatchCourseResponse[]>([]);
   const [allCourses, setAllCourses] = useState<TrainingCourseResponse[]>([]);
+  const [trainers, setTrainers] = useState<UserSummary[]>([]);
   const [cycles, setCycles] = useState<HiringCycleResponse[]>([]);
   const [loading, setLoading] = useState(true);
 
   // Table filters
-  const [filterCycle, setFilterCycle] = useState('all');
   const [filterProgram, setFilterProgram] = useState('all');
   const [filterBatch, setFilterBatch] = useState('all');
+  const [filterStatus, setFilterStatus] = useState('all');
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
 
-  // Dialog state
+  // Main link dialog state
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dlgProgramId, setDlgProgramId] = useState(0);
   const [selectedCourse, setSelectedCourse] = useState<TrainingCourseResponse | null>(null);
-  const [linking, setLinking] = useState<string | null>(null);
+
+  // Tile popup form state (Option A)
+  const [tilePopup, setTilePopup] = useState<{
+    open: boolean; programId: number; batchNo: number; programName: string;
+  }>({ open: false, programId: 0, batchNo: 0, programName: '' });
+  const [linkForm, setLinkForm] = useState(EMPTY_LINK_FORM);
+  const [linking, setLinking] = useState(false);
+
+  // Status update dialog
+  const [statusDialog, setStatusDialog] = useState<{ open: boolean; bc: BatchCourseResponse | null }>({ open: false, bc: null });
+  const [statusUpdating, setStatusUpdating] = useState(false);
 
   useEffect(() => {
     fetchData();
-    setFilterCycle('all'); setFilterProgram('all'); setFilterBatch('all'); setPage(0);
+    setFilterProgram('all'); setFilterBatch('all'); setFilterStatus('all'); setPage(0);
   }, [programYear]);
 
   const fetchData = async () => {
     try {
       setLoading(true);
-      const [bcRes, crsRes, cycleRes] = await Promise.all([
+      const [bcRes, crsRes, cycleRes, tcRes, memRes] = await Promise.all([
         batchCourseApi.getAllBatchCourses(),
         trainingCourseApi.getAllCourses(),
         hiringCycleApi.getAllCycles(),
+        userApi.getUsersByRole('TRAINING_COORDINATOR'),
+        userApi.getUsersByRole('MEMBERS'),
       ]);
       if (bcRes.success && bcRes.data) setBatchCourses(bcRes.data);
       if (crsRes.success && crsRes.data) setAllCourses(crsRes.data);
       if (cycleRes.success && cycleRes.data) setCycles(cycleRes.data);
+      const combined: UserSummary[] = [];
+      if (tcRes.success && tcRes.data) combined.push(...tcRes.data);
+      if (memRes.success && memRes.data) combined.push(...memRes.data);
+      setTrainers(combined);
     } catch (err: any) {
       showToast(err.message || 'Failed to load data', 'error');
     } finally {
@@ -64,107 +98,130 @@ const BatchCoursesList = ({ context }: { context: AcademyContextProps }) => {
     }
   };
 
-  // ── Helpers ──
-  const getCourseName = (id: number) =>
-    allCourses.find(c => c.courseId === id)?.courseName ?? `Course ${id}`;
-
   const getCycleName = (id: number | null) =>
     id ? (cycles.find(c => c.cycleId === id)?.cycleName ?? `Cycle ${id}`) : '—';
 
-  const formatDate = (d: string) =>
+  const formatDate = (d: string | null) =>
     d ? new Date(d).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : '—';
 
   const isLinked = (courseId: number, programId: number, batchNo: number) =>
     batchCourses.some(bc => bc.courseId === courseId && bc.programId === programId && bc.batchNo === batchNo);
 
-  const getBatchCourseId = (courseId: number, programId: number, batchNo: number) =>
-    batchCourses.find(bc => bc.courseId === courseId && bc.programId === programId && bc.batchNo === batchNo)?.batchCourseId;
+  const getBatchCourse = (courseId: number, programId: number, batchNo: number) =>
+    batchCourses.find(bc => bc.courseId === courseId && bc.programId === programId && bc.batchNo === batchNo);
 
-  // ── Dialog derived data ──
-  const dlgCourses = allCourses.filter(c =>
-    c.status === 'PLANNED' &&
-    (programYear === 0 || !c.startDate || new Date(c.startDate).getFullYear() === programYear)
-  );
-
-  const dlgFilteredPrograms = yearPrograms.filter(p =>
-    p.status === true &&
-    (programYear === 0 || p.programYear === programYear)
-  );
-
-  // ── Dialog open ──
-  const openDialog = () => {
-    setDlgProgramId(0); setSelectedCourse(null);
-    setDialogOpen(true);
+  // ── Tile click handler ──
+  const handleTileClick = (programId: number, batchNo: number, programName: string) => {
+    if (!selectedCourse) return;
+    const existing = getBatchCourse(selectedCourse.courseId, programId, batchNo);
+    if (existing) {
+      // Already linked — open status update dialog
+      setStatusDialog({ open: true, bc: existing });
+    } else {
+      // Not linked — open link form popup
+      setLinkForm(EMPTY_LINK_FORM);
+      setTilePopup({ open: true, programId, batchNo, programName });
+    }
   };
 
-  // ── Link / Unlink tile ──
-  const handleLinkTile = async (programId: number, batchNo: number) => {
+  // ── Save link with form data ──
+  const handleSaveLink = async () => {
     if (!selectedCourse) return;
-    const key = `${programId}-${batchNo}`;
-    const linked = isLinked(selectedCourse.courseId, programId, batchNo);
+    if (!linkForm.startDate || !linkForm.endDate) { showToast('Start date and end date are required', 'error'); return; }
+    if (!linkForm.conductedBy) { showToast('Trainer is required', 'error'); return; }
+    if (linkForm.endDate < linkForm.startDate) { showToast('End date cannot be before start date', 'error'); return; }
+
     try {
-      setLinking(key);
-      if (linked) {
-        const bcId = getBatchCourseId(selectedCourse.courseId, programId, batchNo);
-        if (!bcId) return;
-        const res = await batchCourseApi.removeCourseFromBatch(bcId);
-        if (res.success) { showToast(`Unlinked from Batch ${batchNo}`, 'success'); fetchData(); }
-      } else {
-        const res = await batchCourseApi.linkCourseToBatch({
-          courseId: selectedCourse.courseId, programId, batchNo,
-        });
-        if (res.success) { showToast(`Linked to Batch ${batchNo}`, 'success'); fetchData(); }
+      setLinking(true);
+      const req: BatchCourseRequest = {
+        courseId: selectedCourse.courseId,
+        programId: tilePopup.programId,
+        batchNo: tilePopup.batchNo,
+        startDate: linkForm.startDate,
+        endDate: linkForm.endDate,
+        conductedBy: linkForm.conductedBy,
+        status: linkForm.status,
+      };
+      const res = await batchCourseApi.linkCourseToBatch(req);
+      if (res.success) {
+        showToast(`"${selectedCourse.courseName}" linked to Batch ${tilePopup.batchNo} successfully`, 'success');
+        setTilePopup({ open: false, programId: 0, batchNo: 0, programName: '' });
+        fetchData();
       }
     } catch (err: any) {
-      showToast(err.message || 'Failed', 'error');
+      showToast(err.message || 'Failed to link course', 'error');
     } finally {
-      setLinking(null);
+      setLinking(false);
+    }
+  };
+
+  // ── Unlink ──
+  const handleUnlink = async (batchCourseId: number) => {
+    try {
+      const res = await batchCourseApi.removeCourseFromBatch(batchCourseId);
+      if (res.success) { showToast('Course unlinked from batch', 'success'); fetchData(); }
+    } catch (err: any) {
+      showToast(err.message || 'Failed to unlink', 'error');
     }
   };
 
   // ── Remove from table ──
   const handleRemove = async (batchCourseId: number, e: React.MouseEvent) => {
     e.stopPropagation();
+    await handleUnlink(batchCourseId);
+  };
+
+  // ── Status update ──
+  const handleStatusUpdate = async () => {
+    if (!statusDialog.bc) return;
+    const next = NEXT_STATUS[statusDialog.bc.status];
+    if (!next) return;
     try {
-      const res = await batchCourseApi.removeCourseFromBatch(batchCourseId);
-      if (res.success) { showToast('Link removed', 'success'); fetchData(); }
+      setStatusUpdating(true);
+      const res = await batchCourseApi.updateBatchCourseStatus(statusDialog.bc.batchCourseId, next);
+      if (res.success) {
+        showToast(`Status updated to ${next}`, 'success');
+        setStatusDialog({ open: false, bc: null });
+        fetchData();
+      }
     } catch (err: any) {
-      showToast(err.message || 'Failed to remove', 'error');
+      showToast(err.message || 'Failed to update status', 'error');
+    } finally {
+      setStatusUpdating(false);
     }
   };
 
   // ── Table filter derived data ──
   const yearProgramIds = new Set(
-    yearPrograms
-      .filter(p => programYear === 0 || p.programYear === programYear)
-      .map(p => p.programId)
+    yearPrograms.filter(p => programYear === 0 || p.programYear === programYear).map(p => p.programId)
   );
 
   const filtered = batchCourses.filter(bc => {
     const matchYear    = programYear === 0 || yearProgramIds.has(bc.programId);
-    const matchCycle   = filterCycle === 'all' || String(bc.cycleId) === filterCycle;
     const matchProgram = filterProgram === 'all' || String(bc.programId) === filterProgram;
     const matchBatch   = filterBatch === 'all' || String(bc.batchNo) === filterBatch;
-    return matchYear && matchCycle && matchProgram && matchBatch;
+    const matchStatus  = filterStatus === 'all' || bc.status === filterStatus;
+    return matchYear && matchProgram && matchBatch && matchStatus;
   });
 
   const paginated = filtered.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
-
-  const cyclesInData = cycles.filter(c =>
-    batchCourses.some(bc => bc.cycleId === c.cycleId && (programYear === 0 || yearProgramIds.has(bc.programId)))
-  );
 
   const programsInData = yearPrograms.filter(p =>
     batchCourses.some(bc => bc.programId === p.programId) &&
     (programYear === 0 || p.programYear === programYear)
   );
-
   const batchesInData = Array.from(new Set(
     batchCourses
       .filter(bc => (programYear === 0 || yearProgramIds.has(bc.programId)) &&
         (filterProgram === 'all' || String(bc.programId) === filterProgram))
       .map(bc => bc.batchNo)
   )).sort((a, b) => a - b);
+
+  // ── Dialog derived data ──
+  const dlgCourses = allCourses;
+  const dlgFilteredPrograms = yearPrograms.filter(p =>
+    p.status === true && (programYear === 0 || p.programYear === programYear)
+  );
 
   return (
     <Box className="bc-page">
@@ -173,13 +230,6 @@ const BatchCoursesList = ({ context }: { context: AcademyContextProps }) => {
         {/* Filters */}
         <Box className="bc-filter-section">
           <Box className="bc-filter-row">
-            <FilterSelect label="Hiring Cycle" value={filterCycle}
-              onChange={v => { setFilterCycle(v); setFilterProgram('all'); setFilterBatch('all'); setPage(0); }}>
-              <MenuItem value="all">All Cycles</MenuItem>
-              {cyclesInData.map(c => (
-                <MenuItem key={c.cycleId} value={String(c.cycleId)}>{c.cycleName}</MenuItem>
-              ))}
-            </FilterSelect>
             <FilterSelect label="Program" value={filterProgram}
               onChange={v => { setFilterProgram(v); setFilterBatch('all'); setPage(0); }}>
               <MenuItem value="all">All Programs</MenuItem>
@@ -194,8 +244,16 @@ const BatchCoursesList = ({ context }: { context: AcademyContextProps }) => {
                 <MenuItem key={b} value={String(b)}>Batch {b}</MenuItem>
               ))}
             </FilterSelect>
+            <FilterSelect label="Status" value={filterStatus}
+              onChange={v => { setFilterStatus(v); setPage(0); }}>
+              <MenuItem value="all">All Status</MenuItem>
+              <MenuItem value="PLANNED">Planned</MenuItem>
+              <MenuItem value="ACTIVE">Active</MenuItem>
+              <MenuItem value="COMPLETED">Completed</MenuItem>
+              <MenuItem value="CANCELLED">Cancelled</MenuItem>
+            </FilterSelect>
             <Box className="bc-filter-spacer" />
-            <Button variant="contained" startIcon={<AddIcon />} onClick={openDialog} className="bc-add-button">
+            <Button variant="contained" startIcon={<AddIcon />} onClick={() => { setDlgProgramId(0); setSelectedCourse(null); setDialogOpen(true); }} className="bc-add-button">
               Link Course to Batch
             </Button>
           </Box>
@@ -219,15 +277,17 @@ const BatchCoursesList = ({ context }: { context: AcademyContextProps }) => {
                       <TableCell className="bc-table-head-cell">Course</TableCell>
                       <TableCell className="bc-table-head-cell">Program</TableCell>
                       <TableCell className="bc-table-head-cell">Batch</TableCell>
-                      <TableCell className="bc-table-head-cell">Hiring Cycle</TableCell>
-                      <TableCell className="bc-table-head-cell">Linked On</TableCell>
+                      <TableCell className="bc-table-head-cell">Trainer</TableCell>
+                      <TableCell className="bc-table-head-cell">Start Date</TableCell>
+                      <TableCell className="bc-table-head-cell">End Date</TableCell>
+                      <TableCell className="bc-table-head-cell">Status</TableCell>
                       <TableCell className="bc-table-head-cell bc-table-head-cell--actions">Actions</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
                     {paginated.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={6} className="bc-empty-cell">
+                        <TableCell colSpan={8} className="bc-empty-cell">
                           <LinkIcon className="bc-empty-icon" />
                           <Typography className="bc-empty-text">
                             No batch-course links found{programYear === 0 ? '' : ` for ${programYear}`}
@@ -241,7 +301,10 @@ const BatchCoursesList = ({ context }: { context: AcademyContextProps }) => {
                           <TableCell className="bc-table-cell">
                             <Box className="bc-name-cell">
                               <Box className="bc-name-icon-box"><MenuBookIcon className="bc-name-icon" /></Box>
-                              <Typography className="bc-row-primary">{getCourseName(bc.courseId)}</Typography>
+                              <Box>
+                                <Typography className="bc-row-primary">{bc.courseName ?? `Course ${bc.courseId}`}</Typography>
+                                <Typography className="bc-row-secondary">{getCycleName(bc.cycleId)}</Typography>
+                              </Box>
                             </Box>
                           </TableCell>
                           <TableCell className="bc-table-cell">
@@ -253,13 +316,33 @@ const BatchCoursesList = ({ context }: { context: AcademyContextProps }) => {
                             <Chip label={`Batch ${bc.batchNo}`} size="small" variant="outlined" className="bc-batch-chip" />
                           </TableCell>
                           <TableCell className="bc-table-cell">
-                            <Typography className="bc-row-secondary">{getCycleName(bc.cycleId)}</Typography>
+                            <Typography className="bc-row-secondary">{bc.trainerName ?? '—'}</Typography>
                           </TableCell>
                           <TableCell className="bc-table-cell">
-                            <Typography className="bc-row-secondary">{formatDate(bc.createdAt)}</Typography>
+                            <Typography className="bc-row-secondary">{formatDate(bc.startDate)}</Typography>
+                          </TableCell>
+                          <TableCell className="bc-table-cell">
+                            <Typography className="bc-row-secondary">{formatDate(bc.endDate)}</Typography>
+                          </TableCell>
+                          <TableCell className="bc-table-cell">
+                            <Chip
+                              label={bc.status}
+                              size="small"
+                              variant="outlined"
+                              className={STATUS_CLASS[bc.status] ?? 'bc-status-chip'}
+                            />
                           </TableCell>
                           <TableCell className="bc-table-cell bc-table-cell--actions">
                             <Stack direction="row" spacing={0.5} justifyContent="flex-end">
+                              {NEXT_STATUS[bc.status] && (
+                                <IconButton size="small" className="bc-action-button"
+                                  title={`Move to ${NEXT_STATUS[bc.status]}`}
+                                  onClick={() => setStatusDialog({ open: true, bc })}>
+                                  {bc.status === 'PLANNED'
+                                    ? <PlayArrowIcon className="bc-action-icon" />
+                                    : <CheckCircleIcon className="bc-action-icon" />}
+                                </IconButton>
+                              )}
                               <IconButton size="small" className="bc-action-button bc-action-button--remove"
                                 title="Remove Link" onClick={e => handleRemove(bc.batchCourseId, e)}>
                                 <LinkOffIcon className="bc-action-icon--remove" />
@@ -283,12 +366,10 @@ const BatchCoursesList = ({ context }: { context: AcademyContextProps }) => {
         </Box>
       </Card>
 
-      {/* Link Course to Batch Dialog — two-panel UI */}
+      {/* ── Main Link Dialog — two-panel UI ── */}
       <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} maxWidth="md" fullWidth>
         <DialogTitle className="bc-dialog-title">Link Course to Batch</DialogTitle>
         <DialogContent sx={{ p: 0 }}>
-
-          {/* Program filter */}
           <Box className="bc-dlg-filters">
             <TextField select label="Filter by Program" size="small"
               value={dlgProgramId || ''}
@@ -303,18 +384,16 @@ const BatchCoursesList = ({ context }: { context: AcademyContextProps }) => {
 
           <Box className="bc-separator" />
 
-          {/* Two panels */}
           <Box className="bc-dlg-panels">
-
-            {/* Left — Course Cards */}
+            {/* Left — Course list */}
             <Box className="bc-dlg-panel bc-dlg-panel--left">
-              <Typography className="bc-dlg-panel-title">PLANNED Courses</Typography>
+              <Typography className="bc-dlg-panel-title">Course Templates</Typography>
               <Typography className="bc-dlg-panel-sub">Click a course to select it</Typography>
               <Box className="bc-separator" sx={{ my: 1 }} />
               {dlgCourses.length === 0 ? (
                 <Box className="bc-panel-empty">
                   <MenuBookIcon className="bc-empty-icon" />
-                  <Typography className="bc-empty-text">No PLANNED courses{programYear === 0 ? '' : ` for ${programYear}`}</Typography>
+                  <Typography className="bc-empty-text">No courses found. Create courses first.</Typography>
                 </Box>
               ) : (
                 <Box className="bc-dlg-course-list">
@@ -331,11 +410,10 @@ const BatchCoursesList = ({ context }: { context: AcademyContextProps }) => {
                         <Box className="bc-course-card-info">
                           <Typography className="bc-course-card-name">{course.courseName}</Typography>
                           <Typography className="bc-course-card-meta">
-                            {linkedCount > 0 ? `Linked to ${linkedCount} batch(es)` : 'Not linked yet'}
+                            Min: {course.minScore} · Weight: {course.weightage}% ·{' '}
+                            {linkedCount > 0 ? `${linkedCount} batch(es) linked` : 'Not linked yet'}
                           </Typography>
                         </Box>
-                        <Chip label={course.status} size="small" variant="outlined"
-                          className={`bc-status-chip bc-status-chip--${course.status.toLowerCase()}`} />
                       </Box>
                     );
                   })}
@@ -343,13 +421,13 @@ const BatchCoursesList = ({ context }: { context: AcademyContextProps }) => {
               )}
             </Box>
 
-            {/* Right — Batch Tiles */}
+            {/* Right — Batch tiles */}
             <Box className="bc-dlg-panel bc-dlg-panel--right">
               <Typography className="bc-dlg-panel-title">
                 {selectedCourse ? `Link "${selectedCourse.courseName}" to batches` : 'Select a course first'}
               </Typography>
               <Typography className="bc-dlg-panel-sub">
-                {selectedCourse ? 'Click a batch tile to link or unlink' : 'Choose a course from the left'}
+                {selectedCourse ? 'Click an unlinked batch to set dates & trainer' : 'Choose a course from the left'}
               </Typography>
               <Box className="bc-separator" sx={{ my: 1 }} />
               {!selectedCourse ? (
@@ -360,31 +438,27 @@ const BatchCoursesList = ({ context }: { context: AcademyContextProps }) => {
               ) : (
                 <Box className="bc-dlg-batch-scroll">
                   {yearPrograms
-                    .filter(p =>
-                      p.status &&
-                      (dlgProgramId === 0 || p.programId === dlgProgramId)
-                    )
+                    .filter(p => p.status && (dlgProgramId === 0 || p.programId === dlgProgramId))
                     .map(prog => (
                       <Box key={prog.programId} className="bc-program-group">
                         <Typography className="bc-program-group-name">{prog.programName}</Typography>
                         <Box className="bc-batch-row">
                           {Array.from({ length: prog.numberOfBatches }, (_, i) => i + 1).map(batchNo => {
                             const linked = isLinked(selectedCourse.courseId, prog.programId, batchNo);
-                            const key = `${prog.programId}-${batchNo}`;
-                            const isLinking = linking === key;
+                            const bc = getBatchCourse(selectedCourse.courseId, prog.programId, batchNo);
                             return (
                               <Box key={batchNo}
-                                className={`bc-batch-tile ${linked ? 'bc-batch-tile--linked' : 'bc-batch-tile--unlinked'} ${isLinking ? 'bc-batch-tile--loading' : ''}`}
-                                onClick={() => !isLinking && handleLinkTile(prog.programId, batchNo)}>
-                                {isLinking ? (
-                                  <CircularProgress size={16} sx={{ color: 'var(--color-primary)' }} />
-                                ) : linked ? (
-                                  <CheckCircleIcon className="bc-batch-tile-icon bc-batch-tile-icon--linked" />
-                                ) : (
-                                  <LinkIcon className="bc-batch-tile-icon" />
-                                )}
+                                className={`bc-batch-tile ${linked ? 'bc-batch-tile--linked' : 'bc-batch-tile--unlinked'}`}
+                                onClick={() => handleTileClick(prog.programId, batchNo, prog.programName)}>
+                                {linked
+                                  ? <CheckCircleIcon className="bc-batch-tile-icon bc-batch-tile-icon--linked" />
+                                  : <LinkIcon className="bc-batch-tile-icon" />}
                                 <Typography className="bc-batch-tile-label">Batch {batchNo}</Typography>
-                                {linked && <Typography className="bc-batch-tile-status">Linked</Typography>}
+                                {linked && (
+                                  <Typography className="bc-batch-tile-status">
+                                    {bc?.status ?? 'Linked'}
+                                  </Typography>
+                                )}
                               </Box>
                             );
                           })}
@@ -398,6 +472,77 @@ const BatchCoursesList = ({ context }: { context: AcademyContextProps }) => {
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
           <Button onClick={() => setDialogOpen(false)} className="bc-dialog-cancel-btn">Done</Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* ── Tile Popup Form — fill dates/trainer before linking ── */}
+      <Dialog open={tilePopup.open} onClose={() => setTilePopup({ open: false, programId: 0, batchNo: 0, programName: '' })} maxWidth="xs" fullWidth>
+        <DialogTitle className="bc-dialog-title">
+          Link "{selectedCourse?.courseName}" → Batch {tilePopup.batchNo}
+        </DialogTitle>
+        <DialogContent>
+          <Stack spacing={2} sx={{ mt: 1 }}>
+            <Typography sx={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-secondary)' }}>
+              Program: <strong>{tilePopup.programName}</strong>
+            </Typography>
+            <TextField
+              label="Start Date *" type="date" size="small" fullWidth
+              value={linkForm.startDate}
+              onChange={e => setLinkForm(prev => ({ ...prev, startDate: e.target.value }))}
+              InputLabelProps={{ shrink: true }}
+              className="bc-dialog-field"
+            />
+            <TextField
+              label="End Date *" type="date" size="small" fullWidth
+              value={linkForm.endDate}
+              onChange={e => setLinkForm(prev => ({ ...prev, endDate: e.target.value }))}
+              inputProps={{ min: linkForm.startDate }}
+              InputLabelProps={{ shrink: true }}
+              className="bc-dialog-field"
+            />
+            <TextField
+              select label="Trainer *" size="small" fullWidth
+              value={linkForm.conductedBy || ''}
+              onChange={e => setLinkForm(prev => ({ ...prev, conductedBy: Number(e.target.value) }))}
+              className="bc-dialog-field">
+              <MenuItem value="">— Select Trainer —</MenuItem>
+              {trainers.map(t => (
+                <MenuItem key={t.userId} value={t.userId}>{t.username} — {t.email}</MenuItem>
+              ))}
+            </TextField>
+            <TextField
+              select label="Status" size="small" fullWidth
+              value={linkForm.status}
+              onChange={e => setLinkForm(prev => ({ ...prev, status: e.target.value }))}
+              className="bc-dialog-field">
+              <MenuItem value="PLANNED">Planned</MenuItem>
+              <MenuItem value="ACTIVE">Active</MenuItem>
+            </TextField>
+          </Stack>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button onClick={() => setTilePopup({ open: false, programId: 0, batchNo: 0, programName: '' })} className="bc-dialog-cancel-btn">Cancel</Button>
+          <Button variant="contained" onClick={handleSaveLink} disabled={linking} className="bc-dialog-submit-btn">
+            {linking ? 'Linking...' : 'Link Course'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* ── Status Update Dialog ── */}
+      <Dialog open={statusDialog.open} onClose={() => setStatusDialog({ open: false, bc: null })} maxWidth="xs" fullWidth>
+        <DialogTitle className="bc-dialog-title">Update Course Status</DialogTitle>
+        <DialogContent>
+          <Typography sx={{ mt: 1, fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>
+            Move <strong>{statusDialog.bc?.courseName}</strong> in Batch {statusDialog.bc?.batchNo} from{' '}
+            <strong>{statusDialog.bc?.status}</strong> to{' '}
+            <strong>{statusDialog.bc ? NEXT_STATUS[statusDialog.bc.status] : ''}</strong>?
+          </Typography>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button onClick={() => setStatusDialog({ open: false, bc: null })} className="bc-dialog-cancel-btn">Cancel</Button>
+          <Button variant="contained" onClick={handleStatusUpdate} disabled={statusUpdating} className="bc-dialog-submit-btn">
+            {statusUpdating ? 'Updating...' : 'Confirm'}
+          </Button>
         </DialogActions>
       </Dialog>
     </Box>

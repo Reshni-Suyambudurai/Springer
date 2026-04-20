@@ -23,6 +23,8 @@ public class CandidateResponse {
     private String state;
     private String city;
     private Long cycleId;
+    private Long driveId;
+    private String driveName;
     private String firstName;
     private String lastName;
     private String email;

@@ -65,6 +65,36 @@ public class DriveAssignmentController {
         return ResponseEntity.ok(new ApiResponse<>(true, "Assignments retrieved successfully", responses));
     }
     
+    @GetMapping("/allocation-status")
+    @Operation(summary = "Get panel allocation status per candidate",
+               description = "Returns assigned panel member + evaluated flag for each applicationId in a drive/round. " +
+                             "3 DB queries total regardless of candidate count.")
+    public ResponseEntity<ApiResponse<List<PanelAllocationStatusResponse>>> getAllocationStatus(
+            @RequestParam Long driveId,
+            @RequestParam Integer roundNo,
+            @RequestParam List<Long> applicationIds) {
+        List<PanelAllocationStatusResponse> responses = driveAssignmentService.getAllocationStatus(driveId, roundNo, applicationIds);
+        return ResponseEntity.ok(new ApiResponse<>(true, "Allocation status retrieved successfully", responses));
+    }
+    
+    @GetMapping("/user/{userId}/drive/{driveId}")
+    @Operation(summary = "Get active assignments by panel member userId and driveId",
+               description = "Returns all active assignments for a specific panel member in a specific drive")
+    public ResponseEntity<ApiResponse<List<DriveAssignmentResponse>>> getAssignmentsByUserId(
+            @PathVariable Long userId, @PathVariable Long driveId) {
+        List<DriveAssignmentResponse> responses = driveAssignmentService.getAssignmentsByUserId(userId, driveId);
+        return ResponseEntity.ok(new ApiResponse<>(true, "Assignments retrieved successfully", responses));
+    }
+    
+    @GetMapping("/user/{userId}/status/{status}")
+    @Operation(summary = "Get active assignments by panel member userId and status",
+               description = "Returns all active assignments for a specific panel member with given status")
+    public ResponseEntity<ApiResponse<List<DriveAssignmentResponse>>> getAssignmentsByUserIdAndStatus(
+            @PathVariable Long userId, @PathVariable String status) {
+        List<DriveAssignmentResponse> responses = driveAssignmentService.getAssignmentsByUserIdAndStatus(userId, status);
+        return ResponseEntity.ok(new ApiResponse<>(true, "Assignments retrieved successfully", responses));
+    }
+    
     @PatchMapping("/{assignmentId}/status")
     @Operation(summary = "Update assignment status", 
                description = "Updates the status of a drive assignment (e.g., PLANNED, DRAFT, SELECTED, REJECTED, CANCELLED)")

@@ -2,7 +2,7 @@
   "rules" : [ {
     "field" : "cgpa",
     "operator" : ">=",
-    "value" : 7.0,
+    "value" : 7.5,
     "min" : null,
     "max" : null,
     "message" : "CGPA must be at least {value}",

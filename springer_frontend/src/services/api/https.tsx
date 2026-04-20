@@ -8,6 +8,25 @@ export const http = axios.create({
     }
 });
 
+// Public HTTP client — NO auth header attached.
+// Used for candidate-facing pages (document submission) where the candidate
+// is not a logged-in user. Authentication is done via the JWT token in the URL.
+export const publicHttp = axios.create({
+    baseURL : import.meta.env.VITE_API_URL,
+    headers: {
+        "Content-Type" : "application/json"
+    }
+});
+
+// For FormData (file uploads), remove Content-Type so browser sets it with
+// the correct multipart boundary automatically
+publicHttp.interceptors.request.use((config) => {
+  if (config.data instanceof FormData) {
+    delete config.headers['Content-Type'];
+  }
+  return config;
+});
+
 // Request interceptor - Add auth token to requests
 http.interceptors.request.use((config)=>{
   const token = tokenstore.getToken();

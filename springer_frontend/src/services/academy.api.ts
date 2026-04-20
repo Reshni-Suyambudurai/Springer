@@ -8,6 +8,8 @@ import type {
   TrainingCourseResponse,
   BatchCourseRequest,
   BatchCourseResponse,
+  BatchScheduleRequest,
+  BatchScheduleResponse,
   BatchAllocationRequest,
   BatchAllocationResponse,
   AttendanceMarkRequest,
@@ -17,7 +19,13 @@ import type {
   TrainingScoreRequest,
   TrainingScoreResponse,
   UserSummary,
+  JoiningStatusUpdateRequest,
+  JoiningTrackerRequest,
+  JoiningTrackerCandidate,
+  BatchCandidateResponse,
+  ExcelUploadResponse,
 } from '../types/Academy/academy.types';
+import type { CandidateResponse } from '../types/TA_Recruiter/Drive/candidate.types';
 
 // ==================== PROGRAM YEARS API ====================
 export const programYearsApi = {
@@ -211,6 +219,15 @@ export const batchCourseApi = {
     }
   },
 
+  async updateBatchCourseStatus(batchCourseId: number, status: string): Promise<ApiResponse<BatchCourseResponse>> {
+    try {
+      const response = await http.patch(`/academy/batch-courses/${batchCourseId}/status`, null, { params: { status } });
+      return response.data;
+    } catch (error) {
+      throw handleAxiosError(error);
+    }
+  },
+
   async getAllBatchCourses(): Promise<ApiResponse<BatchCourseResponse[]>> {
     try {
       const response = await http.get('/academy/batch-courses');
@@ -259,6 +276,37 @@ export const batchCourseApi = {
   async removeCourseFromBatch(batchCourseId: number): Promise<ApiResponse<string>> {
     try {
       const response = await http.delete(`/academy/batch-courses/${batchCourseId}`);
+      return response.data;
+    } catch (error) {
+      throw handleAxiosError(error);
+    }
+  },
+};
+
+// ==================== BATCH SCHEDULE APIs ====================
+export const batchScheduleApi = {
+
+  async saveOrUpdate(data: BatchScheduleRequest): Promise<ApiResponse<BatchScheduleResponse>> {
+    try {
+      const response = await http.post('/academy/batch-schedules', data);
+      return response.data;
+    } catch (error) {
+      throw handleAxiosError(error);
+    }
+  },
+
+  async getByProgram(programId: number): Promise<ApiResponse<BatchScheduleResponse[]>> {
+    try {
+      const response = await http.get(`/academy/batch-schedules/program/${programId}`);
+      return response.data;
+    } catch (error) {
+      throw handleAxiosError(error);
+    }
+  },
+
+  async getByProgramAndBatch(programId: number, batchNumber: number): Promise<ApiResponse<BatchScheduleResponse>> {
+    try {
+      const response = await http.get(`/academy/batch-schedules/program/${programId}/batch/${batchNumber}`);
       return response.data;
     } catch (error) {
       throw handleAxiosError(error);
@@ -375,6 +423,77 @@ export const attendanceApi = {
   async getAttendanceSummary(studentId: number): Promise<ApiResponse<AttendanceStatsResponse>> {
     try {
       const response = await http.get(`/academy/attendance/${studentId}/summary`);
+      return response.data;
+    } catch (error) {
+      throw handleAxiosError(error);
+    }
+  },
+
+  async getAttendanceRecords(studentId: number): Promise<ApiResponse<AttendanceResponse[]>> {
+    try {
+      const response = await http.get(`/academy/attendance/${studentId}/records`);
+      return response.data;
+    } catch (error) {
+      throw handleAxiosError(error);
+    }
+  },
+};
+
+// ==================== EXCEL UPLOAD APIs ====================
+export const excelUploadApi = {
+
+  async uploadScores(file: File, programId: number, batchNumber: number, courseId: number, reviewedBy: number): Promise<ApiResponse<ExcelUploadResponse>> {
+    try {
+      const form = new FormData();
+      form.append('file', file);
+      const response = await http.post(
+        `/academy/scores/upload?programId=${programId}&batchNumber=${batchNumber}&courseId=${courseId}&reviewedBy=${reviewedBy}`,
+        form, { headers: { 'Content-Type': 'multipart/form-data' } }
+      );
+      return response.data;
+    } catch (error) { throw handleAxiosError(error); }
+  },
+
+  async uploadAttendance(file: File, programId: number, batchNumber: number): Promise<ApiResponse<ExcelUploadResponse>> {
+    try {
+      const form = new FormData();
+      form.append('file', file);
+      const response = await http.post(
+        `/academy/attendance/upload?programId=${programId}&batchNumber=${batchNumber}`,
+        form, { headers: { 'Content-Type': 'multipart/form-data' } }
+      );
+      return response.data;
+    } catch (error) { throw handleAxiosError(error); }
+  },
+};
+
+// ==================== JOINING TRACKER APIs ====================
+export const joiningTrackerApi = {
+
+  async getCandidatesByCycleAndStages(request: JoiningTrackerRequest): Promise<ApiResponse<JoiningTrackerCandidate[]>> {
+    try {
+      const response = await http.post('/academy/programs/joining-tracker/candidates', request);
+      return response.data;
+    } catch (error) {
+      throw handleAxiosError(error);
+    }
+  },
+
+  async updateJoiningStatus(candidateId: number, data: JoiningStatusUpdateRequest): Promise<ApiResponse<CandidateResponse>> {
+    try {
+      const response = await http.patch(`/candidates/${candidateId}/status`, data);
+      return response.data;
+    } catch (error) {
+      throw handleAxiosError(error);
+    }
+  },
+};
+
+// ==================== BATCH ALLOCATION CANDIDATE APIs ====================
+export const batchCandidateApi = {
+  async getCandidatesByCycleAndStages(request: JoiningTrackerRequest): Promise<ApiResponse<BatchCandidateResponse[]>> {
+    try {
+      const response = await http.post('/academy/programs/batch-allocation/candidates', request);
       return response.data;
     } catch (error) {
       throw handleAxiosError(error);

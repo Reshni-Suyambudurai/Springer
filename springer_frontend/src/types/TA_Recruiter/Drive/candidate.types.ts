@@ -94,6 +94,7 @@ export interface CandidateFilters {
 export interface CandidateRequest {
   instituteId: number;
   cycleId?: number;
+  driveId?: number;
   firstName: string;
   lastName: string;
   email: string;
@@ -138,6 +139,33 @@ export interface CandidateResponse {
   skillNames: string[];
 }
 
+/**
+ * Lightweight response for candidate list/table views.
+ * Only contains fields displayed in the candidate table UI.
+ */
+export interface CandidateListResponse {
+  candidateId: number;
+  firstName: string;
+  lastName: string;
+  instituteName: string;
+  cgpa: number;
+  historyOfArrears: number;
+  passoutYear: number;
+  applicationStage: ApplicationStage;
+  applicationType: ApplicationType;
+  isEligible: boolean;
+  reason: string;
+}
+
+export interface CandidateDocResponse {
+  candidateId: number;
+  firstName: string;
+  lastName: string;
+  email: string;
+  department: string;
+  applicationStage: string;
+}
+
 export interface CandidateUpdateRequest {
   isEligible: boolean;
   reason: string; // Required field for eligibility update audit trail
@@ -147,6 +175,7 @@ export interface CandidateUpdateRequest {
 export interface CandidateStatusUpdateRequest {
   status: string;
   updatedBy: number;
+  reason?: string;
 }
 
 export interface BulkCandidateStatusUpdateRequest {

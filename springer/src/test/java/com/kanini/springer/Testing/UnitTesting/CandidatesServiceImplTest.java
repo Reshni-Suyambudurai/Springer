@@ -49,6 +49,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 /**
@@ -163,7 +164,7 @@ class CandidatesServiceImplTest {
             when(hiringCycleRepository.findById(3L)).thenReturn(Optional.of(openCycle));
             when(instituteRepository.findById(1L)).thenReturn(Optional.of(stubInstitute));
             when(candidatesRepository.findMatchingCandidates(
-                    anyString(), any(), anyString(), anyString(), anyString(),
+                    anyString(), anyString(), anyString(), anyString(),
                     any(), any(), any())).thenReturn(Collections.emptyList());
             when(candidatesRepository.findByEmail(anyString())).thenReturn(Optional.empty());
             when(candidatesRepository.findByAadhaarNumber(any())).thenReturn(Optional.empty());
@@ -259,7 +260,7 @@ class CandidatesServiceImplTest {
             when(hiringCycleRepository.findById(3L)).thenReturn(Optional.of(openCycle));
             when(instituteRepository.findById(1L)).thenReturn(Optional.of(stubInstitute));
             when(candidatesRepository.findMatchingCandidates(
-                    anyString(), any(), anyString(), anyString(), anyString(),
+                    anyString(), anyString(), anyString(), anyString(),
                     any(), any(), any())).thenReturn(Collections.emptyList());
             when(candidatesRepository.findByEmail(anyString())).thenReturn(Optional.of(stubCandidate));
             when(mapper.toEntity(req)).thenReturn(stubCandidate);
@@ -283,7 +284,7 @@ class CandidatesServiceImplTest {
             when(hiringCycleRepository.findById(3L)).thenReturn(Optional.of(openCycle));
             when(instituteRepository.findById(1L)).thenReturn(Optional.of(stubInstitute));
             when(candidatesRepository.findMatchingCandidates(
-                    anyString(), any(), anyString(), anyString(), anyString(),
+                    anyString(), anyString(), anyString(), anyString(),
                     any(), any(), any())).thenReturn(Collections.emptyList());
             when(candidatesRepository.findByEmail(anyString())).thenReturn(Optional.empty());
             when(candidatesRepository.findByAadhaarNumber(any())).thenReturn(Optional.empty());
@@ -316,6 +317,164 @@ class CandidatesServiceImplTest {
 
             assertThat(result.getIsEligible()).isFalse();
             assertThat(ineligibleCandidate.getIsEligible()).isFalse();
+        }
+
+        // ---------------------------------------------------------------
+        // Combined name duplicate detection tests
+        // ---------------------------------------------------------------
+
+        @Test
+        @DisplayName("Negative: detects duplicate when firstName+lastName combined matches existing candidate in same cycle")
+        void createCandidate_splitNameMatchesCombinedName_sameCycle_throwsDuplicate() {
+            // Request: firstName="Suyambu", lastName="Durai" → fullName="SuyambuDurai"
+            // Existing DB: firstName="Suyambudurai", lastName="" → combined="Suyambudurai"
+            // These should match after LOWER + whitespace removal
+            CandidateRequest req = buildValidRequest();
+            req.setFirstName("Suyambu");
+            req.setLastName("Durai");
+            req.setDegree("BE");
+            req.setDepartment("CSE");
+            req.setDateOfBirth(java.time.LocalDate.of(2004, 6, 7));
+
+            Candidate existingCandidate = new Candidate();
+            existingCandidate.setCandidateId(100L);
+            existingCandidate.setFirstName("Suyambudurai");
+            existingCandidate.setLastName("");
+            existingCandidate.setEmail("suyambu@gmail.com");
+            existingCandidate.setApplicationStage(ApplicationStage.SCHEDULED);
+            existingCandidate.setLifecycleStatus(LifecycleStatus.ACTIVE);
+            existingCandidate.setCycle(openCycle);
+            existingCandidate.setCreatedAt(java.time.LocalDateTime.of(2026, 4, 6, 22, 25));
+            existingCandidate.setCandidateSkills(new ArrayList<>());
+
+            when(hiringCycleRepository.findById(3L)).thenReturn(Optional.of(openCycle));
+            when(instituteRepository.findById(1L)).thenReturn(Optional.of(stubInstitute));
+            when(candidatesRepository.findMatchingCandidates(
+                    eq("SuyambuDurai"), anyString(), anyString(), anyString(),
+                    any(), any(), any())).thenReturn(List.of(existingCandidate));
+
+            assertThatThrownBy(() -> candidatesService.createCandidate(req))
+                    .isInstanceOf(ValidationException.class)
+                    .hasMessageContaining("Duplicate");
+        }
+
+        @Test
+        @DisplayName("Negative: detects duplicate when fullName in one field matches split name in DB - same cycle")
+        void createCandidate_combinedNameMatchesSplitName_sameCycle_throwsDuplicate() {
+            // Request: firstName="Suyambudurai", lastName="" → fullName="Suyambudurai"
+            // Existing DB: firstName="Suyambu", lastName="Durai" → combined="SuyambuDurai"
+            CandidateRequest req = buildValidRequest();
+            req.setFirstName("Suyambudurai");
+            req.setLastName("");
+            req.setDegree("BE");
+            req.setDepartment("CSE");
+            req.setDateOfBirth(java.time.LocalDate.of(2004, 6, 7));
+
+            Candidate existingCandidate = new Candidate();
+            existingCandidate.setCandidateId(101L);
+            existingCandidate.setFirstName("Suyambu");
+            existingCandidate.setLastName("Durai");
+            existingCandidate.setEmail("suyambu@gmail.com");
+            existingCandidate.setApplicationStage(ApplicationStage.APPLIED);
+            existingCandidate.setLifecycleStatus(LifecycleStatus.ACTIVE);
+            existingCandidate.setCycle(openCycle);
+            existingCandidate.setCreatedAt(java.time.LocalDateTime.of(2026, 4, 6, 22, 25));
+            existingCandidate.setCandidateSkills(new ArrayList<>());
+
+            when(hiringCycleRepository.findById(3L)).thenReturn(Optional.of(openCycle));
+            when(instituteRepository.findById(1L)).thenReturn(Optional.of(stubInstitute));
+            when(candidatesRepository.findMatchingCandidates(
+                    eq("Suyambudurai"), anyString(), anyString(), anyString(),
+                    any(), any(), any())).thenReturn(List.of(existingCandidate));
+
+            assertThatThrownBy(() -> candidatesService.createCandidate(req))
+                    .isInstanceOf(ValidationException.class)
+                    .hasMessageContaining("Duplicate");
+        }
+
+        @Test
+        @DisplayName("Negative: detects duplicate when lastName is null vs empty - same cycle")
+        void createCandidate_nullLastNameMatchesEmptyLastName_sameCycle_throwsDuplicate() {
+            // Request: firstName="Suyambudurai", lastName=null → fullName="Suyambudurai"
+            // Existing DB: firstName="Suyambudurai", lastName="" → combined="Suyambudurai"
+            CandidateRequest req = buildValidRequest();
+            req.setFirstName("Suyambudurai");
+            req.setLastName(null);
+            req.setDegree("BE");
+            req.setDepartment("CSE");
+            req.setDateOfBirth(java.time.LocalDate.of(2004, 6, 7));
+
+            Candidate existingCandidate = new Candidate();
+            existingCandidate.setCandidateId(102L);
+            existingCandidate.setFirstName("Suyambudurai");
+            existingCandidate.setLastName("");
+            existingCandidate.setEmail("suyambu@gmail.com");
+            existingCandidate.setApplicationStage(ApplicationStage.APPLIED);
+            existingCandidate.setLifecycleStatus(LifecycleStatus.ACTIVE);
+            existingCandidate.setCycle(openCycle);
+            existingCandidate.setCreatedAt(java.time.LocalDateTime.of(2026, 4, 8, 13, 0));
+            existingCandidate.setCandidateSkills(new ArrayList<>());
+
+            when(hiringCycleRepository.findById(3L)).thenReturn(Optional.of(openCycle));
+            when(instituteRepository.findById(1L)).thenReturn(Optional.of(stubInstitute));
+            when(candidatesRepository.findMatchingCandidates(
+                    eq("Suyambudurai"), anyString(), anyString(), anyString(),
+                    any(), any(), any())).thenReturn(List.of(existingCandidate));
+
+            assertThatThrownBy(() -> candidatesService.createCandidate(req))
+                    .isInstanceOf(ValidationException.class)
+                    .hasMessageContaining("Duplicate");
+        }
+
+        @Test
+        @DisplayName("Positive: combined name match in different cycle reuses existing candidate (OLD)")
+        void createCandidate_splitNameMatchesCombinedName_differentCycle_reusesCandidate() {
+            // Request cycle=3, Existing candidate cycle=1 (different) → reuse, not error
+            CandidateRequest req = buildValidRequest();
+            req.setFirstName("Suyambu");
+            req.setLastName("Durai");
+            req.setDegree("BE");
+            req.setDepartment("CSE");
+            req.setDateOfBirth(java.time.LocalDate.of(2004, 6, 7));
+
+            HiringCycle differentCycle = new HiringCycle();
+            differentCycle.setCycleId(1L);
+            differentCycle.setStatus(CycleStatus.CLOSED);
+
+            Candidate existingCandidate = new Candidate();
+            existingCandidate.setCandidateId(103L);
+            existingCandidate.setFirstName("Suyambudurai");
+            existingCandidate.setLastName("");
+            existingCandidate.setEmail("suyambu@gmail.com");
+            existingCandidate.setMobile("8877908909");
+            existingCandidate.setApplicationStage(ApplicationStage.APPLIED);
+            existingCandidate.setLifecycleStatus(LifecycleStatus.ACTIVE);
+            existingCandidate.setCycle(differentCycle);
+            existingCandidate.setCreatedAt(java.time.LocalDateTime.of(2026, 4, 6, 22, 25));
+            existingCandidate.setCandidateSkills(new ArrayList<>());
+
+            CandidateResponse reusedResponse = new CandidateResponse();
+            reusedResponse.setCandidateId(103L);
+            reusedResponse.setFirstName("Suyambu");
+            reusedResponse.setApplicationStage("APPLIED");
+
+            when(hiringCycleRepository.findById(3L)).thenReturn(Optional.of(openCycle));
+            when(instituteRepository.findById(1L)).thenReturn(Optional.of(stubInstitute));
+            when(candidatesRepository.findMatchingCandidates(
+                    eq("SuyambuDurai"), anyString(), anyString(), anyString(),
+                    any(), any(), any())).thenReturn(List.of(existingCandidate));
+            when(eligibilityRuleService.checkEligibility(any(), any(), any(), any(), any()))
+                    .thenReturn(eligibleResult());
+            when(candidatesRepository.save(any(Candidate.class))).thenReturn(existingCandidate);
+            when(candidatesRepository.findByIdWithInstitute(103L)).thenReturn(Optional.of(existingCandidate));
+            when(mapper.toResponse(existingCandidate)).thenReturn(reusedResponse);
+
+            CandidateResponse result = candidatesService.createCandidate(req);
+
+            assertThat(result).isNotNull();
+            assertThat(result.getCandidateId()).isEqualTo(103L);
+            // Verify it reused the existing candidate, not created a new one
+            verify(mapper, never()).toEntity(any());
         }
     }
 
@@ -542,7 +701,7 @@ class CandidatesServiceImplTest {
         @Test
         @DisplayName("Positive: updates application stage for eligible candidate")
         void updateCandidateStatus_eligibleCandidate_success() {
-            CandidateStatusUpdateRequest req = new CandidateStatusUpdateRequest("SHORTLISTED", 1L);
+            CandidateStatusUpdateRequest req = new CandidateStatusUpdateRequest("SHORTLISTED", 1L, null);
             stubCandidate.setIsEligible(true);
 
             when(candidatesRepository.findById(1L)).thenReturn(Optional.of(stubCandidate));
@@ -559,7 +718,7 @@ class CandidatesServiceImplTest {
         @Test
         @DisplayName("Negative: throws ValidationException when ineligible candidate tries to advance")
         void updateCandidateStatus_ineligibleCandidateAdvancing_throwsValidation() {
-            CandidateStatusUpdateRequest req = new CandidateStatusUpdateRequest("SHORTLISTED", 1L);
+            CandidateStatusUpdateRequest req = new CandidateStatusUpdateRequest("SHORTLISTED", 1L, null);
             stubCandidate.setIsEligible(false);
 
             when(candidatesRepository.findById(1L)).thenReturn(Optional.of(stubCandidate));
@@ -572,7 +731,7 @@ class CandidatesServiceImplTest {
         @Test
         @DisplayName("Negative: throws ValidationException when status is blank")
         void updateCandidateStatus_blankStatus_throwsValidation() {
-            CandidateStatusUpdateRequest req = new CandidateStatusUpdateRequest("", 1L);
+            CandidateStatusUpdateRequest req = new CandidateStatusUpdateRequest("", 1L, null);
 
             when(candidatesRepository.findById(1L)).thenReturn(Optional.of(stubCandidate));
 
@@ -584,7 +743,7 @@ class CandidatesServiceImplTest {
         @Test
         @DisplayName("Negative: throws IllegalArgumentException for unknown status value")
         void updateCandidateStatus_unknownStatus_throwsException() {
-            CandidateStatusUpdateRequest req = new CandidateStatusUpdateRequest("UNKNOWN_STATUS", 1L);
+            CandidateStatusUpdateRequest req = new CandidateStatusUpdateRequest("UNKNOWN_STATUS", 1L, null);
             stubCandidate.setIsEligible(true);
 
             when(candidatesRepository.findById(1L)).thenReturn(Optional.of(stubCandidate));
@@ -596,7 +755,7 @@ class CandidatesServiceImplTest {
         @Test
         @DisplayName("Negative: throws ResourceNotFoundException when candidate does not exist")
         void updateCandidateStatus_candidateNotFound_throwsResourceNotFound() {
-            CandidateStatusUpdateRequest req = new CandidateStatusUpdateRequest("SHORTLISTED", 1L);
+            CandidateStatusUpdateRequest req = new CandidateStatusUpdateRequest("SHORTLISTED", 1L, null);
 
             when(candidatesRepository.findById(99L)).thenReturn(Optional.empty());
 

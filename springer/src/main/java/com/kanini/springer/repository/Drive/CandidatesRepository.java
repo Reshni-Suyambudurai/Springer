@@ -6,7 +6,6 @@ import com.kanini.springer.entity.enums.Enums.LifecycleStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
-import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
@@ -20,12 +19,11 @@ import java.util.Optional;
 public interface CandidatesRepository extends JpaRepository<Candidate, Long>, JpaSpecificationExecutor<Candidate> {
     
     /**
-     * Override findAll with Specification and Pageable to use EntityGraph
-     * This prevents N+1 queries when using dynamic filters with pagination
-     * Batch fetches institute, cycle, and skills in a single query
+     * Override findAll with Specification and Pageable.
+     * N+1 is prevented via @BatchSize on entity relationships instead of @EntityGraph,
+     * because EntityGraph with collection joins forces Hibernate to do in-memory pagination.
      */
     @Override
-    @EntityGraph(attributePaths = {"institute", "cycle", "candidateSkills", "candidateSkills.skill"})
     Page<Candidate> findAll(Specification<Candidate> spec, Pageable pageable);
     
     /**
@@ -52,11 +50,16 @@ public interface CandidatesRepository extends JpaRepository<Candidate, Long>, Jp
      * Find candidates by cycle ID
      */
     List<Candidate> findByCycleCycleId(Long cycleId);
+
+    /**
+     * Find candidates by cycle ID and application stages (lightweight — no joins needed)
+     */
+    List<Candidate> findByCycleCycleIdAndApplicationStageIn(Long cycleId, List<ApplicationStage> stages);
     
     /**
      * Find candidates by cycle ID with institute and skills eagerly loaded
      */
-    @Query("SELECT DISTINCT c FROM Candidate c LEFT JOIN FETCH c.institute LEFT JOIN FETCH c.cycle LEFT JOIN FETCH c.candidateSkills cs LEFT JOIN FETCH cs.skill WHERE c.cycle.cycleId = :cycleId")
+    @Query("SELECT DISTINCT c FROM Candidate c LEFT JOIN FETCH c.institute LEFT JOIN FETCH c.drive LEFT JOIN FETCH c.cycle LEFT JOIN FETCH c.candidateSkills cs LEFT JOIN FETCH cs.skill WHERE c.cycle.cycleId = :cycleId")
     List<Candidate> findByCycleIdWithDetails(@Param("cycleId") Long cycleId);
     
     /**
@@ -65,7 +68,7 @@ public interface CandidatesRepository extends JpaRepository<Candidate, Long>, Jp
     /**
      * Find all candidates with institute and skills eagerly loaded
      */
-    @Query("SELECT DISTINCT c FROM Candidate c LEFT JOIN FETCH c.institute LEFT JOIN FETCH c.candidateSkills cs LEFT JOIN FETCH cs.skill")
+    @Query("SELECT DISTINCT c FROM Candidate c LEFT JOIN FETCH c.institute LEFT JOIN FETCH c.drive LEFT JOIN FETCH c.candidateSkills cs LEFT JOIN FETCH cs.skill")
     List<Candidate> findAllWithInstitute();
     
     /**
@@ -74,7 +77,7 @@ public interface CandidatesRepository extends JpaRepository<Candidate, Long>, Jp
     /**
      * Find candidates by institute ID with institute and skills eagerly loaded
      */
-    @Query("SELECT DISTINCT c FROM Candidate c LEFT JOIN FETCH c.institute LEFT JOIN FETCH c.candidateSkills cs LEFT JOIN FETCH cs.skill WHERE c.institute.instituteId = :instituteId")
+    @Query("SELECT DISTINCT c FROM Candidate c LEFT JOIN FETCH c.institute LEFT JOIN FETCH c.drive LEFT JOIN FETCH c.candidateSkills cs LEFT JOIN FETCH cs.skill WHERE c.institute.instituteId = :instituteId")
     List<Candidate> findByInstituteIdWithInstitute(@Param("instituteId") Long instituteId);
     
     /**
@@ -83,7 +86,7 @@ public interface CandidatesRepository extends JpaRepository<Candidate, Long>, Jp
     /**
      * Find a candidate by ID with institute and skills eagerly loaded
      */
-    @Query("SELECT c FROM Candidate c LEFT JOIN FETCH c.institute LEFT JOIN FETCH c.candidateSkills cs LEFT JOIN FETCH cs.skill WHERE c.candidateId = :candidateId")
+    @Query("SELECT c FROM Candidate c LEFT JOIN FETCH c.institute LEFT JOIN FETCH c.drive LEFT JOIN FETCH c.candidateSkills cs LEFT JOIN FETCH cs.skill WHERE c.candidateId = :candidateId")
     Optional<Candidate> findByIdWithInstitute(@Param("candidateId") Long candidateId);
     
     /**
@@ -94,17 +97,15 @@ public interface CandidatesRepository extends JpaRepository<Candidate, Long>, Jp
     @Query("SELECT c FROM Candidate c " +
        "LEFT JOIN FETCH c.institute i " +
        "LEFT JOIN FETCH c.cycle cy " +
-       "WHERE LOWER(TRIM(c.firstName)) = LOWER(TRIM(:firstName)) " +
-       "AND LOWER(TRIM(c.lastName)) = LOWER(TRIM(:lastName)) " +
+       "WHERE LOWER(REPLACE(CONCAT(COALESCE(c.firstName, ''), COALESCE(c.lastName, '')), ' ', '')) = LOWER(REPLACE(:fullName, ' ', '')) " +
        "AND i.instituteName = :instituteName " +
-       "AND c.degree = :degree " +
-       "AND c.department = :department " +
-       "AND c.dateOfBirth = :dateOfBirth " +
-       "AND c.passoutYear = :passoutYear " +
-       "AND (:aadhaarNumber IS NULL OR c.aadhaarNumber = :aadhaarNumber)")
+       "AND COALESCE(c.degree, '') = COALESCE(:degree, '') " +
+       "AND COALESCE(c.department, '') = COALESCE(:department, '') " +
+       "AND (c.dateOfBirth = :dateOfBirth OR (c.dateOfBirth IS NULL AND :dateOfBirth IS NULL)) " +
+       "AND (c.passoutYear = :passoutYear OR (c.passoutYear IS NULL AND :passoutYear IS NULL)) " +
+       "AND (:aadhaarNumber IS NULL OR c.aadhaarNumber IS NULL OR c.aadhaarNumber = :aadhaarNumber)")
 List<Candidate> findMatchingCandidates(
-        @Param("firstName") String firstName,
-        @Param("lastName") String lastName,
+        @Param("fullName") String fullName,
         @Param("instituteName") String instituteName,
         @Param("degree") String degree,
         @Param("department") String department,
@@ -130,17 +131,13 @@ List<Candidate> findMatchingCandidates(
     /**
      * Find all active candidates with pagination filtered by cycle
      * Fetches candidates with lifecycleStatus = ACTIVE and specific cycleId
-     * Uses @EntityGraph to batch-fetch related entities without in-memory pagination
-     * 
-     * NOTE: Removed collection fetch (candidateSkills) from query to avoid HHH90003004 warning
-     * and InvalidDataAccessApiUsageException. Skills are fetched via @EntityGraph batch fetching.
+     * N+1 is prevented via @BatchSize on entity relationships.
      * 
      * @param cycleId Cycle ID to filter candidates
      * @param lifecycleStatus Lifecycle status filter (ACTIVE)
      * @param pageable Pagination and sorting information
      * @return Page of candidates with institute and cycle data
      */
-    @EntityGraph(attributePaths = {"institute", "cycle", "candidateSkills", "candidateSkills.skill"})
     @Query("SELECT c FROM Candidate c " +
            "WHERE c.cycle.cycleId = :cycleId " +
            "AND c.lifecycleStatus = :lifecycleStatus")
@@ -211,7 +208,7 @@ List<Candidate> findMatchingCandidates(
             @Param("lifecycleStatus") LifecycleStatus lifecycleStatus
     );
 
-    @Query("SELECT DISTINCT c FROM Candidate c LEFT JOIN FETCH c.institute LEFT JOIN FETCH c.candidateSkills cs LEFT JOIN FETCH cs.skill WHERE c.candidateId IN :candidateIds")
+    @Query("SELECT DISTINCT c FROM Candidate c LEFT JOIN FETCH c.institute LEFT JOIN FETCH c.drive LEFT JOIN FETCH c.candidateSkills cs LEFT JOIN FETCH cs.skill WHERE c.candidateId IN :candidateIds")
     List<Candidate> findByIdsWithInstitute(@Param("candidateIds") List<Long> candidateIds);
 
     // ===== Dashboard aggregate queries (single DB hit each) =====
