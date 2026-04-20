@@ -1,6 +1,7 @@
 package com.kanini.springer.config;
 
 import com.kanini.springer.entity.HiringReq.*;
+import com.kanini.springer.entity.Drive.RoundTemplate;
 import com.kanini.springer.entity.enums.Enums.*;
 import com.kanini.springer.entity.utils.EmailTemplate;
 import com.kanini.springer.repository.Hiring.HiringCycleRepository;
@@ -10,6 +11,7 @@ import com.kanini.springer.repository.Hiring.ProgramRepository;
 import com.kanini.springer.repository.Hiring.RoleRepository;
 import com.kanini.springer.repository.Hiring.SkillRepository;
 import com.kanini.springer.repository.Hiring.UserRepository;
+import com.kanini.springer.repository.Drive.RoundTemplateRepository;
 import com.kanini.springer.repository.EmailTemplateRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -38,6 +40,7 @@ public class DataLoader {
     private final ProgramRepository programRepository;
     private final InstituteProgramRepository instituteProgramRepository;
     private final EmailTemplateRepository emailTemplateRepository;
+    private final RoundTemplateRepository roundTemplateRepository;
 
     @Bean
     @Transactional
@@ -49,6 +52,11 @@ public class DataLoader {
             // even when other master data already exists.
             if (emailTemplateRepository.count() == 0) {
                 seedEmailTemplates();
+            }
+
+            // Seed round templates independently
+            if (roundTemplateRepository.count() == 0) {
+                seedRoundTemplates();
             }
 
             // Check if data already exists
@@ -124,6 +132,9 @@ public class DataLoader {
             createUser("Priya", "priya@kanini.com", "password123", "Talent Acquisition", "Chennai", taRecruiterRole),
             createUser("Parthiban", "parthiban@kanini.com", "password123", "Product Engineering", "Bangalore", hiringManagerRole),
             createUser("Ramesh", "ramesh@kanini.com", "password123", "Product Engineering", "Coimbatore", membersRole),
+              createUser("Priya Rajagopalan", "priya@kanini.com", "password@123", "Product Engineering", "Coimbatore", membersRole),
+                createUser("Mozhiarasan", "mozhi@kanini.com", "password@123", "Product Engineering", "Coimbatore", membersRole),
+                  createUser("Praveen Kumar", "praveen@kanini.com", "password123", "Product Engineering", "Coimbatore", membersRole),
             createUser("Reshni", "reshni@kanini.com", "password123", "Data Analytics & AI", "Coimbatore", adminRole),
             createUser("Lavanya", "lavanya@kanini.com", "password123", "Data Analytics & AI", "Coimbatore", trainingCoordinatorRole)
         };
@@ -324,6 +335,51 @@ public class DataLoader {
                 }
             }
         }
+    }
+
+    private void seedRoundTemplates() {
+        log.info("Seeding round templates...");
+
+        User createdBy = userRepository.findById(2L).orElse(null);
+
+        // Round 1: Aptitude
+        RoundTemplate aptitude = new RoundTemplate();
+        aptitude.setRoundNo(1);
+        aptitude.setRoundName("Aptitude Round");
+        aptitude.setOutoffScore(120);
+        aptitude.setMinScore(80);
+        aptitude.setWeightage(40);
+        aptitude.setSections("[{\"sectionName\":\"Technical\",\"outOf\":30},{\"sectionName\":\"Aptitude\",\"outOf\":20},{\"sectionName\":\"Verbal\",\"outOf\":20},{\"sectionName\":\"Logical\",\"outOf\":20},{\"sectionName\":\"Coding\",\"outOf\":30}]");
+        aptitude.setIsActive(true);
+        aptitude.setCreatedAt(LocalDateTime.now());
+        aptitude.setCreatedBy(createdBy);
+
+        // Round 2: Communication
+        RoundTemplate communication = new RoundTemplate();
+        communication.setRoundNo(2);
+        communication.setRoundName("Communication Round");
+        communication.setOutoffScore(100);
+        communication.setMinScore(70);
+        communication.setWeightage(40);
+        communication.setSections("[{\"sectionName\":\"Listening\",\"outOf\":30},{\"sectionName\":\"Writing\",\"outOf\":30},{\"sectionName\":\"Speaking\",\"outOf\":40}]");
+        communication.setIsActive(true);
+        communication.setCreatedAt(LocalDateTime.now());
+        communication.setCreatedBy(createdBy);
+
+        // Round 3: Technical
+        RoundTemplate technical = new RoundTemplate();
+        technical.setRoundNo(3);
+        technical.setRoundName("Technical Round");
+        technical.setOutoffScore(100);
+        technical.setMinScore(70);
+        technical.setWeightage(30);
+        technical.setSections("[{\"sectionName\":\"Problem_Solving\",\"outOf\":30},{\"sectionName\":\"Coding_Proficiency\",\"outOf\":30},{\"sectionName\":\"Communication_Skill\",\"outOf\":40}]");
+        technical.setIsActive(true);
+        technical.setCreatedAt(LocalDateTime.now());
+        technical.setCreatedBy(createdBy);
+
+        roundTemplateRepository.saveAll(java.util.Arrays.asList(aptitude, communication, technical));
+        log.info("Seeded 3 round templates");
     }
 
     private void seedEmailTemplates() {

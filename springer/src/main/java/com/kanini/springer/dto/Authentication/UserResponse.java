@@ -16,4 +16,5 @@ public class UserResponse {
     private String location;
     private Long roleId;
     private String roleName;
+    private Boolean isActive;
 }

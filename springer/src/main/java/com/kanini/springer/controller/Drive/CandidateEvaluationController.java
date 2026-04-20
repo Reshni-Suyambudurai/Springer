@@ -19,7 +19,7 @@ import java.util.List;
 public class CandidateEvaluationController {
     
     private final ICandidateEvaluationService evaluationService;
-    
+    // use only for panel to candidate evaluation 
     @PostMapping
     @Operation(summary = "Create a candidate evaluation", 
                description = "Creates a single candidate evaluation with score and status. " +
@@ -61,6 +61,15 @@ public class CandidateEvaluationController {
         return ResponseEntity.ok(new ApiResponse<>(true, "Evaluations retrieved successfully", responses));
     }
     
+    @GetMapping("/application/{applicationId}/round/{roundConfigId}/user/{userId}")
+    @Operation(summary = "Get evaluation by application ID, round config ID, and user ID",
+               description = "Retrieves the single evaluation for a specific application in a specific round by a specific reviewer")
+    public ResponseEntity<ApiResponse<CandidateEvaluationResponse>> getEvaluationByApplicationAndRound(
+            @PathVariable Long applicationId, @PathVariable Long roundConfigId, @PathVariable Long userId) {
+        CandidateEvaluationResponse response = evaluationService.getEvaluationByApplicationAndRound(applicationId, roundConfigId, userId);
+        return ResponseEntity.ok(new ApiResponse<>(true, "Evaluation retrieved successfully", response));
+    }
+    
     @PatchMapping("/{scoreId}/status")
     @Operation(summary = "Update evaluation status", 
                description = "Updates the evaluation status with complex candidate status updates:\n\n" +
@@ -84,5 +93,26 @@ public class CandidateEvaluationController {
             @RequestBody RoundEvaluationRequest request) {
         RoundEvaluationResponse response = evaluationService.getEvaluationsByRoundAndApplications(request);
         return ResponseEntity.ok(new ApiResponse<>(true, "Round evaluations retrieved successfully", response));
+    }
+
+    @PatchMapping("/bulk-status")
+    @Operation(summary = "Bulk update evaluation status",
+               description = "Updates the evaluation status for multiple applications at once.")
+    public ResponseEntity<ApiResponse<Void>> bulkUpdateEvaluationStatus(
+            @RequestBody BulkEvaluationStatusUpdateRequest request) {
+        evaluationService.bulkUpdateEvaluationStatus(request);
+        return ResponseEntity.ok(new ApiResponse<>(true, "Updated successfully", null));
+    }
+
+    @PatchMapping("/bulk-round-skip")
+    @Operation(summary = "Bulk skip/hold/absent a round",
+               description = "Bulk update for rounds not conducted. " +
+                             "SKIP/HOLD: updates CandidateEvaluation status only. " +
+                             "ABSENT: sets Application status to DROPPED (no evaluation record touched). " +
+                             "All-or-nothing — either all succeed or none.")
+    public ResponseEntity<ApiResponse<Void>> bulkRoundSkip(
+            @RequestBody BulkRoundSkipRequest request) {
+        evaluationService.bulkRoundSkip(request);
+        return ResponseEntity.ok(new ApiResponse<>(true, "Round status updated successfully", null));
     }
 }

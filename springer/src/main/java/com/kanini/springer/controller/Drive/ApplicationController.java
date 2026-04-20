@@ -7,7 +7,10 @@ import com.kanini.springer.dto.Drive.ApplicationStatusUpdateRequest;
 import com.kanini.springer.dto.Drive.BulkApplicationResponse;
 import com.kanini.springer.dto.Drive.BulkApplicationStatusUpdateRequest;
 import com.kanini.springer.dto.Drive.BulkApplicationStatusUpdateResponse;
+import com.kanini.springer.dto.Drive.CandidateHistoryResponse;
 import com.kanini.springer.service.Drive.IApplicationService;
+import com.kanini.springer.dto.Drive.OverrideDriveStatusRequest;
+import com.kanini.springer.entity.enums.Enums.ApplicationStatus;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -84,5 +87,26 @@ public class ApplicationController {
             @PathVariable Long driveId) {
         Map<String, List<Long>> batchMap = applicationService.getBatchCandidatesByDriveId(driveId);
         return ResponseEntity.ok(new ApiResponse<>(true, "Batch candidates retrieved successfully", batchMap));
+    }
+
+    @GetMapping("/drive/{driveId}/candidate/{candidateId}/history")
+    @Operation(summary = "Get candidate history in a drive",
+               description = "Retrieves full candidate history including drive info, application details, " +
+                             "panel assignments, and all evaluations for a specific candidate in a specific drive.")
+    public ResponseEntity<ApiResponse<CandidateHistoryResponse>> getCandidateHistory(
+            @PathVariable Long driveId, @PathVariable Long candidateId) {
+        CandidateHistoryResponse response = applicationService.getCandidateHistory(driveId, candidateId);
+        return ResponseEntity.ok(new ApiResponse<>(true, "Candidate history retrieved successfully", response));
+    }
+
+    @PatchMapping("/override-status")
+    @Operation(summary = "Override application drive status",
+               description = "Manually overrides the application status with a reason. Logs to manual_override table.")
+    public ResponseEntity<ApiResponse<ApplicationResponse>> overrideDriveStatus(
+            @RequestBody OverrideDriveStatusRequest request) {
+        ApplicationStatus status = ApplicationStatus.valueOf(request.getStatus());
+        ApplicationResponse response = applicationService.overrideDriveStatus(
+                request.getApplicationId(), status, request.getReason(), request.getUserId());
+        return ResponseEntity.ok(new ApiResponse<>(true, "Application status overridden successfully", response));
     }
 }

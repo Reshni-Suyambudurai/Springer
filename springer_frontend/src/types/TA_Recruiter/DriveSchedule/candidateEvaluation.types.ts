@@ -29,6 +29,7 @@ export interface CandidateEvaluationRequest {
   review: string;
   evaluationStatus: string;
   reviewedBy: number;
+  status: string; // "SUBMIT" or "DRAFT"
 }
 
 export interface CandidateEvaluationResponse {
@@ -88,4 +89,20 @@ export interface BulkCandidateEvaluationResponse {
   totalProcessed: number;
   successCount: number;
   failureCount: number;
+}
+
+export interface BulkEvaluationStatusUpdateRequest {
+  status: string;
+  applicationIds: number[];
+  roundConfigId: number;
+  updatedBy?: number;
+  reason?: string;
+}
+
+export interface BulkRoundSkipRequest {
+  applicationIds: number[];
+  roundConfigId: number;
+  reviewedBy: number;
+  status: 'SKIP' | 'HOLD' | 'ABSENT';
+  reason?: string;
 }

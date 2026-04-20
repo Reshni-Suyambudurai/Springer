@@ -1,25 +1,38 @@
 package com.kanini.springer.service.Drive.impl;
 
+import com.kanini.springer.dto.Common.FieldChangeDTO;
+import com.kanini.springer.dto.Common.ManualOverrideRequest;
 import com.kanini.springer.dto.Drive.ApplicationRequest;
 import com.kanini.springer.dto.Drive.ApplicationResponse;
 import com.kanini.springer.dto.Drive.ApplicationStatusUpdateRequest;
 import com.kanini.springer.dto.Drive.BulkApplicationResponse;
 import com.kanini.springer.dto.Drive.BulkApplicationStatusUpdateRequest;
 import com.kanini.springer.dto.Drive.BulkApplicationStatusUpdateResponse;
+import com.kanini.springer.dto.Drive.CandidateHistoryResponse;
 import com.kanini.springer.entity.Drive.Application;
 import com.kanini.springer.entity.Drive.Candidate;
+import com.kanini.springer.entity.Drive.CandidateEvaluation;
 import com.kanini.springer.entity.Drive.Drive;
+import com.kanini.springer.entity.Drive.DriveAssignment;
 import com.kanini.springer.entity.HiringReq.User;
 import com.kanini.springer.entity.enums.Enums.ApplicationStatus;
+import com.kanini.springer.entity.enums.Enums.OverrideEntityType;
 import com.kanini.springer.entity.enums.Enums.ApplicationStage;
 import com.kanini.springer.exception.ResourceNotFoundException;
 import com.kanini.springer.exception.ValidationException;
 import com.kanini.springer.mapper.Drive.ApplicationMapper;
 import com.kanini.springer.repository.Drive.ApplicationRepository;
+import com.kanini.springer.repository.Drive.CandidateEvaluationRepository;
 import com.kanini.springer.repository.Drive.CandidatesRepository;
+import com.kanini.springer.repository.Drive.DriveAssignmentRepository;
 import com.kanini.springer.repository.Drive.DriveRepository;
 import com.kanini.springer.repository.Hiring.UserRepository;
 import com.kanini.springer.service.Drive.IApplicationService;
+import com.kanini.springer.service.Common.IOverrideService;
+import com.kanini.springer.repository.Common.ManualOverrideRepository;
+import com.kanini.springer.mapper.Common.ManualOverrideMapper;
+import com.kanini.springer.dto.Common.ManualOverrideResponse;
+import com.kanini.springer.entity.utils.ManualOverride;
 import com.kanini.springer.specification.CandidateSpecification;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.criteria.CriteriaBuilder;
@@ -43,9 +56,14 @@ public class ApplicationServiceImpl implements IApplicationService {
     private final ApplicationRepository applicationRepository;
     private final CandidatesRepository candidatesRepository;
     private final DriveRepository driveRepository;
+    private final DriveAssignmentRepository driveAssignmentRepository;
+    private final CandidateEvaluationRepository candidateEvaluationRepository;
     private final UserRepository userRepository;
     private final ApplicationMapper mapper;
     private final EntityManager entityManager;
+    private final IOverrideService overrideService;
+    private final ManualOverrideRepository manualOverrideRepository;
+    private final ManualOverrideMapper manualOverrideMapper;
     
     @Override
     @Transactional
@@ -193,9 +211,37 @@ public class ApplicationServiceImpl implements IApplicationService {
         
         List<Application> applications = applicationRepository.findByDriveDriveId(driveId);
         
-        return applications.stream()
+        List<ApplicationResponse> responses = applications.stream()
             .map(mapper::toResponse)
             .collect(Collectors.toList());
+
+        // Enrich with latest evaluation status
+        List<Long> applicationIds = applications.stream()
+            .map(Application::getApplicationId)
+            .collect(Collectors.toList());
+        if (!applicationIds.isEmpty()) {
+            // row = [applicationId, evaluationStatus, roundConfigId]
+            Map<Long, Object[]> latestMap = candidateEvaluationRepository
+                .findLatestStatusByApplicationIds(applicationIds)
+                .stream()
+                .collect(Collectors.toMap(
+                    row -> (Long) row[0],
+                    row -> row,
+                    (first, _second) -> first  // keep first = latest (ORDER BY scoreId DESC)
+                ));
+            for (ApplicationResponse r : responses) {
+                Object[] row = latestMap.get(r.getApplicationId());
+                if (row != null) {
+                    r.setEvaluationStatus(row[1].toString());
+                    r.setLatestRoundConfigId((Long) row[2]);
+                } else {
+                    r.setEvaluationStatus("PENDING");
+                    r.setLatestRoundConfigId(0L);
+                }
+            }
+        }
+
+        return responses;
     }
     
     @Override
@@ -401,6 +447,29 @@ public class ApplicationServiceImpl implements IApplicationService {
                 ));
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public CandidateHistoryResponse getCandidateHistory(Long driveId, Long candidateId) {
+        if (driveId == null) {
+            throw new ValidationException("Drive ID is required");
+        }
+        if (candidateId == null) {
+            throw new ValidationException("Candidate ID is required");
+        }
+
+        Application application = applicationRepository.findByDriveIdAndCandidateIdWithDetails(driveId, candidateId)
+                .orElseThrow(() -> new ResourceNotFoundException("Application", "driveId + candidateId", driveId + "/" + candidateId));
+
+        List<DriveAssignment> assignments = driveAssignmentRepository.findByApplicationIdWithDetails(application.getApplicationId());
+        List<CandidateEvaluation> evaluations = candidateEvaluationRepository.findByApplicationIdWithDetails(application.getApplicationId());
+        List<ManualOverride> overrides = manualOverrideRepository.findByEntityTypeAndEntityIdWithUser(
+                OverrideEntityType.APPLICATIONS, application.getApplicationId());
+
+        CandidateHistoryResponse response = mapper.toCandidateHistoryResponse(application, assignments, evaluations);
+        response.setOverrides(manualOverrideMapper.toResponseList(overrides));
+        return response;
+    }
+
     /**
      * Generates a unique 6-digit registration code (100000–999999).
      * Retries if the generated code already exists in the database.
@@ -418,4 +487,36 @@ public class ApplicationServiceImpl implements IApplicationService {
         } while (applicationRepository.existsByDriveDriveIdAndRegistrationCode(driveId, code));
         return code;
     }
+
+    @Override
+    @Transactional
+    public ApplicationResponse overrideDriveStatus(Long applicationId, ApplicationStatus status, String reason, Long userId) {
+        Application application = applicationRepository.findById(applicationId)
+                .orElseThrow(() -> new ResourceNotFoundException("Application", "ID", applicationId));
+
+        if (!userRepository.existsById(userId)) {
+            throw new ResourceNotFoundException("User", "ID", userId);
+        }
+
+        String oldStatus = application.getApplicationStatus().name();
+        application.setApplicationStatus(status);
+        Application saved = applicationRepository.save(application);
+
+        // Log to manual_override
+        FieldChangeDTO change = new FieldChangeDTO();
+        change.setField("applicationStatus");
+        change.setOld(oldStatus);
+        change.setNewValue(status.name());
+
+        ManualOverrideRequest overrideRequest = new ManualOverrideRequest();
+        overrideRequest.setEntityType("APPLICATIONS");
+        overrideRequest.setEntityId(applicationId);
+        overrideRequest.setChanges(List.of(change));
+        overrideRequest.setOverrideReason(reason);
+        overrideRequest.setCreatedBy(userId);
+        overrideService.logOverride(overrideRequest);
+
+        return mapper.toResponse(saved);
+    }
+    
 }

@@ -27,3 +27,14 @@ export interface AuthUser {
   username: string;
   email: string;
 }
+
+export interface UserResponse {
+  userId: number;
+  username: string;
+  email: string;
+  department: string;
+  location: string;
+  roleId: number;
+  roleName: string;
+  isActive: boolean;
+}

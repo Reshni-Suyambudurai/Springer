@@ -1,15 +1,16 @@
-import React, { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import React, { useEffect, useMemo, useState } from "react";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { applicationApi, candidateEvaluationApi } from "../../../services/driveschedule.api";
 import type { ApplicationResponse, BatchCandidatesMap } from "../../../types/TA_Recruiter/DriveSchedule/application.types";
-import type { RoundEvaluationResponse } from "../../../types/TA_Recruiter/DriveSchedule/candidateEvaluation.types";
+import type { RoundEvaluationResponse, BulkRoundSkipRequest } from "../../../types/TA_Recruiter/DriveSchedule/candidateEvaluation.types";
 import { showToast } from "../../../utils/toast";
 import { handleAxiosError } from "../../../services/api.error";
 import { tokenstore } from "../../../auth/tokenstore";
-import { Box, Card, Typography, CircularProgress, Select, MenuItem, Button,
+import { Box, Card, Typography, CircularProgress, Select, MenuItem, Button, Tooltip,
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper } from "@mui/material";
 import BackButton from "../../Common/BackButton";
 import Round1 from "./Scores/Round1";
+import type { PanelCandidate } from "./Scores/Round1";
 import "../../../css/TA_Recruiter/DriveProcess/DriveCandidates.css";
 
 const ROUND_NO_MAP: Record<string, number> = {
@@ -21,14 +22,26 @@ const ROUND_NO_MAP: Record<string, number> = {
 const DriveCandidates: React.FC = () => {
   const { driveId } = useParams<{ driveId: string }>();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [applications, setApplications] = useState<ApplicationResponse[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [driveName, setDriveName] = useState<string>("");
-  const [selectedBatch, setSelectedBatch] = useState<string>("ALL");
-  const [selectedRound, setSelectedRound] = useState<string>("ALL");
+  const [selectedBatch, setSelectedBatch] = useState<string>(searchParams.get("batch") || "ALL");
+  const [selectedRound, setSelectedRound] = useState<string>(searchParams.get("round") || "ALL");
   const [batchMap, setBatchMap] = useState<BatchCandidatesMap>({});
   const [roundEvaluation, setRoundEvaluation] = useState<RoundEvaluationResponse | null>(null);
   const [evaluationsLoading, setEvaluationsLoading] = useState<boolean>(false);
+
+  // Filter state
+  const [searchText, setSearchText] = useState<string>("");
+  const [statusFilter, setStatusFilter] = useState<string>("ALL");
+  const [updateStatusTo, setUpdateStatusTo] = useState<string>("");
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+  const [updating, setUpdating] = useState<boolean>(false);
+  const [selectMode, setSelectMode] = useState<boolean>(false);
+  const [selectedRoundFilters, setSelectedRoundFilters] = useState<Set<number>>(new Set());
+  const [showReasonOverlay, setShowReasonOverlay] = useState<boolean>(false);
+  const [skipReason, setSkipReason] = useState<string>("");
 
   useEffect(() => {
     if (driveId) {
@@ -37,6 +50,16 @@ const DriveCandidates: React.FC = () => {
       fetchBatchCandidates(id);
     }
   }, [driveId]);
+
+  const updateFilter = (key: "batch" | "round", value: string) => {
+    if (key === "batch") setSelectedBatch(value);
+    else setSelectedRound(value);
+    setSearchParams((prev) => {
+      if (value === "ALL") prev.delete(key);
+      else prev.set(key, value);
+      return prev;
+    }, { replace: true });
+  };
 
   const fetchApplications = async (id: number) => {
     try {
@@ -127,22 +150,14 @@ const DriveCandidates: React.FC = () => {
     });
   };
 
-  const formatDateTime = (iso: string) => {
-    const d = new Date(iso);
-    const day = d.getDate();
-    const month = d.getMonth() + 1;
-    const year = String(d.getFullYear()).slice(2);
-    let hours = d.getHours();
-    const minutes = String(d.getMinutes()).padStart(2, "0");
-    const ampm = hours >= 12 ? "pm" : "am";
-    hours = hours % 12 || 12;
-    return `${day}/${month}/${year}-${hours}:${minutes}${ampm}`;
-  };
 
   const formatUserDate = (name?: string, dateIso?: string) => {
     if (!name) return "-";
     if (!dateIso) return name;
-    return `${name} (${formatDateTime(dateIso)})`;
+    const d = new Date(dateIso);
+    const date = d.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
+    const time = d.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: true });
+    return { name, date, time };
   };
 
   const handleStart = async () => {
@@ -183,14 +198,124 @@ const DriveCandidates: React.FC = () => {
 
   const batchOptions = Object.keys(batchMap);
 
-  const filteredApplications = applications.filter((app) => {
-    if (selectedBatch === "ALL") return true;
-    const appIds = batchMap[selectedBatch];
-    return appIds ? appIds.includes(app.applicationId) : false;
-  });
+  // Derive distinct round config IDs and evaluation statuses from data
+  const distinctRounds = useMemo(() => {
+    const rounds = new Set<number>();
+    applications.forEach((app) => { if (app.latestRoundConfigId) rounds.add(app.latestRoundConfigId); });
+    return Array.from(rounds).sort((a, b) => a - b);
+  }, [applications]);
+
+  const distinctEvalStatuses = useMemo(() => {
+    const statuses = new Set<string>();
+    applications.forEach((app) => { if (app.evaluationStatus) statuses.add(app.evaluationStatus); });
+    return Array.from(statuses);
+  }, [applications]);
+
+  const toggleRoundFilter = (roundId: number) => {
+    setSelectedRoundFilters((prev) => {
+      const next = new Set(prev);
+      if (next.has(roundId)) next.delete(roundId);
+      else next.add(roundId);
+      return next;
+    });
+  };
+
+  const filteredApplications = useMemo(() => {
+    return applications.filter((app) => {
+      // Batch filter
+      if (selectedBatch !== "ALL") {
+        const appIds = batchMap[selectedBatch];
+        if (!appIds || !appIds.includes(app.applicationId)) return false;
+      }
+      // Status filter — matches applicationStatus OR evaluationStatus
+      if (statusFilter !== "ALL" && app.applicationStatus !== statusFilter && app.evaluationStatus !== statusFilter) return false;
+      // Round filter
+      if (selectedRoundFilters.size > 0 && !selectedRoundFilters.has(app.latestRoundConfigId)) return false;
+      // Search by name or email
+      if (searchText.trim()) {
+        const q = searchText.toLowerCase();
+        const nameMatch = app.candidateName?.toLowerCase().includes(q);
+        const emailMatch = app.candidateEmail?.toLowerCase().includes(q);
+        if (!nameMatch && !emailMatch) return false;
+      }
+      return true;
+    });
+  }, [applications, selectedBatch, batchMap, statusFilter, searchText, selectedRoundFilters]);
+
+  // Clear selection when filters change
+  useEffect(() => {
+    setSelectedIds(new Set());
+  }, [searchText, statusFilter, selectedBatch, selectedRoundFilters]);
+
+  const toggleSelectMode = () => {
+    setSelectMode((prev) => {
+      if (prev) setSelectedIds(new Set()); // exiting select mode clears selection
+      return !prev;
+    });
+  };
+
+  const toggleSelect = (id: number) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const handleBulkRoundSkip = async (reason?: string) => {
+    if (!updateStatusTo) {
+      showToast("Select a status to update to", "error");
+      return;
+    }
+    // If SKIP, require reason via overlay
+    if (updateStatusTo === "SKIP" && !reason) {
+      setShowReasonOverlay(true);
+      return;
+    }
+    // If no rows manually selected, use all filtered applications
+    const ids = selectedIds.size > 0
+      ? Array.from(selectedIds)
+      : filteredApplications.map((a) => a.applicationId);
+    if (ids.length === 0) {
+      showToast("No candidates in the table", "error");
+      return;
+    }
+    const user = tokenstore.getUser();
+    if (!user) {
+      showToast("User not found. Please log in again.", "error");
+      return;
+    }
+    const payload: BulkRoundSkipRequest = {
+      applicationIds: ids,
+      roundConfigId: 1,
+      reviewedBy: user.userId,
+      status: updateStatusTo as BulkRoundSkipRequest["status"],
+      reason: updateStatusTo === "SKIP" ? reason : undefined,
+    };
+    try {
+      setUpdating(true);
+      const response = await candidateEvaluationApi.bulkRoundSkip(payload);
+      if (response.success) {
+        showToast(response.message || "Updated successfully", "success");
+        setSelectedIds(new Set());
+        setUpdateStatusTo("");
+        // Re-fetch data
+        if (driveId) fetchApplications(parseInt(driveId));
+      } else {
+        showToast(response.message || "Update failed", "error");
+      }
+    } catch (error: unknown) {
+      const appError = handleAxiosError(error);
+      showToast(appError.message, "error");
+    } finally {
+      setUpdating(false);
+    }
+  };
 
   const hasInDrive = filteredApplications.some((app) => app.applicationStatus === "IN_DRIVE");
-
+  const hasAlloted = filteredApplications.some((app) => app.applicationStatus === "ALLOTED");
+ 
   if (loading) {
     return (
       <Box className="dc-container">
@@ -216,7 +341,7 @@ const DriveCandidates: React.FC = () => {
         <Box className="dc-header-actions">
           <Select
             value={selectedBatch}
-            onChange={(e) => setSelectedBatch(e.target.value as string)}
+            onChange={(e) => updateFilter("batch", e.target.value as string)}
             className="dc-select"
             size="small"
             displayEmpty
@@ -231,7 +356,7 @@ const DriveCandidates: React.FC = () => {
 
           <Select
             value={selectedRound}
-            onChange={(e) => setSelectedRound(e.target.value as string)}
+            onChange={(e) => updateFilter("round", e.target.value as string)}
             className="dc-select"
             size="small"
           >
@@ -242,15 +367,99 @@ const DriveCandidates: React.FC = () => {
           </Select>
 
           {evaluationsLoading && <CircularProgress size={20} />}
- <Button variant="outlined" className="dc-btn-action" onClick={handleStart}>Start</Button>
-          <Button variant="outlined" className="dc-btn-action" disabled={!hasInDrive}>Allocate Panel</Button>
-          <Button variant="outlined" className="dc-btn-action" disabled={!hasInDrive} onClick={() => navigate(`/drive-process/add-scores/${driveId}`)}>Add Score</Button>
+          <Button variant="contained" className="dc-btn-action" onClick={handleStart} disabled={selectedRound !== "ALL"}>Start</Button>
+          <Button variant="contained" className="dc-btn-action" disabled={!hasInDrive || hasAlloted} onClick={() => navigate(`/drive-process/add-scores/${driveId}/round1`)}>Add Score</Button>
+          
+          <Button variant="contained" className="dc-btn-action">Finalize</Button>
         </Box>
       </Card>
 
+      {/* Filter bar — above the table */}
+      {selectedRound === "ALL" && (
+        <Card className="dc-filter-bar">
+          <span className="dc-round-checkboxes">
+            {distinctRounds.map((r) => (
+              <label key={r} className={`dc-round-chip${selectedRoundFilters.has(r) ? " dc-round-chip-active" : ""}`}>
+                <input type="checkbox" checked={selectedRoundFilters.has(r)} onChange={() => toggleRoundFilter(r)} />
+                R{r}
+              </label>
+            ))}
+          </span>
+
+          <select
+            className="dc-filter-select"
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+          >
+            <option value="ALL">All Status</option>
+            <option disabled>── Application ──</option>
+            <option value="ALLOTED">Alloted</option>
+            <option value="IN_DRIVE">In Drive</option>
+            <option value="DROPPED">Dropped</option>
+            <option value="FAILED">Failed</option>
+            <option value="SELECTED">Selected</option>
+            {distinctEvalStatuses.length > 0 && <option disabled>── Evaluation ──</option>}
+            {distinctEvalStatuses.map((s) => (
+              <option key={s} value={s}>{s}</option>
+            ))}
+          </select>
+
+          <input
+            type="text"
+            className="dc-filter-input"
+            placeholder="Search by name or email..."
+            value={searchText}
+            onChange={(e) => setSearchText(e.target.value)}
+          />
+
+       
+
+          <Button
+            variant={selectMode ? "outlined" : "contained"}
+            className={selectMode ? "dc-btn-select-active" : "dc-btn-action"}
+            onClick={toggleSelectMode}
+          >
+            {selectMode ? `Cancel (${selectedIds.size})` : "Select"}
+          </Button>
+
+          <select
+            className="dc-filter-select"
+            value={updateStatusTo}
+            onChange={(e) => setUpdateStatusTo(e.target.value)}
+          >
+            <option value="">Update Status To...</option>
+            <option value="ABSENT">Absent</option>
+            <option value="HOLD">Hold</option>
+            <option value="SKIP">Skip</option>
+          </select>
+
+          <Button
+            variant="contained"
+            className="dc-btn-action"
+            disabled={!updateStatusTo || updating}
+            onClick={() => handleBulkRoundSkip()}
+          >
+            {updating ? "Updating..." : selectedIds.size > 0 ? `Update (${selectedIds.size})` : `Update All (${filteredApplications.length})`}
+          </Button>
+        </Card>
+      )}
+
       {/* Content area: Round scores view OR candidates table */}
       {roundEvaluation && selectedRound !== "ALL" && selectedBatch !== "ALL" ? (
-        <Round1 data={roundEvaluation} />
+        <Round1 data={roundEvaluation} onStatusUpdated={() => {
+          const roundNo = ROUND_NO_MAP[selectedRound];
+          const applicationIds = batchMap[selectedBatch];
+          if (roundNo && applicationIds?.length) fetchRoundEvaluations(roundNo, applicationIds);
+        }} onAllocatePanel={(candidates: PanelCandidate[]) => {
+          navigate(`/drive-process/panel-allocation/${driveId}`, {
+            state: {
+              candidates,
+              roundNo: ROUND_NO_MAP[selectedRound],
+              batchTime: selectedBatch,
+              driveName,
+            }
+          });
+        }} />
       ) : evaluationsLoading ? (
         <Box className="dc-loading">
           <CircularProgress size={30} className="dc-loading-spinner" />
@@ -274,35 +483,125 @@ const DriveCandidates: React.FC = () => {
                 <TableCell className="dc-th">Candidate Name</TableCell>
                 <TableCell className="dc-th">Email</TableCell>
               
-                <TableCell className="dc-th">Status</TableCell>
+                <TableCell className="dc-th">Round No</TableCell>
+                <TableCell className="dc-th">Evaluation</TableCell>
                 <TableCell className="dc-th">Created By</TableCell>
                 <TableCell className="dc-th">Updated By</TableCell>
+                
+                <TableCell className="dc-th">Status</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {filteredApplications.map((app, index) => (
-                <TableRow key={app.applicationId} className="dc-table-row">
+                <TableRow key={app.applicationId}
+                  className={`dc-table-row${selectedIds.has(app.applicationId) ? " dc-row-selected" : ""}`}
+                  onClick={() => {
+                    if (selectMode) toggleSelect(app.applicationId);
+                    else navigate("/drive-process/application-history", { state: { driveId: app.driveId, candidateId: app.candidateId } });
+                  }}
+                >
                   <TableCell className="dc-td">{index + 1}</TableCell>
                   <TableCell className="dc-td dc-td-name">{app.candidateName}</TableCell>
                   <TableCell className="dc-td">{app.candidateEmail}</TableCell>
                  
+                 
+                  <TableCell className="dc-td">{app.latestRoundConfigId || "-"}</TableCell>
                   <TableCell className="dc-td">
-                    <span className={getStatusClass(app.applicationStatus)}>
-                      {app.applicationStatus.replace("_", " ")}
+                    <span className={`dc-eval-badge dc-eval-${app.evaluationStatus.toLowerCase()}`}>
+                      {app.evaluationStatus}
                     </span>
                   </TableCell>
 
                   <TableCell className="dc-td">
-                    {formatUserDate(app.createdByName, app.createdAt)}
+                    {(() => {
+                      const result = formatUserDate(app.createdByName, app.createdAt);
+                      if (typeof result === "string") return result;
+                      return (
+                        <Tooltip
+                          title={
+                            <span className="dc-tooltip-content">
+                              <span className="dc-tooltip-date">{result.date}</span>
+                              <span className="dc-tooltip-time">{result.time}</span>
+                            </span>
+                          }
+                          arrow
+                          placement="top"
+                          classes={{ tooltip: "g-tooltip", arrow: "g-tooltip-arrow" }}
+                        >
+                          <span className="dc-user-name">{result.name}</span>
+                        </Tooltip>
+                      );
+                    })()}
                   </TableCell>
                   <TableCell className="dc-td">
-                    {formatUserDate(app.updatedByName, app.updatedAt)}
+                    {(() => {
+                      const result = formatUserDate(app.updatedByName, app.updatedAt);
+                      if (typeof result === "string") return result;
+                      return (
+                        <Tooltip
+                          title={
+                            <span className="dc-tooltip-content">
+                              <span className="dc-tooltip-date">{result.date}</span>
+                              <span className="dc-tooltip-time">{result.time}</span>
+                            </span>
+                          }
+                          arrow
+                          placement="top"
+                          classes={{ tooltip: "g-tooltip", arrow: "g-tooltip-arrow" }}
+                        >
+                          <span className="dc-user-name">{result.name}</span>
+                        </Tooltip>
+                      );
+                    })()}
+                  </TableCell>
+                   <TableCell className="dc-td">
+                    <span className={getStatusClass(app.applicationStatus)}>
+                      {app.applicationStatus.replace("_", " ")}
+                    </span>
                   </TableCell>
                 </TableRow>
               ))}
             </TableBody>
           </Table>
         </TableContainer>
+      )}
+      {/* Skip reason overlay */}
+      {showReasonOverlay && (
+        <div className="dc-overlay-backdrop" onClick={() => setShowReasonOverlay(false)}>
+          <div className="dc-overlay-card" onClick={(e) => e.stopPropagation()}>
+            <Typography className="dc-overlay-title">Skip Reason</Typography>
+            <textarea
+              className="dc-overlay-textarea"
+              placeholder="Enter reason for skipping..."
+              value={skipReason}
+              onChange={(e) => setSkipReason(e.target.value)}
+              rows={3}
+            />
+            <div className="dc-overlay-actions">
+              <Button
+                className="dc-overlay-btn-cancel"
+                variant="outlined"
+                size="small"
+                onClick={() => { setShowReasonOverlay(false); setSkipReason(""); }}
+              >
+                Cancel
+              </Button>
+              <Button
+                className="dc-overlay-btn-submit"
+                variant="contained"
+                size="small"
+                disabled={!skipReason.trim() || updating}
+                onClick={() => {
+                  setShowReasonOverlay(false);
+                  handleBulkRoundSkip(skipReason.trim());
+                  setSkipReason("");
+                }}
+              >
+                {updating ? "Submitting..." : "Submit"}
+              </Button>
+            </div>
+          </div>
+        </div>
       )}
     </Box>
   );

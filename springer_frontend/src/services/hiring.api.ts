@@ -3,6 +3,7 @@ import { handleAxiosError } from "./api.error";
 
 // Common type imports
 import type { ApiResponse } from "../types/api.response";
+import type { UserResponse } from "../types/auth.types";
 
 // Hiring-specific type imports
 import type { HiringCycleResponse, HiringCycleSummaryResponse, CycleWithDrivesResponse } from "../types/TA_Recruiter/Hiring/hiringCycle.types";
@@ -579,6 +580,22 @@ export const programApi = {
   async removeInstituteProgramMapping(instituteProgramId: number): Promise<ApiResponse<string>> {
     try {
       const response = await http.delete(`/programs/institute-mappings/${instituteProgramId}`);
+      return response.data;
+    } catch (error) {
+      throw handleAxiosError(error);
+    }
+  }
+};
+
+// ==================== USER APIs ====================
+export const userApi = {
+  /**
+   * Get users by role IDs
+   * GET /api/auth/users/by-roles?roleIds=1,2,3
+   */
+  async getUsersByRoles(roleIds: number[]): Promise<ApiResponse<UserResponse[]>> {
+    try {
+      const response = await http.get('/auth/users/by-roles', { params: { roleIds: roleIds.join(',') } });
       return response.data;
     } catch (error) {
       throw handleAxiosError(error);

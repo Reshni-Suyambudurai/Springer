@@ -76,6 +76,7 @@
   --color-primary: var(--color-blue-500);
   --color-primary-dark: var(--color-blue-600);
   --color-primary-light: var(--color-blue-50);
+  --color-primary-hover: var(--color-blue-700);
   --color-primary-hover-4: rgba(15, 76, 129, 0.04);
   --color-primary-hover-6: rgba(15, 76, 129, 0.06);
   --color-primary-hover-14: rgba(15, 76, 129, 0.14);
@@ -293,7 +294,7 @@
   --color-primary: #5ba3d6;
   --color-primary-dark: #4a8dc4;
   --color-primary-light: #1a2f4d;
-  --color-primary-hover: rgba(91, 163, 214, 0.16);
+  --color-primary-hover: rgba(9, 67, 108, 0.853);
   --color-primary-hover-4: rgba(91, 163, 214, 0.04);
   --color-primary-hover-6: rgba(91, 163, 214, 0.06);
   --color-primary-hover-14: rgba(91, 163, 214, 0.14);

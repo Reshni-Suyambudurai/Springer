@@ -1,15 +1,15 @@
 .layout {
-  min-height: 100vh;
+  height: 100vh;
   display: flex;
   flex-direction: column;
   background-color: var(--color-bg);
+  overflow: hidden;
 }
 
 .layout-content {
   margin-left: 72px;
   height: calc(100vh - 52px);
-  overflow-y: auto;
-  overflow-x: hidden;
+  overflow: hidden;
 }
 
 @media (max-width: 768px) {

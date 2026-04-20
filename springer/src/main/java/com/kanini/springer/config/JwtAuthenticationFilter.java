@@ -79,7 +79,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         // Validate token and set authentication
         if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
             
-            UserDetails userDetails = this.userDetailsService.loadUserByUsername(email);
+            // Build UserDetails directly from JWT claims — zero DB hits
+            String roleName = jwtUtil.extractClaim(jwt, claims -> claims.get("roleName", String.class));
+            UserDetails userDetails = org.springframework.security.core.userdetails.User
+                    .withUsername(email)
+                    .password("")
+                    .roles(roleName != null ? roleName : "UNKNOWN")
+                    .build();
             
             try {
                 if (jwtUtil.validateToken(jwt, email)) {

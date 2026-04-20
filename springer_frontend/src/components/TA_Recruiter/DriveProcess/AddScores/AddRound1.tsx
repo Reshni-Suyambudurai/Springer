@@ -24,8 +24,10 @@ import CloseIcon from "@mui/icons-material/Close";
 import SearchIcon from "@mui/icons-material/Search";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import BackButton from "../../../Common/BackButton";
+import ErrorOverlay from "../../../Common/ErrorOverlay";
 import { showToast } from "../../../../utils/toast";
 import { candidateEvaluationApi } from "../../../../services/driveschedule.api";
+import { roundTemplateApi } from "../../../../services/drive.api";
 import { tokenstore } from "../../../../auth/tokenstore";
 import "../../../../css/TA_Recruiter/DriveProcess/AddScores/AddRound1.css";
 
@@ -43,6 +45,8 @@ const AddRound1: React.FC = () => {
   const [nameOptions, setNameOptions] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [errorMap, setErrorMap] = useState<Record<string, string>>({});
+  const [uploadErrors, setUploadErrors] = useState<string[]>([]);
+  const [errorEmailMap, setErrorEmailMap] = useState<Map<number, string>>(new Map());
 
   // All headers = static + dynamic (score columns from Excel)
   const allHeaders = [...STATIC_HEADERS, ...dynamicHeaders];
@@ -188,11 +192,21 @@ const AddRound1: React.FC = () => {
     setErrorMap({});
   };
 
-  const handleDownloadFormat = () => {
-    const ws = XLSX.utils.aoa_to_sheet([STATIC_HEADERS]);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Aptitude Scores");
-    XLSX.writeFile(wb, "aptitude_score_template.xlsx");
+  const handleDownloadFormat = async () => {
+    try {
+      const res = await roundTemplateApi.getRoundTemplateById(1);
+      const sections = res.data.sections;
+      const sectionHeaders: string[] = Array.isArray(sections)
+        ? (sections as { sectionName: string }[]).map((s) => s.sectionName)
+        : [];
+      const headers = [...STATIC_HEADERS, ...sectionHeaders];
+      const ws = XLSX.utils.aoa_to_sheet([headers]);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Aptitude Scores");
+      XLSX.writeFile(wb, "aptitude_score_template.xlsx");
+    } catch {
+      showToast("Failed to fetch round template", "error");
+    }
   };
 
   const [uploading, setUploading] = useState(false);
@@ -238,17 +252,34 @@ const AddRound1: React.FC = () => {
       const result = response.data;
       if (result.failureCount > 0 && result.errorMessages) {
         const mapped: Record<string, string> = {};
+        const errors: string[] = [];
+        const emailMap = new Map<number, string>();
+        let errorIdx = 0;
         for (const [key, msg] of Object.entries(result.errorMessages)) {
           const idx = Number(key);
           const regCode = String(rows[idx]?.["Registration_code"] ?? "");
+          const email = String(rows[idx]?.["Candidate_email"] ?? "").toLowerCase();
           if (regCode) mapped[regCode] = msg;
+          if (email) emailMap.set(errorIdx, email);
+          errors.push(msg);
+          errorIdx++;
         }
         setErrorMap(mapped);
+        setUploadErrors(errors);
+        setErrorEmailMap(emailMap);
+      } else {
+        setUploadErrors([]);
+        setErrorEmailMap(new Map());
       }
       showToast(
         `Upload complete — ${result.successCount} succeeded, ${result.failureCount} failed`,
         result.failureCount > 0 ? "error" : "success"
       );
+      if (result.failureCount === 0) {
+        setRows([]);
+        setDynamicHeaders([]);
+        if (fileInputRef.current) fileInputRef.current.value = "";
+      }
     } catch (error) {
       showToast("Failed to upload evaluations", "error");
       console.error("Upload error:", error);
@@ -431,6 +462,33 @@ const AddRound1: React.FC = () => {
             </TableBody>
           </Table>
         </TableContainer>
+      )}
+
+      {uploadErrors.length > 0 && (
+        <ErrorOverlay
+          errorMessages={uploadErrors}
+          errorEmailMap={errorEmailMap}
+          onClose={() => setUploadErrors([])}
+          onRemoveByEmail={(email, errorIndex) => {
+            setRows((prev) => prev.filter((r) => String(r["Candidate_email"] ?? "").toLowerCase() !== email));
+            setUploadErrors((prev) => {
+              const remaining = prev.filter((_, i) => i !== errorIndex);
+              if (remaining.length === 0) setErrorEmailMap(new Map());
+              return remaining;
+            });
+            setErrorEmailMap((prev) => {
+              const updated = new Map<number, string>();
+              let newIdx = 0;
+              for (const [oldIdx, e] of prev.entries()) {
+                if (oldIdx !== errorIndex) {
+                  updated.set(newIdx, e);
+                  newIdx++;
+                }
+              }
+              return updated;
+            });
+          }}
+        />
       )}
     </Box>
   );

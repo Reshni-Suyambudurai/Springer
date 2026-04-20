@@ -49,6 +49,8 @@ export interface ApplicationResponse {
   updatedAt?: string; // ISO-8601 format from LocalDateTime
   updatedBy?: number;
   updatedByName?: string;
+  evaluationStatus: string; // Latest evaluation status (PENDING, PASS, FAIL, ABSENT, HOLD, SKIP)
+  latestRoundConfigId: number; // Round config ID of latest evaluation (0 if none)
 }
 
 export interface ApplicationStatusUpdateRequest {
@@ -82,3 +84,63 @@ export interface BulkApplicationStatusUpdateResponse {
  * Applications with no batchTime are grouped under 'UNSCHEDULED'.
  */
 export type BatchCandidatesMap = Record<string, number[]>;
+
+/**
+ * Candidate history response for a specific drive+candidate.
+ * Maps to backend CandidateHistoryResponse DTO.
+ */
+export interface CandidateHistoryResponse {
+  driveId: number;
+  driveName: string;
+  driveMode: string;
+  driveStatus: string;
+
+  applicationId: number;
+  candidateId: number;
+  candidateName: string;
+  batchTime: string | null;
+  registrationCode: string | null;
+  applicationStatus: string;
+  history: string | null;
+
+  assignments: CandidateHistoryAssignment[];
+  evaluations: CandidateHistoryEvaluation[];
+  overrides: CandidateHistoryOverride[];
+}
+
+export interface CandidateHistoryAssignment {
+  assignmentId: number;
+  roundConfigId: number;
+  roundName: string;
+  roundNo: number;
+  panelMemberId: number;
+  panelMemberName: string;
+  status: string;
+  isActive: boolean;
+  createdAt: string;
+}
+
+export interface CandidateHistoryEvaluation {
+  scoreId: number;
+  roundConfigId: number;
+  roundName: string;
+  roundNo: number;
+  score: number;
+  sectionScore: Record<string, unknown> | null;
+  review: string | null;
+  evaluationStatus: string;
+  reviewedBy: number;
+  reviewedByName: string;
+  reviewedAt: string;
+}
+
+export interface CandidateHistoryOverride {
+  overrideId: number;
+  entityType: string;
+  entityId: number;
+  changes: { field: string; old: unknown; newValue: unknown }[];
+  overrideReason: string;
+  createdById: number;
+  createdByName: string;
+  createdAt: string;
+}

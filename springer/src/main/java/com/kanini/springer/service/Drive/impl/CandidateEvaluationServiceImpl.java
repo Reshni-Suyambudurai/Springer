@@ -8,9 +8,12 @@ import com.kanini.springer.dto.Drive.*;
 import com.kanini.springer.entity.Drive.Application;
 import com.kanini.springer.entity.Drive.Candidate;
 import com.kanini.springer.entity.Drive.CandidateEvaluation;
+import com.kanini.springer.entity.Drive.DriveAssignment;
 import com.kanini.springer.entity.Drive.RoundTemplate;
 import com.kanini.springer.entity.HiringReq.User;
 import com.kanini.springer.entity.enums.Enums.ApplicationStage;
+import com.kanini.springer.entity.enums.Enums.ApplicationStatus;
+import com.kanini.springer.entity.enums.Enums.AssignmentStatus;
 import com.kanini.springer.entity.enums.Enums.EvaluationStatus;
 import com.kanini.springer.exception.ResourceNotFoundException;
 import com.kanini.springer.exception.ValidationException;
@@ -19,6 +22,7 @@ import com.kanini.springer.mapper.Drive.RoundTemplateMapper;
 import com.kanini.springer.repository.Drive.ApplicationRepository;
 import com.kanini.springer.repository.Drive.CandidateEvaluationRepository;
 import com.kanini.springer.repository.Drive.CandidatesRepository;
+import com.kanini.springer.repository.Drive.DriveAssignmentRepository;
 import com.kanini.springer.repository.Drive.RoundTemplateRepository;
 import com.kanini.springer.repository.Hiring.UserRepository;
 import com.kanini.springer.service.Common.IOverrideService;
@@ -27,11 +31,14 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -44,6 +51,7 @@ public class CandidateEvaluationServiceImpl implements ICandidateEvaluationServi
     private final RoundTemplateRepository roundTemplateRepository;
     private final UserRepository userRepository;
     private final CandidatesRepository candidatesRepository;
+    private final DriveAssignmentRepository driveAssignmentRepository;
     private final CandidateEvaluationMapper mapper;
     private final RoundTemplateMapper roundTemplateMapper;
     private final ObjectMapper objectMapper;
@@ -68,6 +76,9 @@ public class CandidateEvaluationServiceImpl implements ICandidateEvaluationServi
         if (request.getReviewedBy() == null) {
             throw new ValidationException("Reviewed by user ID is required");
         }
+        if (request.getStatus() == null || request.getStatus().isBlank()) {
+            throw new ValidationException("Submission status is required (SUBMIT or DRAFT)");
+        }
         
         // Fetch application
         Application application = applicationRepository.findById(request.getApplicationId())
@@ -89,32 +100,133 @@ public class CandidateEvaluationServiceImpl implements ICandidateEvaluationServi
             throw new ValidationException("Invalid evaluation status: " + request.getEvaluationStatus());
         }
         
-        // Create evaluation
-        CandidateEvaluation evaluation = new CandidateEvaluation();
-        evaluation.setApplication(application);
-        evaluation.setRoundConfig(roundTemplate);
-        evaluation.setScore(request.getScore());
-        evaluation.setReview(request.getReview());
-        evaluation.setStatus(evaluationStatus);
-        evaluation.setReviewedBy(reviewedByUser);
+        // Validate submission status (SUBMIT, DRAFT, or HOLD)
+        String submitStatus = request.getStatus();
+        if (!"SUBMIT".equals(submitStatus) && !"DRAFT".equals(submitStatus) && !"HOLD".equals(submitStatus)) {
+            throw new ValidationException("Invalid submission status: " + submitStatus + ". Must be SUBMIT, DRAFT, or HOLD");
+        }
         
-        // Serialize sectionScore to JSON string if provided
-        if (request.getSectionScore() != null) {
-            try {
-                String sectionScoreJson = objectMapper.writeValueAsString(request.getSectionScore());
-                evaluation.setSectionScore(sectionScoreJson);
-            } catch (JsonProcessingException e) {
-                throw new ValidationException("Failed to serialize sectionScore to JSON: " + e.getMessage());
+        // Check for existing evaluation (same application + round + reviewer) for upsert
+        Optional<CandidateEvaluation> existingOpt = evaluationRepository
+            .findByApplicationApplicationIdAndRoundConfigRoundConfigIdAndReviewedByUserId(
+                request.getApplicationId(), request.getRoundConfigId(), request.getReviewedBy());
+        
+        // Also check for existing evaluation (same application + round, any reviewer) with HOLD/SKIP
+        if (existingOpt.isEmpty()) {
+            List<CandidateEvaluation> roundEvals = evaluationRepository
+                .findByApplicationApplicationIdAndRoundConfigRoundConfigId(
+                    request.getApplicationId(), request.getRoundConfigId());
+            for (CandidateEvaluation ce : roundEvals) {
+                EvaluationStatus existingStatus = ce.getStatus();
+                if (existingStatus == EvaluationStatus.HOLD || existingStatus == EvaluationStatus.SKIP) {
+                    existingOpt = Optional.of(ce);
+                    break;
+                }
+            }
+        }
+        
+        CandidateEvaluation evaluation;
+        String overriddenStatus = null;
+        if (existingOpt.isPresent()) {
+            // Update existing evaluation
+            evaluation = existingOpt.get();
+            EvaluationStatus prevStatus = evaluation.getStatus();
+            if (prevStatus == EvaluationStatus.HOLD || prevStatus == EvaluationStatus.SKIP) {
+                overriddenStatus = prevStatus.name();
+            }
+            evaluation.setScore(request.getScore());
+            evaluation.setReview(request.getReview());
+            evaluation.setStatus(evaluationStatus);
+            evaluation.setReviewedBy(reviewedByUser);
+            evaluation.setReviewedAt(java.time.LocalDateTime.now());
+            if (request.getSectionScore() != null) {
+                try {
+                    String sectionScoreJson = objectMapper.writeValueAsString(request.getSectionScore());
+                    evaluation.setSectionScore(sectionScoreJson);
+                } catch (JsonProcessingException e) {
+                    throw new ValidationException("Failed to serialize sectionScore to JSON: " + e.getMessage());
+                }
+            }
+        } else {
+            // Create new evaluation
+            evaluation = new CandidateEvaluation();
+            evaluation.setApplication(application);
+            evaluation.setRoundConfig(roundTemplate);
+            evaluation.setScore(request.getScore());
+            evaluation.setReview(request.getReview());
+            evaluation.setStatus(evaluationStatus);
+            evaluation.setReviewedBy(reviewedByUser);
+            if (request.getSectionScore() != null) {
+                try {
+                    String sectionScoreJson = objectMapper.writeValueAsString(request.getSectionScore());
+                    evaluation.setSectionScore(sectionScoreJson);
+                } catch (JsonProcessingException e) {
+                    throw new ValidationException("Failed to serialize sectionScore to JSON: " + e.getMessage());
+                }
             }
         }
         
         // Save evaluation
         CandidateEvaluation savedEvaluation = evaluationRepository.save(evaluation);
         
-        // Update candidate status if FAIL
-        if (evaluationStatus == EvaluationStatus.FAIL) {
-            updateCandidateStatusOnFailure(application.getCandidate(), roundTemplate.getRoundName());
+        // If HOLD/SKIP was overridden, append override history
+        if (overriddenStatus != null) {
+            appendHistory(application, overriddenStatus + " overridden", reviewedByUser.getUsername(), roundTemplate.getRoundName());
         }
+        
+        // If DRAFT or HOLD: update only this reviewer's DriveAssignment status
+        if ("DRAFT".equals(submitStatus) || "HOLD".equals(submitStatus)) {
+            AssignmentStatus draftOrHold = "DRAFT".equals(submitStatus) ? AssignmentStatus.DRAFT : AssignmentStatus.HOLD;
+            driveAssignmentRepository.findActiveByUserIdAndApplicationId(
+                    request.getReviewedBy(), request.getApplicationId())
+                .ifPresent(assignment -> {
+                    assignment.setStatus(draftOrHold);
+                    driveAssignmentRepository.save(assignment);
+                });
+            appendHistory(application, evaluationStatus.name() + " (" + submitStatus + ")", reviewedByUser.getUsername(), roundTemplate.getRoundName());
+            applicationRepository.save(application);
+            return mapper.toResponse(savedEvaluation);
+        }
+        
+        // On SUBMIT: cascade status to this reviewer's DriveAssignment + Application
+        AssignmentStatus assignmentStatus;
+        ApplicationStatus appStatus = null; // null = no change
+
+        if (evaluationStatus == EvaluationStatus.PASS) {
+            assignmentStatus = AssignmentStatus.SELECTED;
+            if (application.getApplicationStatus() != ApplicationStatus.IN_DRIVE) {
+                appStatus = ApplicationStatus.IN_DRIVE;
+            }
+        } else if (evaluationStatus == EvaluationStatus.FAIL) {
+            assignmentStatus = AssignmentStatus.REJECTED;
+            appStatus = ApplicationStatus.FAILED;
+        } else if (evaluationStatus == EvaluationStatus.ABSENT) {
+            assignmentStatus = AssignmentStatus.REJECTED;
+            appStatus = ApplicationStatus.DROPPED;
+        } else if (evaluationStatus == EvaluationStatus.HOLD) {
+            assignmentStatus = AssignmentStatus.HOLD;
+        } else if (evaluationStatus == EvaluationStatus.SKIP) {
+            assignmentStatus = AssignmentStatus.SELECTED;
+        } else {
+            return mapper.toResponse(savedEvaluation);
+        }
+
+        // Update only this reviewer's active DriveAssignment for this application
+        driveAssignmentRepository.findActiveByUserIdAndApplicationId(
+                request.getReviewedBy(), request.getApplicationId())
+            .ifPresent(assignment -> {
+                assignment.setStatus(assignmentStatus);
+                driveAssignmentRepository.save(assignment);
+            });
+
+        // Update Application status only when required
+        if (appStatus != null) {
+            application.setApplicationStatus(appStatus);
+        }
+
+        // Append history and save application
+        appendHistory(application, evaluationStatus.name(), reviewedByUser.getUsername(), roundTemplate.getRoundName());
+        applicationRepository.save(application);
         
         return mapper.toResponse(savedEvaluation);
     }
@@ -157,21 +269,21 @@ public class CandidateEvaluationServiceImpl implements ICandidateEvaluationServi
                 .collect(Collectors.toMap(Application::getRegistrationCode, app -> app, (a, b) -> a));
         }
         
-        // 4. Pre-fetch existing evaluations for this round to detect duplicates (1 DB hit)
+        // 4. Pre-fetch existing evaluations for this round to detect duplicates / overrides (1 DB hit)
         List<Long> allApplicationIds = appByRegCode.values().stream()
             .map(Application::getApplicationId)
             .collect(Collectors.toList());
-        Set<Long> existingAppIds = Set.of();
+        Map<Long, CandidateEvaluation> existingEvalByAppId = Map.of();
         if (!allApplicationIds.isEmpty()) {
-            existingAppIds = evaluationRepository
+            existingEvalByAppId = evaluationRepository
                 .findByApplicationIdsAndRoundConfigIdFetched(allApplicationIds, request.getRoundConfigId())
                 .stream()
-                .map(e -> e.getApplication().getApplicationId())
-                .collect(Collectors.toSet());
+                .collect(Collectors.toMap(e -> e.getApplication().getApplicationId(), e -> e, (a, b) -> a));
         }
         
         // 5. Validate all rows first (all-or-nothing)
         List<CandidateEvaluation> evaluationsToSave = new ArrayList<>();
+        Map<Long, String> overriddenAppStatus = new LinkedHashMap<>();
         Map<Integer, String> errors = new LinkedHashMap<>();
         Set<Long> seenAppIds = new HashSet<>();
         
@@ -206,10 +318,14 @@ public class CandidateEvaluationServiceImpl implements ICandidateEvaluationServi
                 errors.put(i, name + ": Email mismatch — expected " + candidate.getEmail() + " but got " + evalData.getCandidateEmail());
                 continue;
             }            
-            // Check for duplicate in DB
-            if (existingAppIds.contains(application.getApplicationId())) {
-                errors.put(i, name + ": Evaluation already exists for this round");
-                continue;
+            // Check for duplicate in DB — allow override if HOLD/SKIP
+            CandidateEvaluation existingEval = existingEvalByAppId.get(application.getApplicationId());
+            if (existingEval != null) {
+                EvaluationStatus existingStatus = existingEval.getStatus();
+                if (existingStatus != EvaluationStatus.HOLD && existingStatus != EvaluationStatus.SKIP) {
+                    errors.put(i, name + ": Evaluation already exists for this round");
+                    continue;
+                }
             }
             
             // Check for duplicate within this upload batch
@@ -225,10 +341,17 @@ public class CandidateEvaluationServiceImpl implements ICandidateEvaluationServi
                 }
             }
             
-            // Build evaluation entity
-            CandidateEvaluation evaluation = new CandidateEvaluation();
-            evaluation.setApplication(application);
-            evaluation.setRoundConfig(roundTemplate);
+            // Build or update evaluation entity
+            CandidateEvaluation evaluation;
+            if (existingEval != null) {
+                // Override existing HOLD/SKIP entry
+                evaluation = existingEval;
+                overriddenAppStatus.put(application.getApplicationId(), existingEval.getStatus().name());
+            } else {
+                evaluation = new CandidateEvaluation();
+                evaluation.setApplication(application);
+                evaluation.setRoundConfig(roundTemplate);
+            }
             evaluation.setScore(totalScore);
             evaluation.setStatus(EvaluationStatus.PENDING);
             evaluation.setReviewedBy(updatedByUser);
@@ -260,6 +383,15 @@ public class CandidateEvaluationServiceImpl implements ICandidateEvaluationServi
         // 6. Bulk save all evaluations (1 DB hit)
         evaluationRepository.saveAll(evaluationsToSave);
         
+        // 7. Append override history for HOLD/SKIP entries that were overridden
+        if (!overriddenAppStatus.isEmpty()) {
+            String roundName = roundTemplate.getRoundName();
+            String userName = updatedByUser.getUsername();
+            for (Map.Entry<Long, String> entry : overriddenAppStatus.entrySet()) {
+                appendHistoryBulk(List.of(entry.getKey()), entry.getValue() + " overridden", userName, roundName);
+            }
+        }
+        
         response.setTotalProcessed(totalProcessed);
         response.setSuccessCount(evaluationsToSave.size());
         response.setFailureCount(0);
@@ -289,6 +421,26 @@ public class CandidateEvaluationServiceImpl implements ICandidateEvaluationServi
         return evaluations.stream()
             .map(mapper::toResponse)
             .collect(Collectors.toList());
+    }
+    
+    @Override
+    @Transactional(readOnly = true)
+    public CandidateEvaluationResponse getEvaluationByApplicationAndRound(Long applicationId, Long roundConfigId, Long userId) {
+        if (applicationId == null) {
+            throw new ValidationException("Application ID is required");
+        }
+        if (roundConfigId == null) {
+            throw new ValidationException("Round config ID is required");
+        }
+        if (userId == null) {
+            throw new ValidationException("User ID is required");
+        }
+        
+        CandidateEvaluation evaluation = evaluationRepository
+            .findByApplicationApplicationIdAndRoundConfigRoundConfigIdAndReviewedByUserId(applicationId, roundConfigId, userId)
+            .orElseThrow(() -> new ResourceNotFoundException("Evaluation", "applicationId + roundConfigId + userId", applicationId + "/" + roundConfigId + "/" + userId));
+        
+        return mapper.toResponse(evaluation);
     }
     
     @Override
@@ -369,6 +521,10 @@ public class CandidateEvaluationServiceImpl implements ICandidateEvaluationServi
         // Find evaluation
         CandidateEvaluation evaluation = evaluationRepository.findById(scoreId)
             .orElseThrow(() -> new ResourceNotFoundException("Evaluation", "ID", scoreId));
+
+        // Fetch updatedBy user for history
+        User updatedByUser = userRepository.findById(request.getUpdatedBy())
+            .orElseThrow(() -> new ResourceNotFoundException("User", "ID", request.getUpdatedBy()));
         
         // Store old status for comparison
         EvaluationStatus oldStatus = evaluation.getStatus();
@@ -402,6 +558,11 @@ public class CandidateEvaluationServiceImpl implements ICandidateEvaluationServi
             updateCandidateStatusOnPassAfterFail(candidate, roundName);
             logManualOverride(candidate, oldStatus, newStatus, "Evaluation status changed from FAIL to PASS", request.getUpdatedBy());
         }
+        
+        // Append history to application
+        Application application = evaluation.getApplication();
+        appendHistory(application, newStatus.name(), updatedByUser.getUsername(), roundName);
+        applicationRepository.save(application);
         
         return mapper.toResponse(evaluation);
     }
@@ -481,6 +642,40 @@ public class CandidateEvaluationServiceImpl implements ICandidateEvaluationServi
         }
     }
 
+    // =========================================================================
+    // Application history helpers
+    // =========================================================================
+
+    private static final DateTimeFormatter HISTORY_FMT = DateTimeFormatter.ofPattern("d/M/yy - h:mma");
+
+    /**
+     * Build a formatted history entry string.
+     * Example: "Evaluation updated to PASS by admin on 16/4/26 - 9:30pm."
+     */
+    private String buildHistoryEntry(String status, String userName, String roundName) {
+        String ts = LocalDateTime.now().format(HISTORY_FMT).toLowerCase();
+        String round = (roundName != null && !roundName.isBlank()) ? " in " + roundName : "";
+        return "Evaluation updated to " + status + round + " by " + userName + " on " + ts + ".\n";
+    }
+
+    /**
+     * Append a history entry to a single Application entity (already loaded).
+     */
+    private void appendHistory(Application application, String status, String userName, String roundName) {
+        String entry = buildHistoryEntry(status, userName, roundName);
+        String current = application.getHistory();
+        application.setHistory(current == null || current.isEmpty() ? entry : current + entry);
+    }
+
+    /**
+     * Bulk append a history entry to multiple applications via a single UPDATE query.
+     * Use when applications are not loaded as entities (bulk @Modifying flows).
+     */
+    private void appendHistoryBulk(List<Long> applicationIds, String status, String userName, String roundName) {
+        String entry = buildHistoryEntry(status, userName, roundName);
+        applicationRepository.appendHistoryByApplicationIds(entry, applicationIds);
+    }
+
     @Override
     @Transactional(readOnly = true)
     public RoundEvaluationResponse getEvaluationsByRoundAndApplications(RoundEvaluationRequest request) {
@@ -507,5 +702,296 @@ public class CandidateEvaluationServiceImpl implements ICandidateEvaluationServi
                 .collect(Collectors.toList()));
 
         return response;
+    }
+
+    @Override
+    @Transactional
+    public void bulkUpdateEvaluationStatus(BulkEvaluationStatusUpdateRequest request) {
+        if (request.getStatus() == null || request.getStatus().isBlank()) {
+            throw new ValidationException("Status is required");
+        }
+        if (request.getApplicationIds() == null || request.getApplicationIds().isEmpty()) {
+            throw new ValidationException("Application IDs list cannot be empty");
+        }
+        if (request.getRoundConfigId() == null) {
+            throw new ValidationException("Round config ID is required");
+        }
+
+        EvaluationStatus status;
+        try {
+            status = EvaluationStatus.valueOf(request.getStatus());
+        } catch (IllegalArgumentException e) {
+            throw new ValidationException("Invalid evaluation status: " + request.getStatus());
+        }
+
+        List<Long> applicationIds = request.getApplicationIds();
+        Long roundConfigId = request.getRoundConfigId();
+
+        // Check for DROPPED/FAILED applications — cannot proceed
+        List<Application> apps = applicationRepository.findAllById(applicationIds);
+        List<String> blockedEntries = apps.stream()
+                .filter(a -> a.getApplicationStatus() == ApplicationStatus.DROPPED
+                        || a.getApplicationStatus() == ApplicationStatus.FAILED)
+                .map(a -> {
+                    String name = a.getCandidate() != null
+                            ? a.getCandidate().getFirstName() + (a.getCandidate().getLastName() != null ? " " + a.getCandidate().getLastName() : "")
+                            : "ID " + a.getApplicationId();
+                    return name + " (" + a.getApplicationStatus() + ")";
+                })
+                .collect(Collectors.toList());
+        if (!blockedEntries.isEmpty()) {
+            throw new ValidationException("Cannot proceed — applications are DROPPED/FAILED: " + String.join(", ", blockedEntries));
+        }
+
+        // Check if panel allocation exists for the next round (roundConfigId + 1)
+        long allocatedCount = driveAssignmentRepository.countActiveByApplicationIdsAndRoundConfigId(
+                applicationIds, roundConfigId + 1);
+        if (allocatedCount > 0) {
+            throw new ValidationException("Cannot update status — " + allocatedCount
+                    + " application(s) already have panel allocation for the next round");
+        }
+
+        // Resolve user name for history
+        String userName = "System";
+        if (request.getUpdatedBy() != null) {
+            userName = userRepository.findById(request.getUpdatedBy())
+                    .map(User::getUsername).orElse("Unknown");
+        }
+        String roundName = roundTemplateRepository.findById(roundConfigId)
+                .map(RoundTemplate::getRoundName).orElse(null);
+
+        switch (status) {
+            case PASS:
+                // Update existing evals → PASS. No ApplicationStatus change.
+                evaluationRepository.updateStatusByApplicationIdsAndRoundConfigId(
+                        status, applicationIds, roundConfigId);
+                break;
+
+            case FAIL:
+                // Update existing evals → FAIL. ApplicationStatus → FAILED.
+                evaluationRepository.updateStatusByApplicationIdsAndRoundConfigId(
+                        status, applicationIds, roundConfigId);
+                applicationRepository.updateStatusByApplicationIds(
+                        ApplicationStatus.FAILED, applicationIds);
+                break;
+
+            case ABSENT: {
+                // Check no eval exists for this round
+                List<CandidateEvaluation> absentExisting = evaluationRepository
+                        .findByApplicationIdsAndRoundConfigIdFetched(applicationIds, roundConfigId);
+                if (!absentExisting.isEmpty()) {
+                    String absentNames = absentExisting.stream()
+                            .map(e -> {
+                                Candidate c = e.getApplication().getCandidate();
+                                return c != null ? c.getFirstName() + (c.getLastName() != null ? " " + c.getLastName() : "") : "Unknown";
+                            }).distinct().collect(Collectors.joining(", "));
+                    throw new ValidationException("Evaluations already exist for " + absentNames + " in this round");
+                }
+                // Mark previous round's (roundConfigId - 1) eval status → ABSENT
+                evaluationRepository.updateStatusByApplicationIdsAndRoundConfigId(
+                        EvaluationStatus.ABSENT, applicationIds, roundConfigId - 1);
+                // ApplicationStatus → DROPPED
+                applicationRepository.updateStatusByApplicationIds(
+                        ApplicationStatus.DROPPED, applicationIds);
+                break;
+            }
+
+            case SKIP: {
+                if (request.getReason() == null || request.getReason().isBlank()) {
+                    throw new ValidationException("Reason is required when status is SKIP");
+                }
+                Long nextRoundConfigId = roundConfigId + 1;
+                // Fetch next round template
+                RoundTemplate nextRoundTemplate = roundTemplateRepository.findById(nextRoundConfigId)
+                        .orElseThrow(() -> new ResourceNotFoundException("Round template", "ID", nextRoundConfigId));
+                // Check if eval already exists for the next round
+                List<CandidateEvaluation> skipExisting = evaluationRepository
+                        .findByApplicationIdsAndRoundConfigIdFetched(applicationIds, nextRoundConfigId);
+                if (!skipExisting.isEmpty()) {
+                    String skipNames = skipExisting.stream()
+                            .map(e -> {
+                                Candidate c = e.getApplication().getCandidate();
+                                return c != null ? c.getFirstName() + (c.getLastName() != null ? " " + c.getLastName() : "") : "Unknown";
+                            }).distinct().collect(Collectors.joining(", "));
+                    throw new ValidationException("Evaluations already exist for " + skipNames + " in " + nextRoundTemplate.getRoundName());
+                }
+                // Create new CandidateEvaluation at the next round
+                User skipReviewedBy = userRepository.findById(request.getUpdatedBy())
+                        .orElseThrow(() -> new ResourceNotFoundException("User", "ID", request.getUpdatedBy()));
+                List<Application> skipApplications = applicationRepository.findAllById(applicationIds);
+                if (skipApplications.size() != applicationIds.size()) {
+                    throw new ValidationException("Some applications were not found. Expected "
+                            + applicationIds.size() + " but found " + skipApplications.size());
+                }
+                List<CandidateEvaluation> skipEvals = new ArrayList<>();
+                for (Application app : skipApplications) {
+                    CandidateEvaluation eval = new CandidateEvaluation();
+                    eval.setApplication(app);
+                    eval.setRoundConfig(nextRoundTemplate);
+                    eval.setStatus(status);
+                    eval.setReviewedBy(skipReviewedBy);
+                    eval.setReview(request.getReason());
+                    skipEvals.add(eval);
+                }
+                evaluationRepository.saveAll(skipEvals);
+                roundName = nextRoundTemplate.getRoundName();
+                break;
+            }
+
+            case HOLD: {
+                // Check no eval exists for this round
+                List<CandidateEvaluation> holdExisting = evaluationRepository
+                        .findByApplicationIdsAndRoundConfigIdFetched(applicationIds, roundConfigId);
+                if (!holdExisting.isEmpty()) {
+                    String holdNames = holdExisting.stream()
+                            .map(e -> {
+                                Candidate c = e.getApplication().getCandidate();
+                                return c != null ? c.getFirstName() + (c.getLastName() != null ? " " + c.getLastName() : "") : "Unknown";
+                            }).distinct().collect(Collectors.joining(", "));
+                    throw new ValidationException("Evaluations already exist for " + holdNames + " in this round");
+                }
+                // Create new CandidateEvaluation per application
+                RoundTemplate holdRoundTemplate = roundTemplateRepository.findById(roundConfigId)
+                        .orElseThrow(() -> new ResourceNotFoundException("Round template", "ID", roundConfigId));
+                User holdReviewedBy = userRepository.findById(request.getUpdatedBy())
+                        .orElseThrow(() -> new ResourceNotFoundException("User", "ID", request.getUpdatedBy()));
+                List<Application> holdApplications = applicationRepository.findAllById(applicationIds);
+                if (holdApplications.size() != applicationIds.size()) {
+                    throw new ValidationException("Some applications were not found. Expected "
+                            + applicationIds.size() + " but found " + holdApplications.size());
+                }
+                List<CandidateEvaluation> holdEvals = new ArrayList<>();
+                for (Application app : holdApplications) {
+                    CandidateEvaluation eval = new CandidateEvaluation();
+                    eval.setApplication(app);
+                    eval.setRoundConfig(holdRoundTemplate);
+                    eval.setStatus(status);
+                    eval.setReviewedBy(holdReviewedBy);
+                    holdEvals.add(eval);
+                }
+                evaluationRepository.saveAll(holdEvals);
+                break;
+            }
+
+            default:
+                throw new ValidationException("Unsupported status: " + status);
+        }
+
+        appendHistoryBulk(applicationIds, status.name(), userName, roundName);
+    }
+
+    @Override
+    @Transactional
+    public void bulkRoundSkip(BulkRoundSkipRequest request) {
+        // Validate
+        if (request.getApplicationIds() == null || request.getApplicationIds().isEmpty()) {
+            throw new ValidationException("Application IDs list cannot be empty");
+        }
+        if (request.getRoundConfigId() == null) {
+            throw new ValidationException("Round config ID is required");
+        }
+        if (request.getReviewedBy() == null) {
+            throw new ValidationException("Reviewed by user ID is required");
+        }
+        if (request.getStatus() == null || request.getStatus().isBlank()) {
+            throw new ValidationException("Status is required");
+        }
+
+        String statusStr = request.getStatus();
+        if (!"SKIP".equals(statusStr) && !"HOLD".equals(statusStr) && !"ABSENT".equals(statusStr)) {
+            throw new ValidationException("Invalid status: " + statusStr + ". Must be SKIP, HOLD, or ABSENT");
+        }
+
+        if ("SKIP".equals(statusStr) && (request.getReason() == null || request.getReason().isBlank())) {
+            throw new ValidationException("Reason is required when status is SKIP");
+        }
+
+        List<Long> applicationIds = request.getApplicationIds();
+
+        // Check for DROPPED/FAILED applications — cannot proceed
+        List<Application> droppedCheck = applicationRepository.findAllById(applicationIds);
+        List<String> blockedEntries = droppedCheck.stream()
+                .filter(a -> a.getApplicationStatus() == ApplicationStatus.DROPPED
+                        || a.getApplicationStatus() == ApplicationStatus.FAILED)
+                .map(a -> {
+                    String name = a.getCandidate() != null
+                            ? a.getCandidate().getFirstName() + (a.getCandidate().getLastName() != null ? " " + a.getCandidate().getLastName() : "")
+                            : "ID " + a.getApplicationId();
+                    return name + " (" + a.getApplicationStatus() + ")";
+                })
+                .collect(Collectors.toList());
+        if (!blockedEntries.isEmpty()) {
+            throw new ValidationException("Cannot proceed — applications are DROPPED/FAILED: " + String.join(", ", blockedEntries));
+        }
+
+        // Fetch round name for history
+        String roundName = roundTemplateRepository.findById(request.getRoundConfigId())
+                .map(RoundTemplate::getRoundName).orElse(null);
+
+        if ("ABSENT".equals(statusStr)) {
+            // ABSENT: just set Application status to DROPPED — no evaluation record needed
+            // 1 DB hit: bulk UPDATE
+            int updated = applicationRepository.updateStatusByApplicationIds(
+                    ApplicationStatus.DROPPED, applicationIds);
+            if (updated != applicationIds.size()) {
+                throw new ValidationException("Some applications were not found. Expected "
+                        + applicationIds.size() + " but updated " + updated);
+            }
+            // Append history
+            String userName = userRepository.findById(request.getReviewedBy())
+                    .map(User::getUsername).orElse("Unknown");
+            appendHistoryBulk(applicationIds, "ABSENT", userName, roundName);
+            return;
+        }
+
+        // SKIP or HOLD: create new CandidateEvaluation entries (these rounds have no prior evaluation)
+        EvaluationStatus evalStatus = EvaluationStatus.valueOf(statusStr);
+
+        // Fetch required entities
+        RoundTemplate roundTemplate = roundTemplateRepository.findById(request.getRoundConfigId())
+                .orElseThrow(() -> new ResourceNotFoundException("Round template", "ID", request.getRoundConfigId()));
+        User reviewedByUser = userRepository.findById(request.getReviewedBy())
+                .orElseThrow(() -> new ResourceNotFoundException("User", "ID", request.getReviewedBy()));
+        List<Application> applications = applicationRepository.findAllById(applicationIds);
+        if (applications.size() != applicationIds.size()) {
+            throw new ValidationException("Some applications were not found. Expected "
+                    + applicationIds.size() + " but found " + applications.size());
+        }
+
+        // Check if evaluations already exist for any candidate (same app + round + reviewer)
+        List<CandidateEvaluation> existingEvals = evaluationRepository
+                .findByApplicationIdsAndRoundConfigIdFetched(applicationIds, request.getRoundConfigId());
+        List<CandidateEvaluation> conflicting = existingEvals.stream()
+                .filter(e -> e.getReviewedBy() != null && e.getReviewedBy().getUserId().equals(request.getReviewedBy()))
+                .collect(Collectors.toList());
+        if (!conflicting.isEmpty()) {
+            String names = conflicting.stream()
+                    .map(e -> {
+                        Candidate c = e.getApplication().getCandidate();
+                        String name = c != null ? c.getFirstName() + (c.getLastName() != null ? " " + c.getLastName() : "") : "Unknown";
+                        return name + " (status: " + e.getStatus() + ")";
+                    })
+                    .collect(Collectors.joining(", "));
+            throw new ValidationException("Evaluation already exists for: " + names);
+        }
+
+        // Create a new CandidateEvaluation for each application
+        List<CandidateEvaluation> evaluations = new ArrayList<>();
+        for (Application app : applications) {
+            CandidateEvaluation eval = new CandidateEvaluation();
+            eval.setApplication(app);
+            eval.setRoundConfig(roundTemplate);
+            eval.setStatus(evalStatus);
+            eval.setReviewedBy(reviewedByUser);
+            if ("SKIP".equals(statusStr)) {
+                eval.setReview(request.getReason());
+            }
+            evaluations.add(eval);
+        }
+        evaluationRepository.saveAll(evaluations);
+
+        // Append history
+        String userName = reviewedByUser.getUsername();
+        appendHistoryBulk(applicationIds, statusStr, userName, roundTemplate.getRoundName());
     }
 }

@@ -6,10 +6,10 @@ import type { CandidateRequest } from "../../types/TA_Recruiter/Drive/candidate.
 
 interface ErrorOverlayProps {
   errorMessages: string[];
-  errorEmailMap: Map<number, string>;
-  bulkData: CandidateRequest[];
   onClose: () => void;
-  onRemoveByEmail: (email: string, errorIndex: number) => void;
+  errorEmailMap?: Map<number, string>;
+  bulkData?: CandidateRequest[];
+  onRemoveByEmail?: (email: string, errorIndex: number) => void;
 }
 
 const ErrorOverlay: React.FC<ErrorOverlayProps> = ({
@@ -32,23 +32,30 @@ const ErrorOverlay: React.FC<ErrorOverlayProps> = ({
         </Box>
         <Box className="error-overlay-messages">
           {errorMessages.map((error, index) => {
+            // Legacy AddCandidates path: parse "Candidate #N:" pattern
             const candidateMatch = error.match(/^Candidate\s*#(\d+):/i);
             const candidateNum = candidateMatch ? parseInt(candidateMatch[1], 10) : null;
-            const email = candidateNum !== null ? errorEmailMap.get(candidateNum) : undefined;
-            const stillExists = email
-              ? bulkData.some((c) => c.email.toLowerCase() === email)
+            const legacyEmail = candidateNum !== null ? errorEmailMap?.get(candidateNum) : undefined;
+            const legacyExists = legacyEmail
+              ? bulkData?.some((c) => c.email.toLowerCase() === legacyEmail)
               : false;
+
+            // Generic path: direct index→email mapping
+            const directEmail = errorEmailMap?.get(index);
+
+            const resolvedEmail = legacyExists && legacyEmail ? legacyEmail : directEmail;
+            const showDelete = !!resolvedEmail && !!onRemoveByEmail;
 
             return (
               <Box key={index} className="error-message-item">
                 <Typography className="error-message-number">{index + 1}.</Typography>
                 <Typography className="error-message-text">{error}</Typography>
-                {candidateNum !== null && stillExists && email && (
+                {showDelete && (
                   <Tooltip title="Remove this candidate from table">
                     <IconButton
                       size="small"
                       className="error-message-delete-btn"
-                      onClick={() => onRemoveByEmail(email, index)}
+                      onClick={() => onRemoveByEmail!(resolvedEmail!, index)}
                     >
                       <DeleteIcon fontSize="small" />
                     </IconButton>

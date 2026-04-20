@@ -2,7 +2,107 @@
 .dc-container {
   padding: 16px;
   background-color: var(--color-bg);
-  min-height: 100vh;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+/* ========== Filter Bar ========== */
+.dc-filter-bar {
+  display: flex !important;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 20px !important;
+  margin-bottom: 16px;
+  background: var(--color-surface) !important;
+  border: 1px solid var(--color-border) !important;
+  border-radius: 10px !important;
+  box-shadow: none !important;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+
+.dc-filter-input {
+  flex: 1;
+  min-width: 180px;
+  padding: 8px 12px;
+  font-size: 13px;
+  font-family: inherit;
+  color: var(--color-text);
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+
+.dc-filter-input::placeholder {
+  color: var(--color-text-muted);
+}
+
+.dc-filter-input:focus {
+  border-color: var(--color-primary);
+}
+
+.dc-filter-select {
+  min-width: 140px;
+  padding: 8px 12px;
+  font-size: 13px;
+  font-family: inherit;
+  color: var(--color-text);
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  outline: none;
+  cursor: pointer;
+  transition: border-color 0.2s ease;
+}
+
+.dc-filter-select:focus {
+  border-color: var(--color-primary);
+}
+
+/* ========== Round Checkboxes ========== */
+.dc-round-checkboxes {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.dc-round-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 50px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1.5px solid var(--color-border);
+  color: var(--color-text-muted);
+  background: var(--color-bg);
+  transition: all 0.15s ease;
+  user-select: none;
+}
+.dc-round-chip input[type="checkbox"] {
+  display: none;
+}
+.dc-round-chip-active {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+  background: var(--color-primary-light, #e0e7ff);
+}
+
+/* ========== Checkbox ========== */
+.dc-checkbox .MuiSvgIcon-root {
+  color: var(--color-primary) !important;
+  font-size: 20px;
+}
+
+.dc-th-check {
+  width: 48px;
+  max-width: 48px;
 }
 
 /* ========== Header — mirrors InstitutesList / DriveList pattern ========== */
@@ -88,6 +188,33 @@
 
 .dc-btn-action:hover {
   background-color: var(--color-primary-hover) !important;
+}
+
+.dc-btn-action:disabled,
+.dc-btn-action.Mui-disabled {
+  background-color: var(--color-grey-350) !important;
+  color: var(--color-text-disabled) !important;
+  box-shadow: none !important;
+  cursor: not-allowed !important;
+  pointer-events: auto !important;
+}
+
+/* Select mode toggle button (active/outlined state) */
+.dc-btn-select-active {
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  border-radius: 8px !important;
+  padding: 6px 16px !important;
+  background-color: transparent !important;
+  color: var(--color-primary) !important;
+  border: 1.5px solid var(--color-primary) !important;
+  text-transform: none !important;
+  white-space: nowrap;
+  transition: background-color 0.2s ease !important;
+}
+
+.dc-btn-select-active:hover {
+  background-color: var(--color-primary-hover-4) !important;
 }
 
 /* ========== Loading ========== */
@@ -221,6 +348,23 @@
   background-color: #fef3c7;
 }
 
+/* ========== Evaluation Status Badges ========== */
+.dc-eval-badge {
+  padding: 3px 10px;
+  border-radius: 50px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  white-space: nowrap;
+}
+.dc-eval-pending { color: #d97706; background: #fef3c7; border: 1px solid #d97706; }
+.dc-eval-pass    { color: #16a34a; background: #dcfce7; border: 1px solid #16a34a; }
+.dc-eval-fail    { color: #dc2626; background: #fee2e2; border: 1px solid #dc2626; }
+.dc-eval-absent  { color: #be185d; background: #fce7f3; border: 1px solid #be185d; }
+.dc-eval-hold    { color: #1d4ed8; background: #dbeafe; border: 1px solid #1d4ed8; }
+.dc-eval-skip    { color: #6b7280; background: #f3f4f6; border: 1px solid #6b7280; }
+
 /* ========== Table ========== */
 .dc-table-container {
   border-radius: 12px !important;
@@ -258,6 +402,15 @@
   background-color: var(--color-bg) !important;
 }
 
+/* Selected row (double-click) */
+.dc-row-selected .dc-td {
+  background-color: var(--color-primary-light) !important;
+}
+
+.dc-row-selected:hover .dc-td {
+  background-color: var(--color-primary-light) !important;
+}
+
 .dc-td {
   font-size: 14px !important;
   color: var(--color-text) !important;
@@ -268,6 +421,122 @@
 
 .dc-td-name {
   font-weight: 600 !important;
+}
+
+/* ========== User name + Tooltip ========== */
+.dc-user-name {
+  cursor: default;
+}
+
+.dc-tooltip-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.dc-tooltip-date {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.dc-tooltip-time {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+}
+
+/* ========== Skip Reason Overlay ========== */
+.dc-overlay-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: var(--opacity-black-medium);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1300;
+}
+
+.dc-overlay-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  padding: 24px;
+  width: 400px;
+  max-width: 90vw;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  box-shadow: 0 8px 24px var(--opacity-shadow-dark);
+}
+
+.dc-overlay-title {
+  font-size: var(--text-lg) !important;
+  font-weight: 700 !important;
+  color: var(--color-text-primary) !important;
+}
+
+.dc-overlay-textarea {
+  width: 100%;
+  padding: 10px 12px;
+  font-size: var(--text-sm);
+  font-family: inherit;
+  color: var(--color-text-primary);
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-input-border);
+  border-radius: 8px;
+  resize: vertical;
+  outline: none;
+  transition: border-color 0.2s ease;
+  box-sizing: border-box;
+}
+
+.dc-overlay-textarea:focus {
+  border-color: var(--color-primary);
+}
+
+.dc-overlay-textarea::placeholder {
+  color: var(--color-text-muted);
+}
+
+.dc-overlay-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.dc-overlay-btn-cancel {
+  color: var(--color-text-secondary) !important;
+  border-color: var(--color-border) !important;
+  text-transform: none !important;
+  font-size: var(--text-sm) !important;
+  font-weight: 600 !important;
+}
+
+.dc-overlay-btn-cancel:hover {
+  background: var(--color-bg-secondary) !important;
+}
+
+.dc-overlay-btn-submit {
+  background: var(--color-primary) !important;
+  color: var(--color-white) !important;
+  text-transform: none !important;
+  font-size: var(--text-sm) !important;
+  font-weight: 600 !important;
+}
+
+.dc-overlay-btn-submit:hover {
+  background: var(--color-primary-dark) !important;
+}
+
+.dc-overlay-btn-submit:disabled {
+  background: var(--color-inactive-bg) !important;
+  color: var(--color-text-disabled) !important;
 }
 
 /* ========== Responsive ========== */
