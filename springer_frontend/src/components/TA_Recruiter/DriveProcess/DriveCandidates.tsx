@@ -406,7 +406,7 @@ const DriveCandidates: React.FC = () => {
   };
 
   const hasInDrive = filteredApplications.some((app) => app.applicationStatus === "IN_DRIVE");
-  const hasAlloted = filteredApplications.some((app) => app.applicationStatus === "ALLOTED");
+  const canAddScores = !hasInDrive && filteredApplications.length > 0;
  
   if (loading) {
     return (
@@ -460,7 +460,7 @@ const DriveCandidates: React.FC = () => {
 
           {evaluationsLoading && <CircularProgress size={20} />}
           <Button variant="contained" className="dc-btn-action" onClick={handleStart} disabled={selectedRound !== "ALL"}>Start</Button>
-          <Button variant="contained" className="dc-btn-action" disabled={!hasInDrive || hasAlloted} onClick={() => navigate(`/drive-process/add-scores/${driveId}/round1`)}>Add Score</Button>
+          <Button variant="contained" className="dc-btn-action" disabled={!canAddScores} onClick={() => navigate(`/drive-process/add-scores/${driveId}/round1`)}>Add Score</Button>
           
           <Button variant="contained" className="dc-btn-action" onClick={handleFinalizeClick}>Finalize</Button>
         </Box>
