@@ -741,30 +741,6 @@ public class CandidateEvaluationServiceImpl implements ICandidateEvaluationServi
         List<Long> applicationIds = request.getApplicationIds();
         Long roundConfigId = request.getRoundConfigId();
 
-        // Check for DROPPED/FAILED applications — cannot proceed
-        List<Application> apps = applicationRepository.findAllById(applicationIds);
-        List<String> blockedEntries = apps.stream()
-                .filter(a -> a.getApplicationStatus() == ApplicationStatus.DROPPED
-                        || a.getApplicationStatus() == ApplicationStatus.FAILED)
-                .map(a -> {
-                    String name = a.getCandidate() != null
-                            ? a.getCandidate().getFirstName() + (a.getCandidate().getLastName() != null ? " " + a.getCandidate().getLastName() : "")
-                            : "ID " + a.getApplicationId();
-                    return name + " (" + a.getApplicationStatus() + ")";
-                })
-                .collect(Collectors.toList());
-        if (!blockedEntries.isEmpty()) {
-            throw new ValidationException("Cannot proceed — applications are DROPPED/FAILED: " + String.join(", ", blockedEntries));
-        }
-
-        // Check if panel allocation exists for the next round (roundConfigId + 1)
-        long allocatedCount = driveAssignmentRepository.countActiveByApplicationIdsAndRoundConfigId(
-                applicationIds, roundConfigId + 1);
-        if (allocatedCount > 0) {
-            throw new ValidationException("Cannot update status — " + allocatedCount
-                    + " application(s) already have panel allocation for the next round");
-        }
-
         // Resolve user name for history
         String userName = "System";
         if (request.getUpdatedBy() != null) {
