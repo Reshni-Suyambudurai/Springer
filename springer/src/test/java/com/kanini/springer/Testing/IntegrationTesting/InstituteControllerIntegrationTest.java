@@ -50,12 +50,10 @@ class InstituteControllerIntegrationTest {
 
     private String jwtToken;
     private Long createdInstituteId;
-
-    // Seeded IDs from DataLoader
-    private static final Long SEEDED_INSTITUTE_ID = 1L;   // Anna University
+    private Long seededInstituteId; // Create our own instead of relying on DataLoader
 
     // =========================================================================
-    // SETUP — obtain JWT once for all tests
+    // SETUP — obtain JWT and create test institutes
     // =========================================================================
 
     @BeforeAll
@@ -75,6 +73,24 @@ class InstituteControllerIntegrationTest {
 
         JsonNode node = objectMapper.readTree(result.getResponse().getContentAsString());
         jwtToken = node.path("data").path("token").asText();
+
+        // Create a test institute for GET operations (don't conflict with DataLoader)
+        InstituteRequest seededRequest = new InstituteRequest();
+        seededRequest.setInstituteName("Test Institute Anna University");
+        seededRequest.setInstituteTier("TIER_1");
+        seededRequest.setState("Tamil Nadu");
+        seededRequest.setCity("Chennai");
+        seededRequest.setIsActive(true);
+
+        MvcResult seededResult = mockMvc.perform(post("/api/institutes")
+                        .header("Authorization", "Bearer " + jwtToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(seededRequest)))
+                .andExpect(status().isCreated())
+                .andReturn();
+
+        JsonNode seededNode = objectMapper.readTree(seededResult.getResponse().getContentAsString());
+        seededInstituteId = seededNode.path("data").path("instituteId").asLong();
     }
 
     // =========================================================================
@@ -90,7 +106,7 @@ class InstituteControllerIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data").isArray())
-                .andExpect(jsonPath("$.data", hasSize(greaterThanOrEqualTo(8))));
+                .andExpect(jsonPath("$.data", hasSize(greaterThanOrEqualTo(1))));
     }
 
     // =========================================================================
@@ -134,12 +150,12 @@ class InstituteControllerIntegrationTest {
     @Order(3)
     @DisplayName("GET /api/institutes/{id} - returns seeded institute by ID")
     void getInstituteById_found_returnsOk() throws Exception {
-        mockMvc.perform(get("/api/institutes/{id}", SEEDED_INSTITUTE_ID)
+        mockMvc.perform(get("/api/institutes/{id}", seededInstituteId)
                         .header("Authorization", "Bearer " + jwtToken))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data.instituteId").value(SEEDED_INSTITUTE_ID))
-                .andExpect(jsonPath("$.data.instituteName").value("Anna University"));
+                .andExpect(jsonPath("$.data.instituteId").value(seededInstituteId))
+                .andExpect(jsonPath("$.data.instituteName").value("Test Institute Anna University"));
     }
 
     @Test
@@ -166,7 +182,7 @@ class InstituteControllerIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data").isArray())
-                .andExpect(jsonPath("$.data", hasSize(greaterThanOrEqualTo(8))))
+                .andExpect(jsonPath("$.data", hasSize(greaterThanOrEqualTo(2)))) // At least Anna University + New Tech College
                 .andExpect(jsonPath("$.data[0].instituteId").exists())
                 .andExpect(jsonPath("$.data[0].instituteName").exists());
     }
@@ -187,7 +203,7 @@ class InstituteControllerIntegrationTest {
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.content").isArray())
                 .andExpect(jsonPath("$.data.content", hasSize(greaterThanOrEqualTo(1))))
-                .andExpect(jsonPath("$.data.totalElements").value(greaterThanOrEqualTo(8)))
+                .andExpect(jsonPath("$.data.totalElements").value(greaterThanOrEqualTo(2)))
                 .andExpect(jsonPath("$.data.size").value(6));
     }
 
@@ -212,12 +228,12 @@ class InstituteControllerIntegrationTest {
     @Order(8)
     @DisplayName("GET /api/institutes/{id}/with-tpos - returns institute with TPO details by ID")
     void getInstituteWithTPOsById_returnsOk() throws Exception {
-        mockMvc.perform(get("/api/institutes/{id}/with-tpos", SEEDED_INSTITUTE_ID)
+        mockMvc.perform(get("/api/institutes/{id}/with-tpos", seededInstituteId)
                         .header("Authorization", "Bearer " + jwtToken))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data.instituteId").value(SEEDED_INSTITUTE_ID))
-                .andExpect(jsonPath("$.data.instituteName").value("Anna University"))
+                .andExpect(jsonPath("$.data.instituteId").value(seededInstituteId))
+                .andExpect(jsonPath("$.data.instituteName").value("Test Institute Anna University"))
                 .andExpect(jsonPath("$.data.tpoDetails").isArray());
     }
 

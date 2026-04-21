@@ -177,8 +177,8 @@ public class CandidateEvaluationServiceImpl implements ICandidateEvaluationServi
         // If DRAFT or HOLD: update only this reviewer's DriveAssignment status
         if ("DRAFT".equals(submitStatus) || "HOLD".equals(submitStatus)) {
             AssignmentStatus draftOrHold = "DRAFT".equals(submitStatus) ? AssignmentStatus.DRAFT : AssignmentStatus.HOLD;
-            driveAssignmentRepository.findActiveByUserIdAndApplicationId(
-                    request.getReviewedBy(), request.getApplicationId())
+            driveAssignmentRepository.findActiveByUserIdAndApplicationIdAndRoundConfigId(
+                    request.getReviewedBy(), request.getApplicationId(), request.getRoundConfigId())
                 .ifPresent(assignment -> {
                     assignment.setStatus(draftOrHold);
                     driveAssignmentRepository.save(assignment);
@@ -194,7 +194,10 @@ public class CandidateEvaluationServiceImpl implements ICandidateEvaluationServi
 
         if (evaluationStatus == EvaluationStatus.PASS) {
             assignmentStatus = AssignmentStatus.SELECTED;
-            if (application.getApplicationStatus() != ApplicationStatus.IN_DRIVE) {
+            // If Round 3 (Technical) and PASS → Mark application as SELECTED
+            if (roundTemplate.getRoundNo() != null && roundTemplate.getRoundNo() == 3) {
+                appStatus = ApplicationStatus.SELECTED;
+            } else if (application.getApplicationStatus() != ApplicationStatus.IN_DRIVE) {
                 appStatus = ApplicationStatus.IN_DRIVE;
             }
         } else if (evaluationStatus == EvaluationStatus.FAIL) {
@@ -212,8 +215,8 @@ public class CandidateEvaluationServiceImpl implements ICandidateEvaluationServi
         }
 
         // Update only this reviewer's active DriveAssignment for this application
-        driveAssignmentRepository.findActiveByUserIdAndApplicationId(
-                request.getReviewedBy(), request.getApplicationId())
+        driveAssignmentRepository.findActiveByUserIdAndApplicationIdAndRoundConfigId(
+                request.getReviewedBy(), request.getApplicationId(), request.getRoundConfigId())
             .ifPresent(assignment -> {
                 assignment.setStatus(assignmentStatus);
                 driveAssignmentRepository.save(assignment);
@@ -541,7 +544,10 @@ public class CandidateEvaluationServiceImpl implements ICandidateEvaluationServi
         evaluation.setStatus(newStatus);
         
         Candidate candidate = evaluation.getApplication().getCandidate();
-        String roundName = evaluation.getRoundConfig().getRoundName();
+        Application application = evaluation.getApplication();
+        RoundTemplate roundTemplate = evaluation.getRoundConfig();
+        String roundName = roundTemplate.getRoundName();
+        Integer roundNo = roundTemplate.getRoundNo();
         
         // Handle status change logic
         if (newStatus == EvaluationStatus.ABSENT) {
@@ -557,10 +563,18 @@ public class CandidateEvaluationServiceImpl implements ICandidateEvaluationServi
             // FAIL → PASS: Update candidate to SHORTLISTED, log override
             updateCandidateStatusOnPassAfterFail(candidate, roundName);
             logManualOverride(candidate, oldStatus, newStatus, "Evaluation status changed from FAIL to PASS", request.getUpdatedBy());
+            
+            // If Round 3 and changed to PASS → Mark application as SELECTED
+            if (roundNo != null && roundNo == 3) {
+                application.setApplicationStatus(ApplicationStatus.SELECTED);
+            }
+        }
+        else if (newStatus == EvaluationStatus.PASS && roundNo != null && roundNo == 3) {
+            // If Round 3 and status is PASS (regardless of old status) → Mark application as SELECTED
+            application.setApplicationStatus(ApplicationStatus.SELECTED);
         }
         
         // Append history to application
-        Application application = evaluation.getApplication();
         appendHistory(application, newStatus.name(), updatedByUser.getUsername(), roundName);
         applicationRepository.save(application);
         

@@ -211,8 +211,9 @@ public class InstituteServiceImpl implements IInstituteService {
     }
     
     @Override
+    @Transactional(readOnly = true)
     public InstituteResponse getInstituteById(Long instituteId) {
-        Institute institute = instituteRepository.findById(instituteId)
+        Institute institute = instituteRepository.findByIdWithPrograms(instituteId)
                 .orElseThrow(() -> new ResourceNotFoundException("Institute", "ID", instituteId));
         return mapper.toResponse(institute);
     }

@@ -32,7 +32,8 @@ public class InstituteController {
     public ResponseEntity<ApiResponse<InstituteResponse>> createInstitute(@RequestBody InstituteRequest request) {
         // Manual validation for required fields
         if (request.getInstituteName() == null || request.getInstituteName().isBlank()) {
-            throw new RuntimeException("Institute name is required");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new ApiResponse<>(false, "Institute name is required", null));
         }
         
         InstituteResponse response = instituteService.createInstitute(request);

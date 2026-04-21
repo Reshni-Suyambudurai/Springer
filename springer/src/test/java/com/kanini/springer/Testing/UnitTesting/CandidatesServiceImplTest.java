@@ -26,6 +26,7 @@ import com.kanini.springer.repository.Hiring.HiringCycleRepository;
 import com.kanini.springer.repository.Hiring.InstituteRepository;
 import com.kanini.springer.repository.Hiring.SkillRepository;
 import com.kanini.springer.repository.Hiring.UserRepository;
+import com.kanini.springer.repository.Drive.DriveRepository;
 import com.kanini.springer.service.Common.IOverrideService;
 import com.kanini.springer.service.Drive.IEligibilityRuleService;
 import com.kanini.springer.service.Drive.impl.CandidatesServiceImpl;
@@ -47,6 +48,7 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -74,6 +76,8 @@ class CandidatesServiceImplTest {
     @Mock private SkillRepository        skillRepository;
     @Mock private CandidateSkillRepository candidateSkillRepository;
     @Mock private UserRepository         userRepository;
+    @Mock private DriveRepository         driveRepository;
+    @Mock private jakarta.persistence.EntityManager entityManager;
 
     @InjectMocks
     private CandidatesServiceImpl candidatesService;
@@ -167,7 +171,6 @@ class CandidatesServiceImplTest {
                     anyString(), anyString(), anyString(), anyString(),
                     any(), any(), any())).thenReturn(Collections.emptyList());
             when(candidatesRepository.findByEmail(anyString())).thenReturn(Optional.empty());
-            when(candidatesRepository.findByAadhaarNumber(any())).thenReturn(Optional.empty());
             when(mapper.toEntity(req)).thenReturn(stubCandidate);
             when(eligibilityRuleService.checkEligibility(any(), any(), any(), any(), any()))
                     .thenReturn(eligibleResult());
@@ -264,8 +267,6 @@ class CandidatesServiceImplTest {
                     any(), any(), any())).thenReturn(Collections.emptyList());
             when(candidatesRepository.findByEmail(anyString())).thenReturn(Optional.of(stubCandidate));
             when(mapper.toEntity(req)).thenReturn(stubCandidate);
-            when(eligibilityRuleService.checkEligibility(any(), any(), any(), any(), any()))
-                    .thenReturn(eligibleResult());
 
             assertThatThrownBy(() -> candidatesService.createCandidate(req))
                     .isInstanceOf(ValidationException.class)
@@ -287,7 +288,6 @@ class CandidatesServiceImplTest {
                     anyString(), anyString(), anyString(), anyString(),
                     any(), any(), any())).thenReturn(Collections.emptyList());
             when(candidatesRepository.findByEmail(anyString())).thenReturn(Optional.empty());
-            when(candidatesRepository.findByAadhaarNumber(any())).thenReturn(Optional.empty());
 
             Candidate ineligibleCandidate = new Candidate();
             ineligibleCandidate.setCandidateId(2L);
@@ -781,8 +781,7 @@ class CandidatesServiceImplTest {
             );
 
             when(userRepository.findById(1L)).thenReturn(Optional.of(stubUser));
-            when(candidatesRepository.findById(1L)).thenReturn(Optional.of(stubCandidate));
-            when(candidatesRepository.save(any(Candidate.class))).thenReturn(stubCandidate);
+            when(candidatesRepository.findAllById(List.of(1L))).thenReturn(List.of(stubCandidate));
 
             BulkCandidateStatusUpdateResponse result = candidatesService.bulkUpdateCandidateStatus(req);
 
@@ -800,9 +799,7 @@ class CandidatesServiceImplTest {
                     List.of(10L, 11L), null, "SHORTLISTED", "Bulk test", null
             );
 
-            when(candidatesRepository.findById(10L)).thenReturn(Optional.of(eligible));
-            when(candidatesRepository.findById(11L)).thenReturn(Optional.of(ineligible));
-            when(candidatesRepository.save(any(Candidate.class))).thenReturn(eligible);
+            when(candidatesRepository.findAllById(List.of(10L, 11L))).thenReturn(List.of(eligible, ineligible));
 
             BulkCandidateStatusUpdateResponse result = candidatesService.bulkUpdateCandidateStatus(req);
 
@@ -876,8 +873,7 @@ class CandidatesServiceImplTest {
             );
 
             when(userRepository.findById(1L)).thenReturn(Optional.of(stubUser));
-            when(candidatesRepository.findById(1L)).thenReturn(Optional.of(stubCandidate));
-            when(candidatesRepository.save(any(Candidate.class))).thenReturn(stubCandidate);
+            when(candidatesRepository.findAllById(List.of(1L))).thenReturn(List.of(stubCandidate));
 
             BulkCandidateLifecycleUpdateResponse result = candidatesService.bulkUpdateCandidateLifecycleStatus(req);
 
@@ -893,9 +889,7 @@ class CandidatesServiceImplTest {
                     List.of(1L, 99L), null, "ACTIVE", null
             );
 
-            when(candidatesRepository.findById(1L)).thenReturn(Optional.of(stubCandidate));
-            when(candidatesRepository.findById(99L)).thenReturn(Optional.empty());
-            when(candidatesRepository.save(any(Candidate.class))).thenReturn(stubCandidate);
+            when(candidatesRepository.findAllById(List.of(1L, 99L))).thenReturn(List.of(stubCandidate));
 
             BulkCandidateLifecycleUpdateResponse result = candidatesService.bulkUpdateCandidateLifecycleStatus(req);
 

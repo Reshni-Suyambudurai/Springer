@@ -136,6 +136,7 @@ public class ApplicationMapper {
                 entry.setRoundConfigId(e.getRoundConfig().getRoundConfigId());
                 entry.setRoundName(e.getRoundConfig().getRoundName());
                 entry.setRoundNo(e.getRoundConfig().getRoundNo());
+                entry.setOutoffScore(e.getRoundConfig().getOutoffScore());
             }
             entry.setScore(e.getScore());
             // Deserialize sectionScore JSON

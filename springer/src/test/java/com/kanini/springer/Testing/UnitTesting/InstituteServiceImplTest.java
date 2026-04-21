@@ -192,8 +192,7 @@ class InstituteServiceImplTest {
             InstituteRequest r1 = buildRequest("College A", "TIER_2", "TN", "Trichy", true);
             InstituteRequest r2 = buildRequest("College B", "TIER_3", "TN", "Madurai", true);
 
-            when(instituteRepository.findByInstituteName("College A")).thenReturn(Optional.empty());
-            when(instituteRepository.findByInstituteName("College B")).thenReturn(Optional.empty());
+            when(instituteRepository.findByInstituteNameIn(any())).thenReturn(Collections.emptyList());
 
             Institute saved1 = institute(10L, "College A");
             Institute saved2 = institute(11L, "College B");
@@ -219,9 +218,7 @@ class InstituteServiceImplTest {
             InstituteRequest r1 = buildRequest("Unique College", "TIER_2", "TN", "Salem", true);
             InstituteRequest r2 = buildRequest("Anna University", "TIER_1", "TN", "Chennai", true); // dup
 
-            when(instituteRepository.findByInstituteName("Unique College")).thenReturn(Optional.empty());
-            when(instituteRepository.findByInstituteName("Anna University"))
-                    .thenReturn(Optional.of(stubInstitute));
+            when(instituteRepository.findByInstituteNameIn(any())).thenReturn(List.of(stubInstitute));
 
             BulkInsertResponse<InstituteResponse> result =
                     instituteService.bulkCreateInstitutes(List.of(r1, r2));
@@ -238,7 +235,7 @@ class InstituteServiceImplTest {
             InstituteRequest r1 = buildRequest("Valid College", "TIER_2", "TN", "Vellore", true);
             InstituteRequest r2 = buildRequest("   ", "TIER_2", "TN", "Vellore", true); // blank
 
-            when(instituteRepository.findByInstituteName("Valid College")).thenReturn(Optional.empty());
+            when(instituteRepository.findByInstituteNameIn(any())).thenReturn(Collections.emptyList());
 
             BulkInsertResponse<InstituteResponse> result =
                     instituteService.bulkCreateInstitutes(List.of(r1, r2));
@@ -254,8 +251,7 @@ class InstituteServiceImplTest {
             InstituteRequest r1 = buildRequest("Good College", "TIER_2", "TN", "Salem", true);
             InstituteRequest r2 = buildRequest("Bad Tier College", "TIER_99", "TN", "Salem", true);
 
-            when(instituteRepository.findByInstituteName("Good College")).thenReturn(Optional.empty());
-            when(instituteRepository.findByInstituteName("Bad Tier College")).thenReturn(Optional.empty());
+            when(instituteRepository.findByInstituteNameIn(any())).thenReturn(Collections.emptyList());
 
             BulkInsertResponse<InstituteResponse> result =
                     instituteService.bulkCreateInstitutes(List.of(r1, r2));
@@ -277,7 +273,7 @@ class InstituteServiceImplTest {
         @Test
         @DisplayName("Positive: returns mapped list of all institutes")
         void getAllInstitutes_returnsList() {
-            when(instituteRepository.findAll()).thenReturn(List.of(stubInstitute));
+            when(instituteRepository.findAllWithPrograms()).thenReturn(List.of(stubInstitute));
             when(mapper.toResponse(stubInstitute)).thenReturn(stubResponse);
 
             List<InstituteResponse> result = instituteService.getAllInstitutes();
@@ -289,7 +285,7 @@ class InstituteServiceImplTest {
         @Test
         @DisplayName("Positive: returns empty list when no institutes exist")
         void getAllInstitutes_empty_returnsEmptyList() {
-            when(instituteRepository.findAll()).thenReturn(Collections.emptyList());
+            when(instituteRepository.findAllWithPrograms()).thenReturn(Collections.emptyList());
 
             List<InstituteResponse> result = instituteService.getAllInstitutes();
 
@@ -308,7 +304,7 @@ class InstituteServiceImplTest {
         @Test
         @DisplayName("Positive: returns institute when found by ID")
         void getInstituteById_found_returnsResponse() {
-            when(instituteRepository.findById(1L)).thenReturn(Optional.of(stubInstitute));
+            when(instituteRepository.findByIdWithPrograms(1L)).thenReturn(Optional.of(stubInstitute));
             when(mapper.toResponse(stubInstitute)).thenReturn(stubResponse);
 
             InstituteResponse result = instituteService.getInstituteById(1L);
@@ -320,7 +316,7 @@ class InstituteServiceImplTest {
         @Test
         @DisplayName("Negative: throws ResourceNotFoundException when ID does not exist")
         void getInstituteById_notFound_throwsResourceNotFound() {
-            when(instituteRepository.findById(99L)).thenReturn(Optional.empty());
+            when(instituteRepository.findByIdWithPrograms(99L)).thenReturn(Optional.empty());
 
             assertThatThrownBy(() -> instituteService.getInstituteById(99L))
                     .isInstanceOf(ResourceNotFoundException.class)

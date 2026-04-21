@@ -66,6 +66,7 @@ public class CandidateHistoryResponse {
         private String roundName;
         private Integer roundNo;
         private Integer score;
+        private Integer outoffScore;   // Maximum possible score from round_template
         private Object sectionScore;   // JSON object
         private String review;
         private String evaluationStatus; // PASS, FAIL, ABSENT, HOLD, SKIP

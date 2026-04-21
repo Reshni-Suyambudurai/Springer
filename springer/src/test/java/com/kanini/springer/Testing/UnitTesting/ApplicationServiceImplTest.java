@@ -10,10 +10,15 @@ import com.kanini.springer.entity.enums.Enums.ApplicationStage;
 import com.kanini.springer.exception.ResourceNotFoundException;
 import com.kanini.springer.exception.ValidationException;
 import com.kanini.springer.mapper.Drive.ApplicationMapper;
+import com.kanini.springer.mapper.Common.ManualOverrideMapper;
 import com.kanini.springer.repository.Drive.ApplicationRepository;
+import com.kanini.springer.repository.Drive.CandidateEvaluationRepository;
 import com.kanini.springer.repository.Drive.CandidatesRepository;
+import com.kanini.springer.repository.Drive.DriveAssignmentRepository;
 import com.kanini.springer.repository.Drive.DriveRepository;
+import com.kanini.springer.repository.Common.ManualOverrideRepository;
 import com.kanini.springer.repository.Hiring.UserRepository;
+import com.kanini.springer.service.Common.IOverrideService;
 import com.kanini.springer.service.Drive.impl.ApplicationServiceImpl;
 import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.DisplayName;
@@ -55,6 +60,12 @@ class ApplicationServiceImplTest {
     private DriveRepository driveRepository;
 
     @Mock
+    private DriveAssignmentRepository driveAssignmentRepository;
+
+    @Mock
+    private CandidateEvaluationRepository candidateEvaluationRepository;
+
+    @Mock
     private UserRepository userRepository;
 
     @Mock
@@ -62,6 +73,15 @@ class ApplicationServiceImplTest {
 
     @Mock
     private EntityManager entityManager;
+
+    @Mock
+    private IOverrideService overrideService;
+
+    @Mock
+    private ManualOverrideRepository manualOverrideRepository;
+
+    @Mock
+    private ManualOverrideMapper manualOverrideMapper;
 
     // =========================================================================
     // Helpers
@@ -365,6 +385,7 @@ class ApplicationServiceImplTest {
 
             when(applicationRepository.findByDriveDriveId(1L)).thenReturn(List.of(app));
             when(mapper.toResponse(app)).thenReturn(response);
+            when(candidateEvaluationRepository.findLatestStatusByApplicationIds(any())).thenReturn(Collections.emptyList());
 
             List<ApplicationResponse> result = service.getApplicationsByDriveId(1L);
 
@@ -394,6 +415,7 @@ class ApplicationServiceImplTest {
             Drive drive = buildDrive(1L);
             Candidate candidate = buildCandidate(1L, ApplicationStage.SCHEDULED, true);
             Application app = buildApplication(1L, drive, candidate);
+            app.setApplicationStatus(ApplicationStatus.IN_DRIVE);
             Application updated = buildApplication(1L, drive, candidate);
             updated.setApplicationStatus(ApplicationStatus.SELECTED);
 
@@ -470,7 +492,7 @@ class ApplicationServiceImplTest {
 
             assertThatThrownBy(() -> service.bulkUpdateApplicationStatus(request))
                     .isInstanceOf(ValidationException.class)
-                    .hasMessageContaining("Applications list cannot be empty");
+                    .hasMessageContaining("Application IDs list cannot be empty");
         }
 
         @Test

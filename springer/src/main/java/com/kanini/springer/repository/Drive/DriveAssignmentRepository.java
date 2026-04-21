@@ -90,6 +90,17 @@ public interface DriveAssignmentRepository extends JpaRepository<DriveAssignment
             @Param("userId") Long userId, @Param("applicationId") Long applicationId);
 
     /**
+     * Find active assignment by userId, applicationId, and roundConfigId.
+     */
+    @Query("SELECT a FROM DriveAssignment a WHERE a.user.userId = :userId " +
+           "AND a.application.applicationId = :applicationId " +
+           "AND a.roundConfig.roundConfigId = :roundConfigId AND a.isActive = true")
+    java.util.Optional<DriveAssignment> findActiveByUserIdAndApplicationIdAndRoundConfigId(
+            @Param("userId") Long userId, 
+            @Param("applicationId") Long applicationId,
+            @Param("roundConfigId") Long roundConfigId);
+
+    /**
      * Find active assignments by applicationId and roundConfigId.
      */
     @Query("SELECT a FROM DriveAssignment a WHERE a.application.applicationId = :applicationId " +

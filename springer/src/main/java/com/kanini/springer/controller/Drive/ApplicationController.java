@@ -8,6 +8,8 @@ import com.kanini.springer.dto.Drive.BulkApplicationResponse;
 import com.kanini.springer.dto.Drive.BulkApplicationStatusUpdateRequest;
 import com.kanini.springer.dto.Drive.BulkApplicationStatusUpdateResponse;
 import com.kanini.springer.dto.Drive.CandidateHistoryResponse;
+import com.kanini.springer.dto.Drive.FinalizeApplicationsRequest;
+import com.kanini.springer.dto.Drive.FinalizeApplicationsResponse;
 import com.kanini.springer.service.Drive.IApplicationService;
 import com.kanini.springer.dto.Drive.OverrideDriveStatusRequest;
 import com.kanini.springer.entity.enums.Enums.ApplicationStatus;
@@ -108,5 +110,17 @@ public class ApplicationController {
         ApplicationResponse response = applicationService.overrideDriveStatus(
                 request.getApplicationId(), status, request.getReason(), request.getUserId());
         return ResponseEntity.ok(new ApiResponse<>(true, "Application status overridden successfully", response));
+    }
+    
+    @PostMapping("/finalize")
+    @Operation(summary = "Finalize applications - Apply application status to candidate stages",
+               description = "Updates candidate applicationStage based on application status. " +
+                             "Mapping: SELECTED→SELECTED, FAILED→REJECTED, DROPPED→DROPPED, ALLOTED/IN_DRIVE→REJECTED")
+    public ResponseEntity<ApiResponse<FinalizeApplicationsResponse>> finalizeApplications(
+            @RequestBody FinalizeApplicationsRequest request) {
+        FinalizeApplicationsResponse response = applicationService.finalizeApplications(request);
+        return ResponseEntity.ok(new ApiResponse<>(true, 
+                "Applications finalized successfully. " + response.getUpdatedCount() + " candidates updated.", 
+                response));
     }
 }

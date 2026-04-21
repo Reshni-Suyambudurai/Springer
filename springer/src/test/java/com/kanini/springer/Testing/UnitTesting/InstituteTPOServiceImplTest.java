@@ -218,7 +218,7 @@ class InstituteTPOServiceImplTest {
             when(instituteRepository.findById(instituteId)).thenReturn(Optional.of(inst));
             when(contactRepository.findByTpoEmail("sundar@annauniv.edu")).thenReturn(Optional.empty());
             when(contactRepository.findByTpoEmail("lalitha@annauniv.edu")).thenReturn(Optional.empty());
-            when(contactRepository.save(any(InstituteContact.class))).thenReturn(c1, c2);
+            when(contactRepository.saveAll(any())).thenReturn(List.of(c1, c2));
             when(mapper.toResponse(c1)).thenReturn(resp1);
             when(mapper.toResponse(c2)).thenReturn(resp2);
 
@@ -337,7 +337,7 @@ class InstituteTPOServiceImplTest {
             when(contactRepository.findByTpoEmail("tpotwo@ssn.edu")).thenReturn(Optional.empty());
             when(instituteRepository.findById(1L)).thenReturn(Optional.of(inst1));
             when(instituteRepository.findById(2L)).thenReturn(Optional.of(inst2));
-            when(contactRepository.save(any(InstituteContact.class))).thenReturn(c1, c2);
+            when(contactRepository.saveAll(any())).thenReturn(List.of(c1, c2));
             when(mapper.toResponse(c1)).thenReturn(resp1);
             when(mapper.toResponse(c2)).thenReturn(resp2);
 
@@ -373,7 +373,6 @@ class InstituteTPOServiceImplTest {
                     "badinst@test.com", "9100000002", "ACTIVE", false);
 
             when(contactRepository.findByTpoEmail("valid@annauniv.edu")).thenReturn(Optional.empty());
-            when(contactRepository.findByTpoEmail("badinst@test.com")).thenReturn(Optional.empty());
             when(instituteRepository.findById(1L)).thenReturn(Optional.of(inst1));
             when(instituteRepository.findById(99L)).thenReturn(Optional.empty());
 
@@ -577,7 +576,7 @@ class InstituteTPOServiceImplTest {
             InstituteContact toggled = buildContact(5, "Ravi", "ravi@test.edu",
                     "9111111111", ContactStatus.INACTIVE, inst);
 
-            when(contactRepository.findByIdWithInstitute(5)).thenReturn(Optional.of(contact));
+            when(contactRepository.findById(5)).thenReturn(Optional.of(contact));
             when(contactRepository.save(any(InstituteContact.class))).thenReturn(toggled);
 
             service.deleteContact(5);
@@ -594,7 +593,7 @@ class InstituteTPOServiceImplTest {
             InstituteContact toggled = buildContact(5, "Ravi", "ravi@test.edu",
                     "9111111111", ContactStatus.ACTIVE, inst);
 
-            when(contactRepository.findByIdWithInstitute(5)).thenReturn(Optional.of(contact));
+            when(contactRepository.findById(5)).thenReturn(Optional.of(contact));
             when(contactRepository.save(any(InstituteContact.class))).thenReturn(toggled);
 
             service.deleteContact(5);
@@ -605,7 +604,7 @@ class InstituteTPOServiceImplTest {
         @Test
         @DisplayName("failure - throws ResourceNotFoundException when contact not found")
         void deleteContact_notFound_throwsResourceNotFoundException() {
-            when(contactRepository.findByIdWithInstitute(99)).thenReturn(Optional.empty());
+            when(contactRepository.findById(99)).thenReturn(Optional.empty());
 
             assertThatThrownBy(() -> service.deleteContact(99))
                     .isInstanceOf(ResourceNotFoundException.class);
