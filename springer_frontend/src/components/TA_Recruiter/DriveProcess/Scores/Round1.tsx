@@ -181,7 +181,15 @@ const Round1: React.FC<Round1Props> = ({ data, onStatusUpdated, onAllocatePanel 
     let result = sortedEvaluations;
     if (filterName) {
       const search = filterName.toLowerCase();
-      result = result.filter((e) => e.candidateName.toLowerCase().includes(search));
+      result = result.filter((e) => {
+        const candidateMatch = e.candidateName.toLowerCase().includes(search);
+        // For rounds 2 and 3, also search by reviewedByName
+        if (roundTemplate.roundNo === 2 || roundTemplate.roundNo === 3) {
+          const reviewerMatch = e.reviewedByName?.toLowerCase().includes(search) || false;
+          return candidateMatch || reviewerMatch;
+        }
+        return candidateMatch;
+      });
     }
     if (filterStatus) {
       result = result.filter((e) => e.evaluationStatus === filterStatus);
@@ -193,7 +201,7 @@ const Round1: React.FC<Round1Props> = ({ data, onStatusUpdated, onAllocatePanel 
       }
     }
     return result;
-  }, [sortedEvaluations, filterName, filterStatus, showAverage, minAvgInput, getAverage]);
+  }, [sortedEvaluations, filterName, filterStatus, showAverage, minAvgInput, getAverage, roundTemplate.roundNo]);
 
   const handleBulkUpdate = useCallback(async (reason?: string) => {
     if (!bulkStatus) return;
@@ -233,13 +241,18 @@ const Round1: React.FC<Round1Props> = ({ data, onStatusUpdated, onAllocatePanel 
     } finally {
       setUpdating(false);
     }
-  }, [bulkStatus, selectedRows, displayedEvaluations, onStatusUpdated]);
+  }, [bulkStatus, selectedRows, displayedEvaluations, onStatusUpdated, roundTemplate.roundConfigId]);
 
   
 
   return (
     <Box className="r1-container">
       <Box className="r1-main-layout">
+        {/* Mobile sidebar backdrop */}
+        {sidebarOpen && (
+          <div className="r1-sidebar-backdrop" onClick={() => setSidebarOpen(false)} />
+        )}
+
         {/* Filter Sidebar */}
         {sidebarOpen && (
           <Box className="r1-sidebar">
@@ -343,7 +356,11 @@ const Round1: React.FC<Round1Props> = ({ data, onStatusUpdated, onAllocatePanel 
               <TextField
                 value={filterName}
                 onChange={(e) => setFilterName(e.target.value)}
-                placeholder="Search name"
+                placeholder={
+                  roundTemplate.roundNo === 2 || roundTemplate.roundNo === 3
+                    ? "Search name or reviewer"
+                    : "Search name"
+                }
                 size="small"
                 className="r1-filter-name-input"
               />
@@ -368,8 +385,13 @@ const Round1: React.FC<Round1Props> = ({ data, onStatusUpdated, onAllocatePanel 
                   size="small"
                   className="r1-allocate-btn"
                   onClick={() => {
+                    // For round 3 (TECHNICAL), include FAIL status as well
+                    const isRound3 = roundTemplate.roundNo === 3;
                     const eligible = displayedEvaluations.filter(
-                      (e) => e.evaluationStatus === "PASS" || e.evaluationStatus === "HOLD" || e.evaluationStatus === "SKIP"
+                      (e) => e.evaluationStatus === "PASS" || 
+                             e.evaluationStatus === "HOLD" || 
+                             e.evaluationStatus === "SKIP" ||
+                             (isRound3 && e.evaluationStatus === "FAIL")
                     );
                     if (eligible.length === 0) return;
                     const seen = new Set<number>();
@@ -382,9 +404,25 @@ const Round1: React.FC<Round1Props> = ({ data, onStatusUpdated, onAllocatePanel 
                     }
                     onAllocatePanel(candidates);
                   }}
-                  disabled={displayedEvaluations.filter((e) => e.evaluationStatus === "PASS" || e.evaluationStatus === "HOLD" || e.evaluationStatus === "SKIP").length === 0}
+                  disabled={(() => {
+                    const isRound3 = roundTemplate.roundNo === 3;
+                    return displayedEvaluations.filter((e) => 
+                      e.evaluationStatus === "PASS" || 
+                      e.evaluationStatus === "HOLD" || 
+                      e.evaluationStatus === "SKIP" ||
+                      (isRound3 && e.evaluationStatus === "FAIL")
+                    ).length === 0;
+                  })()}
                 >
-                  Allocate Panel ({new Set(displayedEvaluations.filter((e) => e.evaluationStatus === "PASS" || e.evaluationStatus === "HOLD" || e.evaluationStatus === "SKIP").map((e) => e.applicationId)).size})
+                  Allocate Panel ({(() => {
+                    const isRound3 = roundTemplate.roundNo === 3;
+                    return new Set(displayedEvaluations.filter((e) => 
+                      e.evaluationStatus === "PASS" || 
+                      e.evaluationStatus === "HOLD" || 
+                      e.evaluationStatus === "SKIP" ||
+                      (isRound3 && e.evaluationStatus === "FAIL")
+                    ).map((e) => e.applicationId)).size;
+                  })()})
                   <NavigateNextIcon className="r1-allocate-icon" />
                 </Button>
               )}

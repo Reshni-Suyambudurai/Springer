@@ -9,6 +9,8 @@ import com.kanini.springer.dto.Drive.BulkApplicationResponse;
 import com.kanini.springer.dto.Drive.BulkApplicationStatusUpdateRequest;
 import com.kanini.springer.dto.Drive.BulkApplicationStatusUpdateResponse;
 import com.kanini.springer.dto.Drive.CandidateHistoryResponse;
+import com.kanini.springer.dto.Drive.FinalizeApplicationsRequest;
+import com.kanini.springer.dto.Drive.FinalizeApplicationsResponse;
 import com.kanini.springer.entity.Drive.Application;
 import com.kanini.springer.entity.Drive.Candidate;
 import com.kanini.springer.entity.Drive.CandidateEvaluation;
@@ -517,6 +519,86 @@ public class ApplicationServiceImpl implements IApplicationService {
         overrideService.logOverride(overrideRequest);
 
         return mapper.toResponse(saved);
+    }
+    
+    @Override
+    @Transactional
+    public FinalizeApplicationsResponse finalizeApplications(FinalizeApplicationsRequest request) {
+        if (request.getApplicationIds() == null || request.getApplicationIds().isEmpty()) {
+            throw new ValidationException("Application IDs list cannot be empty");
+        }
+        
+        // Fetch all applications with candidates in one query to avoid N+1
+        List<Application> applications = applicationRepository.findAllById(request.getApplicationIds());
+        
+        if (applications.isEmpty()) {
+            throw new ResourceNotFoundException("Applications", "IDs", request.getApplicationIds().toString());
+        }
+        
+        // Verify all requested IDs exist
+        if (applications.size() != request.getApplicationIds().size()) {
+            List<Long> foundIds = applications.stream().map(Application::getApplicationId).collect(Collectors.toList());
+            List<Long> missingIds = request.getApplicationIds().stream()
+                    .filter(id -> !foundIds.contains(id))
+                    .collect(Collectors.toList());
+            throw new ResourceNotFoundException("Applications", "IDs", missingIds.toString());
+        }
+        
+        List<FinalizeApplicationsResponse.ApplicationUpdateDetail> details = new ArrayList<>();
+        
+        for (Application application : applications) {
+            Candidate candidate = application.getCandidate();
+            if (candidate == null) {
+                throw new ValidationException("Application " + application.getApplicationId() + " has no associated candidate");
+            }
+            
+            ApplicationStatus appStatus = application.getApplicationStatus();
+            ApplicationStage previousStage = candidate.getApplicationStage();
+            ApplicationStage newStage;
+            
+            // Map application status to candidate stage
+            switch (appStatus) {
+                case SELECTED:
+                    newStage = ApplicationStage.SELECTED;
+                    break;
+                case FAILED:
+                    newStage = ApplicationStage.REJECTED;
+                    break;
+                case DROPPED:
+                    newStage = ApplicationStage.DROPPED;
+                    break;
+                case ALLOTED:
+                case IN_DRIVE:
+                    newStage = ApplicationStage.REJECTED;
+                    break;
+                default:
+                    // Should not happen, but handle gracefully
+                    newStage = ApplicationStage.REJECTED;
+            }
+            
+            // Update candidate stage
+            candidate.setApplicationStage(newStage);
+            candidatesRepository.save(candidate);
+            
+            // Build detail entry
+            FinalizeApplicationsResponse.ApplicationUpdateDetail detail = 
+                new FinalizeApplicationsResponse.ApplicationUpdateDetail();
+            detail.setApplicationId(application.getApplicationId());
+            detail.setCandidateId(candidate.getCandidateId());
+            detail.setCandidateName(candidate.getFirstName() + 
+                (candidate.getLastName() != null ? " " + candidate.getLastName() : ""));
+            detail.setPreviousStage(previousStage != null ? previousStage.toString() : "NONE");
+            detail.setNewStage(newStage.toString());
+            detail.setApplicationStatus(appStatus.toString());
+            
+            details.add(detail);
+        }
+        
+        FinalizeApplicationsResponse response = new FinalizeApplicationsResponse();
+        response.setUpdatedCount(details.size());
+        response.setDetails(details);
+        
+        return response;
     }
     
 }

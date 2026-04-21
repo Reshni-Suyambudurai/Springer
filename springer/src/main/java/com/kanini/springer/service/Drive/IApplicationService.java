@@ -7,6 +7,8 @@ import com.kanini.springer.dto.Drive.BulkApplicationResponse;
 import com.kanini.springer.dto.Drive.BulkApplicationStatusUpdateRequest;
 import com.kanini.springer.dto.Drive.BulkApplicationStatusUpdateResponse;
 import com.kanini.springer.dto.Drive.CandidateHistoryResponse;
+import com.kanini.springer.dto.Drive.FinalizeApplicationsRequest;
+import com.kanini.springer.dto.Drive.FinalizeApplicationsResponse;
 import com.kanini.springer.entity.enums.Enums.ApplicationStatus;
 
 import java.util.List;
@@ -84,4 +86,17 @@ public interface IApplicationService {
      * Override the application status with a reason, logged to manual_override.
      */
     ApplicationResponse overrideDriveStatus(Long applicationId, ApplicationStatus status, String reason, Long userId);
+    
+    /**
+     * Finalize applications - Apply application status to candidate stages
+     * Maps application status to candidate application stage:
+     * - SELECTED → SELECTED
+     * - FAILED → REJECTED
+     * - DROPPED → DROPPED
+     * - ALLOTED, IN_DRIVE → REJECTED
+     * 
+     * @param request FinalizeApplicationsRequest with list of application IDs
+     * @return FinalizeApplicationsResponse with update counts and details
+     */
+    FinalizeApplicationsResponse finalizeApplications(FinalizeApplicationsRequest request);
 }

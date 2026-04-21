@@ -126,6 +126,7 @@ export interface CandidateHistoryEvaluation {
   roundName: string;
   roundNo: number;
   score: number;
+  outoffScore: number;
   sectionScore: Record<string, unknown> | null;
   review: string | null;
   evaluationStatus: string;
@@ -143,4 +144,23 @@ export interface CandidateHistoryOverride {
   createdById: number;
   createdByName: string;
   createdAt: string;
+}
+
+// Finalize Applications Types
+export interface FinalizeApplicationsRequest {
+  applicationIds: number[];
+}
+
+export interface FinalizeApplicationsResponse {
+  updatedCount: number;
+  details: ApplicationUpdateDetail[];
+}
+
+export interface ApplicationUpdateDetail {
+  applicationId: number;
+  candidateId: number;
+  candidateName: string;
+  previousStage: string;
+  newStage: string;
+  applicationStatus: string;
 }

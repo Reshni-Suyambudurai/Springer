@@ -19,6 +19,8 @@ import type {
   BulkApplicationStatusUpdateResponse,
   BatchCandidatesMap,
   CandidateHistoryResponse,
+  FinalizeApplicationsRequest,
+  FinalizeApplicationsResponse,
 } from "../types/TA_Recruiter/DriveSchedule/application.types";
 import type {
   DriveAssignmentRequest,
@@ -309,6 +311,19 @@ export const applicationApi = {
   async overrideDriveStatus(data: { applicationId: number; status: string; reason: string; userId: number }): Promise<ApiResponse<ApplicationResponse>> {
     try {
       const response = await http.patch<ApiResponse<ApplicationResponse>>("/applications/override-status", data);
+      return response.data;
+    } catch (error) {
+      throw handleAxiosError(error);
+    }
+  },
+
+  /**
+   * Finalize applications - Apply application status to candidate stages
+   * POST /api/applications/finalize
+   */
+  async finalizeApplications(data: FinalizeApplicationsRequest): Promise<ApiResponse<FinalizeApplicationsResponse>> {
+    try {
+      const response = await http.post<ApiResponse<FinalizeApplicationsResponse>>("/applications/finalize", data);
       return response.data;
     } catch (error) {
       throw handleAxiosError(error);

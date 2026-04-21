@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { applicationApi, candidateEvaluationApi } from "../../../services/driveschedule.api";
-import type { ApplicationResponse, BatchCandidatesMap } from "../../../types/TA_Recruiter/DriveSchedule/application.types";
+import type { ApplicationResponse, BatchCandidatesMap, FinalizeApplicationsRequest } from "../../../types/TA_Recruiter/DriveSchedule/application.types";
 import type { RoundEvaluationResponse, BulkRoundSkipRequest } from "../../../types/TA_Recruiter/DriveSchedule/candidateEvaluation.types";
 import { showToast } from "../../../utils/toast";
 import { handleAxiosError } from "../../../services/api.error";
@@ -42,6 +42,12 @@ const DriveCandidates: React.FC = () => {
   const [selectedRoundFilters, setSelectedRoundFilters] = useState<Set<number>>(new Set());
   const [showReasonOverlay, setShowReasonOverlay] = useState<boolean>(false);
   const [skipReason, setSkipReason] = useState<string>("");
+  
+  // Finalize dialog states
+  const [showFinalizeDialog, setShowFinalizeDialog] = useState<boolean>(false);
+  const [finalizeDialogVariant, setFinalizeDialogVariant] = useState<"warning" | "confirm">("confirm");
+  const [unfinishedCount, setUnfinishedCount] = useState<number>(0);
+  const [finalizing, setFinalizing] = useState<boolean>(false);
 
   useEffect(() => {
     if (driveId) {
@@ -313,8 +319,94 @@ const DriveCandidates: React.FC = () => {
     }
   };
 
+  const handleFinalizeClick = () => {
+    // Determine which applications to finalize based on batch selection
+    let applicationsToFinalize: ApplicationResponse[] = [];
+    
+    if (selectedBatch === "ALL") {
+      // All applications across all batches
+      applicationsToFinalize = applications;
+    } else {
+      // Filter by selected batch
+      const batchAppIds = batchMap[selectedBatch];
+      if (batchAppIds && batchAppIds.length > 0) {
+        applicationsToFinalize = applications.filter(app => batchAppIds.includes(app.applicationId));
+      }
+    }
+
+    if (applicationsToFinalize.length === 0) {
+      showToast("No applications to finalize", "error");
+      return;
+    }
+
+    // Check status validity
+    const validStatuses = ["SELECTED", "FAILED", "DROPPED"];
+    const invalidApps = applicationsToFinalize.filter(app => !validStatuses.includes(app.applicationStatus));
+    const unfinished = invalidApps.length;
+
+    if (unfinished > 0) {
+      // Show warning dialog first
+      setUnfinishedCount(unfinished);
+      setFinalizeDialogVariant("warning");
+      setShowFinalizeDialog(true);
+    } else {
+      // All valid, show confirmation
+      setFinalizeDialogVariant("confirm");
+      setShowFinalizeDialog(true);
+    }
+  };
+
+  const handleFinalizeConfirm = async () => {
+    // Collect application IDs
+    let applicationIds: number[] = [];
+    
+    if (selectedBatch === "ALL") {
+      applicationIds = applications.map(app => app.applicationId);
+    } else {
+      const batchAppIds = batchMap[selectedBatch];
+      if (batchAppIds) {
+        applicationIds = batchAppIds;
+      }
+    }
+
+    if (applicationIds.length === 0) {
+      showToast("No applications to finalize", "error");
+      setShowFinalizeDialog(false);
+      return;
+    }
+
+    const request: FinalizeApplicationsRequest = { applicationIds };
+
+    try {
+      setFinalizing(true);
+      const response = await applicationApi.finalizeApplications(request);
+      
+      if (response.success && response.data) {
+        showToast(
+          `Successfully finalized! ${response.data.updatedCount} candidate(s) updated.`,
+          "success"
+        );
+        setShowFinalizeDialog(false);
+        // Refresh data
+        if (driveId) fetchApplications(parseInt(driveId));
+      } else {
+        showToast(response.message || "Failed to finalize applications", "error");
+      }
+    } catch (error: unknown) {
+      const appError = handleAxiosError(error);
+      showToast(appError.message, "error");
+    } finally {
+      setFinalizing(false);
+    }
+  };
+
+  const handleWarningProceed = () => {
+    // User acknowledged warning, now show final confirmation
+    setFinalizeDialogVariant("confirm");
+  };
+
   const hasInDrive = filteredApplications.some((app) => app.applicationStatus === "IN_DRIVE");
-  const hasAlloted = filteredApplications.some((app) => app.applicationStatus === "ALLOTED");
+  const canAddScores = !hasInDrive && filteredApplications.length > 0;
  
   if (loading) {
     return (
@@ -368,9 +460,9 @@ const DriveCandidates: React.FC = () => {
 
           {evaluationsLoading && <CircularProgress size={20} />}
           <Button variant="contained" className="dc-btn-action" onClick={handleStart} disabled={selectedRound !== "ALL"}>Start</Button>
-          <Button variant="contained" className="dc-btn-action" disabled={!hasInDrive || hasAlloted} onClick={() => navigate(`/drive-process/add-scores/${driveId}/round1`)}>Add Score</Button>
+          <Button variant="contained" className="dc-btn-action" disabled={!canAddScores} onClick={() => navigate(`/drive-process/add-scores/${driveId}/round1`)}>Add Score</Button>
           
-          <Button variant="contained" className="dc-btn-action">Finalize</Button>
+          <Button variant="contained" className="dc-btn-action" onClick={handleFinalizeClick}>Finalize</Button>
         </Box>
       </Card>
 
@@ -600,6 +692,74 @@ const DriveCandidates: React.FC = () => {
                 {updating ? "Submitting..." : "Submit"}
               </Button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Finalize confirmation dialog */}
+      {showFinalizeDialog && (
+        <div className="dc-overlay-backdrop" onClick={() => !finalizing && setShowFinalizeDialog(false)}>
+          <div className="dc-finalize-dialog" onClick={(e) => e.stopPropagation()}>
+            {finalizeDialogVariant === "warning" ? (
+              <>
+                <Typography className="dc-dialog-title dc-dialog-title-warning">⚠️ Warning</Typography>
+                <Typography className="dc-dialog-message">
+                  {unfinishedCount} candidate(s) haven't finished the interview process 
+                  (status is IN_DRIVE). Would you like to proceed anyway?
+                </Typography>
+                <div className="dc-dialog-actions">
+                  <Button
+                    className="dc-dialog-btn-cancel"
+                    variant="outlined"
+                    size="small"
+                    onClick={() => setShowFinalizeDialog(false)}
+                    disabled={finalizing}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    className="dc-dialog-btn-proceed"
+                    variant="contained"
+                    size="small"
+                    onClick={handleWarningProceed}
+                    disabled={finalizing}
+                  >
+                    Proceed
+                  </Button>
+                </div>
+              </>
+            ) : (
+              <>
+                <Typography className="dc-dialog-title">Confirm Finalization</Typography>
+                <Typography className="dc-dialog-message">
+                  Are you sure you want to finalize these applications? 
+                  This will update candidate stages based on their application status.
+                  {selectedBatch === "ALL" 
+                    ? ` All ${applications.length} applications will be finalized.`
+                    : ` Applications in the selected batch will be finalized.`}
+                </Typography>
+                <div className="dc-dialog-actions">
+                  <Button
+                    className="dc-dialog-btn-cancel"
+                    variant="outlined"
+                    size="small"
+                    onClick={() => setShowFinalizeDialog(false)}
+                    disabled={finalizing}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    className="dc-dialog-btn-confirm"
+                    variant="contained"
+                    size="small"
+                    onClick={handleFinalizeConfirm}
+                    disabled={finalizing}
+                  >
+                    {finalizing ? "Finalizing..." : "Confirm"}
+                  </Button>
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}

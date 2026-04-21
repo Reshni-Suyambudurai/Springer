@@ -27,6 +27,18 @@
   overflow: hidden;
 }
 
+/* Sidebar backdrop - only visible on mobile when sidebar is open */
+.r1-sidebar-backdrop {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: var(--opacity-black-medium);
+  z-index: 1199;
+}
+
 .r1-sidebar-header {
   display: flex;
   justify-content: space-between;
@@ -300,14 +312,17 @@
 .r1-summary-group {
   display: flex;
   align-items: center;
-  gap: 24px;
-  flex-wrap: wrap;
+  gap: 20px;
+  flex-wrap: nowrap;
+  flex-shrink: 0;
 }
 
 .r1-summary-item {
   display: flex;
   flex-direction: column;
   gap: 2px;
+  flex-shrink: 0;
+  min-width: fit-content;
 }
 
 .r1-summary-label {
@@ -660,23 +675,257 @@
 }
 
 /* ========== Responsive ========== */
-@media (max-width: 768px) {
-  .r1-sidebar {
-    width: 240px;
-    min-width: 240px;
-  }
 
+/* Tablet and below - Hide summary group, adjust sidebar */
+@media (max-width: 1200px) {
   .r1-summary-group {
-    gap: 12px;
+    display: none !important;
   }
 
-  .r1-summary-value {
-    font-size: 13px !important;
+  .r1-header-actions {
+    flex-wrap: wrap;
+  }
+}
+
+/* Medium screens - Overlay sidebar */
+@media (max-width: 992px) {
+  .r1-sidebar-backdrop {
+    display: block !important;
+  }
+
+  .r1-sidebar {
+    position: fixed;
+    left: 0;
+    top: 0;
+    height: 100vh;
+    width: 280px;
+    z-index: 1200;
+    box-shadow: 2px 0 8px var(--opacity-shadow-dark);
+  }
+
+  .r1-content {
+    width: 100% !important;
+  }
+
+  .r1-header {
+    padding: 8px 12px !important;
+    gap: 8px;
+  }
+
+  .r1-header-left {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .r1-filter-name-input {
+    min-width: 120px !important;
+    max-width: 140px !important;
+  }
+
+  .r1-filter-status-select {
+    min-width: 110px !important;
+  }
+
+  .r1-allocate-btn {
+    font-size: 11px !important;
+    padding: 4px 10px !important;
+  }
+
+  .r1-status-select,
+  .r1-bulk-update-btn {
+    font-size: 11px !important;
+    height: 28px !important;
+    padding: 4px 10px !important;
+  }
+
+  .r1-clear-selection-btn {
+    font-size: 11px !important;
+  }
+}
+
+/* Mobile landscape and below */
+@media (max-width: 768px) {
+  .r1-container {
+    padding: 0;
+  }
+
+  .r1-sidebar {
+    width: 260px;
+    min-width: 260px;
+  }
+
+  .r1-header {
+    padding: 6px 10px !important;
+    flex-wrap: wrap;
+  }
+
+  .r1-header-left {
+    width: 100%;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .r1-header-actions {
+    width: 100%;
+    gap: 6px;
+  }
+
+  .r1-filter-name-input {
+    flex: 1;
+    min-width: 100px !important;
+  }
+
+  .r1-filter-status-select {
+    flex: 1;
+    min-width: 100px !important;
+  }
+
+  .r1-email-btn {
+    display: none !important;
+  }
+
+  .r1-allocate-btn {
+    width: 100%;
+    font-size: 12px !important;
+  }
+
+  .r1-status-select {
+    flex: 1;
+    min-width: 100px !important;
+  }
+
+  .r1-bulk-update-btn {
+    flex: 1;
+    white-space: normal;
+    text-align: center;
+  }
+
+  .r1-clear-selection-btn {
+    width: 100%;
   }
 
   .r1-th,
   .r1-td {
-    padding: 10px 10px !important;
+    padding: 8px 6px !important;
+    font-size: 11px !important;
+  }
+
+  .r1-td-name {
     font-size: 12px !important;
+  }
+
+  .r1-eval-badge {
+    font-size: 9px !important;
+    padding: 2px 6px;
+  }
+
+  .r1-th-sort-wrapper {
+    font-size: 10px;
+  }
+
+  .r1-sort-icon {
+    font-size: 14px !important;
+  }
+
+  .r1-overlay-card {
+    width: 90vw;
+    max-width: 90vw;
+    padding: 20px;
+  }
+}
+
+/* Mobile portrait */
+@media (max-width: 480px) {
+  .r1-sidebar {
+    width: 100%;
+    max-width: 280px;
+  }
+
+  .r1-header {
+    padding: 8px !important;
+  }
+
+  .r1-hamburger-btn {
+    padding: 4px !important;
+  }
+
+  .r1-filter-name-input .MuiInputBase-input {
+    font-size: 12px !important;
+    padding: 6px 8px !important;
+  }
+
+  .r1-filter-status-select .MuiSelect-select {
+    font-size: 12px !important;
+    padding: 6px 8px !important;
+  }
+
+  .r1-allocate-btn,
+  .r1-bulk-update-btn,
+  .r1-clear-selection-btn {
+    font-size: 11px !important;
+    padding: 6px 10px !important;
+  }
+
+  .r1-th,
+  .r1-td {
+    padding: 6px 4px !important;
+    font-size: 10px !important;
+  }
+
+  .r1-td-name {
+    font-size: 11px !important;
+  }
+
+  .r1-eval-badge {
+    font-size: 8px !important;
+    padding: 2px 5px;
+    margin-left: 4px;
+  }
+
+  .r1-table-container {
+    font-size: 10px;
+  }
+
+  .r1-sidebar-header {
+    padding: 10px;
+  }
+
+  .r1-sidebar-title {
+    font-size: 14px !important;
+  }
+
+  .r1-sidebar-content {
+    padding: 12px;
+  }
+
+  .r1-sidebar-section-title {
+    font-size: 11px !important;
+  }
+
+  .r1-sidebar-section-hint {
+    font-size: 10px !important;
+  }
+
+  .r1-sidebar-checkbox-label .MuiTypography-root {
+    font-size: 11px !important;
+  }
+
+  .r1-sidebar-footer {
+    padding: 8px 12px;
+  }
+
+  .r1-sidebar-results-count {
+    font-size: 10px !important;
+  }
+
+  .r1-sidebar-clear-btn {
+    font-size: 11px !important;
+  }
+}
+
+/* Large screens - Ensure sidebar stays inline */
+@media (min-width: 993px) {
+  .r1-sidebar {
+    position: relative !important;
   }
 }

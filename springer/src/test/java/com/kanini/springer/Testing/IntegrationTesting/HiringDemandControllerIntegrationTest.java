@@ -47,9 +47,10 @@ class HiringDemandControllerIntegrationTest {
 
     private String jwtToken;
     private Long createdDemandId;
+    private Long testCycleId; // Create our own test cycle instead of using DataLoader
 
     // =========================================================================
-    // SETUP — obtain JWT once
+    // SETUP — obtain JWT and create test cycle
     // =========================================================================
 
     @BeforeAll
@@ -69,6 +70,19 @@ class HiringDemandControllerIntegrationTest {
 
         JsonNode node = objectMapper.readTree(result.getResponse().getContentAsString());
         jwtToken = node.path("data").path("token").asText();
+
+        // Create a test cycle for demands (don't rely on DataLoader)
+        MvcResult cycleResult = mockMvc.perform(multipart("/api/hiring/cycles")
+                        .param("cycleYear", "2027")
+                        .param("cycleName", "Test Cycle for Demands")
+                        .param("compensationBand", "50000")
+                        .param("budget", "1000000")
+                        .header("Authorization", "Bearer " + jwtToken))
+                .andExpect(status().isCreated())
+                .andReturn();
+
+        JsonNode cycleNode = objectMapper.readTree(cycleResult.getResponse().getContentAsString());
+        testCycleId = cycleNode.path("data").path("cycleId").asLong();
     }
 
     // =========================================================================
@@ -80,7 +94,7 @@ class HiringDemandControllerIntegrationTest {
     @DisplayName("POST /api/hiring/demands - creates demand successfully")
     void createDemand_validRequest_returns201() throws Exception {
         HiringDemandRequest request = new HiringDemandRequest();
-        request.setCycleId(1L);
+        request.setCycleId(testCycleId); // Use our test cycle
         request.setBusinessUnit("DATA_ANALYTICS_AND_AI");
         request.setDemandCount(5);
         request.setCompensationBand("Band A");

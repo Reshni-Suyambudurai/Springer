@@ -440,7 +440,7 @@ const PanelAllocation: React.FC = () => {
       {/* Scrollable content area */}
       <Box className="pa-scroll-area">
       {/* Bulk Reassignment Bar */}
-      {assignedPanelMembers.length > 0 && (
+      {candidates.some(c => allocationStatus[c.applicationId]?.additionalPanels?.length > 0) && (
         <Card className="pa-reassign-bar">
           <SwapHorizIcon className="pa-reassign-icon" />
           <Typography className="pa-reassign-label">Reassign</Typography>

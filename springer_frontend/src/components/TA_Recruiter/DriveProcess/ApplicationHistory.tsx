@@ -53,7 +53,7 @@ interface RoundSummary {
   roundConfigId: number;
   roundName: string;
   assignments: CandidateHistoryAssignment[];
-  evaluation: CandidateHistoryEvaluation | null;
+  evaluations: CandidateHistoryEvaluation[];
 }
 
 const fmtDate = (iso: string) =>
@@ -161,15 +161,15 @@ const ApplicationHistory = () => {
 
     for (const a of data.assignments) {
       if (!roundMap.has(a.roundNo)) {
-        roundMap.set(a.roundNo, { roundNo: a.roundNo, roundConfigId: a.roundConfigId, roundName: a.roundName, assignments: [], evaluation: null });
+        roundMap.set(a.roundNo, { roundNo: a.roundNo, roundConfigId: a.roundConfigId, roundName: a.roundName, assignments: [], evaluations: [] });
       }
       roundMap.get(a.roundNo)!.assignments.push(a);
     }
     for (const e of data.evaluations) {
       if (!roundMap.has(e.roundNo)) {
-        roundMap.set(e.roundNo, { roundNo: e.roundNo, roundConfigId: e.roundConfigId, roundName: e.roundName, assignments: [], evaluation: null });
+        roundMap.set(e.roundNo, { roundNo: e.roundNo, roundConfigId: e.roundConfigId, roundName: e.roundName, assignments: [], evaluations: [] });
       }
-      roundMap.get(e.roundNo)!.evaluation = e;
+      roundMap.get(e.roundNo)!.evaluations.push(e);
     }
 
     return [...roundMap.values()].sort((a, b) => a.roundNo - b.roundNo);
@@ -201,36 +201,36 @@ const ApplicationHistory = () => {
       {/* ─── Header Card ─── */}
       <Card className="ah-header-card">
         <Box className="ah-header">
-          <IconButton className="ah-back-btn" onClick={() => navigate(-1)}>
-            <ArrowBackIcon />
-          </IconButton>
-          <Box className="ah-header-icon">
-            <HistoryIcon />
+          {/* Left Section */}
+          <Box className="ah-header-left">
+            <IconButton className="ah-back-btn" onClick={() => navigate(-1)}>
+              <ArrowBackIcon />
+            </IconButton>
+            <Box className="ah-header-icon">
+              <HistoryIcon />
+            </Box>
+            <Box className="ah-header-info">
+              <Typography className="ah-header-title">{data.candidateName}</Typography>
+              <Typography className="ah-header-subtitle">{data.driveName}</Typography>
+            </Box>
           </Box>
-          <Box className="ah-header-info">
-            <Typography className="ah-header-title">{data.candidateName}</Typography>
-            <Typography className="ah-header-subtitle">{data.driveName}</Typography>
-          </Box>
-          <Chip label={data.driveMode} size="small" className={MODE_CHIP[data.driveMode] || "ah-chip-default"} />
-          <Chip label={data.applicationStatus} className={APP_CHIP[data.applicationStatus] || "ah-chip-default"} />
-        </Box>
 
-        <Box className="ah-info-strip">
-          <Box className="ah-info-pill">
-            <span className="ah-pill-label">Reg. Code</span>
-            <span className="ah-pill-value">{data.registrationCode || "—"}</span>
+          {/* Center Section */}
+          <Box className="ah-header-center">
+            <Box className="ah-info-pill">
+              <span className="ah-pill-label">Reg. Code</span>
+              <span className="ah-pill-value">{data.registrationCode || "—"}</span>
+            </Box>
+            <Box className="ah-info-pill">
+              <span className="ah-pill-label">Batch</span>
+              <span className="ah-pill-value">
+                {data.batchTime ? fmtDate(data.batchTime) + " " + fmtTime(data.batchTime) : "—"}
+              </span>
+            </Box>
           </Box>
-          <Box className="ah-info-pill">
-            <span className="ah-pill-label">Batch</span>
-            <span className="ah-pill-value">
-              {data.batchTime ? fmtDate(data.batchTime) + " " + fmtTime(data.batchTime) : "—"}
-            </span>
-          </Box>
-          <Box className="ah-info-pill">
-            <span className="ah-pill-label">Drive Status</span>
-            <span className="ah-pill-value">{data.driveStatus || "—"}</span>
-          </Box>
-          <Box className="ah-override-group">
+
+          {/* Right Section */}
+          <Box className="ah-header-right">
             <Select
               value={overrideStatus}
               onChange={(e) => setOverrideStatus(e.target.value)}
@@ -259,27 +259,38 @@ const ApplicationHistory = () => {
       {/* ─── Level Progress Bar ─── */}
       {rounds.length > 0 && (
         <Card className="ah-level-bar">
-          {rounds.map((round, rIdx) => {
-            const ev = round.evaluation;
-            const status = ev?.evaluationStatus || "PENDING";
-            const dotCls = STATUS_DOT_CLASS[status] || "ah-dot-pending";
-            const lineCls = STATUS_LINE_CLASS[status] || "ah-line-pending";
-            return (
-              <Box key={round.roundNo} className="ah-level-step">
-                <Box className={`ah-level-dot ${dotCls}`}>
-                  <span className="ah-level-num">{round.roundConfigId}</span>
-                </Box>
-             
-                {rIdx < rounds.length - 1 && (
-                  <Box className="ah-level-bridge">
-                    <Box className={`ah-level-connector ${lineCls}`} />
-                    <Typography className={`ah-level-status ${dotCls}`}>{status}</Typography>
-                    <Box className={`ah-level-connector ${lineCls}`} />
+          <Box className="ah-level-bar-left">
+            <Chip label={data.applicationStatus} className={APP_CHIP[data.applicationStatus] || "ah-chip-default"} />
+          </Box>
+          
+          <Box className="ah-level-bar-center">
+            {rounds.map((round, rIdx) => {
+              // Use the most recent evaluation (last in array) for the status indicator
+              const latestEval = round.evaluations.length > 0 ? round.evaluations[round.evaluations.length - 1] : null;
+              const status = latestEval?.evaluationStatus || "PENDING";
+              const dotCls = STATUS_DOT_CLASS[status] || "ah-dot-pending";
+              const lineCls = STATUS_LINE_CLASS[status] || "ah-line-pending";
+              return (
+                <Box key={round.roundNo} className="ah-level-step">
+                  <Box className={`ah-level-dot ${dotCls}`}>
+                    <span className="ah-level-num">{round.roundConfigId}</span>
                   </Box>
-                )}
-              </Box>
-            );
-          })}
+               
+                  {rIdx < rounds.length - 1 && (
+                    <Box className="ah-level-bridge">
+                      <Box className={`ah-level-connector ${lineCls}`} />
+                      <Typography className={`ah-level-status ${dotCls}`}>{status}</Typography>
+                      <Box className={`ah-level-connector ${lineCls}`} />
+                    </Box>
+                  )}
+                </Box>
+              );
+            })}
+          </Box>
+
+          <Box className="ah-level-bar-right">
+            <Chip label={data.driveMode} size="small" className={MODE_CHIP[data.driveMode] || "ah-chip-default"} />
+          </Box>
         </Card>
       )}
 
@@ -293,16 +304,16 @@ const ApplicationHistory = () => {
         ) : (
           <Box className="ah-timeline">
             {rounds.map((round, rIdx) => {
-              const ev = round.evaluation;
+              const latestEval = round.evaluations.length > 0 ? round.evaluations[round.evaluations.length - 1] : null;
               return (
                 <Box key={round.roundNo} className="ah-tl-item">
                   {/* Timeline connector */}
                   <Box className="ah-tl-rail">
-                    <Box className={`ah-tl-dot ${ev ? (STATUS_DOT_CLASS[ev.evaluationStatus] || "ah-dot-default") : "ah-dot-pending"}`}>
+                    <Box className={`ah-tl-dot ${latestEval ? (STATUS_DOT_CLASS[latestEval.evaluationStatus] || "ah-dot-default") : "ah-dot-pending"}`}>
                       {round.roundNo}
                     </Box>
                     {rIdx < rounds.length - 1 && (
-                      <Box className={`ah-tl-line ${ev ? (STATUS_LINE_CLASS[ev.evaluationStatus] || "ah-line-pending") : "ah-line-pending"}`} />
+                      <Box className={`ah-tl-line ${latestEval ? (STATUS_LINE_CLASS[latestEval.evaluationStatus] || "ah-line-pending") : "ah-line-pending"}`} />
                     )}
                   </Box>
 
@@ -311,70 +322,119 @@ const ApplicationHistory = () => {
                     {/* Round header */}
                     <Box className="ah-round-header">
                       <Typography className="ah-round-name">{round.roundName}</Typography>
-                      {ev && <Chip label={ev.evaluationStatus} size="small" className={EVAL_CHIP[ev.evaluationStatus] || "ah-chip-default"} />}
-                      {!ev && <Chip label="PENDING" size="small" className="ah-chip-default" />}
+                      {latestEval && <Chip label={latestEval.evaluationStatus} size="small" className={EVAL_CHIP[latestEval.evaluationStatus] || "ah-chip-default"} />}
+                      {!latestEval && <Chip label="PENDING" size="small" className="ah-chip-default" />}
+                      {round.evaluations.length > 1 && (
+                        <Chip label={`${round.evaluations.length} Evaluations`} size="small" className="ah-chip-default ah-multi-eval-badge" />
+                      )}
                     </Box>
 
-                    {/* 2-column body: Panels | Evaluation */}
+                    {/* Round Card Body */}
                     <Box className="ah-round-body">
-                      {/* Left: Panel Members */}
-                      <Box className="ah-round-col">
-                        <Typography className="ah-col-label">
-                          <PersonIcon className="ah-col-icon" /> Panel ({round.assignments.length})
-                        </Typography>
-                        {round.assignments.length === 0 ? (
-                          <Typography className="ah-col-empty">No panel assigned</Typography>
-                        ) : (
-                          <Box className="ah-panel-list">
+                      {/* Panel Assignments Summary at top */}
+                      {round.assignments.length > 0 && (
+                        <Box className="ah-panel-assignments-section">
+                          <Typography className="ah-panel-assignments-label">
+                            <PersonIcon /> Panel Members Assigned ({round.assignments.length})
+                          </Typography>
+                          <Box className="ah-panel-assignments-list">
                             {round.assignments.map((a) => (
-                              <Box key={a.assignmentId} className="ah-panel-row">
-                                <Typography className="ah-panel-name">{a.panelMemberName}</Typography>
+                              <Box key={a.assignmentId} className="ah-panel-assignment-item">
+                                <span className="ah-panel-assignment-name">{a.panelMemberName}</span>
                                 <Chip label={a.status} size="small" className={ASSIGNMENT_CHIP[a.status] || "ah-chip-default"} />
                                 <Tooltip title={a.isActive ? "Active" : "Inactive"} arrow>
                                   {a.isActive
-                                    ? <ActiveIcon className="ah-active-icon" />
-                                    : <InactiveIcon className="ah-inactive-icon" />}
+                                    ? <ActiveIcon className="ah-panel-assignment-status-icon ah-panel-assignment-active" />
+                                    : <InactiveIcon className="ah-panel-assignment-status-icon ah-panel-assignment-inactive" />}
                                 </Tooltip>
-                                <Typography className="ah-panel-date">
-                                  <ClockIcon className="ah-clock-icon" /> {fmtDate(a.createdAt)}
-                                </Typography>
                               </Box>
                             ))}
                           </Box>
-                        )}
-                      </Box>
+                        </Box>
+                      )}
 
-                      {/* Right: Evaluation */}
-                      <Box className="ah-round-col">
-                        <Typography className="ah-col-label">
-                          <GradingIcon className="ah-col-icon" /> Evaluation
-                        </Typography>
-                        {!ev ? (
-                          <Typography className="ah-col-empty">Not evaluated yet</Typography>
-                        ) : (
-                          <Box className="ah-eval-block">
-                            <Box className="ah-eval-score-row">
-                              {/* <Box className="ah-score-circle">{ev.score}</Box> */}
-                              {ev.sectionScore && (
-                                <Box className="ah-section-scores">
-                                  {Object.entries(ev.sectionScore).map(([key, val]) => (
-                                    <Chip key={key} label={`${key}: ${val}`} size="small" className="ah-score-tag" />
-                                  ))}
-                                </Box>
-                              )}
-                            </Box>
-                            {ev.review && (
-                              <Typography className="ah-eval-review">"{ev.review}"</Typography>
-                            )}
-                            <Box className="ah-eval-meta">
-                              <Typography className="ah-eval-reviewer">
-                                <PersonIcon className="ah-meta-icon" /> {ev.reviewedByName}
-                              </Typography>
-                              <Typography className="ah-eval-date">
-                                <ClockIcon className="ah-meta-icon" /> {fmtDate(ev.reviewedAt)} {fmtTime(ev.reviewedAt)}
-                              </Typography>
-                            </Box>
+                      {/* Panel Evaluations */}
+                      <Box className="ah-round-evaluations-grid">
+                        {round.evaluations.length === 0 ? (
+                          <Box className="ah-panel-no-eval">
+                            <Typography className="ah-panel-no-eval-text">
+                              <GradingIcon />
+                              No evaluations recorded yet
+                            </Typography>
                           </Box>
+                        ) : (
+                          round.evaluations.map((ev, evIdx) => {
+                            const initials = ev.reviewedByName.split(' ').map(n => n[0]).join('').toUpperCase();
+                            
+                            return (
+                              <Box 
+                                key={ev.scoreId} 
+                                className={`ah-panel-eval-card ah-eval-status-${ev.evaluationStatus.toLowerCase()}`}
+                              >
+                                {/* Left Column: Panel Identity, Status + DateTime */}
+                                <Box className="ah-panel-eval-left">
+                                  <Box className="ah-panel-eval-identity">
+                                    <Box className="ah-panel-eval-avatar">{initials}</Box>
+                                    <Box className="ah-panel-eval-name-block">
+                                      <Typography className="ah-panel-eval-name">{ev.reviewedByName}</Typography>
+                                      <Typography className="ah-panel-eval-role">Panel Member</Typography>
+                                    </Box>
+                                  </Box>
+                                  
+                                  <Box className="ah-panel-eval-status-time">
+                                    {round.evaluations.length > 1 && (
+                                      <Chip label={`#${evIdx + 1}`} size="small" className="ah-panel-eval-index" />
+                                    )}
+                                    <Chip 
+                                      label={ev.evaluationStatus} 
+                                      size="small" 
+                                      className={EVAL_CHIP[ev.evaluationStatus] || "ah-chip-default"} 
+                                    />
+                                    <Box className="ah-panel-eval-timestamp">
+                                      <ClockIcon className="ah-panel-eval-timestamp-icon" />
+                                      <span>{fmtDate(ev.reviewedAt)} • {fmtTime(ev.reviewedAt)}</span>
+                                    </Box>
+                                  </Box>
+                                </Box>
+
+                                {/* Right Column: Section Scores + Total Score at right end */}
+                                <Box className="ah-panel-eval-right">
+                                  {(ev.score !== null || ev.sectionScore) && (
+                                    <Box className="ah-panel-eval-scores-row">
+                                      {ev.sectionScore && (
+                                        <Box className="ah-panel-eval-sections-left">
+                                          {Object.entries(ev.sectionScore).map(([key, val]) => (
+                                            <Chip 
+                                              key={key} 
+                                              label={`${key.replace(/_/g, ' ')}: ${val}`} 
+                                              size="small" 
+                                              className="ah-panel-eval-section-chip" 
+                                            />
+                                          ))}
+                                        </Box>
+                                      )}
+                                      {ev.score !== null && (
+                                        <Box className="ah-panel-eval-total-score">
+                                          
+                                          <span className="ah-panel-eval-total-value">
+                                            {ev.score}{ev.outoffScore ? ` / ${ev.outoffScore}` : ''}
+                                          </span>
+                                        </Box>
+                                      )}
+                                    </Box>
+                                  )}
+
+                                  {ev.review && (
+                                    <Box className={`ah-panel-eval-review-wrapper ah-review-${ev.evaluationStatus.toLowerCase()}`}>
+                                      <Typography className="ah-panel-eval-review-text">
+                                        "{ev.review}"
+                                      </Typography>
+                                    </Box>
+                                  )}
+                                </Box>
+                              </Box>
+                            );
+                          })
                         )}
                       </Box>
                     </Box>
@@ -468,7 +528,7 @@ const ApplicationHistory = () => {
             label="Reason"
             value={overrideReason}
             onChange={(e) => setOverrideReason(e.target.value)}
-            sx={{ mt: 1 }}
+            className="ah-dialog-text-field"
           />
         </DialogContent>
         <DialogActions>
