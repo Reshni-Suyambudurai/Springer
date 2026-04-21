@@ -26,4 +26,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
      */
     @Query("SELECT u FROM User u LEFT JOIN FETCH u.role r WHERE r.roleId IN :roleIds AND u.isActive = true")
     List<User> findByRoleIdIn(@Param("roleIds") List<Long> roleIds);
+
+    List<User> findByRole_RoleNameAndIsActiveTrue(com.kanini.springer.entity.enums.Enums.RoleName roleName);
 }

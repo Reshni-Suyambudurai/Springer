@@ -16,9 +16,8 @@ public class TrainingScoreRequest {
     @NotNull(message = "Student ID is required")
     private Long studentId;
 
-    @NotNull(message = "Score is required")
+    // For technical courses: 0–100. For communication courses: null (score is derived from communicationBreakdown sub-scores).
     @Min(value = 0, message = "Score must be at least 0")
-    @Max(value = 100, message = "Score must be at most 100")
     private Integer score;
 
     private String review;
@@ -27,4 +26,12 @@ public class TrainingScoreRequest {
 
     @NotNull(message = "Reviewer ID is required")
     private Long reviewedBy;
+
+    /**
+     * JSON breakdown for Communication course scores.
+     * Only sent when the course has isCommunication = true.
+     * Format: [{"name":"Grammar","score":16,"maxScore":20}, ...]
+     * The score field must equal the sum of all sub-scores.
+     */
+    private String communicationBreakdown;
 }

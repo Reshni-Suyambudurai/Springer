@@ -8,6 +8,7 @@ import {
 } from '@mui/material';
 import { Add as AddIcon, Person as PersonIcon, Upload as UploadIcon, Download as DownloadIcon } from '@mui/icons-material';
 import { attendanceApi, batchAllocationApi, trainingProgramApi, excelUploadApi } from '../../../services/academy.api';
+import { handleAxiosError } from '../../../services/api.error';
 import { showToast } from '../../../utils/toast';
 import FilterSelect from '../../Common/FilterSelect';
 import type {
@@ -21,6 +22,7 @@ const BatchAttendancePanel = ({ context, readOnly = false }: { context: AcademyC
   // ── Base data ──
   const [allPrograms, setAllPrograms] = useState<TrainingProgramResponse[]>([]);
   const [allocations, setAllocations] = useState<BatchAllocationResponse[]>([]);
+  const [batchStudents, setBatchStudents] = useState<BatchAllocationResponse[]>([]);
   const [statsMap, setStatsMap]       = useState<Record<number, { presentDays: number; absentDays: number }>>({});
   const [loading, setLoading]         = useState(true);
 
@@ -32,53 +34,78 @@ const BatchAttendancePanel = ({ context, readOnly = false }: { context: AcademyC
   const [rowsPerPage, setRowsPerPage]         = useState(10);
 
   // ── Mark Attendance dialog ──
-  const [dlgOpen, setDlgOpen]             = useState(false);
-  const [dlgProgramId, setDlgProgramId]   = useState(0);
-  const [dlgBatchNo, setDlgBatchNo]       = useState(0);
-  const [dlgDate, setDlgDate]             = useState(new Date().toISOString().split('T')[0]);
-  // attendanceMap: studentId -> true=present, false=absent
+  const [dlgOpen, setDlgOpen]         = useState(false);
+  const [dlgDate, setDlgDate]         = useState(new Date().toISOString().split('T')[0]);
   const [attendanceMap, setAttendanceMap] = useState<Record<number, boolean>>({});
-  const [submitting, setSubmitting]       = useState(false);
-  const [uploading, setUploading]         = useState(false);
-  const uploadRef                         = useRef<HTMLInputElement>(null);
+  const [submitting, setSubmitting]   = useState(false);
+  const [uploading, setUploading]     = useState(false);
+  const uploadRef                     = useRef<HTMLInputElement>(null);
 
   useEffect(() => { fetchBase(); }, []);
+
+  // Fetch batch stats whenever program+batch filter changes — single API call
+  useEffect(() => {
+    if (filterProgramId && filterBatchNo) {
+      fetchBatchStats(filterProgramId, filterBatchNo);
+      // Fetch only active students for this batch — used in dialog
+      batchAllocationApi.getAllocationsByBatch(filterProgramId, filterBatchNo)
+        .then(res => {
+          if (res.success && res.data)
+            setBatchStudents(res.data.filter(a => a.isActive));
+        })
+        .catch(() => {});
+    } else {
+      setBatchStudents([]);
+    }
+  }, [filterProgramId, filterBatchNo]);
 
   const fetchBase = async () => {
     try {
       setLoading(true);
-      const [allocRes, progRes] = await Promise.all([
-        batchAllocationApi.getAllAllocations(),
-        trainingProgramApi.getAllPrograms(),
-      ]);
-      if (allocRes.success && allocRes.data) {
-        const allocs = allocRes.data;
-        setAllocations(allocs);
-        // Fetch stats for all active students in parallel
-        const activeStudents = allocs.filter(a => a.isActive);
-        const statsResults = await Promise.allSettled(
-          activeStudents.map(s => attendanceApi.getAttendanceSummary(s.studentId))
+      const progRes = await trainingProgramApi.getAllPrograms();
+      if (progRes.success && progRes.data) setAllPrograms(progRes.data);
+
+      // Fetch allocations only for year-scoped programs — not all allocations
+      const scopedPrograms = (progRes.success && progRes.data)
+        ? (programYear === 0 ? progRes.data : progRes.data.filter(p => p.programYear === programYear))
+        : [];
+      if (scopedPrograms.length > 0) {
+        const allocResults = await Promise.allSettled(
+          scopedPrograms.map(p => batchAllocationApi.getAllocationsByProgram(p.programId))
         );
-        const map: Record<number, { presentDays: number; absentDays: number }> = {};
-        statsResults.forEach((result, idx) => {
-          if (result.status === 'fulfilled' && result.value.success && result.value.data) {
-            map[activeStudents[idx].studentId] = {
-              presentDays: Number(result.value.data.presentDays),
-              absentDays:  Number(result.value.data.absentDays),
-            };
-          }
+        const allAllocs: BatchAllocationResponse[] = [];
+        allocResults.forEach(r => {
+          if (r.status === 'fulfilled' && r.value.success && r.value.data)
+            allAllocs.push(...r.value.data);
         });
-        setStatsMap(map);
+        setAllocations(allAllocs);
+      } else {
+        setAllocations([]);
       }
-      if (progRes.success && progRes.data)  setAllPrograms(progRes.data);
-    } catch (err: any) {
+    } catch (error) {
+      const err = handleAxiosError(error);
       showToast(err.message || 'Failed to load data', 'error');
     } finally {
       setLoading(false);
     }
   };
 
-  // ── View derived — use yearPrograms for scoping ──
+  // Single call returns stats for ALL students in a batch — replaces N+1 calls
+  const fetchBatchStats = async (programId: number, batchNumber: number) => {
+    if (!programId || !batchNumber) return;
+    try {
+      const res = await attendanceApi.getAttendanceSummaryByBatch(programId, batchNumber);
+      if (res.success && res.data) {
+        const map: Record<number, { presentDays: number; absentDays: number }> = {};
+        res.data.forEach(s => {
+          map[s.studentId] = { presentDays: Number(s.presentDays), absentDays: Number(s.absentDays) };
+        });
+        setStatsMap(map);
+      }
+    } catch { /* silent — stats are supplementary */ }
+  };
+
+  // ── View derived ──
   const yearProgramIds = new Set(yearPrograms.map(p => p.programId));
 
   const batchesForProgram = filterProgramId
@@ -109,21 +136,26 @@ const BatchAttendancePanel = ({ context, readOnly = false }: { context: AcademyC
     return 'low';
   };
 
-  // ── Dialog derived ──
-  const dlgPrograms = allPrograms.filter(p => p.status === true);
+  const dlgStudents = batchStudents;
 
-  const dlgBatchOptions = dlgProgramId
-    ? Array.from({ length: allPrograms.find(p => p.programId === dlgProgramId)?.numberOfBatches ?? 0 }, (_, i) => i + 1)
-    : [];
+  const selectedProgramObj = allPrograms.find(p => p.programId === filterProgramId)
+    ?? yearPrograms.find(p => p.programId === filterProgramId);
+  const isSelectedProgramActive = selectedProgramObj?.status === true;
+  const canMarkAttendance = !readOnly && filterProgramId !== 0 && filterBatchNo !== 0 && isSelectedProgramActive;
 
-  const dlgStudents = (dlgProgramId && dlgBatchNo)
-    ? allocations.filter(a => a.programId === dlgProgramId && a.batchNumber === dlgBatchNo && a.isActive)
-    : [];
+  const getMarkAttendanceTooltip = () => {
+    if (readOnly) return '';
+    if (filterProgramId === 0) return 'Select a specific program first';
+    if (!isSelectedProgramActive) return 'Attendance can only be marked for active programs';
+    if (filterBatchNo === 0) return 'Select a batch first';
+    return '';
+  };
 
   const openDlg = () => {
-    setDlgProgramId(0); setDlgBatchNo(0);
     setDlgDate(new Date().toISOString().split('T')[0]);
-    setAttendanceMap({});
+    const map: Record<number, boolean> = {};
+    batchStudents.forEach(s => { map[s.studentId] = true; });
+    setAttendanceMap(map);
     setDlgOpen(true);
   };
 
@@ -132,25 +164,19 @@ const BatchAttendancePanel = ({ context, readOnly = false }: { context: AcademyC
       showToast('Select Program and Batch before downloading template', 'error');
       return;
     }
-
-    const batchStudents = allocations
-      .filter(a => a.programId === filterProgramId && a.batchNumber === filterBatchNo && a.isActive)
-      .sort((a, b) => a.candidateName.localeCompare(b.candidateName));
-
-    if (batchStudents.length === 0) {
+    const sorted = [...batchStudents].sort((a, b) => a.candidateName.localeCompare(b.candidateName));
+    if (sorted.length === 0) {
       showToast('No active students found for selected Program and Batch', 'error');
       return;
     }
-
     const today = new Date().toISOString().split('T')[0];
-    const rows = batchStudents.map(student => ({
+    const rows = sorted.map(student => ({
       'Student ID': student.studentId,
       'Candidate Name': student.candidateName,
       'Candidate Email': student.candidateEmail,
       'Date': today,
       'Present': 'true',
     }));
-
     const worksheet = XLSX.utils.json_to_sheet(rows);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, 'Attendance');
@@ -182,20 +208,14 @@ const BatchAttendancePanel = ({ context, readOnly = false }: { context: AcademyC
           if (d.errors.length > 3) showToast(`...and ${d.errors.length - 3} more errors`, 'error');
         }
         fetchBase();
+        fetchBatchStats(filterProgramId, filterBatchNo);
       }
-    } catch (err: any) {
+    } catch (error) {
+      const err = handleAxiosError(error);
       showToast(err.message || 'Upload failed', 'error');
     } finally {
       setUploading(false);
     }
-  };
-
-  const handleBatchSelect = (batchNo: number) => {
-    setDlgBatchNo(batchNo);
-    const students = allocations.filter(a => a.programId === dlgProgramId && a.batchNumber === batchNo && a.isActive);
-    const map: Record<number, boolean> = {};
-    students.forEach(s => { map[s.studentId] = true; }); // default all present
-    setAttendanceMap(map);
   };
 
   const toggleStudent = (studentId: number) => {
@@ -213,7 +233,7 @@ const BatchAttendancePanel = ({ context, readOnly = false }: { context: AcademyC
   const todayPct     = dlgStudents.length > 0 ? Math.round((presentCount / dlgStudents.length) * 100) : 0;
 
   const handleSubmit = async () => {
-    if (!dlgProgramId || !dlgBatchNo || !dlgDate) {
+    if (!filterProgramId || !filterBatchNo || !dlgDate) {
       showToast('Select program, batch and date', 'error'); return;
     }
     if (dlgStudents.length === 0) {
@@ -232,7 +252,7 @@ const BatchAttendancePanel = ({ context, readOnly = false }: { context: AcademyC
           });
           if (res.success) successCount++;
         } catch {
-          skippedCount++; // already marked for this date — skip silently
+          skippedCount++;
         }
       }
       if (skippedCount > 0) {
@@ -241,8 +261,10 @@ const BatchAttendancePanel = ({ context, readOnly = false }: { context: AcademyC
         showToast(`Attendance marked for ${successCount}/${dlgStudents.length} students`, 'success');
       }
       setDlgOpen(false);
-      fetchBase(); // refresh allocations to get updated attendancePercentage
-    } catch (err: any) {
+      fetchBase();
+      fetchBatchStats(filterProgramId, filterBatchNo);
+    } catch (error) {
+      const err = handleAxiosError(error);
       showToast(err.message || 'Failed to mark attendance', 'error');
     } finally {
       setSubmitting(false);
@@ -269,14 +291,12 @@ const BatchAttendancePanel = ({ context, readOnly = false }: { context: AcademyC
                 const progId = Number(v);
                 setFilterProgramId(progId);
                 setFilterBatchNo(0);
+                setStatsMap({});
                 setPage(0);
-                // Auto-fill batch if program has only one batch
                 if (progId) {
                   const prog = allPrograms.find(p => p.programId === progId)
                     ?? yearPrograms.find(p => p.programId === progId);
-                  if (prog && prog.numberOfBatches === 1) {
-                    setFilterBatchNo(1);
-                  }
+                  if (prog && prog.numberOfBatches === 1) setFilterBatchNo(1);
                 }
               }}>
               <MenuItem value="0">All Programs</MenuItem>
@@ -325,7 +345,11 @@ const BatchAttendancePanel = ({ context, readOnly = false }: { context: AcademyC
               </>
             )}
             {!readOnly && (
-              <Button variant="contained" startIcon={<AddIcon />} onClick={openDlg} className="atp-add-button">
+              <Button variant="contained" startIcon={<AddIcon />}
+                onClick={openDlg}
+                disabled={!canMarkAttendance}
+                title={getMarkAttendanceTooltip()}
+                className="atp-add-button">
                 Mark Attendance
               </Button>
             )}
@@ -425,32 +449,11 @@ const BatchAttendancePanel = ({ context, readOnly = false }: { context: AcademyC
 
       {/* Mark Attendance Dialog */}
       <Dialog open={dlgOpen} onClose={() => setDlgOpen(false)} maxWidth="md" fullWidth>
-        <DialogTitle className="atp-dialog-title">Mark Attendance</DialogTitle>
+        <DialogTitle className="atp-dialog-title">
+          Mark Attendance — {selectedProgramObj?.programName} · Batch {filterBatchNo}
+        </DialogTitle>
         <DialogContent sx={{ p: 0 }}>
-
-          {/* Selectors */}
           <Box className="atp-dlg-selectors">
-            <TextField select label="Program *" size="small"
-              value={dlgProgramId || ''}
-              onChange={e => { setDlgProgramId(Number(e.target.value)); setDlgBatchNo(0); setAttendanceMap({}); }}
-              className="atp-dlg-field">
-              <MenuItem value="">— Select Program —</MenuItem>
-              {dlgPrograms.map(p => (
-                <MenuItem key={p.programId} value={p.programId}>{p.programName} ({p.programYear})</MenuItem>
-              ))}
-            </TextField>
-
-            <TextField select label="Batch *" size="small"
-              value={dlgBatchNo || ''}
-              disabled={!dlgProgramId}
-              onChange={e => handleBatchSelect(Number(e.target.value))}
-              className="atp-dlg-field">
-              <MenuItem value="">— Select Batch —</MenuItem>
-              {dlgBatchOptions.map(b => (
-                <MenuItem key={b} value={b}>Batch {b}</MenuItem>
-              ))}
-            </TextField>
-
             <TextField label="Date *" type="date" size="small"
               value={dlgDate}
               onChange={e => setDlgDate(e.target.value)}
@@ -459,11 +462,9 @@ const BatchAttendancePanel = ({ context, readOnly = false }: { context: AcademyC
               className="atp-dlg-field" />
           </Box>
 
-          {dlgBatchNo > 0 && dlgStudents.length > 0 && (
+          {filterBatchNo > 0 && dlgStudents.length > 0 && (
             <>
               <Box className="atp-separator" />
-
-              {/* Stats + Bulk actions */}
               <Box className="atp-dlg-stats-row">
                 <Box className="atp-dlg-stat">
                   <Typography className="atp-dlg-stat-value atp-dlg-stat-value--present">{presentCount}</Typography>
@@ -490,10 +491,7 @@ const BatchAttendancePanel = ({ context, readOnly = false }: { context: AcademyC
                   </Button>
                 </Box>
               </Box>
-
               <Box className="atp-separator" />
-
-              {/* Student list */}
               <Box className="atp-dlg-student-list">
                 {dlgStudents.map(s => {
                   const isPresent = attendanceMap[s.studentId] !== false;
@@ -528,7 +526,7 @@ const BatchAttendancePanel = ({ context, readOnly = false }: { context: AcademyC
             </>
           )}
 
-          {dlgBatchNo > 0 && dlgStudents.length === 0 && (
+          {filterBatchNo > 0 && dlgStudents.length === 0 && (
             <Box sx={{ p: 4, textAlign: 'center' }}>
               <Typography sx={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>
                 No active students in this batch
@@ -540,7 +538,7 @@ const BatchAttendancePanel = ({ context, readOnly = false }: { context: AcademyC
           <Button onClick={() => setDlgOpen(false)} className="atp-dialog-cancel-btn">Cancel</Button>
           <Button variant="contained"
             onClick={handleSubmit}
-            disabled={submitting || !dlgBatchNo || dlgStudents.length === 0}
+            disabled={submitting || !filterBatchNo || dlgStudents.length === 0}
             className="atp-dialog-submit-btn">
             {submitting ? 'Saving...' : `Save Attendance (${dlgStudents.length})`}
           </Button>

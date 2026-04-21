@@ -34,7 +34,7 @@ const NEXT_STATUS: Record<string, string> = {
 };
 
 const EMPTY_LINK_FORM = {
-  startDate: '', endDate: '', conductedBy: 0, status: 'PLANNED',
+  startDate: '', endDate: '', conductedBy: 0,
 };
 
 const BatchCoursesList = ({ context }: { context: AcademyContextProps }) => {
@@ -58,7 +58,7 @@ const BatchCoursesList = ({ context }: { context: AcademyContextProps }) => {
   const [dlgProgramId, setDlgProgramId] = useState(0);
   const [selectedCourse, setSelectedCourse] = useState<TrainingCourseResponse | null>(null);
 
-  // Tile popup form state (Option A)
+  // Tile popup form state
   const [tilePopup, setTilePopup] = useState<{
     open: boolean; programId: number; batchNo: number; programName: string;
   }>({ open: false, programId: 0, batchNo: 0, programName: '' });
@@ -115,16 +115,14 @@ const BatchCoursesList = ({ context }: { context: AcademyContextProps }) => {
     if (!selectedCourse) return;
     const existing = getBatchCourse(selectedCourse.courseId, programId, batchNo);
     if (existing) {
-      // Already linked — open status update dialog
       setStatusDialog({ open: true, bc: existing });
     } else {
-      // Not linked — open link form popup
       setLinkForm(EMPTY_LINK_FORM);
       setTilePopup({ open: true, programId, batchNo, programName });
     }
   };
 
-  // ── Save link with form data ──
+  // ── Save link ──
   const handleSaveLink = async () => {
     if (!selectedCourse) return;
     if (!linkForm.startDate || !linkForm.endDate) { showToast('Start date and end date are required', 'error'); return; }
@@ -140,7 +138,6 @@ const BatchCoursesList = ({ context }: { context: AcademyContextProps }) => {
         startDate: linkForm.startDate,
         endDate: linkForm.endDate,
         conductedBy: linkForm.conductedBy,
-        status: linkForm.status,
       };
       const res = await batchCourseApi.linkCourseToBatch(req);
       if (res.success) {
@@ -165,7 +162,6 @@ const BatchCoursesList = ({ context }: { context: AcademyContextProps }) => {
     }
   };
 
-  // ── Remove from table ──
   const handleRemove = async (batchCourseId: number, e: React.MouseEvent) => {
     e.stopPropagation();
     await handleUnlink(batchCourseId);
@@ -217,7 +213,6 @@ const BatchCoursesList = ({ context }: { context: AcademyContextProps }) => {
       .map(bc => bc.batchNo)
   )).sort((a, b) => a - b);
 
-  // ── Dialog derived data ──
   const dlgCourses = allCourses;
   const dlgFilteredPrograms = yearPrograms.filter(p =>
     p.status === true && (programYear === 0 || p.programYear === programYear)
@@ -253,7 +248,9 @@ const BatchCoursesList = ({ context }: { context: AcademyContextProps }) => {
               <MenuItem value="CANCELLED">Cancelled</MenuItem>
             </FilterSelect>
             <Box className="bc-filter-spacer" />
-            <Button variant="contained" startIcon={<AddIcon />} onClick={() => { setDlgProgramId(0); setSelectedCourse(null); setDialogOpen(true); }} className="bc-add-button">
+            <Button variant="contained" startIcon={<AddIcon />}
+              onClick={() => { setDlgProgramId(0); setSelectedCourse(null); setDialogOpen(true); }}
+              className="bc-add-button">
               Link Course to Batch
             </Button>
           </Box>
@@ -325,24 +322,35 @@ const BatchCoursesList = ({ context }: { context: AcademyContextProps }) => {
                             <Typography className="bc-row-secondary">{formatDate(bc.endDate)}</Typography>
                           </TableCell>
                           <TableCell className="bc-table-cell">
-                            <Chip
-                              label={bc.status}
-                              size="small"
-                              variant="outlined"
-                              className={STATUS_CLASS[bc.status] ?? 'bc-status-chip'}
-                            />
+                            <Chip label={bc.status} size="small" variant="outlined"
+                              className={STATUS_CLASS[bc.status] ?? 'bc-status-chip'} />
                           </TableCell>
                           <TableCell className="bc-table-cell bc-table-cell--actions">
                             <Stack direction="row" spacing={0.5} justifyContent="flex-end">
-                              {NEXT_STATUS[bc.status] && (
-                                <IconButton size="small" className="bc-action-button"
-                                  title={`Move to ${NEXT_STATUS[bc.status]}`}
-                                  onClick={() => setStatusDialog({ open: true, bc })}>
-                                  {bc.status === 'PLANNED'
-                                    ? <PlayArrowIcon className="bc-action-icon" />
-                                    : <CheckCircleIcon className="bc-action-icon" />}
-                                </IconButton>
-                              )}
+                              {NEXT_STATUS[bc.status] && (() => {
+                                const today = new Date();
+                                today.setHours(0, 0, 0, 0);
+                                const startDate = bc.startDate ? new Date(bc.startDate) : null;
+                                const endDate   = bc.endDate   ? new Date(bc.endDate)   : null;
+                                const tooEarlyForActive    = bc.status === 'PLANNED' && startDate !== null && today < startDate;
+                                const tooEarlyForCompleted = bc.status === 'ACTIVE'  && endDate   !== null && today < endDate;
+                                const isDisabled = tooEarlyForActive || tooEarlyForCompleted;
+                                const tooltip = tooEarlyForActive
+                                  ? `Cannot activate before start date (${formatDate(bc.startDate)})`
+                                  : tooEarlyForCompleted
+                                  ? `Cannot complete before end date (${formatDate(bc.endDate)})`
+                                  : `Move to ${NEXT_STATUS[bc.status]}`;
+                                return (
+                                  <IconButton size="small"
+                                    className={`bc-action-button ${isDisabled ? 'bc-action-button--disabled' : ''}`}
+                                    title={tooltip} disabled={isDisabled}
+                                    onClick={() => !isDisabled && setStatusDialog({ open: true, bc })}>
+                                    {bc.status === 'PLANNED'
+                                      ? <PlayArrowIcon className="bc-action-icon" />
+                                      : <CheckCircleIcon className="bc-action-icon" />}
+                                  </IconButton>
+                                );
+                              })()}
                               <IconButton size="small" className="bc-action-button bc-action-button--remove"
                                 title="Remove Link" onClick={e => handleRemove(bc.batchCourseId, e)}>
                                 <LinkOffIcon className="bc-action-icon--remove" />
@@ -366,7 +374,7 @@ const BatchCoursesList = ({ context }: { context: AcademyContextProps }) => {
         </Box>
       </Card>
 
-      {/* ── Main Link Dialog — two-panel UI ── */}
+      {/* ── Main Link Dialog ── */}
       <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} maxWidth="md" fullWidth>
         <DialogTitle className="bc-dialog-title">Link Course to Batch</DialogTitle>
         <DialogContent sx={{ p: 0 }}>
@@ -399,7 +407,7 @@ const BatchCoursesList = ({ context }: { context: AcademyContextProps }) => {
                 <Box className="bc-dlg-course-list">
                   {dlgCourses.map(course => {
                     const linkedCount = batchCourses.filter(bc => bc.courseId === course.courseId).length;
-                    const isSelected = selectedCourse?.courseId === course.courseId;
+                    const isSelected  = selectedCourse?.courseId === course.courseId;
                     return (
                       <Box key={course.courseId}
                         className={`bc-course-card ${isSelected ? 'bc-course-card--selected' : ''}`}
@@ -408,10 +416,17 @@ const BatchCoursesList = ({ context }: { context: AcademyContextProps }) => {
                           <MenuBookIcon className="bc-course-card-icon" />
                         </Box>
                         <Box className="bc-course-card-info">
-                          <Typography className="bc-course-card-name">{course.courseName}</Typography>
+                          <Typography className="bc-course-card-name">
+                            {course.courseName}
+                            {course.isCommunication && (
+                              <Chip label="Communication" size="small" variant="outlined"
+                                sx={{ ml: 1, fontSize: '10px', borderColor: 'var(--color-primary)', color: 'var(--color-primary)' }} />
+                            )}
+                          </Typography>
                           <Typography className="bc-course-card-meta">
-                            Min: {course.minScore} · Weight: {course.weightage}% ·{' '}
-                            {linkedCount > 0 ? `${linkedCount} batch(es) linked` : 'Not linked yet'}
+                            Min: {course.minScore}
+                            {!course.isCommunication && ` · Weight: ${course.weightage}%`}
+                            {' · '}{linkedCount > 0 ? `${linkedCount} batch(es) linked` : 'Not linked yet'}
                           </Typography>
                         </Box>
                       </Box>
@@ -445,7 +460,7 @@ const BatchCoursesList = ({ context }: { context: AcademyContextProps }) => {
                         <Box className="bc-batch-row">
                           {Array.from({ length: prog.numberOfBatches }, (_, i) => i + 1).map(batchNo => {
                             const linked = isLinked(selectedCourse.courseId, prog.programId, batchNo);
-                            const bc = getBatchCourse(selectedCourse.courseId, prog.programId, batchNo);
+                            const bc     = getBatchCourse(selectedCourse.courseId, prog.programId, batchNo);
                             return (
                               <Box key={batchNo}
                                 className={`bc-batch-tile ${linked ? 'bc-batch-tile--linked' : 'bc-batch-tile--unlinked'}`}
@@ -475,8 +490,10 @@ const BatchCoursesList = ({ context }: { context: AcademyContextProps }) => {
         </DialogActions>
       </Dialog>
 
-      {/* ── Tile Popup Form — fill dates/trainer before linking ── */}
-      <Dialog open={tilePopup.open} onClose={() => setTilePopup({ open: false, programId: 0, batchNo: 0, programName: '' })} maxWidth="xs" fullWidth>
+      {/* ── Tile Popup Form ── */}
+      <Dialog open={tilePopup.open}
+        onClose={() => setTilePopup({ open: false, programId: 0, batchNo: 0, programName: '' })}
+        maxWidth="xs" fullWidth>
         <DialogTitle className="bc-dialog-title">
           Link "{selectedCourse?.courseName}" → Batch {tilePopup.batchNo}
         </DialogTitle>
@@ -510,19 +527,14 @@ const BatchCoursesList = ({ context }: { context: AcademyContextProps }) => {
                 <MenuItem key={t.userId} value={t.userId}>{t.username} — {t.email}</MenuItem>
               ))}
             </TextField>
-            <TextField
-              select label="Status" size="small" fullWidth
-              value={linkForm.status}
-              onChange={e => setLinkForm(prev => ({ ...prev, status: e.target.value }))}
-              className="bc-dialog-field">
-              <MenuItem value="PLANNED">Planned</MenuItem>
-              <MenuItem value="ACTIVE">Active</MenuItem>
-            </TextField>
+
           </Stack>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button onClick={() => setTilePopup({ open: false, programId: 0, batchNo: 0, programName: '' })} className="bc-dialog-cancel-btn">Cancel</Button>
-          <Button variant="contained" onClick={handleSaveLink} disabled={linking} className="bc-dialog-submit-btn">
+          <Button onClick={() => setTilePopup({ open: false, programId: 0, batchNo: 0, programName: '' })}
+            className="bc-dialog-cancel-btn">Cancel</Button>
+          <Button variant="contained" onClick={handleSaveLink} disabled={linking}
+            className="bc-dialog-submit-btn">
             {linking ? 'Linking...' : 'Link Course'}
           </Button>
         </DialogActions>
@@ -540,7 +552,8 @@ const BatchCoursesList = ({ context }: { context: AcademyContextProps }) => {
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
           <Button onClick={() => setStatusDialog({ open: false, bc: null })} className="bc-dialog-cancel-btn">Cancel</Button>
-          <Button variant="contained" onClick={handleStatusUpdate} disabled={statusUpdating} className="bc-dialog-submit-btn">
+          <Button variant="contained" onClick={handleStatusUpdate} disabled={statusUpdating}
+            className="bc-dialog-submit-btn">
             {statusUpdating ? 'Updating...' : 'Confirm'}
           </Button>
         </DialogActions>

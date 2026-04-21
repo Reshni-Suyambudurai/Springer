@@ -241,6 +241,15 @@ export const candidateApi = {
     }
   },
 
+  async getCandidatesByCycleIdAndStage(cycleId: number, stage: string): Promise<ApiResponse<CandidateResponse[]>> {
+    try {
+      const response = await http.get(`/candidates/cycle/${cycleId}/stage/${stage}`);
+      return response.data;
+    } catch (error) {
+      throw handleAxiosError(error);
+    }
+  },
+
   /**
    * Update candidate eligibility status
    * PATCH /api/candidates/{id}

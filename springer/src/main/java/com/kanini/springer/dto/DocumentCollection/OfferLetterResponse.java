@@ -21,4 +21,5 @@ public class OfferLetterResponse {
     private String response;       // PENDING / ACCEPTED / DECLINED
     private LocalDate respondedDate;
     private String declineReason;
+    private String applicationStage; // candidate's current stage — used to decide if offer is editable
 }

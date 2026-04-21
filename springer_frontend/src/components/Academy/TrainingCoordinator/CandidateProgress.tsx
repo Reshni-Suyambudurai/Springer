@@ -10,15 +10,25 @@ import {
   trainingCourseApi, attendanceApi, batchScheduleApi,
   trainingProgramApi,
 } from '../../../services/academy.api';
+import { internApi } from '../../../services/intern.api';
+import { leaveApi } from '../../../services/leave.api';
+import { warningApi } from '../../../services/warning.api';
+import type { InternWarningResponse } from '../../../services/warning.api';
+import { tokenstore } from '../../../auth/tokenstore';
+import { handleAxiosError } from '../../../services/api.error';
 import { showToast } from '../../../utils/toast';
 import FilterSelect from '../../Common/FilterSelect';
+import { downloadIndividualReport, downloadBatchReport } from '../../../utils/scorecardPdf';
+import type { IndividualReportData, BatchReportData } from '../../../utils/scorecardPdf';
 import type {
   BatchAllocationResponse, TrainingScoreResponse,
   BatchCourseResponse, TrainingCourseResponse,
   AttendanceStatsResponse, BatchScheduleResponse,
   AcademyContextProps, TrainingProgramResponse,
 } from '../../../types/Academy/academy.types';
+import type { InternCertificateResponse, InternProfileResponse } from '../../../types/Academy/intern.types';
 import '../../../css/Academy/TrainingCoordinator/CandidateProgress.css';
+import '../../../css/Academy/Intern/InternWarnings.css';
 
 // ── Status logic ─────────────────────────────────────────────────────────────
 const getStatus = (a: BatchAllocationResponse): string => {
@@ -69,7 +79,6 @@ const CandidateProgress = ({ context }: { context: AcademyContextProps }) => {
   const { programYear, programs: yearPrograms } = context;
 
   const [allocations, setAllocations]   = useState<BatchAllocationResponse[]>([]);
-  const [scores, setScores]             = useState<TrainingScoreResponse[]>([]);
   const [loading, setLoading]           = useState(true);
 
   const [search, setSearch]               = useState('');
@@ -88,24 +97,39 @@ const CandidateProgress = ({ context }: { context: AcademyContextProps }) => {
   const [panelSchedule, setPanelSchedule] = useState<BatchScheduleResponse | null>(null);
   const [panelStats, setPanelStats]       = useState<AttendanceStatsResponse | null>(null);
   const [panelProgram, setPanelProgram]   = useState<TrainingProgramResponse | null>(null);
+  const [panelCertificates, setPanelCertificates] = useState<InternCertificateResponse[]>([]);
+  const [panelProfile, setPanelProfile]   = useState<InternProfileResponse | null>(null);
+  const [panelApprovedLeaveDays, setPanelApprovedLeaveDays] = useState<number>(0);
+  const [panelWarnings, setPanelWarnings]   = useState<InternWarningResponse[]>([]);
+  const [showWarnForm, setShowWarnForm]     = useState(false);
+  const [warnType, setWarnType]             = useState('BEHAVIOUR');
+  const [warnSeverity, setWarnSeverity]     = useState('MINOR');
+  const [warnMessage, setWarnMessage]       = useState('');
+  const [issuingWarn, setIssuingWarn]       = useState(false);
 
   useEffect(() => {
     fetchData();
     setFilterProgram('all'); setFilterBatch('all');
     setFilterStatus('all'); setSearch(''); setPage(0); setSelected(null);
-  }, [programYear]);
+  }, [programYear, yearPrograms.length]);
 
   const fetchData = async () => {
     try {
       setLoading(true);
-      const [allocRes, scoreRes] = await Promise.all([
-        batchAllocationApi.getAllAllocations(),
-        trainingScoreApi.getAllScores(),
-      ]);
-      const allocs = (allocRes.success && allocRes.data) ? allocRes.data : [];
+      // Fetch only allocations for the scoped programs — not all allocations
+      const progIds = yearPrograms.map(p => p.programId);
+      if (progIds.length === 0) { setAllocations([]); return; }
+      const results = await Promise.allSettled(
+        progIds.map(id => batchAllocationApi.getAllocationsByProgram(id))
+      );
+      const allocs: BatchAllocationResponse[] = [];
+      results.forEach(r => {
+        if (r.status === 'fulfilled' && r.value.success && r.value.data)
+          allocs.push(...r.value.data);
+      });
       setAllocations(allocs);
-      if (scoreRes.success && scoreRes.data) setScores(scoreRes.data);
-    } catch (err: any) {
+    } catch (error) {
+      const err = handleAxiosError(error);
       showToast(err.message || 'Failed to load data', 'error');
     } finally {
       setLoading(false);
@@ -158,14 +182,20 @@ const CandidateProgress = ({ context }: { context: AcademyContextProps }) => {
     setPanelLoading(true);
     setPanelScores([]); setPanelBatchCourses([]); setPanelAllCourses([]);
     setPanelSchedule(null); setPanelStats(null); setPanelProgram(null);
+    setPanelCertificates([]); setPanelProfile(null); setPanelApprovedLeaveDays(0);
+    setPanelWarnings([]); setShowWarnForm(false); setWarnMessage('');
     try {
-      const [scoreRes, bcRes, crsRes, schedRes, statsRes, progRes] = await Promise.all([
+      const [scoreRes, bcRes, crsRes, schedRes, statsRes, progRes, certRes, profRes, leaveRes, warnRes] = await Promise.all([
         trainingScoreApi.getScoresByStudent(a.studentId),
         batchCourseApi.getCoursesByBatch(a.programId, a.batchNumber),
         trainingCourseApi.getAllCourses(),
         batchScheduleApi.getByProgramAndBatch(a.programId, a.batchNumber),
         attendanceApi.getAttendanceSummary(a.studentId),
         trainingProgramApi.getProgramById(a.programId),
+        internApi.getCertificates(a.studentId).catch(() => ({ success: false, data: [] })),
+        internApi.getProfileByStudent(a.studentId).catch(() => ({ success: false, data: null })),
+        leaveApi.getLeavesByStudent(a.studentId).catch(() => ({ success: false, data: [] })),
+        warningApi.getWarningsByStudent(a.studentId).catch(() => ({ success: false, data: [] })),
       ]);
       if (scoreRes.success && scoreRes.data) setPanelScores(scoreRes.data);
       if (bcRes.success && bcRes.data)       setPanelBatchCourses(bcRes.data);
@@ -173,7 +203,17 @@ const CandidateProgress = ({ context }: { context: AcademyContextProps }) => {
       if (schedRes.success && schedRes.data) setPanelSchedule(schedRes.data);
       if (statsRes.success && statsRes.data) setPanelStats(statsRes.data);
       if (progRes.success && progRes.data)   setPanelProgram(progRes.data);
-    } catch (err: any) {
+      if (certRes.success && certRes.data)   setPanelCertificates(certRes.data as InternCertificateResponse[]);
+      if (profRes.success && profRes.data)   setPanelProfile(profRes.data as InternProfileResponse);
+      if (leaveRes.success && leaveRes.data) {
+        const approvedDays = leaveRes.data
+          .filter(l => l.status === 'APPROVED')
+          .reduce((sum, l) => sum + (l.totalDays ?? 0), 0);
+        setPanelApprovedLeaveDays(approvedDays);
+      }
+      if (warnRes.success && warnRes.data) setPanelWarnings(warnRes.data as InternWarningResponse[]);
+    } catch (error) {
+      const err = handleAxiosError(error);
       showToast(err.message || 'Failed to load candidate details', 'error');
     } finally {
       setPanelLoading(false);
@@ -246,6 +286,47 @@ const CandidateProgress = ({ context }: { context: AcademyContextProps }) => {
             </FilterSelect>
             <Box className="cp-filter-spacer" />
             <Typography className="cp-count-badge">{filtered.length} candidate(s)</Typography>
+            {filterProgram !== 'all' && filterBatch !== 'all' && (
+              <button className="cp-action-btn"
+                onClick={async () => {
+                  try {
+                    const [bcRes, crsRes] = await Promise.all([
+                      batchCourseApi.getCoursesByBatch(Number(filterProgram), Number(filterBatch)),
+                      trainingCourseApi.getAllCourses(),
+                    ]);
+                    const batchCourseList = (bcRes.success && bcRes.data) ? bcRes.data : [];
+                    const allCourseList   = (crsRes.success && crsRes.data) ? crsRes.data : [];
+                    const scoreResults = await Promise.allSettled(
+                      batchCourseList.map(bc =>
+                        trainingScoreApi.getScoresByBatchAndCourse(Number(filterProgram), Number(filterBatch), bc.courseId)
+                      )
+                    );
+                    const batchScores: TrainingScoreResponse[] = [];
+                    scoreResults.forEach(r => {
+                      if (r.status === 'fulfilled' && r.value.success && r.value.data)
+                        batchScores.push(...r.value.data);
+                    });
+                    const batchAllocs = scopedAllocations.filter(
+                      a => String(a.programId) === filterProgram && String(a.batchNumber) === filterBatch
+                    );
+                    const reportData: BatchReportData = {
+                      allocations: batchAllocs,
+                      batchCourses: batchCourseList,
+                      allCourses: allCourseList,
+                      allScores: batchScores,
+                      programName: yearPrograms.find(p => String(p.programId) === filterProgram)?.programName ?? `Program ${filterProgram}`,
+                      batchNumber: Number(filterBatch),
+                      programYear: yearPrograms.find(p => String(p.programId) === filterProgram)?.programYear ?? 0,
+                    };
+                    downloadBatchReport(reportData);
+                  } catch (error) {
+                    const err = handleAxiosError(error);
+                    showToast(err.message || 'Failed to generate batch report', 'error');
+                  }
+                }}>
+                ⬇ Batch Report
+              </button>
+            )}
           </Box>
         </Box>
 
@@ -376,9 +457,36 @@ const CandidateProgress = ({ context }: { context: AcademyContextProps }) => {
                   )}
                 </Box>
               </Box>
-              <IconButton size="small" onClick={() => setSelected(null)}>
-                <CloseIcon fontSize="small" />
-              </IconButton>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <button className="cp-action-btn"
+                  onClick={() => {
+                    if (!selected || panelLoading) return;
+                    const reportData: IndividualReportData = {
+                      allocation: selected,
+                      scores: panelScores,
+                      batchCourses: panelBatchCourses,
+                      allCourses: panelAllCourses,
+                      stats: panelStats,
+                      program: panelProgram,
+                      programName: panelProgram?.programName ?? getProgramName(selected.programId),
+                      totalInBatch: scopedAllocations.filter(a => a.batchNumber === selected.batchNumber && a.programId === selected.programId).length,
+                      rank: (() => {
+                        const batchAllocs = scopedAllocations.filter(a => a.batchNumber === selected.batchNumber && a.programId === selected.programId);
+                        const myScore = Number(selected.overallWeightedScore ?? 0);
+                        return batchAllocs.filter(a => Number(a.overallWeightedScore ?? 0) > myScore).length + 1;
+                      })(),
+                    };
+                    downloadIndividualReport(reportData);
+                  }}
+                  disabled={panelLoading}
+                  className="cp-action-btn"
+                  style={{ opacity: panelLoading ? 0.5 : 1, cursor: panelLoading ? 'not-allowed' : 'pointer' }}>
+                  ⬇ Report
+                </button>
+                <IconButton size="small" onClick={() => setSelected(null)}>
+                  <CloseIcon fontSize="small" />
+                </IconButton>
+              </Box>
             </Box>
 
             <Box className="cp-panel-body">
@@ -389,6 +497,22 @@ const CandidateProgress = ({ context }: { context: AcademyContextProps }) => {
                 </Box>
               ) : (
               <>
+              {/* Transfer History */}
+              {selected.transferredFromStudentId && (
+                <Box className="cp-section">
+                  <Typography className="cp-section-title">Transfer History</Typography>
+                  <Box sx={{ p: '10px 14px', borderRadius: 1, background: 'var(--color-warning-bg)', border: '1px solid var(--color-warning-border)' }}>
+                    <Typography sx={{ fontSize: 'var(--text-xs)', color: 'var(--color-warning-text)', fontWeight: 600 }}>
+                      🔄 Transferred from a previous batch
+                    </Typography>
+                    <Typography sx={{ fontSize: 'var(--text-xs)', color: 'var(--color-warning-text)', mt: 0.5 }}>
+                      Previous Student ID: #{selected.transferredFromStudentId} · Attendance restarted from zero in current batch.
+                      Overall score uses best performance per course across all batches.
+                    </Typography>
+                  </Box>
+                </Box>
+              )}
+
               {/* Program Details */}
               <Box className="cp-section">
                 <Typography className="cp-section-title">Program Details</Typography>
@@ -454,6 +578,12 @@ const CandidateProgress = ({ context }: { context: AcademyContextProps }) => {
                       </Typography>
                       <Typography className="cp-att-stat-label">Total</Typography>
                     </Box>
+                    <Box className="cp-att-stat">
+                      <Typography className="cp-att-stat-val" style={{ color: 'var(--color-warning)' }}>
+                        {panelApprovedLeaveDays}
+                      </Typography>
+                      <Typography className="cp-att-stat-label">Leave Days</Typography>
+                    </Box>
                   </Box>
                 </Box>
               </Box>
@@ -467,20 +597,40 @@ const CandidateProgress = ({ context }: { context: AcademyContextProps }) => {
                   <Box className="cp-score-list">
                     {panelCourses.map(({ bc, course }) => {
                       const scoreEntry = panelScores.find(s => s.courseId === bc.courseId);
+                      const isCommunication = course!.isCommunication === true || !!course!.communicationTemplate;
                       return (
                         <Box key={bc.batchCourseId} className="cp-score-row">
                           <Box>
                             <Typography className="cp-score-course">{course!.courseName}</Typography>
                             <Typography className="cp-score-meta">
-                              Min: {course!.minScore} · Weight: {course!.weightage}%
+                              Min: {course!.minScore}{isCommunication ? ' · Communication' : ` · Weight: ${course!.weightage}%`}
                             </Typography>
                           </Box>
                           <Box className="cp-score-right">
                             {scoreEntry ? (
                               <>
-                                <Typography className="cp-score-val">{scoreEntry.score}/100</Typography>
+                                <Typography className="cp-score-val">
+                                  {isCommunication && scoreEntry.maxScore
+                                    ? `${Math.round((scoreEntry.score / scoreEntry.maxScore) * 100)} / 100`
+                                    : `${scoreEntry.score} / 100`}
+                                </Typography>
                                 <Chip label={scoreEntry.status.replace('_', ' ')} size="small" variant="outlined"
                                   className={`cp-perf-chip cp-perf--${scoreEntry.status === 'EXCELLENT' ? 'excellent' : scoreEntry.status === 'GOOD' ? 'good' : 'need'}`} />
+                                {isCommunication && scoreEntry.communicationBreakdown && (() => {
+                                  try {
+                                    const fields: { name: string; score: number; maxScore: number }[] =
+                                      JSON.parse(scoreEntry.communicationBreakdown);
+                                    return (
+                                      <Box sx={{ mt: 0.5 }}>
+                                        {fields.map(f => (
+                                          <Typography key={f.name} sx={{ fontSize: '11px', color: 'var(--color-text-secondary)' }}>
+                                            {f.name}: {f.score}/{f.maxScore}
+                                          </Typography>
+                                        ))}
+                                      </Box>
+                                    );
+                                  } catch { return null; }
+                                })()}
                               </>
                             ) : (
                               <Typography className="cp-score-empty">Not scored</Typography>
@@ -491,7 +641,7 @@ const CandidateProgress = ({ context }: { context: AcademyContextProps }) => {
                     })}
                     {panelWeighted !== null && (
                       <Box className="cp-avg-row">
-                        <Typography className="cp-avg-label">Weighted Score</Typography>
+                        <Typography className="cp-avg-label">Weighted Score (Technical only)</Typography>
                         <Typography className="cp-avg-val">{panelWeighted} / 100</Typography>
                       </Box>
                     )}
@@ -510,6 +660,170 @@ const CandidateProgress = ({ context }: { context: AcademyContextProps }) => {
                 <Chip label={STATUS_LABEL[panelStatus]} size="small" variant="outlined"
                   className={STATUS_CLASS[panelStatus]} />
               </Box>
+
+              {/* Profile Links */}
+              {panelProfile && panelProfile.profileLinks && panelProfile.profileLinks.length > 0 && (
+                <Box className="cp-section">
+                  <Typography className="cp-section-title">Profile Links</Typography>
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    {panelProfile.bio && (
+                      <Typography sx={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-secondary)', fontStyle: 'italic', mb: 1 }}>
+                        {panelProfile.bio}
+                      </Typography>
+                    )}
+                    {panelProfile.profileLinks.map((link, idx) => (
+                      <Box key={idx} sx={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <Typography sx={{ fontSize: 'var(--text-xs)', fontWeight: 600, color: 'var(--color-text-secondary)', minWidth: 80 }}>
+                          {link.platform}
+                        </Typography>
+                        <a href={link.url} target="_blank" rel="noopener noreferrer"
+                          style={{ fontSize: 'var(--text-xs)', color: 'var(--color-primary)', textDecoration: 'none', wordBreak: 'break-all' }}>
+                          {link.url}
+                        </a>
+                      </Box>
+                    ))}
+                  </Box>
+                </Box>
+              )}
+
+              {/* Certificates */}
+              {panelCertificates.length > 0 && (
+                <Box className="cp-section">
+                  <Typography className="cp-section-title">Certificates ({panelCertificates.length})</Typography>
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    {panelCertificates.map(cert => (
+                      <Box key={cert.certificateId} className="cp-score-row">
+                        <Box>
+                          <Typography className="cp-score-course">{cert.certificateName}</Typography>
+                          <Typography className="cp-score-meta">
+                            {cert.issuer}{cert.issueDate ? ` · ${new Date(cert.issueDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}` : ''}
+                          </Typography>
+                        </Box>
+                        <Box className="cp-score-right">
+                          <Typography
+                            sx={{ fontSize: 'var(--text-xs)', color: 'var(--color-primary)', cursor: 'pointer', fontWeight: 600 }}
+                            onClick={async () => {
+                              try { await internApi.openCertificate(cert.certificateId); }
+                              catch { showToast('Failed to open certificate', 'error'); }
+                            }}>
+                            View
+                          </Typography>
+                        </Box>
+                      </Box>
+                    ))}
+                  </Box>
+                </Box>
+              )}
+              {/* Warnings */}
+              <Box className="cp-section">
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
+                  <Typography className="cp-section-title">
+                    Warnings {panelWarnings.filter(w => w.status === 'ACTIVE').length > 0 &&
+                      `(${panelWarnings.filter(w => w.status === 'ACTIVE').length} active)`}
+                  </Typography>
+                  <Typography
+                    sx={{ fontSize: 'var(--text-xs)', color: 'var(--color-primary)', cursor: 'pointer', fontWeight: 600 }}
+                    onClick={() => setShowWarnForm(v => !v)}>
+                    {showWarnForm ? 'Cancel' : '+ Issue Warning'}
+                  </Typography>
+                </Box>
+
+                {/* Issue warning form */}
+                {showWarnForm && (
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 8, mb: 10,
+                    padding: '12px', background: 'var(--color-bg-primary)',
+                    border: '1px solid var(--color-border)', borderRadius: '8px' }}>
+                    <Box sx={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                      <Box sx={{ flex: 1, minWidth: 120, display: 'flex', flexDirection: 'column', gap: 4 }}>
+                        <Typography sx={{ fontSize: 'var(--text-xs)', fontWeight: 600, color: 'var(--color-text-secondary)' }}>Type</Typography>
+                        <select style={{ padding: '6px 8px', borderRadius: 6, border: '1px solid var(--color-border)',
+                          fontSize: 'var(--text-xs)', background: 'var(--color-surface)', color: 'var(--color-text-primary)' }}
+                          value={warnType} onChange={e => setWarnType(e.target.value)}>
+                          {['ATTENDANCE','PERFORMANCE','BEHAVIOUR','PUNCTUALITY','OTHER'].map(t =>
+                            <option key={t} value={t}>{t}</option>)}
+                        </select>
+                      </Box>
+                      <Box sx={{ flex: 1, minWidth: 100, display: 'flex', flexDirection: 'column', gap: 4 }}>
+                        <Typography sx={{ fontSize: 'var(--text-xs)', fontWeight: 600, color: 'var(--color-text-secondary)' }}>Severity</Typography>
+                        <select style={{ padding: '6px 8px', borderRadius: 6, border: '1px solid var(--color-border)',
+                          fontSize: 'var(--text-xs)', background: 'var(--color-surface)', color: 'var(--color-text-primary)' }}
+                          value={warnSeverity} onChange={e => setWarnSeverity(e.target.value)}>
+                          {['MINOR','MODERATE','SEVERE'].map(s =>
+                            <option key={s} value={s}>{s}</option>)}
+                        </select>
+                      </Box>
+                    </Box>
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                      <Typography sx={{ fontSize: 'var(--text-xs)', fontWeight: 600, color: 'var(--color-text-secondary)' }}>Message *</Typography>
+                      <textarea rows={3}
+                        style={{ padding: '7px 10px', borderRadius: 6, border: '1px solid var(--color-border)',
+                          fontSize: 'var(--text-xs)', resize: 'vertical', fontFamily: 'inherit',
+                          background: 'var(--color-surface)', color: 'var(--color-text-primary)' }}
+                        placeholder="Describe the reason for this warning..."
+                        value={warnMessage} onChange={e => setWarnMessage(e.target.value)} />
+                    </Box>
+                    <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+                      <button className="cp-action-btn"
+                        disabled={issuingWarn || !warnMessage.trim()}
+                        style={{ opacity: issuingWarn ? 0.6 : 1, cursor: issuingWarn || !warnMessage.trim() ? 'not-allowed' : 'pointer' }}
+                        onClick={async () => {
+                          if (!selected || !warnMessage.trim()) return;
+                          try {
+                            setIssuingWarn(true);
+                            const res = await warningApi.issueWarning({
+                              studentId: selected.studentId,
+                              issuedBy: tokenstore.getUser()?.userId ?? 0,
+                              warningType: warnType,
+                              severity: warnSeverity,
+                              message: warnMessage.trim(),
+                            });
+                            if (res.success && res.data) {
+                              setPanelWarnings(prev => [res.data!, ...prev]);
+                              setWarnMessage('');
+                              setShowWarnForm(false);
+                              showToast('Warning issued successfully', 'success');
+                            }
+                          } catch (error) {
+                            const err = handleAxiosError(error);
+                            showToast(err.message || 'Failed to issue warning', 'error');
+                          } finally { setIssuingWarn(false); }
+                        }}>
+                        {issuingWarn ? 'Issuing...' : 'Issue Warning'}
+                      </button>
+                    </Box>
+                  </Box>
+                )}
+
+                {/* Warning list */}
+                {panelWarnings.length === 0 ? (
+                  <Typography className="cp-score-empty">No warnings issued for this intern</Typography>
+                ) : (
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    {panelWarnings.map(w => (
+                      <Box key={w.warningId} className={`iwarn-item iwarn-item--${w.severity.toLowerCase()}`}
+                        sx={{ borderRadius: '6px !important' }}>
+                        <Box className="iwarn-item-left">
+                          <Box className="iwarn-item-top">
+                            <span className="iwarn-item-type">{w.warningType.replace('_',' ')}</span>
+                            <span className={`iwarn-severity iwarn-severity--${w.severity.toLowerCase()}`}>{w.severity}</span>
+                            <span className={`iwarn-status iwarn-status--${w.status.toLowerCase()}`}>{w.status}</span>
+                          </Box>
+                          <Typography className="iwarn-item-message" sx={{ fontSize: 'var(--text-xs) !important' }}>{w.message}</Typography>
+                          <Typography className="iwarn-item-meta">
+                            {new Date(w.issuedAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
+                          </Typography>
+                          {w.acknowledgementComment && (
+                            <Typography sx={{ fontSize: '11px', fontStyle: 'italic', color: 'var(--color-success-dark)', mt: 0.5 }}>
+                              ✓ "{w.acknowledgementComment}"
+                            </Typography>
+                          )}
+                        </Box>
+                      </Box>
+                    ))}
+                  </Box>
+                )}
+              </Box>
+
               </>
               )}
             </Box>

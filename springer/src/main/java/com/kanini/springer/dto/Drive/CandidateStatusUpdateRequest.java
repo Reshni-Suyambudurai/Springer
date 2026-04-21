@@ -14,5 +14,5 @@ public class CandidateStatusUpdateRequest {
     
     private String status; // CandidateStatus enum string
     private Long updatedBy; // User ID who updated the status
-    private String reason; // Optional; required when status is DROPPED
+    private String reason; // Optional; required for DROPPED / NOT_JOINED / OFFER_REJECTED
 }

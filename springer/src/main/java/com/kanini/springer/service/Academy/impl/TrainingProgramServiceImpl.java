@@ -14,12 +14,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class TrainingProgramServiceImpl implements ITrainingProgramService {
-    
+
+    private static final String PROGRAM_NOT_FOUND = "Training Program not found with ID: ";
+
     private final TrainingProgramRepository programRepository;
     private final HiringCycleRepository cycleRepository;
     private final TrainingProgramMapper mapper;
@@ -47,7 +48,7 @@ public class TrainingProgramServiceImpl implements ITrainingProgramService {
     @Transactional(readOnly = true)
     public TrainingProgramResponse getProgramById(Integer programId) {
         TrainingProgram program = programRepository.findByProgramId(programId)
-                .orElseThrow(() -> new ResourceNotFoundException("Training Program not found with ID: " + programId));
+                .orElseThrow(() -> new ResourceNotFoundException(PROGRAM_NOT_FOUND + programId));
         return mapper.toResponse(program);
     }
     
@@ -56,7 +57,7 @@ public class TrainingProgramServiceImpl implements ITrainingProgramService {
     public List<TrainingProgramResponse> getAllPrograms() {
         return programRepository.findAll().stream()
                 .map(mapper::toResponse)
-                .collect(Collectors.toList());
+                .toList();
     }
     
     @Override
@@ -64,30 +65,14 @@ public class TrainingProgramServiceImpl implements ITrainingProgramService {
     public List<TrainingProgramResponse> getProgramsByStatus(boolean status) {
         return programRepository.findByStatus(status).stream()
                 .map(mapper::toResponse)
-                .collect(Collectors.toList());
-    }
-    
-    @Override
-    @Transactional(readOnly = true)
-    public List<TrainingProgramResponse> getProgramsByCycle(Long cycleId) {
-        return programRepository.findByCycle_CycleId(cycleId).stream()
-                .map(mapper::toResponse)
-                .collect(Collectors.toList());
-    }
-    
-    @Override
-    @Transactional(readOnly = true)
-    public List<TrainingProgramResponse> getProgramsByLocation(String location) {
-        return programRepository.findByLocation(location).stream()
-                .map(mapper::toResponse)
-                .collect(Collectors.toList());
+                .toList();
     }
     
     @Override
     @Transactional
     public TrainingProgramResponse updateProgram(Integer programId, TrainingProgramRequest request) {
         TrainingProgram program = programRepository.findByProgramId(programId)
-                .orElseThrow(() -> new ResourceNotFoundException("Training Program not found with ID: " + programId));
+                .orElseThrow(() -> new ResourceNotFoundException(PROGRAM_NOT_FOUND + programId));
         
         // Only update fields that are provided (not null) - PATCH behavior
         if (request.getProgramName() != null) {
@@ -131,7 +116,7 @@ public class TrainingProgramServiceImpl implements ITrainingProgramService {
     @Transactional
     public void deleteProgram(Integer programId) {
         TrainingProgram program = programRepository.findByProgramId(programId)
-                .orElseThrow(() -> new ResourceNotFoundException("Training Program not found with ID: " + programId));
+                .orElseThrow(() -> new ResourceNotFoundException(PROGRAM_NOT_FOUND + programId));
         
         program.setStatus(false); // Soft delete
         programRepository.save(program);

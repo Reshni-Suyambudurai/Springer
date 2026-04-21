@@ -13,4 +13,7 @@ public interface IOfferResponseService {
     List<OfferResponseResponse> bulkRecordResponse(List<BulkOfferResponseRequest> requests);
 
     OfferResponseResponse getCandidateOffer(Long candidateId);
+
+    // Allowed only when candidate is still ACCEPTED (not yet JOINED/NOT_JOINED in academy)
+    OfferResponseResponse updateResponse(Long offerId, OfferResponseRequest request);
 }

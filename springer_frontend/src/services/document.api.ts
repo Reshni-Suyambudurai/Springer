@@ -248,6 +248,15 @@ export const offerApi = {
     }
   },
 
+  async updateOfferResponse(offerId: number, data: OfferResponseRequest): Promise<ApiResponse<OfferResponseResponse>> {
+    try {
+      const response = await http.put(`/offers/${offerId}/response`, data);
+      return response.data;
+    } catch (error) {
+      throw handleAxiosError(error);
+    }
+  },
+
   async getCandidateOffer(candidateId: number): Promise<ApiResponse<OfferResponseResponse>> {
     try {
       const response = await http.get(`/offers/candidate/${candidateId}`);

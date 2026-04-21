@@ -20,6 +20,11 @@ import javax.crypto.SecretKey;
 @RequiredArgsConstructor
 public class TokenServiceImpl implements ITokenService {
 
+    private static final String CLAIM_CANDIDATE_ID    = "candidateId";
+    private static final String CLAIM_CYCLE_ID        = "cycleId";
+    private static final String CLAIM_PURPOSE         = "purpose";
+    private static final String CLAIM_CANDIDATE_EMAIL = "candidateEmail";
+    private static final String CLAIM_DOCUMENT_TYPE_ID = "documentTypeId";
     @Value("${app.jwt.secret:your-secret-key-min-256-chars-long-for-hs256-algorithm-min-32-bytes}")
     private String jwtSecret;
 
@@ -36,10 +41,10 @@ public class TokenServiceImpl implements ITokenService {
             Date expiryDate = java.sql.Timestamp.valueOf(LocalDateTime.now().plusDays(expiryDays));
             return Jwts.builder()
                 .subject("candidate_submission_" + candidateId)
-                .claim("candidateId", candidateId)
-                .claim("cycleId", cycleId)
-                .claim("purpose", purpose)
-                .claim("candidateEmail", candidateEmail)
+                .claim(CLAIM_CANDIDATE_ID, candidateId)
+                .claim(CLAIM_CYCLE_ID, cycleId)
+                .claim(CLAIM_PURPOSE, purpose)
+                .claim(CLAIM_CANDIDATE_EMAIL, candidateEmail)
                 .issuedAt(new Date())
                 .expiration(expiryDate)
                 .signWith(getSigningKey())
@@ -55,10 +60,10 @@ public class TokenServiceImpl implements ITokenService {
             Date tokenExpiryDate = java.sql.Timestamp.valueOf(expiryDate);
             return Jwts.builder()
                 .subject("candidate_submission_" + candidateId)
-                .claim("candidateId", candidateId)
-                .claim("cycleId", cycleId)
-                .claim("purpose", purpose)
-                .claim("candidateEmail", candidateEmail)
+                .claim(CLAIM_CANDIDATE_ID, candidateId)
+                .claim(CLAIM_CYCLE_ID, cycleId)
+                .claim(CLAIM_PURPOSE, purpose)
+                .claim(CLAIM_CANDIDATE_EMAIL, candidateEmail)
                 .issuedAt(new Date())
                 .expiration(tokenExpiryDate)
                 .signWith(getSigningKey())
@@ -74,10 +79,10 @@ public class TokenServiceImpl implements ITokenService {
             Date expiryDate = java.sql.Timestamp.valueOf(LocalDateTime.now().plusDays(defaultExpiryDays));
             return Jwts.builder()
                 .subject("document_resubmit_" + candidateId + "_" + documentTypeId)
-                .claim("candidateId", candidateId)
-                .claim("cycleId", cycleId)
-                .claim("documentTypeId", documentTypeId)
-                .claim("purpose", "RESUBMIT")
+                .claim(CLAIM_CANDIDATE_ID, candidateId)
+                .claim(CLAIM_CYCLE_ID, cycleId)
+                .claim(CLAIM_DOCUMENT_TYPE_ID, documentTypeId)
+                .claim(CLAIM_PURPOSE, "RESUBMIT")
                 .claim("rejectionReason", rejectionReason)
                 .issuedAt(new Date())
                 .expiration(expiryDate)
@@ -102,13 +107,13 @@ public class TokenServiceImpl implements ITokenService {
                 .toLocalDateTime();
 
             return new TokenClaims(
-                ((Number) claims.get("candidateId")).longValue(),
-                ((Number) claims.get("cycleId")).longValue(),
-                claims.get("documentTypeId") != null ? ((Number) claims.get("documentTypeId")).longValue() : null,
-                (String) claims.get("purpose"),
+                ((Number) claims.get(CLAIM_CANDIDATE_ID)).longValue(),
+                ((Number) claims.get(CLAIM_CYCLE_ID)).longValue(),
+                claims.get(CLAIM_DOCUMENT_TYPE_ID) != null ? ((Number) claims.get(CLAIM_DOCUMENT_TYPE_ID)).longValue() : null,
+                (String) claims.get(CLAIM_PURPOSE),
                 expiryDate,
                 (String) claims.get("rejectionReason"),
-                (String) claims.get("candidateEmail")
+                (String) claims.get(CLAIM_CANDIDATE_EMAIL)
             );
         } catch (JwtException e) {
             throw new ValidationException("Invalid or expired token: " + e.getMessage());
@@ -140,7 +145,7 @@ public class TokenServiceImpl implements ITokenService {
                 .build()
                 .parseSignedClaims(token)
                 .getPayload();
-            Object candidateId = claims.get("candidateId");
+            Object candidateId = claims.get(CLAIM_CANDIDATE_ID);
             return candidateId != null ? ((Number) candidateId).longValue() : null;
         } catch (Exception e) {
             return null;

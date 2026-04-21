@@ -16,5 +16,7 @@ public class TrainingCourseResponse {
     private String description;
     private Integer minScore;
     private Integer weightage;
+    private Boolean isCommunication;
+    private String communicationTemplate;
     private LocalDateTime createdAt;
 }

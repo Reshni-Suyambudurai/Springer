@@ -15,7 +15,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -63,7 +62,7 @@ public class BatchScheduleServiceImpl implements IBatchScheduleService {
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Training Program not found with ID: " + programId));
         return batchScheduleRepository.findByProgram_ProgramId(programId)
-                .stream().map(mapper::toResponse).collect(Collectors.toList());
+                .stream().map(mapper::toResponse).toList();
     }
 
     @Override

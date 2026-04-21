@@ -678,12 +678,26 @@ public class CandidatesServiceImpl implements ICandidatesService {
     
     @Override
     public List<CandidateResponse> getCandidatesByCycleId(Long cycleId) {
-        // Validate cycle exists
         if (!hiringCycleRepository.existsById(cycleId)) {
             throw new ResourceNotFoundException("Hiring cycle", "ID", cycleId);
         }
-        
         List<Candidate> candidates = candidatesRepository.findByCycleIdWithDetails(cycleId);
+        return mapper.toResponseList(candidates);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<CandidateResponse> getCandidatesByCycleIdAndStage(Long cycleId, String stage) {
+        if (!hiringCycleRepository.existsById(cycleId)) {
+            throw new ResourceNotFoundException("Hiring cycle", "ID", cycleId);
+        }
+        ApplicationStage applicationStage;
+        try {
+            applicationStage = ApplicationStage.valueOf(stage);
+        } catch (IllegalArgumentException e) {
+            throw new com.kanini.springer.exception.ValidationException("Invalid application stage: " + stage);
+        }
+        List<Candidate> candidates = candidatesRepository.findByCycleIdAndStageWithDetails(cycleId, applicationStage);
         return mapper.toResponseList(candidates);
     }
     
@@ -752,8 +766,11 @@ public class CandidatesServiceImpl implements ICandidatesService {
         ApplicationStage newStatus = ApplicationStage.valueOf(request.getStatus());
 
         String statusReason = request.getReason() != null ? request.getReason().trim() : null;
-        if (newStatus == ApplicationStage.DROPPED && (statusReason == null || statusReason.isEmpty())) {
-            throw new ValidationException("Reason is required when marking candidate as DROPPED");
+        if ((newStatus == ApplicationStage.DROPPED
+                || newStatus == ApplicationStage.NOT_JOINED
+                || newStatus == ApplicationStage.OFFER_REJECTED)
+                && (statusReason == null || statusReason.isEmpty())) {
+            throw new ValidationException("Reason is required when marking candidate as " + newStatus);
         }
         
         // Ineligible candidates cannot be moved to progression statuses
@@ -788,7 +805,10 @@ public class CandidatesServiceImpl implements ICandidatesService {
         
         // Append to statusHistory; include drop reason for audit readability
         String historyActor = userName;
-        if (newStatus == ApplicationStage.DROPPED && statusReason != null && !statusReason.isEmpty()) {
+        if ((newStatus == ApplicationStage.DROPPED
+            || newStatus == ApplicationStage.NOT_JOINED
+            || newStatus == ApplicationStage.OFFER_REJECTED)
+            && statusReason != null && !statusReason.isEmpty()) {
             historyActor = userName + " (Reason: " + statusReason + ")";
         }
         appendStatusHistory(candidate, newStatus, historyActor);

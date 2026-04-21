@@ -18,7 +18,9 @@ import java.util.List;
 @RequiredArgsConstructor
 @Validated
 public class BatchCourseController {
-    
+
+    private static final String RETRIEVED_SUCCESSFULLY = " retrieved successfully";
+
     private final IBatchCourseService batchCourseService;
     
     @PostMapping
@@ -49,7 +51,7 @@ public class BatchCourseController {
             @PathVariable Integer programId) {
         List<BatchCourseResponse> response = batchCourseService.getCoursesByProgram(programId);
         return ResponseEntity.status(HttpStatus.OK)
-                .body(ApiResponse.success("Courses for program " + programId + " retrieved successfully", response));
+                .body(ApiResponse.success("Courses for program " + programId + RETRIEVED_SUCCESSFULLY, response));
     }
     
     @GetMapping("/program/{programId}/batch/{batchNumber}")
@@ -58,7 +60,7 @@ public class BatchCourseController {
             @PathVariable Integer batchNumber) {
         List<BatchCourseResponse> response = batchCourseService.getCoursesByBatch(programId, batchNumber);
         return ResponseEntity.status(HttpStatus.OK)
-                .body(ApiResponse.success("Courses for batch " + batchNumber + " retrieved successfully", response));
+                .body(ApiResponse.success("Courses for batch " + batchNumber + RETRIEVED_SUCCESSFULLY, response));
     }
     
     @GetMapping("/course/{courseId}")
@@ -66,7 +68,7 @@ public class BatchCourseController {
             @PathVariable Integer courseId) {
         List<BatchCourseResponse> response = batchCourseService.getCoursesByTrainingCourse(courseId);
         return ResponseEntity.status(HttpStatus.OK)
-                .body(ApiResponse.success("Batches linked to course " + courseId + " retrieved successfully", response));
+                .body(ApiResponse.success("Batches linked to course " + courseId + RETRIEVED_SUCCESSFULLY, response));
     }
     
     @PatchMapping("/{batchCourseId}/status")

@@ -179,6 +179,18 @@ public class CandidatesController {
         List<CandidateResponse> responses = candidatesService.getCandidatesByCycleId(cycleId);
         return ResponseEntity.ok(new ApiResponse<>(true, "Candidates retrieved successfully", responses));
     }
+
+    @GetMapping("/cycle/{cycleId}/stage/{stage}")
+    @Operation(summary = "Get candidates by cycle and stage",
+               description = "Retrieves candidates from a specific hiring cycle filtered by applicationStage at DB level. " +
+                             "More efficient than fetching all candidates and filtering in frontend. " +
+                             "Valid stages: APPLIED, SHORTLISTED, SELECTED, OFFERED, ACCEPTED, JOINED, NOT_JOINED, REJECTED, DROPPED")
+    public ResponseEntity<ApiResponse<List<CandidateResponse>>> getCandidatesByCycleIdAndStage(
+            @PathVariable("cycleId") Long cycleId,
+            @PathVariable("stage") String stage) {
+        List<CandidateResponse> responses = candidatesService.getCandidatesByCycleIdAndStage(cycleId, stage);
+        return ResponseEntity.ok(new ApiResponse<>(true, "Candidates retrieved successfully", responses));
+    }
     
     @PatchMapping("/{id}")
     @Operation(summary = "Update candidate eligibility", 

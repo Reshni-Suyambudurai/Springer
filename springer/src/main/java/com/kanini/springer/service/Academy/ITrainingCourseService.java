@@ -13,10 +13,6 @@ public interface ITrainingCourseService {
     
     List<TrainingCourseResponse> getAllCourses();
     
-    List<TrainingCourseResponse> getCoursesByStatus(String status);
-    
-    List<TrainingCourseResponse> getCoursesByTrainer(Long trainerId);
-    
     TrainingCourseResponse updateCourse(Integer courseId, TrainingCourseRequest request);
     
     void deleteCourse(Integer courseId);

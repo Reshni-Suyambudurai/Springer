@@ -14,6 +14,7 @@ public interface IAttendanceService {
     AttendanceResponse markAttendance(AttendanceMarkRequest request);
     List<AttendanceResponse> markAttendanceBulk(BulkAttendanceMarkRequest request);
     AttendanceStatsResponse getAttendanceSummary(Long studentId);
+    List<AttendanceStatsResponse> getAttendanceSummaryByBatch(Integer programId, Integer batchNumber);
     List<AttendanceResponse> getAttendanceRecords(Long studentId);
     ExcelUploadResponse uploadAttendanceFromExcel(MultipartFile file, Integer programId, Integer batchNumber);
 }

@@ -50,11 +50,12 @@ public interface IDocumentLinkService {
     DocumentSubmissionStatusResponse getSubmissionStatus(Long candidateId, Long cycleId, String token);
 
     /**
-     * Send initial submission link via email
+     * Send initial document submission link to candidate
+     * Provides secure link for candidate to submit required documents
      * @param candidateId candidate to send to
      * @param cycleId hiring cycle
      * @param documentTypeIds required documents
-     * @return true if email sent successfully
+     * @return true if link sent successfully
      */
     boolean sendInitialSubmissionLink(Long candidateId, Long cycleId,
         java.util.List<Long> documentTypeIds);
@@ -63,20 +64,22 @@ public interface IDocumentLinkService {
         java.util.List<Long> documentTypeIds, LocalDateTime submissionDeadline);
 
     /**
-     * Send rejection email with resubmit link
+     * Send document rejection link with resubmit opportunity
+     * Notifies candidate of rejection and provides secure link to resubmit document
      * @param documentId rejected document
-     * @param rejectionReason reason
-     * @return true if email sent successfully
+     * @param rejectionReason reason for rejection
+     * @return true if notification sent successfully
      */
-    boolean sendRejectionEmail(Long documentId, String rejectionReason);
+    boolean sendDocumentRejectionLink(Long documentId, String rejectionReason);
 
     /**
-     * Resend submission link (if candidate didn't receive)
+     * Resend submission link to candidate
+     * Used when candidate needs the link again or didn't receive it initially
      * @param candidateId candidate
      * @param cycleId cycle
      * @param documentTypeIds optional list of specific document types to include in resend
      *                        if empty, resends for all PENDING/REJECTED documents
-     * @return true if email resent
+     * @return true if link resent successfully
      */
     boolean resendSubmissionLink(Long candidateId, Long cycleId, java.util.List<Long> documentTypeIds);
 

@@ -48,6 +48,10 @@ public class Candidate {
     private Long candidateId;
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
+    private com.kanini.springer.entity.HiringReq.User user; // nullable — linked when intern account created
+
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "institute_id")
     private Institute institute; // nullable if off-campus pool
 

@@ -9,6 +9,10 @@ public class ValidationException extends RuntimeException {
         super(message);
     }
     
+    public ValidationException(String message, Throwable cause) {
+        super(message, cause);
+    }
+    
     public ValidationException(String fieldName, String errorMessage) {
         super(String.format("%s: %s", fieldName, errorMessage));
     }

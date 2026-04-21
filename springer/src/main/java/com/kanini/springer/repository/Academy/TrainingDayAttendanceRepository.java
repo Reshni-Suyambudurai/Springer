@@ -21,4 +21,17 @@ public interface TrainingDayAttendanceRepository extends JpaRepository<TrainingD
 
     @Query("SELECT COUNT(t) FROM TrainingDayAttendance t WHERE t.student.studentId = ?1 AND t.isPresent = false")
     long countAbsentDays(Long studentId);
+
+    // Returns [studentId, presentCount, absentCount] for all students in a batch — single query
+    @Query("SELECT t.student.studentId, " +
+           "SUM(CASE WHEN t.isPresent = true THEN 1 ELSE 0 END), " +
+           "SUM(CASE WHEN t.isPresent = false THEN 1 ELSE 0 END) " +
+           "FROM TrainingDayAttendance t " +
+           "WHERE t.student.program.programId = :programId " +
+           "AND t.student.batchNumber = :batchNumber " +
+           "AND t.student.isActive = true " +
+           "GROUP BY t.student.studentId")
+    List<Object[]> findAttendanceStatsByBatch(
+            @org.springframework.data.repository.query.Param("programId") Integer programId,
+            @org.springframework.data.repository.query.Param("batchNumber") Integer batchNumber);
 }

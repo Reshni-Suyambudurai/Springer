@@ -29,6 +29,7 @@ public class Role {
     private Long roleId;
     
     @Enumerated(EnumType.STRING)
+    @Column(length = 50)
     private RoleName roleName;
     
     private LocalDateTime createdAt;

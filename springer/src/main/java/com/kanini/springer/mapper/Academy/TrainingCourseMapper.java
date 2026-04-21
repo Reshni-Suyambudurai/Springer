@@ -17,6 +17,8 @@ public class TrainingCourseMapper {
         response.setDescription(entity.getDescription());
         response.setMinScore(entity.getMinScore());
         response.setWeightage(entity.getWeightage());
+        response.setIsCommunication(Boolean.TRUE.equals(entity.getIsCommunication()));
+        response.setCommunicationTemplate(entity.getCommunicationTemplate());
         response.setCreatedAt(entity.getCreatedAt());
         return response;
     }
@@ -29,6 +31,19 @@ public class TrainingCourseMapper {
         entity.setDescription(request.getDescription());
         entity.setMinScore(request.getMinScore());
         entity.setWeightage(request.getWeightage());
+        entity.setIsCommunication(Boolean.TRUE.equals(request.getIsCommunication()));
+        // For communication courses: apply template (custom or default), clear weightage
+        if (Boolean.TRUE.equals(request.getIsCommunication())) {
+            entity.setWeightage(null);
+            String tpl = (request.getCommunicationTemplate() != null
+                    && !request.getCommunicationTemplate().isBlank())
+                    ? request.getCommunicationTemplate()
+                    : "[{\"name\":\"Grammar\",\"maxScore\":20},{\"name\":\"Proactiveness\",\"maxScore\":20},{\"name\":\"Fluency\",\"maxScore\":10}]";
+            entity.setCommunicationTemplate(tpl);
+        } else {
+            entity.setWeightage(request.getWeightage());
+            entity.setCommunicationTemplate(null);
+        }
         return entity;
     }
 }

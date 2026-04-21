@@ -53,6 +53,12 @@ public interface ICandidatesService {
      * Get all candidates by cycle ID with institute details
      */
     List<CandidateResponse> getCandidatesByCycleId(Long cycleId);
+
+    /**
+     * Get candidates by cycle ID filtered by applicationStage — fetches from DB, not in memory
+     * Use this instead of getCandidatesByCycleId when you only need a specific stage
+     */
+    List<CandidateResponse> getCandidatesByCycleIdAndStage(Long cycleId, String stage);
     
     /**
      * Update candidate (with manual override logging)

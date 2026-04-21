@@ -44,22 +44,6 @@ public class TrainingCourseController {
                 .body(ApiResponse.success("Course retrieved successfully", response));
     }
     
-    @GetMapping("/status/{status}")
-    public ResponseEntity<ApiResponse<List<TrainingCourseResponse>>> getCoursesByStatus(
-            @PathVariable String status) {
-        List<TrainingCourseResponse> response = courseService.getCoursesByStatus(status);
-        return ResponseEntity.status(HttpStatus.OK)
-                .body(ApiResponse.success("Courses with status " + status + " retrieved successfully", response));
-    }
-    
-    @GetMapping("/trainer/{trainerId}")
-    public ResponseEntity<ApiResponse<List<TrainingCourseResponse>>> getCoursesByTrainer(
-            @PathVariable Long trainerId) {
-        List<TrainingCourseResponse> response = courseService.getCoursesByTrainer(trainerId);
-        return ResponseEntity.status(HttpStatus.OK)
-                .body(ApiResponse.success("Courses conducted by trainer " + trainerId + " retrieved successfully", response));
-    }
-    
     @PatchMapping("/{courseId}")
     public ResponseEntity<ApiResponse<TrainingCourseResponse>> updateCourse(
             @PathVariable Integer courseId,

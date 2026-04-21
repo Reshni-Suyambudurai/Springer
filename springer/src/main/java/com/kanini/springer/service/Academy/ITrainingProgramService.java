@@ -15,10 +15,6 @@ public interface ITrainingProgramService {
     
     List<TrainingProgramResponse> getProgramsByStatus(boolean status);
     
-    List<TrainingProgramResponse> getProgramsByCycle(Long cycleId);
-    
-    List<TrainingProgramResponse> getProgramsByLocation(String location);
-    
     TrainingProgramResponse updateProgram(Integer programId, TrainingProgramRequest request);
     
     void deleteProgram(Integer programId);

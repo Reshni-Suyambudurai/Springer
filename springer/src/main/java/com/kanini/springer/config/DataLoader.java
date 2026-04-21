@@ -51,6 +51,12 @@ public class DataLoader {
                 seedEmailTemplates();
             }
 
+            // Ensure INTERN role exists even on existing DBs
+            if (roleRepository.findByRoleName(RoleName.INTERN).isEmpty()) {
+                roleRepository.save(createRole(RoleName.INTERN));
+                log.info("Seeded missing INTERN role");
+            }
+
             // Check if data already exists
             if (roleRepository.count() > 0) {
                 log.info("Data already exists. Skipping seed data loading.");
@@ -93,7 +99,8 @@ public class DataLoader {
             createRole(RoleName.HR_OPERATIONS),
             createRole(RoleName.TRAINING_COORDINATOR),
             createRole(RoleName.BU_SPOC),
-            createRole(RoleName.SYSTEM_ADMIN)
+            createRole(RoleName.SYSTEM_ADMIN),
+            createRole(RoleName.INTERN)
         };
 
         roleRepository.saveAll(java.util.Arrays.asList(roles));

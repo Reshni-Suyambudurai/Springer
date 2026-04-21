@@ -4,9 +4,7 @@
   display: flex;
   flex-direction: column;
   height: 100%;
-  gap: 4px;
   background-color: var(--color-bg-secondary);
-  padding: 4px;
 }
 
 .jt-card {
@@ -325,21 +323,9 @@
   margin: 0 !important;
 }
 
-.jt-pagination .MuiInputBase-root { margin-right: 32px !important; }
-
-.jt-pagination .MuiIconButton-root {
-  padding: 4px !important;
-  color: var(--color-text-secondary) !important;
-}
-
-.jt-pagination .MuiIconButton-root:hover {
-  background-color: var(--opacity-shadow-very-light) !important;
-  color: var(--color-grey-550) !important;
-}
-
-.jt-pagination .MuiIconButton-root.Mui-disabled {
-  color: var(--color-grey-350) !important;
-}
+.jt-pagination .MuiIconButton-root { padding: 4px !important; color: var(--color-text-secondary) !important; }
+.jt-pagination .MuiIconButton-root:hover { background-color: var(--opacity-shadow-very-light) !important; color: var(--color-grey-550) !important; }
+.jt-pagination .MuiIconButton-root.Mui-disabled { color: var(--color-grey-350) !important; }
 
 /* ── Dialog ── */
 .jt-dialog-title {

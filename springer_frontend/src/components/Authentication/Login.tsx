@@ -29,8 +29,8 @@ const Login: React.FC = () => {
   const [emailError, setEmailError] = useState<string>("");
   const [passwordError, setPasswordError] = useState<string>("");
 
-  // Validation regex patterns
-  const emailRegex = /^[a-zA-Z0-9._%+-]+@kanini\.com$/;
+  // Validation regex patterns — allows @kanini.com (staff) and any valid email (interns)
+  const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
   const passwordMinLength = 4;
 
   const validateEmail = (email: string): boolean => {

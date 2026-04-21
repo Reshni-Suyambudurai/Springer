@@ -26,7 +26,6 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -38,7 +37,7 @@ public class DocumentSubmissionServiceImpl implements IDocumentSubmissionService
     private final HiringCycleRepository cycleRepository;
     private final DocumentSubmissionMapper mapper;
     
-    private static final long MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+    private static final long MAX_FILE_SIZE = 10L * 1024 * 1024; // 10MB
     
     @Override
     @Transactional
@@ -94,7 +93,7 @@ public class DocumentSubmissionServiceImpl implements IDocumentSubmissionService
             DocumentSubmission saved = submissionRepository.save(submission);
             return mapper.toResponse(saved);
         } catch (IOException e) {
-            throw new ValidationException("Failed to process file: " + e.getMessage());
+            throw new ValidationException("Failed to process file: " + e.getMessage(), e);
         }
     }
     
@@ -115,7 +114,7 @@ public class DocumentSubmissionServiceImpl implements IDocumentSubmissionService
         List<DocumentSubmission> submissions = submissionRepository.findByCandidateId(candidateId);
         return submissions.stream()
                 .map(mapper::toResponse)
-                .collect(Collectors.toList());
+                .toList();
     }
     
     @Override
@@ -129,7 +128,7 @@ public class DocumentSubmissionServiceImpl implements IDocumentSubmissionService
                 Enums.VerificationStatus verificationStatus = Enums.VerificationStatus.valueOf(status.toUpperCase(java.util.Locale.ROOT));
                 submissions = submissionRepository.findByVerificationStatusAndCycleId(verificationStatus, cycleId, pageable);
             } catch (IllegalArgumentException e) {
-                throw new ValidationException("Invalid verification status: " + status);
+                throw new ValidationException("Invalid verification status: " + status, e);
             }
         } else if (cycleId != null) {
             submissions = submissionRepository.findByCycleId(cycleId, pageable);
@@ -138,7 +137,7 @@ public class DocumentSubmissionServiceImpl implements IDocumentSubmissionService
                 Enums.VerificationStatus verificationStatus = Enums.VerificationStatus.valueOf(status.toUpperCase(java.util.Locale.ROOT));
                 submissions = submissionRepository.findByVerificationStatus(verificationStatus, pageable);
             } catch (IllegalArgumentException e) {
-                throw new ValidationException("Invalid verification status: " + status);
+                throw new ValidationException("Invalid verification status: " + status, e);
             }
         } else {
             submissions = submissionRepository.findAllWithDetails(pageable);
@@ -146,7 +145,7 @@ public class DocumentSubmissionServiceImpl implements IDocumentSubmissionService
         
         return submissions.stream()
                 .map(mapper::toResponse)
-                .collect(Collectors.toList());
+                .toList();
     }
     
     @Override

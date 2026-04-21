@@ -58,6 +58,13 @@ public interface CandidatesRepository extends JpaRepository<Candidate, Long>, Jp
      */
     @Query("SELECT DISTINCT c FROM Candidate c LEFT JOIN FETCH c.institute LEFT JOIN FETCH c.cycle LEFT JOIN FETCH c.candidateSkills cs LEFT JOIN FETCH cs.skill WHERE c.cycle.cycleId = :cycleId")
     List<Candidate> findByCycleIdWithDetails(@Param("cycleId") Long cycleId);
+
+    /**
+     * Find candidates by cycle ID and applicationStage with institute and skills eagerly loaded
+     * Used to fetch only candidates of a specific stage (e.g. JOINED) — avoids loading all candidates
+     */
+    @Query("SELECT DISTINCT c FROM Candidate c LEFT JOIN FETCH c.institute LEFT JOIN FETCH c.cycle LEFT JOIN FETCH c.candidateSkills cs LEFT JOIN FETCH cs.skill WHERE c.cycle.cycleId = :cycleId AND c.applicationStage = :stage")
+    List<Candidate> findByCycleIdAndStageWithDetails(@Param("cycleId") Long cycleId, @Param("stage") ApplicationStage stage);
     
     /**
      * Find all candidates with institute details (JOIN FETCH to avoid lazy loading)
@@ -213,6 +220,8 @@ List<Candidate> findMatchingCandidates(
 
     @Query("SELECT DISTINCT c FROM Candidate c LEFT JOIN FETCH c.institute LEFT JOIN FETCH c.candidateSkills cs LEFT JOIN FETCH cs.skill WHERE c.candidateId IN :candidateIds")
     List<Candidate> findByIdsWithInstitute(@Param("candidateIds") List<Long> candidateIds);
+
+    Optional<Candidate> findByUser_UserId(Long userId);
 
     // ===== Dashboard aggregate queries (single DB hit each) =====
 

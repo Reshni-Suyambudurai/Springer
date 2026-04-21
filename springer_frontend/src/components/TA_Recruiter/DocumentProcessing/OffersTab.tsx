@@ -33,7 +33,7 @@ interface CandidateOfferRow {
 
 const today = () => new Date().toISOString().split('T')[0];
 const OFFER_PAGE_SIZE = 200;
-const OFFER_MAX_PAGES = 50;
+const OFFER_MAX_PAGES = 10; // max 2000 offers per cycle — safe upper bound
 
 const OffersTab = ({ context }: { context: DocProcessingContextProps }) => {
   const { cycleId } = context;
@@ -60,6 +60,7 @@ const OffersTab = ({ context }: { context: DocProcessingContextProps }) => {
   const [singleDate, setSingleDate] = useState(today());
   const [singleReason, setSingleReason] = useState('');
   const [singleSubmitting, setSingleSubmitting] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
 
   useEffect(() => {
     if (cycleId) { fetchEligible(); fetchOffers(); }
@@ -202,13 +203,14 @@ const OffersTab = ({ context }: { context: DocProcessingContextProps }) => {
     if (singleResponse === 'DECLINED' && !singleReason.trim()) { showToast('Enter decline reason', 'error'); return; }
     try {
       setSingleSubmitting(true);
-      const res = await offerApi.recordOfferResponse(singleDialog.offer.offerId, {
+      const apiCall = isEditing ? offerApi.updateOfferResponse : offerApi.recordOfferResponse;
+      const res = await apiCall(singleDialog.offer.offerId, {
         response: singleResponse,
         respondedDate: singleDate,
         declineReason: singleResponse === 'DECLINED' ? singleReason.trim() : undefined,
       });
       if (res.success) {
-        showToast('Response recorded', 'success');
+        showToast(isEditing ? 'Response updated' : 'Response recorded', 'success');
         setSingleDialog({ open: false, offer: null });
         refresh();
       }
@@ -325,7 +327,7 @@ const OffersTab = ({ context }: { context: DocProcessingContextProps }) => {
                       <TableCell colSpan={2} className="oft-empty-cell">
                         <OfferIcon className="oft-empty-icon" />
                         <Typography className="oft-empty-text">No candidates with fully approved documents</Typography>
-                        <Typography className="oft-empty-sub">Go to ③ Verify Docs and approve all documents first</Typography>
+                        <Typography className="oft-empty-sub">Go to Review & Verify tab and approve all documents first</Typography>
                       </TableCell>
                     </TableRow>
                   ) : (
@@ -336,7 +338,6 @@ const OffersTab = ({ context }: { context: DocProcessingContextProps }) => {
                             <Box className="oft-name-icon-box"><PersonIcon className="oft-name-icon" /></Box>
                             <Box>
                               <Typography className="oft-row-primary">{c.candidateName || `Candidate #${c.candidateId}`}</Typography>
-                              <Typography className="oft-row-secondary">ID: {c.candidateId}</Typography>
                             </Box>
                           </Box>
                         </TableCell>
@@ -382,7 +383,6 @@ const OffersTab = ({ context }: { context: DocProcessingContextProps }) => {
                               <Box className="oft-name-icon-box"><PersonIcon className="oft-name-icon" /></Box>
                               <Box>
                                 <Typography className="oft-row-primary">{offer.candidateName || `Candidate #${offer.candidateId}`}</Typography>
-                                <Typography className="oft-row-secondary">ID: {offer.candidateId}</Typography>
                               </Box>
                             </Box>
                           </TableCell>
@@ -413,10 +413,27 @@ const OffersTab = ({ context }: { context: DocProcessingContextProps }) => {
                                   setSingleResponse('ACCEPTED');
                                   setSingleDate(today());
                                   setSingleReason('');
+                                  setIsEditing(false);
                                   setSingleDialog({ open: true, offer });
                                 }}
                               >
                                 Record Response
+                              </Button>
+                            )}
+                            {offer.response === 'ACCEPTED' && offer.applicationStage === 'ACCEPTED' && (
+                              <Button
+                                size="small"
+                                variant="outlined"
+                                className="oft-record-btn"
+                                onClick={() => {
+                                  setSingleResponse(offer.response as 'ACCEPTED' | 'DECLINED');
+                                  setSingleDate(offer.respondedDate ?? today());
+                                  setSingleReason(offer.declineReason ?? '');
+                                  setIsEditing(true);
+                                  setSingleDialog({ open: true, offer });
+                                }}
+                              >
+                                Edit Response
                               </Button>
                             )}
                           </TableCell>
@@ -521,7 +538,7 @@ const OffersTab = ({ context }: { context: DocProcessingContextProps }) => {
                           disabled={!row.selected}
                           sx={{ width: 140 }}
                         >
-                          <MenuItem value="PENDING">Pending</MenuItem>
+                          <MenuItem value="PENDING" sx={{ display: 'none' }}>Pending</MenuItem>
                           <MenuItem value="ACCEPTED">Accepted</MenuItem>
                           <MenuItem value="DECLINED">Declined</MenuItem>
                         </TextField>
@@ -574,7 +591,7 @@ const OffersTab = ({ context }: { context: DocProcessingContextProps }) => {
       {/* ── Single Record Response Dialog ── */}
       <Dialog open={singleDialog.open} onClose={() => setSingleDialog({ open: false, offer: null })} maxWidth="xs" fullWidth>
         <DialogTitle className="oft-dialog-title">
-          Record Response — {singleDialog.offer?.candidateName}
+          {isEditing ? 'Edit Response' : 'Record Response'} — {singleDialog.offer?.candidateName}
         </DialogTitle>
         <DialogContent>
           <Stack spacing={2} sx={{ mt: 1 }}>

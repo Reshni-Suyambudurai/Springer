@@ -1,6 +1,6 @@
 import { http } from './api/https';
 import { handleAxiosError } from './api.error';
-import type { ApiResponse } from '../types/api.response';
+import type { ApiResponse, Page } from '../types/api.response';
 import type {
   TrainingProgramRequest,
   TrainingProgramResponse,
@@ -12,6 +12,7 @@ import type {
   BatchScheduleResponse,
   BatchAllocationRequest,
   BatchAllocationResponse,
+  BatchTransferRequest,
   AttendanceMarkRequest,
   BulkAttendanceMarkRequest,
   AttendanceResponse,
@@ -91,27 +92,9 @@ export const trainingProgramApi = {
     }
   },
 
-  async getProgramsByCycle(cycleId: number): Promise<ApiResponse<TrainingProgramResponse[]>> {
-    try {
-      const response = await http.get(`/academy/programs/cycle/${cycleId}`);
-      return response.data;
-    } catch (error) {
-      throw handleAxiosError(error);
-    }
-  },
-
   async updateProgram(programId: number, data: Partial<TrainingProgramRequest>): Promise<ApiResponse<TrainingProgramResponse>> {
     try {
       const response = await http.patch(`/academy/programs/${programId}`, data);
-      return response.data;
-    } catch (error) {
-      throw handleAxiosError(error);
-    }
-  },
-
-  async getProgramsByLocation(location: string): Promise<ApiResponse<TrainingProgramResponse[]>> {
-    try {
-      const response = await http.get(`/academy/programs/location/${location}`);
       return response.data;
     } catch (error) {
       throw handleAxiosError(error);
@@ -158,15 +141,6 @@ export const trainingCourseApi = {
     }
   },
 
-  async getCoursesByStatus(status: string): Promise<ApiResponse<TrainingCourseResponse[]>> {
-    try {
-      const response = await http.get(`/academy/courses/status/${status}`);
-      return response.data;
-    } catch (error) {
-      throw handleAxiosError(error);
-    }
-  },
-
   async updateCourse(courseId: number, data: Partial<TrainingCourseRequest>): Promise<ApiResponse<TrainingCourseResponse>> {
     try {
       const response = await http.patch(`/academy/courses/${courseId}`, data);
@@ -179,15 +153,6 @@ export const trainingCourseApi = {
   async updateCourseStatus(courseId: number, status: string): Promise<ApiResponse<TrainingCourseResponse>> {
     try {
       const response = await http.patch(`/academy/courses/${courseId}/status`, null, { params: { status } });
-      return response.data;
-    } catch (error) {
-      throw handleAxiosError(error);
-    }
-  },
-
-  async getCoursesByTrainer(trainerId: number): Promise<ApiResponse<TrainingCourseResponse[]>> {
-    try {
-      const response = await http.get(`/academy/courses/trainer/${trainerId}`);
       return response.data;
     } catch (error) {
       throw handleAxiosError(error);
@@ -246,24 +211,6 @@ export const batchCourseApi = {
   async getCoursesByBatch(programId: number, batchNumber: number): Promise<ApiResponse<BatchCourseResponse[]>> {
     try {
       const response = await http.get(`/academy/batch-courses/program/${programId}/batch/${batchNumber}`);
-      return response.data;
-    } catch (error) {
-      throw handleAxiosError(error);
-    }
-  },
-
-  async getBatchCourseById(batchCourseId: number): Promise<ApiResponse<BatchCourseResponse>> {
-    try {
-      const response = await http.get(`/academy/batch-courses/${batchCourseId}`);
-      return response.data;
-    } catch (error) {
-      throw handleAxiosError(error);
-    }
-  },
-
-  async getCoursesByTrainingCourse(courseId: number): Promise<ApiResponse<BatchCourseResponse[]>> {
-    try {
-      const response = await http.get(`/academy/batch-courses/course/${courseId}`);
       return response.data;
     } catch (error) {
       throw handleAxiosError(error);
@@ -350,15 +297,6 @@ export const batchAllocationApi = {
     }
   },
 
-  async getAllocationsByCandidate(candidateId: number): Promise<ApiResponse<BatchAllocationResponse[]>> {
-    try {
-      const response = await http.get(`/academy/batch-allocations/candidate/${candidateId}`);
-      return response.data;
-    } catch (error) {
-      throw handleAxiosError(error);
-    }
-  },
-
   async updateAllocation(studentId: number, data: Partial<BatchAllocationRequest>): Promise<ApiResponse<BatchAllocationResponse>> {
     try {
       const response = await http.patch(`/academy/batch-allocations/${studentId}`, data);
@@ -386,9 +324,26 @@ export const batchAllocationApi = {
     }
   },
 
-  async getAllocationsByMinAttendance(programId: number, minPercentage: number): Promise<ApiResponse<BatchAllocationResponse[]>> {
+  async transferStudent(studentId: number, data: BatchTransferRequest): Promise<ApiResponse<BatchAllocationResponse>> {
     try {
-      const response = await http.get(`/academy/batch-allocations/program/${programId}/min-attendance/${minPercentage}`);
+      const response = await http.patch(`/academy/batch-allocations/${studentId}/transfer`, data);
+      return response.data;
+    } catch (error) {
+      throw handleAxiosError(error);
+    }
+  },
+
+  async getAllocationsByProgramFiltered(params: {
+    programId: number;
+    batchNumber?: number;
+    isActive?: boolean;
+    search?: string;
+    page: number;
+    size: number;
+  }): Promise<ApiResponse<Page<BatchAllocationResponse>>> {
+    try {
+      const { programId, ...rest } = params;
+      const response = await http.get(`/academy/batch-allocations/program/${programId}/filtered`, { params: rest });
       return response.data;
     } catch (error) {
       throw handleAxiosError(error);
@@ -420,6 +375,15 @@ export const attendanceApi = {
   async getAttendanceSummary(studentId: number): Promise<ApiResponse<AttendanceStatsResponse>> {
     try {
       const response = await http.get(`/academy/attendance/${studentId}/summary`);
+      return response.data;
+    } catch (error) {
+      throw handleAxiosError(error);
+    }
+  },
+
+  async getAttendanceSummaryByBatch(programId: number, batchNumber: number): Promise<ApiResponse<AttendanceStatsResponse[]>> {
+    try {
+      const response = await http.get('/academy/attendance/batch/summary', { params: { programId, batchNumber } });
       return response.data;
     } catch (error) {
       throw handleAxiosError(error);
@@ -467,23 +431,21 @@ export const excelUploadApi = {
 // ==================== JOINING TRACKER APIs ====================
 export const joiningTrackerApi = {
 
+  // Fetches only ACCEPTED, JOINED, NOT_JOINED candidates from backend — not all candidates
   async getCandidatesByCycle(cycleId: number): Promise<ApiResponse<CandidateResponse[]>> {
     try {
-      const response = await http.get(`/candidates/cycle/${cycleId}`);
-      return response.data;
-    } catch (error) {
-      throw handleAxiosError(error);
-    }
-  },
-
-  async getAcceptedCandidatesByCycle(cycleId: number): Promise<ApiResponse<CandidateResponse[]>> {
-    try {
-      const response = await this.getCandidatesByCycle(cycleId);
-      const all: CandidateResponse[] = response.data ?? [];
+      const response = await http.post('/candidates/filter', {
+        cycleId,
+        applicationStages: ['ACCEPTED', 'JOINED', 'NOT_JOINED'],
+        page: 0,
+        size: 1000,
+      });
+      // filter endpoint returns Page, unwrap content into list
+      const page = response.data?.data;
       return {
-        success: true,
-        message: 'Fetched',
-        data: all.filter(c => c.applicationStage === 'ACCEPTED'),
+        success: response.data?.success ?? false,
+        message: response.data?.message ?? '',
+        data: page?.content ?? [],
       };
     } catch (error) {
       throw handleAxiosError(error);
@@ -512,15 +474,6 @@ export const trainingScoreApi = {
     }
   },
 
-  async getAllScores(): Promise<ApiResponse<TrainingScoreResponse[]>> {
-    try {
-      const response = await http.get('/academy/scores');
-      return response.data;
-    } catch (error) {
-      throw handleAxiosError(error);
-    }
-  },
-
   async getScoresByStudent(studentId: number): Promise<ApiResponse<TrainingScoreResponse[]>> {
     try {
       const response = await http.get(`/academy/scores/student/${studentId}`);
@@ -530,36 +483,9 @@ export const trainingScoreApi = {
     }
   },
 
-  async getScoresByCourse(courseId: number): Promise<ApiResponse<TrainingScoreResponse[]>> {
+  async getScoresByBatchAndCourse(programId: number, batchNumber: number, courseId: number): Promise<ApiResponse<TrainingScoreResponse[]>> {
     try {
-      const response = await http.get(`/academy/scores/course/${courseId}`);
-      return response.data;
-    } catch (error) {
-      throw handleAxiosError(error);
-    }
-  },
-
-  async getScoreById(scoreId: number): Promise<ApiResponse<TrainingScoreResponse>> {
-    try {
-      const response = await http.get(`/academy/scores/${scoreId}`);
-      return response.data;
-    } catch (error) {
-      throw handleAxiosError(error);
-    }
-  },
-
-  async getScoresByStatus(status: string): Promise<ApiResponse<TrainingScoreResponse[]>> {
-    try {
-      const response = await http.get(`/academy/scores/status/${status}`);
-      return response.data;
-    } catch (error) {
-      throw handleAxiosError(error);
-    }
-  },
-
-  async getScoresByReviewer(reviewerId: number): Promise<ApiResponse<TrainingScoreResponse[]>> {
-    try {
-      const response = await http.get(`/academy/scores/reviewer/${reviewerId}`);
+      const response = await http.get('/academy/scores/batch', { params: { programId, batchNumber, courseId } });
       return response.data;
     } catch (error) {
       throw handleAxiosError(error);

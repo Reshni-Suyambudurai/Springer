@@ -15,8 +15,11 @@ public class TrainingScoreResponse {
     private Integer courseId;
     private Long studentId;
     private Integer score;
+    /** For technical courses: always 100. For communication: sum of all sub-field maxScores from the template. */
+    private Integer maxScore;
     private String review;
     private String status;
     private Long reviewedBy;
+    private String communicationBreakdown;
     private LocalDateTime createdAt;
 }

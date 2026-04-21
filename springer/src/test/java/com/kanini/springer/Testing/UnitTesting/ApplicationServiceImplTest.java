@@ -389,18 +389,19 @@ class ApplicationServiceImplTest {
     class UpdateApplicationStatus {
 
         @Test
-        @DisplayName("success - updates application status")
+        @DisplayName("success - updates ALLOTED to IN_DRIVE")
         void updateApplicationStatus_valid_success() {
             Drive drive = buildDrive(1L);
             Candidate candidate = buildCandidate(1L, ApplicationStage.SCHEDULED, true);
             Application app = buildApplication(1L, drive, candidate);
+            // app starts as ALLOTED — valid transition is ALLOTED → IN_DRIVE
             Application updated = buildApplication(1L, drive, candidate);
-            updated.setApplicationStatus(ApplicationStatus.SELECTED);
+            updated.setApplicationStatus(ApplicationStatus.IN_DRIVE);
 
             ApplicationResponse response = buildResponse(1L);
-            response.setApplicationStatus("SELECTED");
+            response.setApplicationStatus("IN_DRIVE");
 
-            ApplicationStatusUpdateRequest request = new ApplicationStatusUpdateRequest("SELECTED", 1L);
+            ApplicationStatusUpdateRequest request = new ApplicationStatusUpdateRequest("IN_DRIVE", 1L);
 
             when(applicationRepository.findById(1L)).thenReturn(Optional.of(app));
             when(applicationRepository.save(any(Application.class))).thenReturn(updated);
@@ -408,7 +409,7 @@ class ApplicationServiceImplTest {
 
             ApplicationResponse result = service.updateApplicationStatus(1L, request);
 
-            assertThat(result.getApplicationStatus()).isEqualTo("SELECTED");
+            assertThat(result.getApplicationStatus()).isEqualTo("IN_DRIVE");
             verify(applicationRepository).save(any(Application.class));
         }
 
@@ -470,7 +471,7 @@ class ApplicationServiceImplTest {
 
             assertThatThrownBy(() -> service.bulkUpdateApplicationStatus(request))
                     .isInstanceOf(ValidationException.class)
-                    .hasMessageContaining("Applications list cannot be empty");
+                    .hasMessageContaining("Application IDs list cannot be empty");
         }
 
         @Test

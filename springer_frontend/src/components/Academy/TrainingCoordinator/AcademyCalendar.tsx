@@ -6,12 +6,15 @@ import {
 } from '@mui/material';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
-import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import CloseIcon from '@mui/icons-material/Close';
 import {
   batchScheduleApi, batchCourseApi, trainingCourseApi,
   batchAllocationApi, attendanceApi,
 } from '../../../services/academy.api';
+import { academyEventApi } from '../../../services/academyEvent.api';
+import type { AcademyEventResponse } from '../../../services/academyEvent.api';
+import { tokenstore } from '../../../auth/tokenstore';
+import { handleAxiosError } from '../../../services/api.error';
 import { showToast } from '../../../utils/toast';
 import type {
   AcademyContextProps, BatchScheduleResponse,
@@ -27,23 +30,27 @@ const MONTHS = [
 ];
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
-const setMidnight = (d: Date) => { d.setHours(0, 0, 0, 0); return d; };
-const parseDate   = (s: string) => setMidnight(new Date(s));
-const sameDay     = (a: Date, b: Date) =>
+const toMidnight = (d: Date) => { const c = new Date(d); c.setHours(0,0,0,0); return c; };
+const parseDate  = (s: string) => toMidnight(new Date(s));
+const sameDay    = (a: Date, b: Date) =>
   a.getDate() === b.getDate() && a.getMonth() === b.getMonth() && a.getFullYear() === b.getFullYear();
+const isBetween  = (date: Date, start: Date, end: Date) => {
+  const d = toMidnight(date).getTime();
+  return d >= toMidnight(start).getTime() && d <= toMidnight(end).getTime();
+};
 
-// ── Types ─────────────────────────────────────────────────────────────────────
-interface CalEvent {
+// ── Multi-day bar types ───────────────────────────────────────────────────────
+interface MultiDayBar {
   id: string;
-  title: string;
-  subtitle: string;
-  type: 'batch' | 'planned' | 'active' | 'completed' | 'cancelled';
+  label: string;
+  type: 'batch' | 'course-planned' | 'course-active' | 'course-completed' | 'course-cancelled' | 'event';
+  startDate: Date;
+  endDate: Date;
+  batchNo?: number;
+  venue?: string; // ONLINE | OFFLINE
 }
 
-interface DayAtt {
-  present: number;
-  absent: number;
-}
+interface DayAtt { present: number; absent: number; }
 
 // ── Component ─────────────────────────────────────────────────────────────────
 const AcademyCalendar: React.FC<{ context: AcademyContextProps }> = ({ context }) => {
@@ -52,41 +59,91 @@ const AcademyCalendar: React.FC<{ context: AcademyContextProps }> = ({ context }
   const currentYear = new Date().getFullYear();
   const yearOptions = Array.from({ length: 4 }, (_, i) => currentYear - i);
 
-  const [loading, setLoading]             = useState<boolean>(true);
-  const [currentDate, setCurrentDate]     = useState<Date>(new Date());
-  const [selectedYear, setSelectedYear]   = useState<number>(currentYear);
+  const [loading, setLoading]             = useState(true);
+  const [currentDate, setCurrentDate]     = useState(new Date());
+  const [selectedYear, setSelectedYear]   = useState(currentYear);
   const [schedules, setSchedules]         = useState<BatchScheduleResponse[]>([]);
   const [batchCourses, setBatchCourses]   = useState<BatchCourseResponse[]>([]);
   const [allCourses, setAllCourses]       = useState<TrainingCourseResponse[]>([]);
   const [attMap, setAttMap]               = useState<Record<string, DayAtt>>({});
-  const [filterProgram, setFilterProgram] = useState<string>('all');
+  const [filterProgram, setFilterProgram] = useState('all');
+  const [filterBatch, setFilterBatch]     = useState('all');
   const [selectedDay, setSelectedDay]     = useState<Date | null>(null);
+  const [events, setEvents]               = useState<AcademyEventResponse[]>([]);
+  const user = tokenstore.getUser();
+
+  // Add event dialog
+  const [addEventOpen, setAddEventOpen]   = useState(false);
+  const [evtTitle, setEvtTitle]           = useState('');
+  const [evtDesc, setEvtDesc]             = useState('');
+  const [evtDate, setEvtDate]             = useState('');
+  const [evtTime, setEvtTime]             = useState('');
+  const [evtType, setEvtType]             = useState('MEETING');
+  const [evtVenue, setEvtVenue]           = useState('ONLINE');
+  const [evtProgram, setEvtProgram]       = useState<number | null>(null);
+  const [evtBatches, setEvtBatches]         = useState<number[]>([]);
+  const [savingEvent, setSavingEvent]     = useState(false);
 
   useEffect(() => {
     fetchData();
+    fetchEvents();
     setFilterProgram('all');
+    setFilterBatch('all');
   }, [programYear]);
+
+  const fetchEvents = async () => {
+    try {
+      const res = await academyEventApi.getAllEvents();
+      if (res.success && res.data) setEvents(res.data);
+    } catch { /* silent */ }
+  };
+
+  const handleSaveEvent = async () => {
+    if (!evtTitle.trim()) { showToast('Title is required', 'error'); return; }
+    if (!evtDate) { showToast('Date is required', 'error'); return; }
+    try {
+      setSavingEvent(true);
+      const res = await academyEventApi.createEvent({
+        title: evtTitle.trim(),
+        description: evtDesc.trim() || undefined,
+        eventDate: evtDate,
+        eventTime: evtTime || undefined,
+        eventType: evtType,
+        venue: evtVenue || undefined,
+        programId: evtProgram,
+        batchNumbers: evtBatches.length > 0 ? evtBatches : null,
+        createdBy: user?.userId ?? 0,
+      });
+      if (res.success) {
+        showToast('Event created successfully', 'success');
+        setAddEventOpen(false);
+        setEvtTitle(''); setEvtDesc(''); setEvtDate(''); setEvtTime('');
+        setEvtType('MEETING'); setEvtVenue('ONLINE'); setEvtProgram(null); setEvtBatches([]);
+        fetchEvents();
+      }
+    } catch (error) {
+      const err = handleAxiosError(error);
+      showToast(err.message || 'Failed to create event', 'error');
+    } finally {
+      setSavingEvent(false);
+    }
+  };
 
   const fetchData = async () => {
     try {
       setLoading(true);
-
       const [bcRes, crsRes, allocRes] = await Promise.all([
         batchCourseApi.getAllBatchCourses(),
         trainingCourseApi.getAllCourses(),
         batchAllocationApi.getAllAllocations(),
       ]);
-
       if (bcRes.success && bcRes.data)   setBatchCourses(bcRes.data);
       if (crsRes.success && crsRes.data) setAllCourses(crsRes.data);
 
       const allocs: BatchAllocationResponse[] = (allocRes.success && allocRes.data) ? allocRes.data : [];
 
-      // Batch schedules for year programs
       const progIds = yearPrograms.map(p => p.programId);
-      const schedResults = await Promise.allSettled(
-        progIds.map(id => batchScheduleApi.getByProgram(id))
-      );
+      const schedResults = await Promise.allSettled(progIds.map(id => batchScheduleApi.getByProgram(id)));
       const allScheds: BatchScheduleResponse[] = [];
       schedResults.forEach(r => {
         if (r.status === 'fulfilled' && r.value.success && r.value.data)
@@ -94,47 +151,108 @@ const AcademyCalendar: React.FC<{ context: AcademyContextProps }> = ({ context }
       });
       setSchedules(allScheds);
 
-      // Attendance records — aggregate by date
       const active = allocs.filter(a => a.isActive);
-      const attResults = await Promise.allSettled(
-        active.map(a => attendanceApi.getAttendanceRecords(a.studentId))
-      );
+      const attResults = await Promise.allSettled(active.map(a => attendanceApi.getAttendanceRecords(a.studentId)));
       const map: Record<string, DayAtt> = {};
       attResults.forEach(r => {
         if (r.status === 'fulfilled' && r.value.success && r.value.data) {
           r.value.data.forEach((rec: AttendanceResponse) => {
             const key = String(rec.attendanceDate);
             if (!map[key]) map[key] = { present: 0, absent: 0 };
-            if (rec.isPresent) map[key].present++;
-            else               map[key].absent++;
+            if (rec.isPresent) map[key].present++; else map[key].absent++;
           });
         }
       });
       setAttMap(map);
-
     } catch (error: unknown) {
-      const msg = (error as { message?: string })?.message || 'Failed to load calendar data';
-      showToast(msg, 'error');
+      showToast((error as { message?: string })?.message || 'Failed to load calendar data', 'error');
     } finally {
       setLoading(false);
     }
   };
 
   // ── Navigation ────────────────────────────────────────────────────────────
-  const handlePreviousMonth = () =>
-    setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1));
+  const prevMonth = () => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1));
+  const nextMonth = () => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1));
+  const goToday   = () => setCurrentDate(new Date());
+  const changeYear = (year: number) => { setSelectedYear(year); setCurrentDate(new Date(year, currentDate.getMonth(), 1)); };
 
-  const handleNextMonth = () =>
-    setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1));
+  // ── Scoped data ───────────────────────────────────────────────────────────
+  const scopedPrograms = yearPrograms.filter(p =>
+    filterProgram === 'all' || String(p.programId) === filterProgram
+  );
+  const scopedProgramIds = new Set(scopedPrograms.map(p => p.programId));
 
-  const handleToday = () => setCurrentDate(new Date());
+  // Available batches for selected program
+  const availableBatches = Array.from(new Set(
+    schedules
+      .filter(s => scopedProgramIds.has(s.programId))
+      .map(s => s.batchNumber)
+  )).sort((a, b) => a - b);
 
-  const handleYearChange = (year: number) => {
-    setSelectedYear(year);
-    setCurrentDate(new Date(year, currentDate.getMonth(), 1));
-  };
+  const scopedSchedules = schedules.filter(s =>
+    scopedProgramIds.has(s.programId) &&
+    (filterBatch === 'all' || String(s.batchNumber) === filterBatch)
+  );
+  const scopedBatchCourses = batchCourses.filter(bc =>
+    scopedProgramIds.has(bc.programId) &&
+    bc.startDate && bc.endDate &&
+    (filterBatch === 'all' || String(bc.batchNo) === filterBatch)
+  );
 
-  // ── Calendar grid ─────────────────────────────────────────────────────────
+  // ── Calendar grid ───────────────────────────────────────────────────────────
+  const multiDayBars: MultiDayBar[] = [];
+
+  // Batch duration bars
+  scopedSchedules.forEach(s => {
+    const prog = yearPrograms.find(p => p.programId === s.programId);
+    multiDayBars.push({
+      id: `batch-${s.batchScheduleId}`,
+      label: `Batch ${s.batchNumber} · ${prog?.programName ?? 'Program'}`,
+      type: 'batch',
+      startDate: parseDate(s.startDate),
+      endDate: parseDate(s.endDate),
+      batchNo: s.batchNumber,
+    });
+  });
+
+  // Course duration bars
+  scopedBatchCourses.forEach(bc => {
+    const course = allCourses.find(c => c.courseId === bc.courseId);
+    const status = bc.status?.toLowerCase() ?? 'planned';
+    const type = status === 'active' ? 'course-active'
+      : status === 'completed' ? 'course-completed'
+      : status === 'cancelled' ? 'course-cancelled'
+      : 'course-planned';
+    multiDayBars.push({
+      id: `course-${bc.batchCourseId}`,
+      label: `${course?.courseName ?? 'Course'} (B${bc.batchNo})`,
+      type,
+      startDate: parseDate(bc.startDate!),
+      endDate: parseDate(bc.endDate!),
+      batchNo: bc.batchNo,
+    });
+  });
+
+  // Academy events (meetings, reviews etc.)
+  events.forEach(ev => {
+    const evDate = parseDate(ev.eventDate);
+    multiDayBars.push({
+      id: `event-${ev.eventId}`,
+      label: `${ev.eventType}: ${ev.title}`,
+      type: 'event',
+      startDate: evDate,
+      endDate: evDate,
+      venue: ev.venue ?? undefined,
+    });
+  });
+
+  // Batches available for the selected program in the Add Event form
+  const evtAvailableBatches = Array.from(new Set(
+    schedules
+      .filter(s => evtProgram != null ? s.programId === evtProgram : true)
+      .map(s => s.batchNumber)
+  )).sort((a, b) => a - b);
   const getCalendarDays = (): (Date | null)[] => {
     const year = currentDate.getFullYear();
     const month = currentDate.getMonth();
@@ -145,89 +263,46 @@ const AcademyCalendar: React.FC<{ context: AcademyContextProps }> = ({ context }
     return days;
   };
 
-  const isToday = (date: Date | null): boolean => {
-    if (!date) return false;
-    const today = new Date();
-    return sameDay(date, today);
-  };
-
-  // ── Scoped data ───────────────────────────────────────────────────────────
-  const scopedPrograms = yearPrograms.filter(p =>
-    filterProgram === 'all' || String(p.programId) === filterProgram
-  );
-  const scopedProgramIds = new Set(scopedPrograms.map(p => p.programId));
-  const scopedSchedules    = schedules.filter(s => scopedProgramIds.has(s.programId));
-  const scopedBatchCourses = batchCourses.filter(bc =>
-    scopedProgramIds.has(bc.programId) && bc.startDate && bc.endDate
-  );
-
-  // ── Events for a day ──────────────────────────────────────────────────────
-  const getEventsForDate = (date: Date | null): CalEvent[] => {
+  // For each day, get which bars are active (for the continuous bar rendering)
+  const getBarsForDay = (date: Date | null): { bar: MultiDayBar; isStart: boolean; isEnd: boolean }[] => {
     if (!date) return [];
-    const events: CalEvent[] = [];
-
-    // Batch start/end events
-    scopedSchedules.forEach(s => {
-      const prog = yearPrograms.find(p => p.programId === s.programId);
-      const progName = prog?.programName ?? 'Program';
-
-      if (sameDay(date, parseDate(s.startDate))) {
-        events.push({
-          id: `bs-${s.batchScheduleId}`,
-          title: `${progName} — Batch ${s.batchNumber} Starts`,
-          subtitle: `Ends ${new Date(s.endDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}`,
-          type: 'batch',
-        });
-      }
-      if (sameDay(date, parseDate(s.endDate))) {
-        events.push({
-          id: `be-${s.batchScheduleId}`,
-          title: `${progName} — Batch ${s.batchNumber} Ends`,
-          subtitle: '',
-          type: 'batch',
-        });
-      }
-    });
-
-    // Course start AND end events
-    scopedBatchCourses.forEach(bc => {
-      const course  = allCourses.find(c => c.courseId === bc.courseId);
-      const prog    = yearPrograms.find(p => p.programId === bc.programId);
-      const status  = bc.status?.toLowerCase() ?? 'planned';
-      const type    = (['planned','active','completed','cancelled'].includes(status)
-        ? status : 'planned') as CalEvent['type'];
-      const subtitle = `${prog?.programName ?? ''} · Batch ${bc.batchNo}`;
-
-      if (bc.startDate && sameDay(date, parseDate(bc.startDate))) {
-        events.push({
-          id: `bc-start-${bc.batchCourseId}`,
-          title: `${course?.courseName ?? `Course ${bc.courseId}`} Starts`,
-          subtitle,
-          type,
-        });
-      }
-      if (bc.endDate && sameDay(date, parseDate(bc.endDate))) {
-        events.push({
-          id: `bc-end-${bc.batchCourseId}`,
-          title: `${course?.courseName ?? `Course ${bc.courseId}`} Ends`,
-          subtitle,
-          type,
-        });
-      }
-    });
-
-    return events;
+    return multiDayBars
+      .filter(bar => isBetween(date, bar.startDate, bar.endDate))
+      .map(bar => ({
+        bar,
+        isStart: sameDay(date, bar.startDate),
+        isEnd:   sameDay(date, bar.endDate),
+      }));
   };
 
-  // Attendance for a day
   const getAttForDate = (date: Date | null): DayAtt | null => {
     if (!date) return null;
-    // Key format: YYYY-MM-DD
-    const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+    const key = `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
     return attMap[key] ?? null;
   };
 
+  const isToday = (date: Date | null) => {
+    if (!date) return false;
+    return sameDay(date, new Date());
+  };
+
+  // Day detail popup data
+  const getDayDetail = (date: Date) => {
+    const bars = getBarsForDay(date);
+    const att  = getAttForDate(date);
+    return { bars, att };
+  };
+
   const calendarDays = getCalendarDays();
+
+  const barTypeClass: Record<string, string> = {
+    'batch':            'acal-bar--batch',
+    'course-planned':   'acal-bar--planned',
+    'course-active':    'acal-bar--active',
+    'course-completed': 'acal-bar--completed',
+    'course-cancelled': 'acal-bar--cancelled',
+    'event':            'acal-bar--event',
+  };
 
   return (
     <Box className="acal-container">
@@ -238,29 +313,16 @@ const AcademyCalendar: React.FC<{ context: AcademyContextProps }> = ({ context }
         {/* Left — year + nav */}
         <Box className="acal-header-left">
           <FormControl className="acal-year-select">
-            <Select
-              value={selectedYear}
-              onChange={e => handleYearChange(e.target.value as number)}
-              className="acal-year-dropdown"
-            >
-              {yearOptions.map(y => (
-                <MenuItem key={y} value={y}>{y}</MenuItem>
-              ))}
+            <Select value={selectedYear} onChange={e => changeYear(e.target.value as number)} className="acal-year-dropdown">
+              {yearOptions.map(y => <MenuItem key={y} value={y}>{y}</MenuItem>)}
             </Select>
           </FormControl>
-
           <Box className="acal-nav-controls">
             <Box className="acal-nav-buttons">
-              <IconButton onClick={handlePreviousMonth} className="acal-nav-btn">
-                <ChevronLeftIcon />
-              </IconButton>
-              <IconButton onClick={handleNextMonth} className="acal-nav-btn">
-                <ChevronRightIcon />
-              </IconButton>
+              <IconButton onClick={prevMonth} className="acal-nav-btn"><ChevronLeftIcon /></IconButton>
+              <IconButton onClick={nextMonth} className="acal-nav-btn"><ChevronRightIcon /></IconButton>
             </Box>
-            <Button variant="outlined" onClick={handleToday} className="acal-today-btn">
-              Today
-            </Button>
+            <Button variant="outlined" onClick={goToday} className="acal-today-btn">Today</Button>
             <Typography variant="h6" className="acal-month-year">
               {MONTHS[currentDate.getMonth()]} {currentDate.getFullYear()}
             </Typography>
@@ -269,32 +331,41 @@ const AcademyCalendar: React.FC<{ context: AcademyContextProps }> = ({ context }
 
         {/* Center — title */}
         <Box className="acal-header-center">
-          <Typography variant="h5" className="acal-title">
-            Academy Calendar
-          </Typography>
+          <Typography variant="h5" className="acal-title">Academy Calendar</Typography>
         </Box>
 
-        {/* Right — program filter + legend */}
+        {/* Right — filters + legend */}
         <Box className="acal-header-right">
+          {/* Program filter */}
           <FormControl size="small" className="acal-program-select">
-            <Select
-              value={filterProgram}
-              onChange={e => setFilterProgram(e.target.value)}
-              displayEmpty
-            >
+            <Select value={filterProgram} onChange={e => { setFilterProgram(e.target.value); setFilterBatch('all'); }} displayEmpty>
               <MenuItem value="all">All Programs</MenuItem>
-              {yearPrograms.map(p => (
-                <MenuItem key={p.programId} value={String(p.programId)}>{p.programName}</MenuItem>
-              ))}
+              {yearPrograms.map(p => <MenuItem key={p.programId} value={String(p.programId)}>{p.programName}</MenuItem>)}
             </Select>
           </FormControl>
 
+          {/* Batch filter */}
+          <FormControl size="small" className="acal-batch-select">
+            <Select value={filterBatch} onChange={e => setFilterBatch(e.target.value)} displayEmpty>
+              <MenuItem value="all">All Batches</MenuItem>
+              {availableBatches.map(b => <MenuItem key={b} value={String(b)}>Batch {b}</MenuItem>)}
+            </Select>
+          </FormControl>
+
+          {/* Add Event button */}
+          <Button variant="contained" size="small" onClick={() => setAddEventOpen(true)}
+            sx={{ background: 'var(--color-primary)', textTransform: 'none', fontWeight: 600, borderRadius: '6px', whiteSpace: 'nowrap' }}>
+            + Add Event
+          </Button>
+
+          {/* Legend */}
           <Box className="acal-legend">
             {[
-              { cls: 'acal-legend-batch',     label: 'Batch' },
+              { cls: 'acal-legend-batch',     label: 'Batch Period' },
               { cls: 'acal-legend-active',    label: 'Course Active' },
-              { cls: 'acal-legend-planned',   label: 'Planned' },
+              { cls: 'acal-legend-planned',   label: 'Course Planned' },
               { cls: 'acal-legend-completed', label: 'Completed' },
+              { cls: 'acal-legend-event',     label: 'Event' },
               { cls: 'acal-legend-present',   label: 'Present' },
               { cls: 'acal-legend-absent',    label: 'Absent' },
             ].map(l => (
@@ -328,60 +399,72 @@ const AcademyCalendar: React.FC<{ context: AcademyContextProps }> = ({ context }
           {/* Days */}
           <Box className="acal-grid">
             {calendarDays.map((date, index) => {
-              const events      = getEventsForDate(date);
-              const att         = getAttForDate(date);
+              const barsForDay   = getBarsForDay(date);
+              const att          = getAttForDate(date);
               const isCurrentDay = isToday(date);
-              const visible     = events.slice(0, 3);
-              const more        = events.length - visible.length;
+              const hasContent   = barsForDay.length > 0 || (att && (att.present > 0 || att.absent > 0));
+              const hasToday     = isCurrentDay && barsForDay.length > 0;
 
               return (
                 <Box key={index}
-                  className={`acal-day-cell ${!date ? 'acal-day-cell--empty' : ''} ${isCurrentDay ? 'acal-day-cell--today' : ''}`}
-                  onClick={() => date && (events.length > 0 || att) && setSelectedDay(date)}
-                  style={{ cursor: date && (events.length > 0 || att) ? 'pointer' : 'default' }}>
+                  className={`acal-day-cell ${!date ? 'acal-day-cell--empty' : ''} ${isCurrentDay ? 'acal-day-cell--today' : ''} ${hasToday ? 'acal-day-cell--has-event-today' : ''}`}
+                  onClick={() => date && hasContent && setSelectedDay(date)}
+                  style={{ cursor: date && hasContent ? 'pointer' : 'default' }}>
+
                   {date && (
                     <>
+                      {/* Day number */}
                       <Typography variant="body2" className="acal-day-number">
                         {date.getDate()}
                       </Typography>
 
-                      <Box className="acal-events">
-                        {/* Attendance summary */}
-                        {att && (att.present > 0 || att.absent > 0) && (
-                          <Box className="acal-att-row">
-                            {att.present > 0 && (
-                              <Typography variant="caption" className="acal-att-pill acal-att-pill--present">
-                                ✓ {att.present}
-                              </Typography>
-                            )}
-                            {att.absent > 0 && (
-                              <Typography variant="caption" className="acal-att-pill acal-att-pill--absent">
-                                ✗ {att.absent}
-                              </Typography>
-                            )}
-                          </Box>
+                      {/* Attendance pills */}
+                      {att && (att.present > 0 || att.absent > 0) && (
+                        <Box className="acal-att-row">
+                          {att.present > 0 && <Typography variant="caption" className="acal-att-pill acal-att-pill--present">✓ {att.present}</Typography>}
+                          {att.absent  > 0 && <Typography variant="caption" className="acal-att-pill acal-att-pill--absent">✗ {att.absent}</Typography>}
+                        </Box>
+                      )}
+
+                      {/* Dots + Summary — clean professional view */}
+                      <Box className="acal-dots-row">
+                        {/* Batch dot */}
+                        {barsForDay.some(b => b.bar.type === 'batch') && (
+                          <span className="acal-dot acal-dot--batch" title="Batch Period" />
                         )}
-
-                        {/* Events */}
-                        {visible.map(ev => (
-                          <Box key={ev.id} className={`acal-event acal-event--${ev.type}`}>
-                            <Typography variant="caption" className="acal-event-name">
-                              {ev.title}
-                            </Typography>
-                            {ev.subtitle && (
-                              <Typography variant="caption" className="acal-event-sub">
-                                {ev.subtitle}
-                              </Typography>
-                            )}
-                          </Box>
-                        ))}
-
-                        {more > 0 && (
-                          <Typography variant="caption" className="acal-more">
-                            +{more} more
-                          </Typography>
+                        {/* Active course dot */}
+                        {barsForDay.some(b => b.bar.type === 'course-active') && (
+                          <span className="acal-dot acal-dot--active" title="Course Active" />
+                        )}
+                        {/* Planned course dot */}
+                        {barsForDay.some(b => b.bar.type === 'course-planned') && (
+                          <span className="acal-dot acal-dot--planned" title="Course Planned" />
+                        )}
+                        {/* Completed course dot */}
+                        {barsForDay.some(b => b.bar.type === 'course-completed') && (
+                          <span className="acal-dot acal-dot--completed" title="Completed" />
+                        )}
+                        {/* Event dot */}
+                        {barsForDay.some(b => b.bar.type === 'event') && (
+                          <span className="acal-dot acal-dot--event" title="Event" />
                         )}
                       </Box>
+
+                      {/* Summary line */}
+                      {barsForDay.length > 0 && (() => {
+                        const activeCourses  = barsForDay.filter(b => b.bar.type === 'course-active').length;
+                        const plannedCourses = barsForDay.filter(b => b.bar.type === 'course-planned').length;
+                        const completedCourses = barsForDay.filter(b => b.bar.type === 'course-completed').length;
+                        const events        = barsForDay.filter(b => b.bar.type === 'event').length;
+                        const parts: string[] = [];
+                        if (activeCourses > 0)   parts.push(`${activeCourses} active`);
+                        if (plannedCourses > 0)  parts.push(`${plannedCourses} planned`);
+                        if (completedCourses > 0) parts.push(`${completedCourses} done`);
+                        if (events > 0)          parts.push(`${events} event${events > 1 ? 's' : ''}`);
+                        return parts.length > 0 ? (
+                          <Typography className="acal-day-summary">{parts.join(' · ')}</Typography>
+                        ) : null;
+                      })()}
                     </>
                   )}
                 </Box>
@@ -392,15 +475,9 @@ const AcademyCalendar: React.FC<{ context: AcademyContextProps }> = ({ context }
       )}
 
       {/* ── Day Detail Dialog ── */}
-      <Dialog
-        open={!!selectedDay}
-        onClose={() => setSelectedDay(null)}
-        maxWidth="xs"
-        fullWidth
-      >
+      <Dialog open={!!selectedDay} onClose={() => setSelectedDay(null)} maxWidth="sm" fullWidth>
         {selectedDay && (() => {
-          const dayEvents = getEventsForDate(selectedDay);
-          const dayAtt    = getAttForDate(selectedDay);
+          const { bars, att } = getDayDetail(selectedDay);
           const dateLabel = selectedDay.toLocaleDateString('en-IN', {
             weekday: 'long', day: '2-digit', month: 'long', year: 'numeric',
           });
@@ -410,62 +487,196 @@ const AcademyCalendar: React.FC<{ context: AcademyContextProps }> = ({ context }
                 <Typography sx={{ fontWeight: 700, fontSize: 'var(--text-md)', color: 'var(--color-text-primary)' }}>
                   {dateLabel}
                 </Typography>
-                <IconButton size="small" onClick={() => setSelectedDay(null)}>
-                  <CloseIcon fontSize="small" />
-                </IconButton>
+                <IconButton size="small" onClick={() => setSelectedDay(null)}><CloseIcon fontSize="small" /></IconButton>
               </DialogTitle>
               <DialogContent sx={{ pt: 0 }}>
 
-                {/* Attendance summary */}
-                {dayAtt && (dayAtt.present > 0 || dayAtt.absent > 0) && (
-                  <Box sx={{ mb: 2, p: 1.5, borderRadius: 2, background: 'var(--color-bg-secondary)', border: '1px solid var(--color-border-light)' }}>
-                    <Typography sx={{ fontSize: 'var(--text-xs)', fontWeight: 700, color: 'var(--color-grey-600)', textTransform: 'uppercase', letterSpacing: '0.5px', mb: 1 }}>
+                {/* Attendance */}
+                {att && (att.present > 0 || att.absent > 0) && (
+                  <Box sx={{ mb: 2, p: 1.5, borderRadius: 2, background: 'var(--color-bg-secondary)', border: '1px solid var(--color-border)' }}>
+                    <Typography sx={{ fontSize: 'var(--text-xs)', fontWeight: 700, color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', mb: 1 }}>
                       Attendance
                     </Typography>
                     <Box sx={{ display: 'flex', gap: 1 }}>
-                      {dayAtt.present > 0 && (
-                        <Chip label={`✓ ${dayAtt.present} Present`} size="small"
-                          sx={{ background: 'var(--color-success-light)', color: 'var(--color-success-dark)', border: '1px solid var(--color-success-border)', fontWeight: 600 }} />
-                      )}
-                      {dayAtt.absent > 0 && (
-                        <Chip label={`✗ ${dayAtt.absent} Absent`} size="small"
-                          sx={{ background: 'var(--color-error-light)', color: 'var(--color-error-dark)', border: '1px solid var(--color-error-border)', fontWeight: 600 }} />
-                      )}
+                      {att.present > 0 && <Chip label={`✓ ${att.present} Present`} size="small" sx={{ background: 'var(--color-success-light)', color: 'var(--color-success-dark)', border: '1px solid var(--color-success-border)', fontWeight: 600 }} />}
+                      {att.absent  > 0 && <Chip label={`✗ ${att.absent} Absent`}  size="small" sx={{ background: 'var(--color-error-light)',   color: 'var(--color-error-dark)',   border: '1px solid var(--color-error-border)',   fontWeight: 600 }} />}
                     </Box>
                   </Box>
                 )}
 
-                {/* Events list */}
-                {dayEvents.length === 0 && !dayAtt && (
+                {/* Active bars on this day */}
+                {bars.length === 0 && !att && (
                   <Typography sx={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)', textAlign: 'center', py: 2 }}>
                     No events on this day
                   </Typography>
                 )}
 
-                {dayEvents.length > 0 && (
+                {bars.length > 0 && (
                   <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                    <Typography sx={{ fontSize: 'var(--text-xs)', fontWeight: 700, color: 'var(--color-grey-600)', textTransform: 'uppercase', letterSpacing: '0.5px', mb: 0.5 }}>
-                      Events ({dayEvents.length})
-                    </Typography>
-                    {dayEvents.map(ev => (
-                      <Box key={ev.id} className={`acal-event acal-event--${ev.type}`}
-                        sx={{ cursor: 'default !important' }}>
-                        <Typography variant="caption" className="acal-event-name" sx={{ fontSize: '13px !important' }}>
-                          {ev.title}
+
+                    {/* Batch Period section */}
+                    {bars.filter(b => b.bar.type === 'batch').length > 0 && (
+                      <>
+                        <Typography sx={{ fontSize: 'var(--text-xs)', fontWeight: 700, color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', mb: 0.5 }}>
+                          Batch Period
                         </Typography>
-                        {ev.subtitle && (
-                          <Typography variant="caption" className="acal-event-sub" sx={{ fontSize: '11px !important' }}>
-                            {ev.subtitle}
-                          </Typography>
-                        )}
-                      </Box>
-                    ))}
+                        {bars.filter(b => b.bar.type === 'batch').map(({ bar }) => (
+                          <Box key={bar.id} className="acal-bar acal-bar--dialog acal-bar--batch">
+                            <Typography sx={{ fontSize: 'var(--text-sm)', fontWeight: 600 }}>{bar.label}</Typography>
+                            <Typography sx={{ fontSize: 'var(--text-xs)', opacity: 0.75 }}>
+                              {bar.startDate.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })} → {bar.endDate.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}
+                            </Typography>
+                          </Box>
+                        ))}
+                      </>
+                    )}
+
+                    {/* Courses section */}
+                    {bars.filter(b => b.bar.type.startsWith('course')).length > 0 && (
+                      <>
+                        <Typography sx={{ fontSize: 'var(--text-xs)', fontWeight: 700, color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', mt: 0.5, mb: 0.5 }}>
+                          Courses ({bars.filter(b => b.bar.type.startsWith('course')).length})
+                        </Typography>
+                        {bars.filter(b => b.bar.type.startsWith('course')).map(({ bar, isStart, isEnd }) => (
+                          <Box key={bar.id} className={`acal-bar acal-bar--dialog ${barTypeClass[bar.type]}`}>
+                            <Typography sx={{ fontSize: 'var(--text-sm)', fontWeight: 600 }}>{bar.label}</Typography>
+                            <Typography sx={{ fontSize: 'var(--text-xs)', opacity: 0.75 }}>
+                              {isStart && isEnd ? 'Single day'
+                                : isStart ? `Starts today → ${bar.endDate.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}`
+                                : isEnd   ? `${bar.startDate.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })} → Ends today`
+                                : `${bar.startDate.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })} → ${bar.endDate.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}`}
+                            </Typography>
+                          </Box>
+                        ))}
+                      </>
+                    )}
+
+                    {/* Events section */}
+                    {bars.filter(b => b.bar.type === 'event').length > 0 && (
+                      <>
+                        <Typography sx={{ fontSize: 'var(--text-xs)', fontWeight: 700, color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', mt: 0.5, mb: 0.5 }}>
+                          Events ({bars.filter(b => b.bar.type === 'event').length})
+                        </Typography>
+                        {bars.filter(b => b.bar.type === 'event').map(({ bar }) => (
+                          <Box key={bar.id} className="acal-bar acal-bar--dialog acal-bar--event">
+                            <Typography sx={{ fontSize: 'var(--text-sm)', fontWeight: 600 }}>{bar.label}</Typography>
+                            {bar.venue && (
+                              <Chip
+                                label={bar.venue === 'ONLINE' ? '🌐 Online' : '📍 Offline'}
+                                size="small"
+                                sx={{ mt: 0.5, background: 'rgba(255,255,255,0.2)', color: '#fff', fontWeight: 600, fontSize: '11px' }}
+                              />
+                            )}
+                          </Box>
+                        ))}
+                      </>
+                    )}
+
                   </Box>
                 )}
               </DialogContent>
             </>
           );
         })()}
+      </Dialog>
+      {/* ── Add Event Dialog ── */}
+      <Dialog open={addEventOpen} onClose={() => setAddEventOpen(false)} maxWidth="sm" fullWidth>
+        <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', pb: 1 }}>
+          <Typography sx={{ fontWeight: 700, fontSize: 'var(--text-md)' }}>Add Event</Typography>
+          <IconButton size="small" onClick={() => setAddEventOpen(false)}><CloseIcon fontSize="small" /></IconButton>
+        </DialogTitle>
+        <DialogContent sx={{ pt: 1 }}>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
+            <Box sx={{ display: 'flex', gap: 2 }}>
+              <Box sx={{ flex: 1 }}>
+                <Typography sx={{ fontSize: 'var(--text-xs)', fontWeight: 600, color: 'var(--color-text-secondary)', mb: 0.5 }}>Title *</Typography>
+                <input className="acal-input" value={evtTitle} onChange={e => setEvtTitle(e.target.value)} placeholder="e.g. Sprint Review Meeting" />
+              </Box>
+              <Box sx={{ minWidth: 160 }}>
+                <Typography sx={{ fontSize: 'var(--text-xs)', fontWeight: 600, color: 'var(--color-text-secondary)', mb: 0.5 }}>Type *</Typography>
+                <select className="acal-input" value={evtType} onChange={e => setEvtType(e.target.value)}>
+                  {['MEETING','ASSESSMENT','REVIEW','SESSION','CLIENT_VISIT','OTHER'].map(t => (
+                    <option key={t} value={t}>{t.replace('_', ' ')}</option>
+                  ))}
+                </select>
+              </Box>
+            </Box>
+            <Box>
+              <Typography sx={{ fontSize: 'var(--text-xs)', fontWeight: 600, color: 'var(--color-text-secondary)', mb: 0.5 }}>Description</Typography>
+              <textarea className="acal-input" rows={2} value={evtDesc} onChange={e => setEvtDesc(e.target.value)} placeholder="Optional details..." style={{ resize: 'vertical' }} />
+            </Box>
+            <Box sx={{ display: 'flex', gap: 2 }}>
+              <Box sx={{ flex: 1 }}>
+                <Typography sx={{ fontSize: 'var(--text-xs)', fontWeight: 600, color: 'var(--color-text-secondary)', mb: 0.5 }}>Date *</Typography>
+                <input className="acal-input" type="date" value={evtDate} onChange={e => setEvtDate(e.target.value)} />
+              </Box>
+              <Box sx={{ flex: 1 }}>
+                <Typography sx={{ fontSize: 'var(--text-xs)', fontWeight: 600, color: 'var(--color-text-secondary)', mb: 0.5 }}>Time</Typography>
+                <input className="acal-input" type="time" value={evtTime} onChange={e => setEvtTime(e.target.value)} />
+              </Box>
+            </Box>
+            <Box>
+              <Typography sx={{ fontSize: 'var(--text-xs)', fontWeight: 600, color: 'var(--color-text-secondary)', mb: 0.5 }}>Venue *</Typography>
+              <select className="acal-input" value={evtVenue} onChange={e => setEvtVenue(e.target.value)}>
+                <option value="ONLINE">🌐 Online</option>
+                <option value="OFFLINE">📍 Offline</option>
+              </select>
+            </Box>
+            <Box sx={{ display: 'flex', gap: 2 }}>
+              <Box sx={{ flex: 1 }}>
+                <Typography sx={{ fontSize: 'var(--text-xs)', fontWeight: 600, color: 'var(--color-text-secondary)', mb: 0.5 }}>Program (optional)</Typography>
+                <select className="acal-input" value={evtProgram ?? ''} onChange={e => {
+                  setEvtProgram(e.target.value ? Number(e.target.value) : null);
+                  setEvtBatches([]); // reset batches when program changes
+                }}>
+                  <option value="">All Programs</option>
+                  {yearPrograms.map(p => <option key={p.programId} value={p.programId}>{p.programName}</option>)}
+                </select>
+              </Box>
+              <Box sx={{ flex: 1 }}>
+                <Typography sx={{ fontSize: 'var(--text-xs)', fontWeight: 600, color: 'var(--color-text-secondary)', mb: 0.5 }}>
+                  Batches
+                  <span style={{ fontWeight: 400 }}>
+                    {evtProgram ? ' (optional — leave empty for all batches in this program)' : ' (select a program first)'}
+                  </span>
+                </Typography>
+                <Box sx={{ border: '1px solid var(--color-border)', borderRadius: '6px', p: 1, background: 'var(--color-bg)', maxHeight: 120, overflowY: 'auto', opacity: evtProgram ? 1 : 0.5, pointerEvents: evtProgram ? 'auto' : 'none' }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 'var(--text-sm)', cursor: 'pointer', marginBottom: 4 }}>
+                    <input
+                      type="checkbox"
+                      checked={evtBatches.length === 0}
+                      onChange={() => setEvtBatches([])}
+                    />
+                    All Batches
+                  </label>
+                  {evtAvailableBatches.map(b => (
+                    <label key={b} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 'var(--text-sm)', cursor: 'pointer', marginBottom: 2 }}>
+                      <input
+                        type="checkbox"
+                        checked={evtBatches.includes(b)}
+                        onChange={() => {
+                          setEvtBatches(prev =>
+                            prev.includes(b) ? prev.filter(x => x !== b) : [...prev, b]
+                          );
+                        }}
+                      />
+                      Batch {b}
+                    </label>
+                  ))}
+                </Box>
+              </Box>
+            </Box>
+            {/* no email note needed */}
+          </Box>
+        </DialogContent>
+        <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1, px: 3, pb: 2 }}>
+          <Button onClick={() => setAddEventOpen(false)} variant="outlined" size="small"
+            sx={{ textTransform: 'none', borderColor: 'var(--color-border)', color: 'var(--color-text-secondary)' }}>Cancel</Button>
+          <Button onClick={handleSaveEvent} variant="contained" size="small" disabled={savingEvent}
+            sx={{ textTransform: 'none', background: 'var(--color-primary)', fontWeight: 600 }}>
+            {savingEvent ? 'Creating...' : 'Create Event'}
+          </Button>
+        </Box>
       </Dialog>
     </Box>
   );

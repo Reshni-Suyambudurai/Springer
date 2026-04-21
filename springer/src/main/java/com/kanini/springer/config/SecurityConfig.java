@@ -52,6 +52,7 @@ public class SecurityConfig {
         configuration.setAllowedOrigins(Arrays.asList(
             "http://localhost:8080",  // Swagger UI
             "http://localhost:5173",  // Vite React
+            "http://localhost:5174",  // Vite React (fallback port)
             "http://localhost:3000",  // React
             "http://localhost:4200"   // Angular
         ));

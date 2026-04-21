@@ -31,6 +31,9 @@ public class OfferLetterMapper {
                 ? entity.getResponse().name()
                 : Enums.OfferResponse.PENDING.name());
         response.setDeclineReason(entity.getComment());
+        if (entity.getCandidate() != null && entity.getCandidate().getApplicationStage() != null) {
+            response.setApplicationStage(entity.getCandidate().getApplicationStage().name());
+        }
 
         return response;
     }

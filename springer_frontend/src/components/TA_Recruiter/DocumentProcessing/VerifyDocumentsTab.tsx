@@ -61,7 +61,7 @@ const VerifyDocumentsTab = ({ context }: { context: DocProcessingContextProps })
     try {
       setLoading(true);
       const [subRes, candRes] = await Promise.all([
-        documentSubmissionApi.getAllSubmissions({ cycleId, size: 500 }),
+        documentSubmissionApi.getAllSubmissions({ cycleId, size: 2000 }),
         candidateApi.getCandidatesByCycleId(cycleId),
       ]);
       const submissions = (subRes.success && subRes.data) ? subRes.data : [];

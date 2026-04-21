@@ -7,7 +7,9 @@ import {
 } from '@mui/material';
 import { Person as PersonIcon, Search as SearchIcon } from '@mui/icons-material';
 import { joiningTrackerApi } from '../../../services/academy.api';
+import { internApi } from '../../../services/intern.api';
 import { showToast } from '../../../utils/toast';
+import { handleAxiosError } from '../../../services/api.error';
 import { tokenstore } from '../../../auth/tokenstore';
 import type { JoiningTrackerCandidate, AcademyContextProps } from '../../../types/Academy/academy.types';
 import type { HiringCycleResponse } from '../../../types/TA_Recruiter/Hiring/hiringCycle.types';
@@ -28,10 +30,49 @@ const JoiningTracker = ({ context }: { context: AcademyContextProps }) => {
   const [stageFilter, setStageFilter] = useState('ACCEPTED');
   const [loading, setLoading] = useState(false);
   const [updatingId, setUpdatingId] = useState<number | null>(null);
-  const [dropConfirm, setDropConfirm] = useState<{ open: boolean; candidateId: number | null; candidateName: string }>({ open: false, candidateId: null, candidateName: '' });
-  const [dropReason, setDropReason] = useState('');
+  const [statusConfirm, setStatusConfirm] = useState<{
+    open: boolean;
+    candidateId: number | null;
+    candidateName: string;
+  }>({ open: false, candidateId: null, candidateName: '' });
+  const [statusReason, setStatusReason] = useState('');
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
+
+  // Intern activation
+  const [activateDialog, setActivateDialog] = useState<{ open: boolean; candidateId: number | null; candidateName: string; candidateEmail: string }>({
+    open: false, candidateId: null, candidateName: '', candidateEmail: '',
+  });
+  const [outlookEmail, setOutlookEmail] = useState('');
+  const [activating, setActivating] = useState(false);
+
+  const handleActivateIntern = async () => {
+    if (!activateDialog.candidateId) return;
+    if (!outlookEmail.trim()) { showToast('Outlook email is required', 'error'); return; }
+    setActivating(true);
+    try {
+      const res = await internApi.activateIntern(activateDialog.candidateId, { outlookEmail: outlookEmail.trim() });
+      if (res.success) {
+        showToast('✅ Intern account activated. Login credentials sent!', 'success');
+        const activatedCandidateId = activateDialog.candidateId;
+        const returnedUserId = res.data?.userId ?? -1;
+        setAllCycleCandidates(prev =>
+          prev.map(c =>
+            c.candidateId === activatedCandidateId
+              ? { ...c, userId: returnedUserId }
+              : c
+          )
+        );
+        setActivateDialog({ open: false, candidateId: null, candidateName: '', candidateEmail: '' });
+        setOutlookEmail('');
+      }
+    } catch (error) {
+      const err = handleAxiosError(error);
+      showToast(err.message || 'Failed to activate intern', 'error');
+    } finally {
+      setActivating(false);
+    }
+  };
 
   // Auto-select cycle when programYear or cycles change
   useEffect(() => {
@@ -62,6 +103,7 @@ const JoiningTracker = ({ context }: { context: AcademyContextProps }) => {
           cycleId: c.cycleId,
           applicationStage: c.applicationStage,
           updatedAt: c.updatedAt,
+          userId: c.userId,
         }));
         setAllCycleCandidates(normalized);
       })
@@ -69,7 +111,11 @@ const JoiningTracker = ({ context }: { context: AcademyContextProps }) => {
       .finally(() => setLoading(false));
   }, [selectedCycleId]);
 
-  const handleStatusUpdate = async (candidateId: number, status: 'JOINED' | 'DROPPED', reason?: string) => {
+  const handleStatusUpdate = async (
+    candidateId: number,
+    status: 'JOINED' | 'NOT_JOINED',
+    reason?: string
+  ) => {
     setUpdatingId(candidateId);
     try {
       const payload = reason && reason.trim().length > 0
@@ -84,22 +130,21 @@ const JoiningTracker = ({ context }: { context: AcademyContextProps }) => {
             : c
         ));
       }
-    } catch (err: any) {
+    } catch (error) {
+      const err = handleAxiosError(error);
       showToast(err.message || 'Failed to update status', 'error');
     } finally {
       setUpdatingId(null);
     }
   };
 
-  const handleDropConfirmed = async () => {
-    if (!dropConfirm.candidateId) return;
-    if (!dropReason.trim()) {
-      showToast('Drop reason is required', 'error');
-      return;
-    }
-    setDropConfirm({ open: false, candidateId: null, candidateName: '' });
-    await handleStatusUpdate(dropConfirm.candidateId, 'DROPPED', dropReason);
-    setDropReason('');
+  const handleStatusConfirmed = async () => {
+    if (!statusConfirm.candidateId) return;
+    if (!statusReason.trim()) { showToast('Reason is required', 'error'); return; }
+    const { candidateId } = statusConfirm;
+    setStatusConfirm({ open: false, candidateId: null, candidateName: '' });
+    await handleStatusUpdate(candidateId, 'NOT_JOINED', statusReason);
+    setStatusReason('');
   };
 
   const lowerSearch = searchText.trim().toLowerCase();
@@ -124,11 +169,76 @@ const JoiningTracker = ({ context }: { context: AcademyContextProps }) => {
   const departments = Array.from(new Set(allCycleCandidates.map(c => c.department).filter(Boolean))).sort();
   const degrees = Array.from(new Set(allCycleCandidates.map(c => c.degree).filter(Boolean))).sort();
 
-  const acceptedCount = allCycleCandidates.filter(c => c.applicationStage === 'ACCEPTED').length;
-  const joinedCount   = allCycleCandidates.filter(c => c.applicationStage === 'JOINED').length;
-  const droppedCount  = allCycleCandidates.filter(c => c.applicationStage === 'DROPPED').length;
+  const acceptedCount  = allCycleCandidates.filter(c => c.applicationStage === 'ACCEPTED').length;
+  const joinedCount    = allCycleCandidates.filter(c => c.applicationStage === 'JOINED').length;
+  const notJoinedCount = allCycleCandidates.filter(c => c.applicationStage === 'NOT_JOINED').length;
 
   const paginated = filteredCandidates.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
+
+  const renderActionCell = (candidate: JoiningTrackerCandidate) => {
+    if (candidate.applicationStage === 'ACCEPTED') {
+      return (
+        <Stack direction="row" spacing={1}>
+          <Button
+            size="small"
+            variant="contained"
+            className="jt-btn-join"
+            disabled={updatingId === candidate.candidateId}
+            onClick={() => handleStatusUpdate(candidate.candidateId, 'JOINED')}
+          >
+            {updatingId === candidate.candidateId ? 'Updating...' : 'Mark as Joined'}
+          </Button>
+          <Button
+            size="small"
+            variant="outlined"
+            className="jt-btn-dropped"
+            disabled={updatingId === candidate.candidateId}
+            onClick={() => {
+              setStatusConfirm({
+                open: true,
+                candidateId: candidate.candidateId,
+                candidateName: `${candidate.firstName} ${candidate.lastName}`,
+              });
+              setStatusReason('');
+            }}
+          >
+            Mark as Not Joined
+          </Button>
+        </Stack>
+      );
+    }
+
+    if (candidate.applicationStage === 'JOINED') {
+      if (candidate.userId) {
+        return (
+          <Typography className="jt-row-secondary">Intern account activated</Typography>
+        );
+      }
+
+      return (
+        <Button
+          size="small"
+          variant="contained"
+          className="jt-btn-activate"
+          onClick={() => {
+            setOutlookEmail(candidate.email);
+            setActivateDialog({
+              open: true,
+              candidateId: candidate.candidateId,
+              candidateName: `${candidate.firstName} ${candidate.lastName}`,
+              candidateEmail: candidate.email,
+            });
+          }}
+        >
+          Activate Intern
+        </Button>
+      );
+    }
+
+    return (
+      <Typography className="jt-row-secondary">No actions required</Typography>
+    );
+  };
 
   return (
     <Box className="jt-page">
@@ -151,20 +261,12 @@ const JoiningTracker = ({ context }: { context: AcademyContextProps }) => {
             <Typography className="jt-stat-value">{selectedCycleId ? joinedCount : '—'}</Typography>
           </Box>
           <Box
-            className={`jt-stat-card jt-stat-card--dropped ${stageFilter === 'DROPPED' ? 'jt-stat-card--active' : ''}`}
-            onClick={() => { setStageFilter('DROPPED'); setPage(0); }}
+            className={`jt-stat-card jt-stat-card--dropped ${stageFilter === 'NOT_JOINED' ? 'jt-stat-card--active' : ''}`}
+            onClick={() => { setStageFilter('NOT_JOINED'); setPage(0); }}
             style={{ cursor: 'pointer' }}
           >
-            <Typography className="jt-stat-label">Dropped</Typography>
-            <Typography className="jt-stat-value">{selectedCycleId ? droppedCount : '—'}</Typography>
-          </Box>
-          <Box
-            className={`jt-stat-card jt-stat-card--pending ${stageFilter === 'ALL' ? 'jt-stat-card--active' : ''}`}
-            onClick={() => { setStageFilter('ALL'); setPage(0); }}
-            style={{ cursor: 'pointer' }}
-          >
-            <Typography className="jt-stat-label">All Candidates</Typography>
-            <Typography className="jt-stat-value">{selectedCycleId ? allCycleCandidates.length : '—'}</Typography>
+            <Typography className="jt-stat-label">Not Joined</Typography>
+            <Typography className="jt-stat-value">{selectedCycleId ? notJoinedCount : '—'}</Typography>
           </Box>
         </Box>
 
@@ -232,7 +334,7 @@ const JoiningTracker = ({ context }: { context: AcademyContextProps }) => {
                       <TableRow>
                         <TableCell colSpan={6} className="jt-empty-cell">
                           <PersonIcon className="jt-empty-icon" />
-                          <Typography className="jt-empty-text">No offer-accepted candidates pending joining confirmation for this cycle</Typography>
+                          <Typography className="jt-empty-text">No candidates found for the selected status and filters</Typography>
                         </TableCell>
                       </TableRow>
                     ) : paginated.map((c, idx) => (
@@ -264,33 +366,7 @@ const JoiningTracker = ({ context }: { context: AcademyContextProps }) => {
                           <Chip label={c.applicationStage} size="small" className="jt-stage-chip" />
                         </TableCell>
                         <TableCell className="jt-table-cell jt-table-cell--actions">
-                          <Stack direction="row" spacing={1}>
-                            {c.applicationStage === 'ACCEPTED' && (
-                              <>
-                                <Button
-                                  size="small"
-                                  variant="contained"
-                                  className="jt-btn-join"
-                                  disabled={updatingId === c.candidateId}
-                                  onClick={() => handleStatusUpdate(c.candidateId, 'JOINED')}
-                                >
-                                  {updatingId === c.candidateId ? 'Updating...' : 'Mark as Joined'}
-                                </Button>
-                                <Button
-                                  size="small"
-                                  variant="outlined"
-                                  className="jt-btn-dropped"
-                                  disabled={updatingId === c.candidateId}
-                                  onClick={() => {
-                                    setDropConfirm({ open: true, candidateId: c.candidateId, candidateName: `${c.firstName} ${c.lastName}` });
-                                    setDropReason('');
-                                  }}
-                                >
-                                  Mark as Dropped
-                                </Button>
-                              </>
-                            )}
-                          </Stack>
+                          {renderActionCell(c)}
                         </TableCell>
                       </TableRow>
                     ))}
@@ -311,29 +387,68 @@ const JoiningTracker = ({ context }: { context: AcademyContextProps }) => {
           )}
         </Box>
       </Card>
-      {/* Drop Confirmation Dialog */}
-      <Dialog open={dropConfirm.open} onClose={() => setDropConfirm({ open: false, candidateId: null, candidateName: '' })} maxWidth="sm" fullWidth>
-        <DialogTitle className="jt-dialog-title">Confirm — Mark as Dropped</DialogTitle>
+      {/* Activate Intern Dialog */}
+      <Dialog open={activateDialog.open} onClose={() => setActivateDialog({ open: false, candidateId: null, candidateName: '', candidateEmail: '' })} maxWidth="sm" fullWidth>
+        <DialogTitle className="jt-dialog-title">Activate Intern Account — {activateDialog.candidateName}</DialogTitle>
+        <DialogContent>
+          <Typography sx={{ mt: 1, mb: 2, fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>
+            Enter the Outlook/company email for this intern's login account. A temporary password will be sent to this email.
+          </Typography>
+          <TextField
+            fullWidth
+            size="small"
+            label="Intern Login Email *"
+            placeholder="e.g. manohar.bavigadda@kanini.com"
+            value={outlookEmail}
+            onChange={e => setOutlookEmail(e.target.value)}
+            type="email"
+          />
+          <Typography sx={{ mt: 1, fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>
+            Candidate's personal email: {activateDialog.candidateEmail}
+          </Typography>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button onClick={() => setActivateDialog({ open: false, candidateId: null, candidateName: '', candidateEmail: '' })} className="jt-dialog-cancel-btn">Cancel</Button>
+          <Button variant="contained" onClick={handleActivateIntern} disabled={activating || !outlookEmail.trim()} className="jt-btn-activate">
+            {activating ? 'Activating...' : 'Activate Intern'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Status Confirmation Dialog */}
+      <Dialog
+        open={statusConfirm.open}
+        onClose={() => setStatusConfirm({ open: false, candidateId: null, candidateName: '' })}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle className="jt-dialog-title">
+          Confirm — Mark as Not Joined
+        </DialogTitle>
         <DialogContent>
           <Typography sx={{ mt: 1, fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>
-            Are you sure you want to mark <strong>{dropConfirm.candidateName}</strong> as <strong>Dropped</strong>?
-            This means the candidate has permanently withdrawn and will no longer appear in the joining list.
+            Are you sure you want to mark <strong>{statusConfirm.candidateName}</strong> as <strong>Not Joined</strong>?
           </Typography>
           <TextField
             multiline
             minRows={3}
             fullWidth
-            label="Drop Reason *"
-            placeholder="Enter why this candidate is marked dropped"
-            value={dropReason}
-            onChange={(e) => setDropReason(e.target.value)}
+            label="Reason *"
+            placeholder="Enter reason"
+            value={statusReason}
+            onChange={(e) => setStatusReason(e.target.value)}
             sx={{ mt: 2 }}
           />
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button onClick={() => setDropConfirm({ open: false, candidateId: null, candidateName: '' })} className="jt-dialog-cancel-btn">Cancel</Button>
-          <Button variant="contained" onClick={handleDropConfirmed} className="jt-dialog-confirm-drop-btn" disabled={!dropReason.trim()}>
-            Yes, Mark as Dropped
+          <Button
+            onClick={() => setStatusConfirm({ open: false, candidateId: null, candidateName: '' })}
+            className="jt-dialog-cancel-btn"
+          >
+            Cancel
+          </Button>
+          <Button variant="contained" onClick={handleStatusConfirmed} className="jt-dialog-confirm-drop-btn" disabled={!statusReason.trim()}>
+            Confirm
           </Button>
         </DialogActions>
       </Dialog>

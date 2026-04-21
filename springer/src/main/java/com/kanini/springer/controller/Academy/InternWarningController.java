@@ -1,0 +1,62 @@
+package com.kanini.springer.controller.Academy;
+
+import com.kanini.springer.dto.Academy.InternWarningRequest;
+import com.kanini.springer.dto.Academy.InternWarningResponse;
+import com.kanini.springer.dto.Authentication.ApiResponse;
+import com.kanini.springer.service.Academy.IInternWarningService;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/academy/warnings")
+@RequiredArgsConstructor
+public class InternWarningController {
+
+    private final IInternWarningService warningService;
+
+    // Recruiter / TC issues a warning
+    @PostMapping
+    public ResponseEntity<ApiResponse<InternWarningResponse>> issueWarning(
+            @Valid @RequestBody InternWarningRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.success("Warning issued", warningService.issueWarning(request)));
+    }
+
+    // Get all warnings — TC / Recruiter view
+    @GetMapping
+    public ResponseEntity<ApiResponse<List<InternWarningResponse>>> getAll() {
+        return ResponseEntity.ok(ApiResponse.success("All warnings retrieved",
+                warningService.getAllWarnings()));
+    }
+
+    // Get all warnings for a specific intern
+    @GetMapping("/student/{studentId}")
+    public ResponseEntity<ApiResponse<List<InternWarningResponse>>> getByStudent(
+            @PathVariable Long studentId) {
+        return ResponseEntity.ok(ApiResponse.success("Warnings retrieved",
+                warningService.getWarningsByStudent(studentId)));
+    }
+
+    // Get all warnings for a batch — TC / Recruiter view
+    @GetMapping("/batch")
+    public ResponseEntity<ApiResponse<List<InternWarningResponse>>> getByBatch(
+            @RequestParam Integer programId,
+            @RequestParam Integer batchNumber) {
+        return ResponseEntity.ok(ApiResponse.success("Batch warnings retrieved",
+                warningService.getWarningsByBatch(programId, batchNumber)));
+    }
+
+    // Intern acknowledges a warning with a comment
+    @PatchMapping("/{warningId}/acknowledge")
+    public ResponseEntity<ApiResponse<InternWarningResponse>> acknowledge(
+            @PathVariable Long warningId,
+            @RequestParam String acknowledgementComment) {
+        return ResponseEntity.ok(ApiResponse.success("Warning acknowledged",
+                warningService.acknowledgeWarning(warningId, acknowledgementComment)));
+    }
+}
