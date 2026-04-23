@@ -20,6 +20,7 @@ import com.kanini.springer.entity.HiringReq.User;
 import com.kanini.springer.entity.enums.Enums.ApplicationStatus;
 import com.kanini.springer.entity.enums.Enums.OverrideEntityType;
 import com.kanini.springer.entity.enums.Enums.ApplicationStage;
+import com.kanini.springer.entity.enums.Enums.DriveStatus;
 import com.kanini.springer.exception.ResourceNotFoundException;
 import com.kanini.springer.exception.ValidationException;
 import com.kanini.springer.mapper.Drive.ApplicationMapper;
@@ -379,6 +380,16 @@ public class ApplicationServiceImpl implements IApplicationService {
         List<Application> savedApplications = applicationRepository.saveAll(applicationsToSave);
         candidatesRepository.saveAll(candidatesToSave);
         
+        // Update Drive status to IN_PROGRESS if there are successful updates
+        if (!savedApplications.isEmpty()) {
+            Application firstApp = savedApplications.get(0);
+            Drive drive = firstApp.getDrive();
+            if (drive != null && drive.getStatus() != DriveStatus.IN_PROGRESS) {
+                drive.setStatus(DriveStatus.IN_PROGRESS);
+                driveRepository.save(drive);
+            }
+        }
+        
         for (Application saved : savedApplications) {
             response.getSuccessfulUpdates().add(mapper.toResponse(saved));
         }
@@ -592,6 +603,16 @@ public class ApplicationServiceImpl implements IApplicationService {
             detail.setApplicationStatus(appStatus.toString());
             
             details.add(detail);
+        }
+        
+        // Update Drive status to CLOSED if isClosed is true
+        if (Boolean.TRUE.equals(request.getIsClosed()) && !applications.isEmpty()) {
+            Application firstApp = applications.get(0);
+            Drive drive = firstApp.getDrive();
+            if (drive != null && drive.getStatus() != DriveStatus.CLOSED) {
+                drive.setStatus(DriveStatus.CLOSED);
+                driveRepository.save(drive);
+            }
         }
         
         FinalizeApplicationsResponse response = new FinalizeApplicationsResponse();

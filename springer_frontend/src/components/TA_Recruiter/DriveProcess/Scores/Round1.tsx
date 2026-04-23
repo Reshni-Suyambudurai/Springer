@@ -428,31 +428,35 @@ const Round1: React.FC<Round1Props> = ({ data, onStatusUpdated, onAllocatePanel 
               )}
             </Box>
             <Box className="r1-header-actions">
-                <Select
-                  value={bulkStatus}
-                  onChange={(e) => setBulkStatus(e.target.value)}
-                  displayEmpty
-                  size="small"
-                  className="r1-status-select"
-                >
-                  <MenuItem value="" disabled>Set Status</MenuItem>
-                  {STATUS_OPTIONS
-                    .filter((s) => s !== "HOLD" && s !== "ABSENT" && !((roundTemplate.roundNo === 2 || roundTemplate.roundNo === 3) && s === "SKIP"))
-                    .map((s) => (
-                    <MenuItem key={s} value={s}>{s}</MenuItem>
-                  ))}
-                </Select>
-                <Button
-                  variant="contained"
-                  size="small"
-                  onClick={() => handleBulkUpdate()}
-                  disabled={!bulkStatus || updating}
-                  className="r1-bulk-update-btn"
-                >
-                  {updating ? "Updating..." : selectedRows.size > 0
-                    ? `Update (${selectedRows.size})`
-                    : `Update All (${displayedEvaluations.length})`}
-                </Button>
+                {roundTemplate.roundNo === 1 && (
+                  <>
+                    <Select
+                      value={bulkStatus}
+                      onChange={(e) => setBulkStatus(e.target.value)}
+                      displayEmpty
+                      size="small"
+                      className="r1-status-select"
+                    >
+                      <MenuItem value="" disabled>Set Status</MenuItem>
+                      {STATUS_OPTIONS
+                        .filter((s) => s !== "HOLD" && s !== "ABSENT" && !((roundTemplate.roundNo === 2 || roundTemplate.roundNo === 3) && s === "SKIP"))
+                        .map((s) => (
+                        <MenuItem key={s} value={s}>{s}</MenuItem>
+                      ))}
+                    </Select>
+                    <Button
+                      variant="contained"
+                      size="small"
+                      onClick={() => handleBulkUpdate()}
+                      disabled={!bulkStatus || updating}
+                      className="r1-bulk-update-btn"
+                    >
+                      {updating ? "Updating..." : selectedRows.size > 0
+                        ? `Update (${selectedRows.size})`
+                        : `Update All (${displayedEvaluations.length})`}
+                    </Button>
+                  </>
+                )}
                 {selectedRows.size > 0 && (
                   <Button
                     variant="text"

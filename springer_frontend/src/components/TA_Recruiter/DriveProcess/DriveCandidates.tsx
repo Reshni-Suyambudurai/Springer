@@ -6,8 +6,9 @@ import type { RoundEvaluationResponse, BulkRoundSkipRequest } from "../../../typ
 import { showToast } from "../../../utils/toast";
 import { handleAxiosError } from "../../../services/api.error";
 import { tokenstore } from "../../../auth/tokenstore";
-import { Box, Card, Typography, CircularProgress, Select, MenuItem, Button, Tooltip,
+import { Box, Card, Typography, CircularProgress, Select, MenuItem, Button, Tooltip, IconButton,
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper } from "@mui/material";
+import RefreshIcon from "@mui/icons-material/Refresh";
 import BackButton from "../../Common/BackButton";
 import Round1 from "./Scores/Round1";
 import type { PanelCandidate } from "./Scores/Round1";
@@ -48,6 +49,7 @@ const DriveCandidates: React.FC = () => {
   const [finalizeDialogVariant, setFinalizeDialogVariant] = useState<"warning" | "confirm">("confirm");
   const [unfinishedCount, setUnfinishedCount] = useState<number>(0);
   const [finalizing, setFinalizing] = useState<boolean>(false);
+  const [refreshing, setRefreshing] = useState<boolean>(false);
 
   useEffect(() => {
     if (driveId) {
@@ -56,6 +58,21 @@ const DriveCandidates: React.FC = () => {
       fetchBatchCandidates(id);
     }
   }, [driveId]);
+
+  const handleRefresh = async () => {
+    if (driveId && !refreshing) {
+      const id = parseInt(driveId);
+      setRefreshing(true);
+      try {
+        await fetchApplicationsOnly(id);
+        showToast("Data refreshed successfully", "success");
+      } catch {
+        showToast("Failed to refresh data", "error");
+      } finally {
+        setRefreshing(false);
+      }
+    }
+  };
 
   const updateFilter = (key: "batch" | "round", value: string) => {
     if (key === "batch") setSelectedBatch(value);
@@ -85,6 +102,25 @@ const DriveCandidates: React.FC = () => {
       showToast(appError.message, "error");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchApplicationsOnly = async (id: number) => {
+    try {
+      const response = await applicationApi.getApplicationsByDriveId(id);
+
+      if (response.data.success && response.data.data) {
+        setApplications(response.data.data);
+        if (response.data.data.length > 0) {
+          setDriveName(response.data.data[0].driveName);
+        }
+      } else {
+        showToast(response.data.message || "Failed to fetch candidates", "error");
+      }
+    } catch (error: unknown) {
+      const appError = handleAxiosError(error);
+      showToast(appError.message, "error");
+      throw error;
     }
   };
 
@@ -375,7 +411,15 @@ const DriveCandidates: React.FC = () => {
       return;
     }
 
-    const request: FinalizeApplicationsRequest = { applicationIds };
+    // Check if all applications have status != ALLOTED and != IN_DRIVE
+    const isClosed = applications.every(
+      (app) => app.applicationStatus !== "ALLOTED" && app.applicationStatus !== "IN_DRIVE"
+    );
+
+    const request: FinalizeApplicationsRequest = { 
+      applicationIds,
+      isClosed 
+    };
 
     try {
       setFinalizing(true);
@@ -405,8 +449,8 @@ const DriveCandidates: React.FC = () => {
     setFinalizeDialogVariant("confirm");
   };
 
-  const hasInDrive = filteredApplications.some((app) => app.applicationStatus === "IN_DRIVE");
-  const canAddScores = !hasInDrive && filteredApplications.length > 0;
+  const hasAlloted = filteredApplications.some((app) => app.applicationStatus === "ALLOTED");
+  const canAddScores = !hasAlloted && filteredApplications.length > 0;
  
   if (loading) {
     return (
@@ -503,6 +547,17 @@ const DriveCandidates: React.FC = () => {
             value={searchText}
             onChange={(e) => setSearchText(e.target.value)}
           />
+
+          <Tooltip title="Refresh data">
+            <IconButton
+              onClick={handleRefresh}
+              disabled={refreshing}
+              size="small"
+              sx={{ ml: 1 }}
+            >
+              <RefreshIcon />
+            </IconButton>
+          </Tooltip>
 
        
 

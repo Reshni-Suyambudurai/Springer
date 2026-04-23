@@ -17,4 +17,6 @@ public class FinalizeApplicationsRequest {
     
     @NotEmpty(message = "Application IDs list cannot be empty")
     private List<Long> applicationIds;
+    
+    private Boolean isClosed = false;
 }
