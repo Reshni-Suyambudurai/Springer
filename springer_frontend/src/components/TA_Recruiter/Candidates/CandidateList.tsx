@@ -531,11 +531,7 @@ const CandidateList: React.FC = () => {
                       <MenuItem value="">Select Status</MenuItem>                 
                       <MenuItem value="SHORTLISTED">SHORTLISTED</MenuItem>   
                                   
-                      <MenuItem value="SELECTED">SELECTED</MenuItem>
-                      <MenuItem value="REJECTED">REJECTED</MenuItem>
-                      <MenuItem value="OFFERED">OFFERED</MenuItem>
-                      <MenuItem value="JOINED">JOINED</MenuItem>
-                      <MenuItem value="DROPPED">DROPPED</MenuItem>
+                     
                       <MenuItem value="CLOSED" sx={{ color: 'var(--color-error-delete)' }}>MOVE TO HISTORY</MenuItem>
                     </Select>
                   </FormControl>

@@ -149,6 +149,7 @@ export interface CandidateHistoryOverride {
 // Finalize Applications Types
 export interface FinalizeApplicationsRequest {
   applicationIds: number[];
+  isClosed?: boolean;
 }
 
 export interface FinalizeApplicationsResponse {
