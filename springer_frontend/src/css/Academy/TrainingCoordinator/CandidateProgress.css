@@ -304,10 +304,26 @@
   margin: 0 !important;
 }
 
-.cp-pagination .MuiInputBase-root { margin-right: 32px !important; }
+.cp-pagination .MuiTablePagination-selectLabel,
+.cp-pagination .MuiTablePagination-input { display: flex !important; }
 .cp-pagination .MuiIconButton-root { padding: 4px !important; color: var(--color-text-secondary) !important; }
 .cp-pagination .MuiIconButton-root:hover { background-color: var(--opacity-shadow-very-light) !important; color: var(--color-grey-550) !important; }
 .cp-pagination .MuiIconButton-root.Mui-disabled { color: var(--color-grey-350) !important; }
+
+/* ── Action Button (shared: Batch Report, Download Report, Issue Warning) ── */
+.cp-action-btn {
+  padding: 6px 14px;
+  background: var(--color-primary);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: var(--text-xs);
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: opacity 0.15s ease;
+}
+.cp-action-btn:hover:not(:disabled) { opacity: 0.88; }
 
 /* ══════════════════════════════════════════════════════════════════════
    SIDE PANEL

@@ -15,6 +15,7 @@ import {
   batchAllocationApi, batchCourseApi, trainingProgramApi,
   excelUploadApi,
 } from '../../../services/academy.api';
+import { handleAxiosError } from '../../../services/api.error';
 import { showToast } from '../../../utils/toast';
 import { tokenstore } from '../../../auth/tokenstore';
 import FilterSelect from '../../Common/FilterSelect';
@@ -42,7 +43,7 @@ const TrainingScoresPanel = ({ context, readOnly = false }: { context: AcademyCo
   // ── Base data ──
   const [allCourses, setAllCourses]     = useState<TrainingCourseResponse[]>([]);
   const [batchCourses, setBatchCourses] = useState<BatchCourseResponse[]>([]);
-  const [allocations, setAllocations]   = useState<BatchAllocationResponse[]>([]);
+  const [batchStudents, setBatchStudents] = useState<BatchAllocationResponse[]>([]);
   const [scores, setScores]             = useState<TrainingScoreResponse[]>([]);
   const [allPrograms, setAllPrograms]   = useState<TrainingProgramResponse[]>([]);
   const [loading, setLoading]           = useState(true);
@@ -55,12 +56,9 @@ const TrainingScoresPanel = ({ context, readOnly = false }: { context: AcademyCo
   const [rowsPerPage, setRowsPerPage]         = useState(10);
 
   // ── Give Score dialog ──
-  const [dlgOpen, setDlgOpen]           = useState(false);
-  const [dlgProgramId, setDlgProgramId] = useState(0);
-  const [dlgBatchNo, setDlgBatchNo]     = useState(0);
-  const [dlgCourseId, setDlgCourseId]   = useState(0);
-  const [scoreMap, setScoreMap]         = useState<Record<number, { score: string; review: string }>>({});
-  const [saving, setSaving]             = useState(false);
+  const [dlgOpen, setDlgOpen] = useState(false);
+  const [scoreMap, setScoreMap] = useState<Record<number, { score: string; review: string; commScores: Record<string, string> }>>({});
+  const [saving, setSaving]   = useState(false);
 
   // ── Upload state ──
   const [uploading, setUploading]       = useState(false);
@@ -71,31 +69,57 @@ const TrainingScoresPanel = ({ context, readOnly = false }: { context: AcademyCo
     setFilterProgramId(0); setFilterBatchNo(0); setFilterCourseId(0); setPage(0);
   }, [yearPrograms]);
 
+  // Fetch scores from backend only when program + batch + course are all selected
+  useEffect(() => {
+    if (filterProgramId && filterBatchNo && filterCourseId) {
+      trainingScoreApi.getScoresByBatchAndCourse(filterProgramId, filterBatchNo, filterCourseId)
+        .then(res => { if (res.success && res.data) setScores(res.data); })
+        .catch(() => {});
+    } else {
+      setScores([]);
+    }
+  }, [filterProgramId, filterBatchNo, filterCourseId]);
+
+  // Fetch only active students for selected batch — used in table and dialog
+  useEffect(() => {
+    if (filterProgramId && filterBatchNo) {
+      batchAllocationApi.getAllocationsByBatch(filterProgramId, filterBatchNo)
+        .then(res => {
+          if (res.success && res.data)
+            setBatchStudents(res.data.filter(a => a.isActive));
+        })
+        .catch(() => {});
+    } else {
+      setBatchStudents([]);
+    }
+  }, [filterProgramId, filterBatchNo]);
+
   const fetchBase = async () => {
     try {
       setLoading(true);
-      const [crsRes, bcRes, allocRes, scRes, progRes] = await Promise.all([
+      // Only fetch courses, batch-courses and programs upfront
+      // Scores are fetched on-demand when program+batch+course are selected
+      const [crsRes, bcRes, progRes] = await Promise.all([
         trainingCourseApi.getAllCourses(),
         batchCourseApi.getAllBatchCourses(),
-        batchAllocationApi.getAllAllocations(),
-        trainingScoreApi.getAllScores(),
         trainingProgramApi.getAllPrograms(),
       ]);
       if (crsRes.success && crsRes.data)    setAllCourses(crsRes.data);
       if (bcRes.success && bcRes.data)      setBatchCourses(bcRes.data);
-      if (allocRes.success && allocRes.data) setAllocations(allocRes.data);
-      if (scRes.success && scRes.data)      setScores(scRes.data);
       if (progRes.success && progRes.data)  setAllPrograms(progRes.data);
-    } catch (err: any) {
-      showToast(err.message || 'Failed to load data', 'error');
+    } catch (err) {
+      const e = handleAxiosError(err);
+      showToast(e.message || 'Failed to load data', 'error');
     } finally {
       setLoading(false);
     }
   };
 
   const refreshScores = async () => {
-    const res = await trainingScoreApi.getAllScores();
-    if (res.success && res.data) setScores(res.data);
+    if (filterProgramId && filterBatchNo && filterCourseId) {
+      const res = await trainingScoreApi.getScoresByBatchAndCourse(filterProgramId, filterBatchNo, filterCourseId);
+      if (res.success && res.data) setScores(res.data);
+    }
   };
 
   // ── Auto-select based on global programYear ──
@@ -143,10 +167,8 @@ const TrainingScoresPanel = ({ context, readOnly = false }: { context: AcademyCo
         .filter((c): c is TrainingCourseResponse => !!c)
     : [];
 
-  // Students for selected program+batch (view)
-  const studentsForView = (filterProgramId && filterBatchNo)
-    ? allocations.filter(a => a.programId === filterProgramId && a.batchNumber === filterBatchNo && a.isActive)
-    : [];
+  // Students for selected program+batch — from targeted batch endpoint
+  const studentsForView = batchStudents;
 
   // Filtered rows for table — students with score for selected course
   const tableRows = filterCourseId
@@ -158,34 +180,48 @@ const TrainingScoresPanel = ({ context, readOnly = false }: { context: AcademyCo
 
   const paginated = tableRows.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 
-  // ── Dialog derived ──
+  // ── Dialog derived — uses batchStudents from targeted endpoint ──
+  const dlgStudents = batchStudents;
 
-  // Active programs only for give score dialog — uses ALL programs
-  const dlgPrograms = allPrograms.filter(p => p.status === true);
+  // ── Active program check — scores can only be given for active programs ──
+  const selectedProgramObj = allPrograms.find(p => p.programId === filterProgramId);
+  const isSelectedProgramActive = selectedProgramObj?.status === true;
+  // Also check batch course status — can only score ACTIVE batch courses
+  const selectedBatchCourseStatus = batchCourses.find(
+    bc => bc.programId === filterProgramId && bc.batchNo === filterBatchNo && bc.courseId === filterCourseId
+  )?.status;
+  const isBatchCourseActive = selectedBatchCourseStatus === 'ACTIVE';
+  const canGiveScore = canEdit && filterProgramId !== 0 && filterBatchNo !== 0 && filterCourseId !== 0 && isSelectedProgramActive && isBatchCourseActive;
 
-  const dlgBatchOptions = dlgProgramId
-    ? Array.from({ length: allPrograms.find(p => p.programId === dlgProgramId)?.numberOfBatches ?? 0 }, (_, i) => i + 1)
-    : [];
-
-  // All courses linked to selected program+batch in dialog (trainer sees only their own)
-  const dlgCourses = (dlgProgramId && dlgBatchNo)
-    ? batchCourses
-        .filter(bc => {
-          if (bc.programId !== dlgProgramId || bc.batchNo !== dlgBatchNo) return false;
-          if (isTrainer && bc.conductedBy !== loggedInUser?.userId) return false;
-          return true;
-        })
-        .map(bc => allCourses.find(c => c.courseId === bc.courseId))
-        .filter((c): c is TrainingCourseResponse => !!c)
-    : [];
-
-  // Students for selected program+batch in dialog
-  const dlgStudents = (dlgProgramId && dlgBatchNo)
-    ? allocations.filter(a => a.programId === dlgProgramId && a.batchNumber === dlgBatchNo && a.isActive)
-    : [];
+  const getGiveScoreTooltip = () => {
+    if (!canEdit) return '';
+    if (filterProgramId === 0) return 'Select a specific program first';
+    if (!isSelectedProgramActive) return 'Scores can only be given for active programs';
+    if (filterBatchNo === 0) return 'Select a batch first';
+    if (filterCourseId === 0) return 'Select a course first';
+    if (!isBatchCourseActive) return `Course is ${selectedBatchCourseStatus ?? 'not active'} — move it to ACTIVE first`;
+    return '';
+  };
 
   const openDlg = () => {
-    setDlgProgramId(0); setDlgBatchNo(0); setDlgCourseId(0); setScoreMap({});
+    const map: Record<number, { score: string; review: string; commScores: Record<string, string> }> = {};
+    batchStudents.forEach(s => {
+      const existing = scores.find(sc => sc.courseId === filterCourseId && sc.studentId === s.studentId);
+      // Pre-fill commScores from existing breakdown if available
+      let commScores: Record<string, string> = {};
+      if (isCommCourse && existing?.communicationBreakdown) {
+        try {
+          const parsed: { name: string; score: number }[] = JSON.parse(existing.communicationBreakdown);
+          parsed.forEach(f => { commScores[f.name] = String(f.score); });
+        } catch { /* ignore */ }
+      }
+      map[s.studentId] = {
+        score:  existing ? String(existing.score) : '',
+        review: existing?.review ?? '',
+        commScores,
+      };
+    });
+    setScoreMap(map);
     setDlgOpen(true);
   };
 
@@ -194,14 +230,12 @@ const TrainingScoresPanel = ({ context, readOnly = false }: { context: AcademyCo
       showToast('Select Program, Batch and Course before downloading template', 'error');
       return;
     }
-
-    const batchStudents = studentsForView.sort((a, b) => a.candidateName.localeCompare(b.candidateName));
-    if (batchStudents.length === 0) {
+    const sorted = [...batchStudents].sort((a, b) => a.candidateName.localeCompare(b.candidateName));
+    if (sorted.length === 0) {
       showToast('No active students found for selected Program and Batch', 'error');
       return;
     }
-
-    const rows = batchStudents.map(student => ({
+    const rows = sorted.map(student => ({
       'Student ID': student.studentId,
       'Candidate Name': student.candidateName,
       'Candidate Email': student.candidateEmail,
@@ -242,33 +276,38 @@ const TrainingScoresPanel = ({ context, readOnly = false }: { context: AcademyCo
         }
         await refreshScores();
       }
-    } catch (err: any) {
+    } catch (error) {
+      const err = handleAxiosError(error);
       showToast(err.message || 'Upload failed', 'error');
     } finally {
       setUploading(false);
     }
   };
 
-  // When course selected in dialog — pre-fill existing scores
-  const handleDlgCourseSelect = (courseId: number) => {
-    setDlgCourseId(courseId);
-    const map: Record<number, { score: string; review: string }> = {};
-    dlgStudents.forEach(s => {
-      const existing = scores.find(sc => sc.courseId === courseId && sc.studentId === s.studentId);
-      map[s.studentId] = { score: existing ? String(existing.score) : '', review: existing?.review ?? '' };
-    });
-    setScoreMap(map);
-  };
-
   const handleSaveAll = async () => {
-    if (!dlgCourseId) { showToast('Select a course first', 'error'); return; }
-    const entries = Object.entries(scoreMap).filter(([, v]) => v.score.trim() !== '');
+    const entries = Object.entries(scoreMap).filter(([, v]) => {
+      if (isCommCourse) {
+        // For communication courses, at least one sub-score must be filled
+        return Object.values(v.commScores).some(s => s.trim() !== '');
+      }
+      return v.score.trim() !== '';
+    });
     if (entries.length === 0) { showToast('Enter at least one score', 'error'); return; }
 
-    // Validate all entered scores
-    for (const [, v] of entries) {
-      const n = Number(v.score);
-      if (isNaN(n) || n < 0 || n > 100) { showToast('All scores must be between 0 and 100', 'error'); return; }
+    if (!isCommCourse) {
+      for (const [, v] of entries) {
+        const n = Number(v.score);
+        if (isNaN(n) || n < 0 || n > 100) { showToast('All scores must be between 0 and 100', 'error'); return; }
+      }
+    } else {
+      for (const [, v] of entries) {
+        for (const field of commTemplate) {
+          const val = v.commScores[field.name];
+          if (val === undefined || val.trim() === '') { showToast(`Enter score for "${field.name}" for all students`, 'error'); return; }
+          const n = Number(val);
+          if (isNaN(n) || n < 0 || n > field.maxScore) { showToast(`"${field.name}" score must be between 0 and ${field.maxScore}`, 'error'); return; }
+        }
+      }
     }
 
     try {
@@ -276,11 +315,28 @@ const TrainingScoresPanel = ({ context, readOnly = false }: { context: AcademyCo
       let saved = 0;
       for (const [studentIdStr, v] of entries) {
         const studentId = Number(studentIdStr);
-        const scoreNum = Number(v.score);
-        const existing = scores.find(sc => sc.courseId === dlgCourseId && sc.studentId === studentId);
+        const existing = scores.find(sc => sc.courseId === filterCourseId && sc.studentId === studentId);
+
+        let scoreNum: number;
+        let communicationBreakdown: string | undefined;
+
+        if (isCommCourse) {
+          // Build breakdown array and compute total score from sub-scores
+          const breakdown = commTemplate.map(f => ({
+            name: f.name,
+            score: Number(v.commScores[f.name] ?? 0),
+            maxScore: f.maxScore,
+          }));
+          scoreNum = breakdown.reduce((sum, f) => sum + f.score, 0);
+          communicationBreakdown = JSON.stringify(breakdown);
+        } else {
+          scoreNum = Number(v.score);
+        }
+
         const req: TrainingScoreRequest = {
-          courseId: dlgCourseId, studentId, score: scoreNum,
+          courseId: filterCourseId, studentId, score: scoreNum,
           review: v.review, reviewedBy: loggedInUser?.userId ?? 0,
+          ...(communicationBreakdown && { communicationBreakdown }),
         };
         try {
           if (existing) {
@@ -289,22 +345,43 @@ const TrainingScoresPanel = ({ context, readOnly = false }: { context: AcademyCo
             await trainingScoreApi.createScore(req);
           }
           saved++;
-        } catch { /* skip individual failures */ }
+        } catch (err: any) {
+          const msg = err?.message || `Failed to save score for student ${studentId}`;
+          showToast(msg, 'error');
+        }
       }
-      showToast(`${saved} score(s) saved successfully`, 'success');
+      if (saved > 0) showToast(`${saved} score(s) saved successfully`, 'success');
       setDlgOpen(false);
       await refreshScores();
-    } catch (err: any) {
+    } catch (error) {
+      const err = handleAxiosError(error);
       showToast(err.message || 'Failed to save scores', 'error');
     } finally {
       setSaving(false);
     }
   };
 
-  const getExistingScore = (courseId: number, studentId: number) =>
-    scores.find(s => s.courseId === courseId && s.studentId === studentId);
+  const getExistingScore = (studentId: number) =>
+    scores.find(s => s.courseId === filterCourseId && s.studentId === studentId);
 
+  // ── Communication course detection — must be declared before openDlg ──
   const selectedCourse = allCourses.find(c => c.courseId === filterCourseId);
+  // Detect via isCommunication flag OR communicationTemplate on the course
+  const isCommCourse = selectedCourse?.isCommunication === true || !!selectedCourse?.communicationTemplate;
+
+  // Template lives on TrainingCourse — same for all batches in the program
+  const commTemplate: { name: string; maxScore: number }[] = (() => {
+    if (!isCommCourse) return [];
+    if (selectedCourse?.communicationTemplate) {
+      try { return JSON.parse(selectedCourse.communicationTemplate); }
+      catch { /* fall through to default */ }
+    }
+    return [
+      { name: 'Grammar', maxScore: 20 },
+      { name: 'Proactiveness', maxScore: 20 },
+      { name: 'Fluency', maxScore: 10 },
+    ];
+  })();
 
   if (loading) {
     return (
@@ -394,7 +471,11 @@ const TrainingScoresPanel = ({ context, readOnly = false }: { context: AcademyCo
               </>
             )}
             {canEdit && (
-              <Button variant="contained" startIcon={<AddIcon />} onClick={openDlg} className="sc-add-button">
+              <Button variant="contained" startIcon={<AddIcon />}
+                onClick={openDlg}
+                disabled={!canGiveScore}
+                title={getGiveScoreTooltip()}
+                className="sc-add-button">
                 Give Score
               </Button>
             )}
@@ -452,8 +533,28 @@ const TrainingScoresPanel = ({ context, readOnly = false }: { context: AcademyCo
                         </TableCell>
                         <TableCell className="sc-table-cell">
                           <Typography className={score ? 'sc-score-filled' : 'sc-score-empty'}>
-                            {score ? score.score : '—'}
+                            {score
+                              ? isCommCourse && score.maxScore
+                                ? `${Math.round((score.score / score.maxScore) * 100)} / 100`
+                                : `${score.score} / 100`
+                              : '—'}
                           </Typography>
+                          {/* Show sub-score breakdown for Communication courses */}
+                          {score?.communicationBreakdown && (() => {
+                            try {
+                              const fields: { name: string; score: number; maxScore: number }[] =
+                                JSON.parse(score.communicationBreakdown);
+                              return (
+                                <Box sx={{ mt: 0.5 }}>
+                                  {fields.map(f => (
+                                    <Typography key={f.name} sx={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-secondary)' }}>
+                                      {f.name}: {f.score}/{f.maxScore}
+                                    </Typography>
+                                  ))}
+                                </Box>
+                              );
+                            } catch { return null; }
+                          })()}
                         </TableCell>
                         <TableCell className="sc-table-cell">
                           {score ? (
@@ -482,114 +583,122 @@ const TrainingScoresPanel = ({ context, readOnly = false }: { context: AcademyCo
 
       {/* Give Score Dialog */}
       <Dialog open={dlgOpen} onClose={() => setDlgOpen(false)} maxWidth="md" fullWidth>
-        <DialogTitle className="sc-dialog-title">Give Score</DialogTitle>
+        <DialogTitle className="sc-dialog-title">
+          Give Score — {selectedProgramObj?.programName} · Batch {filterBatchNo} · {allCourses.find(c => c.courseId === filterCourseId)?.courseName}
+        </DialogTitle>
         <DialogContent>
           <Stack spacing={2} sx={{ mt: 1 }}>
-
-            {/* Step 1: Program */}
-            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-              <TextField select label="Program *" size="small" fullWidth
-                value={dlgProgramId || ''}
-                onChange={e => { setDlgProgramId(Number(e.target.value)); setDlgBatchNo(0); setDlgCourseId(0); setScoreMap({}); }}
-                className="sc-dialog-field">
-                <MenuItem value="">— Select Program —</MenuItem>
-                {dlgPrograms.map(p => (
-                  <MenuItem key={p.programId} value={p.programId}>{p.programName} ({p.programYear})</MenuItem>
-                ))}
-              </TextField>
-
-              {/* Step 2: Batch */}
-              <TextField select label="Batch *" size="small" fullWidth
-                value={dlgBatchNo || ''}
-                disabled={!dlgProgramId}
-                onChange={e => { setDlgBatchNo(Number(e.target.value)); setDlgCourseId(0); setScoreMap({}); }}
-                className="sc-dialog-field">
-                <MenuItem value="">— Select Batch —</MenuItem>
-                {dlgBatchOptions.map(b => (
-                  <MenuItem key={b} value={b}>Batch {b}</MenuItem>
-                ))}
-              </TextField>
-
-              {/* Step 3: Course */}
-              <TextField select label="Course *" size="small" fullWidth
-                value={dlgCourseId || ''}
-                disabled={!dlgBatchNo}
-                onChange={e => handleDlgCourseSelect(Number(e.target.value))}
-                className="sc-dialog-field">
-                <MenuItem value="">— Select Course —</MenuItem>
-                {dlgCourses.length === 0 && dlgBatchNo
-                  ? <MenuItem disabled value="">No courses linked to this batch yet</MenuItem>
-                  : dlgCourses.map(c => (
-                    <MenuItem key={c.courseId} value={c.courseId}>{c.courseName}</MenuItem>
-                  ))}
-              </TextField>
-            </Stack>
-
             {/* Students table with inline score inputs */}
-            {dlgCourseId > 0 && (
-              dlgStudents.length === 0 ? (
-                <Typography sx={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)', textAlign: 'center', py: 2 }}>
-                  No active students in this batch
-                </Typography>
-              ) : (
-                <Box className="sc-dlg-table-wrap">
-                  {/* Header row */}
-                  <Box className="sc-dlg-row sc-dlg-row--header">
-                    <Typography className="sc-dlg-col-label sc-dlg-col--student">Student</Typography>
-                    <Typography className="sc-dlg-col-label sc-dlg-col--score">Score (0–100) *</Typography>
-                    <Typography className="sc-dlg-col-label sc-dlg-col--review">Review</Typography>
-                    <Typography className="sc-dlg-col-label sc-dlg-col--status">Current Status</Typography>
-                  </Box>
-
-                  {dlgStudents.map(s => {
-                    const existing = getExistingScore(dlgCourseId, s.studentId);
-                    const val = scoreMap[s.studentId] ?? { score: '', review: '' };
-                    return (
-                      <Box key={s.studentId} className={`sc-dlg-row ${existing ? 'sc-dlg-row--scored' : ''}`}>
-                        <Box className="sc-dlg-col--student">
-                          <Typography className="sc-row-primary">
-                            {s.candidateName || `Student #${s.studentId}`}
-                          </Typography>
-                          <Typography className="sc-row-secondary">{s.department || ''}</Typography>
-                        </Box>
-                        <Box className="sc-dlg-col--score">
+            {dlgStudents.length === 0 ? (
+              <Typography sx={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)', textAlign: 'center', py: 2 }}>
+                No active students in this batch
+              </Typography>
+            ) : (
+              <Box className="sc-dlg-table-wrap">
+                <Box className="sc-dlg-row sc-dlg-row--header"
+                  sx={{ gridTemplateColumns: isCommCourse ? '1.5fr 2fr 2fr 140px' : '2fr 1fr 2fr 140px' }}>
+                  <Typography className="sc-dlg-col-label sc-dlg-col--student">Student</Typography>
+                  <Typography className="sc-dlg-col-label sc-dlg-col--score">
+                    {isCommCourse ? `Sub-scores (Total: ${commTemplate.reduce((s, f) => s + f.maxScore, 0)})` : 'Score (0–100) *'}
+                  </Typography>
+                  <Typography className="sc-dlg-col-label sc-dlg-col--review">Review</Typography>
+                  <Typography className="sc-dlg-col-label sc-dlg-col--status">Current Status</Typography>
+                </Box>
+                {dlgStudents.map(s => {
+                  const existing = getExistingScore(s.studentId);
+                  const val = scoreMap[s.studentId] ?? { score: '', review: '', commScores: {} };
+                  return (
+                    <Box key={s.studentId}
+                      className={`sc-dlg-row ${existing ? 'sc-dlg-row--scored' : ''}`}
+                      sx={{ gridTemplateColumns: isCommCourse ? '1.5fr 2fr 2fr 140px' : '2fr 1fr 2fr 140px', alignItems: 'start' }}>
+                      <Box className="sc-dlg-col--student">
+                        <Typography className="sc-row-primary">
+                          {s.candidateName || `Student #${s.studentId}`}
+                        </Typography>
+                        <Typography className="sc-row-secondary">{s.department || ''}</Typography>
+                      </Box>
+                      <Box className="sc-dlg-col--score">
+                        {isCommCourse ? (
+                          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                            {commTemplate.map(field => {
+                              const raw = val.commScores[field.name] ?? '';
+                              const num = raw === '' ? NaN : Number(raw);
+                              const isErr = raw !== '' && (isNaN(num) || num < 0 || num > field.maxScore);
+                              return (
+                                <Box key={field.name} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                  <Typography sx={{ fontSize: 'var(--text-xs)', width: 110, flexShrink: 0, color: 'var(--color-text-secondary)', fontWeight: 600 }}>
+                                    {field.name}
+                                  </Typography>
+                                  <TextField
+                                    size="small"
+                                    inputProps={{ inputMode: 'numeric', pattern: '[0-9]*' }}
+                                    value={raw}
+                                    error={isErr}
+                                    helperText={isErr ? `0–${field.maxScore}` : ''}
+                                    onChange={e => {
+                                      const v = e.target.value.replace(/[^0-9]/g, '');
+                                      setScoreMap(prev => ({
+                                        ...prev,
+                                        [s.studentId]: {
+                                          ...prev[s.studentId],
+                                          commScores: { ...prev[s.studentId]?.commScores, [field.name]: v },
+                                        },
+                                      }));
+                                    }}
+                                    sx={{ width: 72 }}
+                                    placeholder={`/${field.maxScore}`}
+                                  />
+                                </Box>
+                              );
+                            })}
+                            <Typography sx={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-secondary)', mt: 0.5, fontWeight: 600 }}>
+                              Total: {commTemplate.reduce((sum, f) => sum + (Number(val.commScores[f.name]) || 0), 0)}
+                              /{commTemplate.reduce((sum, f) => sum + f.maxScore, 0)}
+                            </Typography>
+                          </Box>
+                        ) : (
                           <TextField
-                            size="small" type="number"
+                            size="small"
+                            inputProps={{ inputMode: 'numeric', pattern: '[0-9]*' }}
                             value={val.score}
-                            onChange={e => setScoreMap(prev => ({
-                              ...prev,
-                              [s.studentId]: { ...prev[s.studentId] ?? { score: '', review: '' }, score: e.target.value },
-                            }))}
-                            inputProps={{ min: 0, max: 100 }}
+                            onChange={e => {
+                              const v = e.target.value.replace(/[^0-9]/g, '');
+                              setScoreMap(prev => ({
+                                ...prev,
+                                [s.studentId]: { ...prev[s.studentId] ?? { score: '', review: '', commScores: {} }, score: v },
+                              }));
+                            }}
+                            error={val.score !== '' && (Number(val.score) < 0 || Number(val.score) > 100)}
+                            helperText={val.score !== '' && (Number(val.score) < 0 || Number(val.score) > 100) ? '0–100' : ''}
                             className="sc-score-input"
                             placeholder="0–100"
                           />
-                        </Box>
-                        <Box className="sc-dlg-col--review">
-                          <TextField
-                            size="small" fullWidth
-                            value={val.review}
-                            onChange={e => setScoreMap(prev => ({
-                              ...prev,
-                              [s.studentId]: { ...prev[s.studentId] ?? { score: '', review: '' }, review: e.target.value },
-                            }))}
-                            placeholder="Optional feedback"
-                            className="sc-review-input"
-                          />
-                        </Box>
-                        <Box className="sc-dlg-col--status">
-                          {existing ? (
-                            <Chip label={existing.status.replace('_', ' ')} size="small" variant="outlined"
-                              className={STATUS_CLASS[existing.status] ?? 'sc-status-chip'} />
-                          ) : (
-                            <Typography className="sc-score-empty">Not scored</Typography>
-                          )}
-                        </Box>
+                        )}
                       </Box>
-                    );
-                  })}
-                </Box>
-              )
+                      <Box className="sc-dlg-col--review">
+                        <TextField
+                          size="small" fullWidth
+                          value={val.review}
+                          onChange={e => setScoreMap(prev => ({
+                            ...prev,
+                            [s.studentId]: { ...prev[s.studentId] ?? { score: '', review: '', commScores: {} }, review: e.target.value },
+                          }))}
+                          placeholder="Optional feedback"
+                          className="sc-review-input"
+                        />
+                      </Box>
+                      <Box className="sc-dlg-col--status">
+                        {existing ? (
+                          <Chip label={existing.status.replace('_', ' ')} size="small" variant="outlined"
+                            className={STATUS_CLASS[existing.status] ?? 'sc-status-chip'} />
+                        ) : (
+                          <Typography className="sc-score-empty">Not scored</Typography>
+                        )}
+                      </Box>
+                    </Box>
+                  );
+                })}
+              </Box>
             )}
           </Stack>
         </DialogContent>
@@ -597,7 +706,7 @@ const TrainingScoresPanel = ({ context, readOnly = false }: { context: AcademyCo
           <Button onClick={() => setDlgOpen(false)} className="sc-dialog-cancel-btn">Cancel</Button>
           <Button variant="contained" startIcon={<SaveIcon />}
             onClick={handleSaveAll}
-            disabled={saving || !dlgCourseId || dlgStudents.length === 0}
+            disabled={saving || dlgStudents.length === 0}
             className="sc-dialog-submit-btn">
             {saving ? 'Saving...' : 'Save All Scores'}
           </Button>

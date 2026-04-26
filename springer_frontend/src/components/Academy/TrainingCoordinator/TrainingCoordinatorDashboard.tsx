@@ -10,7 +10,8 @@ import {
   TrendingUp as TrendingUpIcon,
   EmojiEvents as TrophyIcon,
 } from '@mui/icons-material';
-import { trainingProgramApi, batchAllocationApi, trainingScoreApi } from '../../../services/academy.api';
+import { trainingProgramApi, batchAllocationApi } from '../../../services/academy.api';
+import type { BatchAllocationResponse } from '../../../types/Academy/academy.types';
 import { tokenstore } from '../../../auth/tokenstore';
 import { showToast } from '../../../utils/toast';
 import '../../../css/Academy/TrainingCoordinator/TrainingCoordinatorDashboard.css';
@@ -49,37 +50,44 @@ const TrainingCoordinatorDashboard = () => {
   const fetchStats = async () => {
     try {
       setLoading(true);
-      const [progRes, allocRes, scoreRes] = await Promise.all([
-        trainingProgramApi.getAllPrograms(),
-        batchAllocationApi.getAllAllocations(),
-        trainingScoreApi.getAllScores(),
-      ]);
-
+      const progRes = await trainingProgramApi.getAllPrograms();
       const programs = (progRes.success && progRes.data) ? progRes.data : [];
-      const allocations = (allocRes.success && allocRes.data) ? allocRes.data : [];
-      const scores = (scoreRes.success && scoreRes.data) ? scoreRes.data : [];
 
-      const yearProgramIds = new Set(
-        programs.filter(p => p.programYear === CURRENT_YEAR).map(p => p.programId)
+      // Only fetch allocations for current year programs — not all allocations
+      const currentYearPrograms = programs.filter(p => p.programYear === CURRENT_YEAR);
+      if (currentYearPrograms.length === 0) {
+        setStats({ activeStudents: 0, projectReady: 0, atRisk: 0, avgAttendance: 0, scoresRecorded: 0, totalScoreable: 0, excellent: 0, needLearning: 0 });
+        return;
+      }
+
+      const allocResults = await Promise.allSettled(
+        currentYearPrograms.map(p => batchAllocationApi.getAllocationsByProgram(p.programId))
       );
-      const active = allocations.filter(a => a.isActive && yearProgramIds.has(a.programId));
+      const allocations: BatchAllocationResponse[] = [];
+      allocResults.forEach(r => {
+        if (r.status === 'fulfilled' && r.value.success && r.value.data)
+          allocations.push(...r.value.data);
+      });
 
+      const active = allocations.filter(a => a.isActive);
       const avgAtt = active.length > 0
         ? active.reduce((s, a) => s + Number(a.attendancePercentage ?? 0), 0) / active.length
         : 0;
+      const scoresRecorded = active.filter(a => a.overallWeightedScore != null && Number(a.overallWeightedScore) > 0).length;
 
       setStats({
         activeStudents: active.length,
-        projectReady: active.filter(a => a.performance === 'PROJECT_READY').length,
-        atRisk: active.filter(a => Number(a.attendancePercentage ?? 0) > 0 && Number(a.attendancePercentage ?? 0) < 75).length,
-        avgAttendance: Math.round(avgAtt * 10) / 10,
-        scoresRecorded: scores.length,
+        projectReady:   active.filter(a => a.performance === 'PROJECT_READY').length,
+        atRisk:         active.filter(a => Number(a.attendancePercentage ?? 0) > 0 && Number(a.attendancePercentage ?? 0) < 75).length,
+        avgAttendance:  Math.round(avgAtt * 10) / 10,
+        scoresRecorded,
         totalScoreable: active.length,
-        excellent: scores.filter(s => s.status === 'EXCELLENT').length,
-        needLearning: scores.filter(s => s.status === 'BELOW_AVERAGE').length,
+        excellent:      active.filter(a => Number(a.overallWeightedScore ?? 0) >= 90).length,
+        needLearning:   active.filter(a => a.overallWeightedScore != null && Number(a.overallWeightedScore) < 50).length,
       });
-    } catch (err: any) {
-      showToast(err.message || 'Failed to load dashboard', 'error');
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Failed to load dashboard';
+      showToast(msg, 'error');
     } finally {
       setLoading(false);
     }

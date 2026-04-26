@@ -53,22 +53,6 @@ public class TrainingProgramController {
                 .body(ApiResponse.success("Program retrieved successfully", response));
     }
     
-    @GetMapping("/cycle/{cycleId}")
-    public ResponseEntity<ApiResponse<List<TrainingProgramResponse>>> getProgramsByCycle(
-            @PathVariable Long cycleId) {
-        List<TrainingProgramResponse> response = programService.getProgramsByCycle(cycleId);
-        return ResponseEntity.status(HttpStatus.OK)
-                .body(ApiResponse.success("Programs for cycle " + cycleId + " retrieved successfully", response));
-    }
-    
-    @GetMapping("/location/{location}")
-    public ResponseEntity<ApiResponse<List<TrainingProgramResponse>>> getProgramsByLocation(
-            @PathVariable String location) {
-        List<TrainingProgramResponse> response = programService.getProgramsByLocation(location);
-        return ResponseEntity.status(HttpStatus.OK)
-                .body(ApiResponse.success("Programs in " + location + " retrieved successfully", response));
-    }
-    
     @GetMapping("/years/all")
     public ResponseEntity<ApiResponse<List<Integer>>> getAllDistinctYears() {
         List<Integer> years = programService.getAllDistinctYears();

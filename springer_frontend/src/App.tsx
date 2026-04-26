@@ -40,6 +40,15 @@ import DocumentProcessingDashboard from './components/TA_Recruiter/DocumentProce
 // Academy
 import TrainingCoordinatorDashboard from './components/Academy/TrainingCoordinator/TrainingCoordinatorDashboard'
 import AcademyDashboard from './components/Academy/TrainingCoordinator/AcademyDashboard'
+import InternDashboard from './components/Academy/Intern/InternDashboard'
+import InternScoresPage from './components/Academy/Intern/InternScoresPage'
+import InternAttendancePage from './components/Academy/Intern/InternAttendancePage'
+import InternProgressPage from './components/Academy/Intern/InternProgressPage'
+import InternCertificatesPage from './components/Academy/Intern/InternCertificatesPage'
+import InternProfilePage from './components/Academy/Intern/InternProfilePage'
+import InternCalendarPage from './components/Academy/Intern/InternCalendarPage'
+import InternLeavePage from './components/Academy/Intern/InternLeavePage'
+import InternWarningsPage from './components/Academy/Intern/InternWarningsPage'
 // TA Head
 import DashboardTAH from './components/TA_Head/DashboardTAH'
 import TAHiringCycleList from './components/TA_Head/HiringCycle/HiringCycleList'
@@ -165,6 +174,19 @@ function App() {
         {/* ADMIN */}
         <Route element={<ProtectedRoute allowedRoles={['SYSTEM_ADMIN']} />}>
           <Route path="/admin/dashboard" element={<AdminDashboard />} />
+        </Route>
+
+        {/* INTERN */}
+        <Route element={<ProtectedRoute allowedRoles={['INTERN']} />}>
+          <Route path="/intern/dashboard"     element={<InternDashboard />} />
+          <Route path="/intern/scores"        element={<InternScoresPage />} />
+          <Route path="/intern/attendance"    element={<InternAttendancePage />} />
+          <Route path="/intern/progress"      element={<InternProgressPage />} />
+          <Route path="/intern/certificates"  element={<InternCertificatesPage />} />
+          <Route path="/intern/profile"       element={<InternProfilePage />} />
+          <Route path="/intern/calendar"      element={<InternCalendarPage />} />
+          <Route path="/intern/leaves"        element={<InternLeavePage />} />
+          <Route path="/intern/warnings"      element={<InternWarningsPage />} />
         </Route>
 
         {/* TRAINING_COORDINATOR */}

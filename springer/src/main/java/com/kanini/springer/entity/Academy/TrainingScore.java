@@ -43,7 +43,16 @@ public class TrainingScore {
     
     @Column(columnDefinition = "TEXT")
     private String review; // Feedback given by the trainer
-    
+
+    /**
+     * JSON breakdown for Communication course scores only.
+     * Null for all other courses.
+     * Format: [{"name":"Grammar","score":16,"maxScore":20}, ...]
+     * The overall score field holds the sum of all sub-scores.
+     */
+    @Column(columnDefinition = "JSON")
+    private String communicationBreakdown;
+
     @Enumerated(EnumType.STRING)
     private ScoreStatus status;
     

@@ -17,7 +17,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.stream.Collectors;
+
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 @Service
 @RequiredArgsConstructor
@@ -28,6 +29,7 @@ public class UserServiceImp implements IUserService {
     private final UserMapper userMapper;
     private final RoleMapper roleMapper;
     private final JwtUtil jwtUtil;
+    private final PasswordEncoder passwordEncoder;
     
     @Override
     @Transactional(readOnly = true)
@@ -35,7 +37,10 @@ public class UserServiceImp implements IUserService {
         // Find all users with this email (same email can have different roles/passwords)
         List<User> users = userRepository.findAllByEmailWithRole(email);
         
-        if (users.isEmpty()) {
+        // Check password — supports both BCrypt encoded (interns) and plain text (seeded staff)
+        boolean passwordMatches = passwordEncoder.matches(password, user.getPassword())
+                || user.getPassword().equals(password);
+        if (!passwordMatches) {
             throw new ValidationException("Invalid email or password");
         }
         
@@ -83,7 +88,7 @@ public class UserServiceImp implements IUserService {
         // Map to response DTOs
         return users.stream()
                 .map(userMapper::toResponse)
-                .collect(Collectors.toList());
+                .toList();
     }
     
     @Override
@@ -95,7 +100,7 @@ public class UserServiceImp implements IUserService {
         // Map to response DTOs
         return roles.stream()
                 .map(roleMapper::toResponse)
-                .collect(Collectors.toList());
+                .toList();
     }
 }
 

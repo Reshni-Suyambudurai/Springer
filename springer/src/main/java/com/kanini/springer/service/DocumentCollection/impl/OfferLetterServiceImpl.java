@@ -27,11 +27,11 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
-
 @Service
 @RequiredArgsConstructor
 public class OfferLetterServiceImpl implements IOfferLetterService {
+
+    private static final String OFFER_FAILED = "FAILED";
 
     private final OfferLetterRepository offerRepository;
     private final CandidateRepository candidateRepository;
@@ -84,7 +84,6 @@ public class OfferLetterServiceImpl implements IOfferLetterService {
         List<CandidateOfferResult> results = new ArrayList<>();
 
         for (Long candidateId : request.getCandidateIds()) {
-            // Skip if offer already exists
             if (offerRepository.findByCandidateId(candidateId).isPresent()) {
                 results.add(CandidateOfferResult.builder()
                         .candidateId(candidateId)
@@ -94,25 +93,22 @@ public class OfferLetterServiceImpl implements IOfferLetterService {
                 continue;
             }
 
-            // Check candidate exists
             Candidate candidate = candidateRepository.findById(candidateId).orElse(null);
             if (candidate == null) {
                 results.add(CandidateOfferResult.builder()
                         .candidateId(candidateId)
-                        .status("FAILED")
+                        .status(OFFER_FAILED)
                         .reason("Candidate not found")
                         .build());
                 continue;
             }
 
-            // Check documents are approved
-            var completion = verificationService.getDocumentCompletionStatus(
-                    candidateId, request.getCycleId());
+            var completion = verificationService.getDocumentCompletionStatus(candidateId, request.getCycleId());
             if (!completion.getIsOfferReady()) {
                 results.add(CandidateOfferResult.builder()
                         .candidateId(candidateId)
                         .candidateName(candidate.getFirstName() + " " + candidate.getLastName())
-                        .status("FAILED")
+                        .status(OFFER_FAILED)
                         .reason("Documents not fully approved: " +
                                 completion.getTotalApproved() + "/" + completion.getTotalRequired() + " approved")
                         .build());
@@ -123,7 +119,7 @@ public class OfferLetterServiceImpl implements IOfferLetterService {
             if (cycle == null) {
                 results.add(CandidateOfferResult.builder()
                         .candidateId(candidateId)
-                        .status("FAILED")
+                        .status(OFFER_FAILED)
                         .reason("Hiring cycle not found with ID: " + request.getCycleId())
                         .build());
                 continue;
@@ -148,7 +144,7 @@ public class OfferLetterServiceImpl implements IOfferLetterService {
 
         long successCount = results.stream().filter(r -> "SUCCESS".equals(r.getStatus())).count();
         long skippedCount = results.stream().filter(r -> "SKIPPED".equals(r.getStatus())).count();
-        long failedCount  = results.stream().filter(r -> "FAILED".equals(r.getStatus())).count();
+        long failedCount  = results.stream().filter(r -> OFFER_FAILED.equals(r.getStatus())).count();
 
         return BulkOfferGenerateResponse.builder()
                 .totalRequested(request.getCandidateIds().size())
@@ -180,21 +176,20 @@ public class OfferLetterServiceImpl implements IOfferLetterService {
                 Enums.OfferResponse responseEnum = Enums.OfferResponse.valueOf(offerResponse.toUpperCase(java.util.Locale.ROOT));
                 offers = offerRepository.findByResponse(responseEnum, pageable);
             } catch (IllegalArgumentException e) {
-                throw new ValidationException("Invalid offer response value: " + offerResponse);
+                throw new ValidationException("Invalid offer response value: " + offerResponse, e);
             }
         } else {
             offers = offerRepository.findAll(pageable);
         }
 
-        return offers.stream().map(mapper::toResponse).collect(Collectors.toList());
+        return offers.stream().map(mapper::toResponse).toList();
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<OfferLetterResponse> getOfferReadyCandidates(Long cycleId) {
         // Only check SELECTED candidates — offer-ready candidates haven't been offered yet
-        Set<Long> alreadyIssuedCandidateIds = offerRepository.findCandidateIdsByCycleId(cycleId)
-                .stream().collect(Collectors.toSet());
+        Set<Long> alreadyIssuedCandidateIds = new java.util.HashSet<>(offerRepository.findCandidateIdsByCycleId(cycleId));
 
         return candidateRepository.findByApplicationStage(Enums.ApplicationStage.SELECTED).stream()
                 .filter(c -> !alreadyIssuedCandidateIds.contains(c.getCandidateId()))
@@ -209,6 +204,6 @@ public class OfferLetterServiceImpl implements IOfferLetterService {
                         .cycleId(cycleId)
                         .response(Enums.OfferResponse.PENDING.name())
                         .build())
-                .collect(Collectors.toList());
+                .toList();
     }
 }

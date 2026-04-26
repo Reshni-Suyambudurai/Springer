@@ -40,7 +40,9 @@ export interface TrainingCourseRequest {
   courseName: string;
   description: string;
   minScore: number;
-  weightage: number;
+  weightage?: number;          // not needed for communication courses
+  isCommunication?: boolean;
+  communicationTemplate?: string; // JSON string, only for communication courses
 }
 
 export interface TrainingCourseResponse {
@@ -48,7 +50,9 @@ export interface TrainingCourseResponse {
   courseName: string;
   description: string;
   minScore: number;
-  weightage: number;
+  weightage: number | null;    // null for communication courses
+  isCommunication: boolean;
+  communicationTemplate: string | null; // JSON string, only for communication courses
   createdAt: string;
 }
 
@@ -58,10 +62,10 @@ export interface BatchCourseRequest {
   batchNo: number;
   courseId: number;
   programId: number;
-  startDate: string;   // "YYYY-MM-DD"
-  endDate: string;     // "YYYY-MM-DD"
-  conductedBy: number; // trainer userId
-  status?: string;     // defaults to PLANNED
+  startDate: string;
+  endDate: string;
+  conductedBy: number;
+  status?: string;
 }
 
 export interface BatchCourseResponse {
@@ -75,7 +79,7 @@ export interface BatchCourseResponse {
   endDate: string | null;
   conductedBy: number | null;
   trainerName: string | null;
-  status: string; // PLANNED | ACTIVE | COMPLETED | CANCELLED
+  status: string;
   createdAt: string;
 }
 
@@ -120,8 +124,16 @@ export interface BatchAllocationResponse {
   isActive: boolean;
   performance: string | null;
   attendancePercentage: number;
-  overallWeightedScore: number | null; // auto-calculated weighted average across all scored courses
+  overallWeightedScore: number | null;
   createdAt: string;
+  /** Populated if this student was transferred from another batch. */
+  transferredFromStudentId: number | null;
+}
+
+export interface BatchTransferRequest {
+  targetProgramId: number;
+  targetBatchNumber: number;
+  transferReason?: string;
 }
 
 // ==================== ATTENDANCE ====================
@@ -188,6 +200,8 @@ export interface TrainingScoreRequest {
   score: number;
   review: string;
   reviewedBy: number; // auto-populated from logged-in user via tokenstore
+  /** Only sent when the course has isCommunication = true. JSON string. */
+  communicationBreakdown?: string;
 }
 
 export interface TrainingScoreResponse {
@@ -195,9 +209,12 @@ export interface TrainingScoreResponse {
   courseId: number;
   studentId: number;
   score: number;
+  /** For technical: 100. For communication: sum of all sub-field maxScores. */
+  maxScore: number;
   review: string;
   status: string; // EXCELLENT | GOOD | AVERAGE | BELOW_AVERAGE
   reviewedBy: number;
+  communicationBreakdown: string | null; // JSON string, only for Communication courses
   createdAt: string;
 }
 
@@ -247,10 +264,11 @@ export interface JoiningTrackerCandidate {
   cycleId: number;
   applicationStage: string;
   updatedAt: string;
+  userId?: number;
 }
 
 export interface JoiningStatusUpdateRequest {
-  status: 'JOINED' | 'DROPPED';
+  status: 'JOINED' | 'NOT_JOINED' | 'OFFER_REJECTED';
   updatedBy: number;
   reason?: string;
 }

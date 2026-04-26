@@ -12,6 +12,8 @@ export const getDashboardPathByRole = (roleName: string): string => {
       return "/admin/dashboard";
     case "TRAINING_COORDINATOR":
       return "/training-coordinator/dashboard";
+    case "INTERN":
+      return "/intern/dashboard";
     default:
       return "/unauthorized";
   }   

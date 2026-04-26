@@ -35,6 +35,8 @@ import CategoryIcon from "@mui/icons-material/Category";
 import AssignmentIndIcon from "@mui/icons-material/AssignmentInd";
 import TimelineIcon from "@mui/icons-material/Timeline";
 import WorkIcon from "@mui/icons-material/Work";
+import RocketLaunchIcon from "@mui/icons-material/RocketLaunch";
+import { internApi } from "../../../services/intern.api";
 import "../../../css/TA_Recruiter/Candidates/CandidateDetails.css";
 
 const CandidateDetails: React.FC = () => {
@@ -54,6 +56,11 @@ const CandidateDetails: React.FC = () => {
     reason: "",
     updatedBy: 0,
   });
+
+  // Activate intern dialog
+  const [activateDialogOpen, setActivateDialogOpen] = useState(false);
+  const [outlookEmail, setOutlookEmail] = useState("");
+  const [activating, setActivating] = useState(false);
 
   const fetchCandidateDetails = useCallback(async (candidateId: number) => {
     setLoading(true);
@@ -167,6 +174,35 @@ const CandidateDetails: React.FC = () => {
 
   const handleBack = () => {
     navigate("/ta-recruiter/candidates");
+  };
+
+  const handleActivateIntern = async () => {
+    if (!outlookEmail.trim()) {
+      showToast("Please enter the intern's Outlook email", "error");
+      return;
+    }
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    if (!emailRegex.test(outlookEmail.trim())) {
+      showToast("Please enter a valid email address", "error");
+      return;
+    }
+    setActivating(true);
+    try {
+      const res = await internApi.activateIntern(Number(id), { outlookEmail: outlookEmail.trim() });
+      if (res.success) {
+        showToast(res.message || "Intern activated successfully", "success");
+        setActivateDialogOpen(false);
+        setOutlookEmail("");
+        await fetchCandidateDetails(Number(id));
+      }
+    } catch (error: unknown) {
+      const errorMessage = error && typeof error === 'object' && 'message' in error
+        ? String(error.message)
+        : "Failed to activate intern";
+      showToast(errorMessage, "error");
+    } finally {
+      setActivating(false);
+    }
   };
 
   const handleStatusUpdate = async () => {
@@ -445,7 +481,10 @@ const CandidateDetails: React.FC = () => {
                             <MenuItem value="SELECTED">SELECTED</MenuItem>
                             <MenuItem value="REJECTED">REJECTED</MenuItem>
                             <MenuItem value="OFFERED">OFFERED</MenuItem>
+                            <MenuItem value="ACCEPTED">ACCEPTED</MenuItem>
                             <MenuItem value="JOINED">JOINED</MenuItem>
+                            <MenuItem value="NOT_JOINED">NOT_JOINED</MenuItem>
+                            <MenuItem value="OFFER_REJECTED">OFFER_REJECTED</MenuItem>
                             <MenuItem value="DROPPED">DROPPED</MenuItem>
                           </Select>
                         </FormControl>
@@ -590,7 +629,30 @@ const CandidateDetails: React.FC = () => {
           </Card>
         </Grid>
 
-        {/* Manual Overrides Section */}
+        {/* Activate Intern Card — shown only for JOINED candidates without user account */}
+        {candidate.applicationStage === 'JOINED' && !candidate.userId && (
+          <Grid size={{ xs: 12, md: 6 }}>
+            <Card className="details-info-card">
+              <CardContent>
+                <Typography variant="h6" className="card-section-title">
+                  <RocketLaunchIcon className="card-section-icon" />
+                  Intern Activation
+                </Typography>
+                <Typography sx={{ fontSize: '14px', color: 'var(--color-text-secondary)', mb: 2 }}>
+                  This candidate has joined. Activate their intern account to give them access to the Academy portal.
+                </Typography>
+                <Button
+                  variant="contained"
+                  startIcon={<RocketLaunchIcon />}
+                  onClick={() => { setOutlookEmail(""); setActivateDialogOpen(true); }}
+                  className="btn-status-action"
+                >
+                  Activate as Intern
+                </Button>
+              </CardContent>
+            </Card>
+          </Grid>
+        )}
         {overrides.length > 0 && (
           <Grid size={{ xs: 12 }}>
             <Card className="details-info-card override-card-compact">
@@ -655,6 +717,45 @@ const CandidateDetails: React.FC = () => {
           </Grid>
         )}
       </Grid>
+
+      {/* Activate Intern Dialog */}
+      <Dialog open={activateDialogOpen} onClose={() => setActivateDialogOpen(false)} maxWidth="sm" fullWidth>
+        <DialogTitle className="dialog-title">Activate Intern Account</DialogTitle>
+        <DialogContent className="dialog-content">
+          <Typography sx={{ fontSize: '14px', color: 'var(--color-text-secondary)', mb: 2, mt: 1 }}>
+            Enter the Outlook email the candidate has created (e.g. <strong>manohar.kanini@outlook.com</strong>).
+            Login credentials will be sent to this email.
+          </Typography>
+          <TextField
+            fullWidth
+            label="Intern Outlook Email *"
+            type="email"
+            value={outlookEmail}
+            onChange={e => setOutlookEmail(e.target.value)}
+            placeholder="firstname.kanini@outlook.com"
+            helperText="The intern will use this email to log in to the Academy portal"
+            className="dialog-text-field"
+          />
+        </DialogContent>
+        <DialogActions className="dialog-actions">
+          <Button
+            onClick={() => setActivateDialogOpen(false)}
+            disabled={activating}
+            variant="outlined"
+            className="t-dialog-cancel-btn"
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={handleActivateIntern}
+            variant="contained"
+            disabled={activating || !outlookEmail.trim()}
+            className="t-dialog-confirm-btn"
+          >
+            {activating ? "Activating..." : "Activate & Send Credentials"}
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       {/* Eligibility Edit Dialog */}
       <Dialog 

@@ -11,11 +11,11 @@ import OffersTab from './OffersTab';
 import '../../../css/TA_Recruiter/DocumentProcessing/DocumentProcessingDashboard.css';
 
 const TABS = [
-  { key: 'doc-types',        label: 'Setup' },
-  { key: 'send-documents',   label: 'Send Links' },
-  { key: 'verify-documents', label: 'Verify Docs' },
-  { key: 'offers',           label: 'Offers' },
-]; 
+  { key: 'doc-types',        label: 'Document Types' },
+  { key: 'send-documents',   label: 'Request Documents' },
+  { key: 'verify-documents', label: 'Review & Verify' },
+  { key: 'offers',           label: 'Offer Responses' },
+];
 
 const DocumentProcessingDashboard = () => {
   const [activeTab, setActiveTab] = useState('doc-types');
@@ -62,15 +62,20 @@ const DocumentProcessingDashboard = () => {
       {/* Header */}
       <Box className="dp-header">
         <Box className="dp-header-top">
-          <Box>
-            <Typography className="dp-title">
-              {TABS.find(t => t.key === activeTab)?.label || 'Document Processing'}
-            </Typography>
+          <Box className="dp-tab-bar" sx={{ flex: 1, padding: '0 !important' }}>
+            {TABS.map(tab => (
+              <button
+                key={tab.key}
+                type="button"
+                className={`dp-tab-btn ${activeTab === tab.key ? 'dp-tab-btn--active' : ''}`}
+                onClick={() => setActiveTab(tab.key)}
+              >
+                <span className="dp-tab-label">{tab.label}</span>
+              </button>
+            ))}
           </Box>
-
-          {/* Cycle Selector */}
           <Box className="dp-cycle-selector">
-            <Typography className="dp-cycle-label">Hiring Cycle</Typography>
+            <Typography className="dp-cycle-label">Cycle</Typography>
             {loadingCycles ? (
               <CircularProgress size={18} sx={{ color: 'var(--color-primary)' }} />
             ) : (
@@ -90,19 +95,7 @@ const DocumentProcessingDashboard = () => {
           </Box>
         </Box>
 
-        {/* Tab Bar */}
-        <Box className="dp-tab-bar">
-          {TABS.map(tab => (
-            <button
-              key={tab.key}
-              type="button"
-              className={`dp-tab-btn ${activeTab === tab.key ? 'dp-tab-btn--active' : ''}`}
-              onClick={() => setActiveTab(tab.key)}
-            >
-              <span className="dp-tab-label">{tab.label}</span>
-            </button>
-          ))}
-        </Box>
+        {/* Tab Bar removed from here — merged into top row */}
       </Box>
 
       {/* Content */}

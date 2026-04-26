@@ -41,14 +41,14 @@ public class VerificationController {
             @Valid @RequestBody VerificationRequest request) {
         VerificationResponse response = verificationService.rejectDocument(documentId, request);
         
-        // *** NEW: Send rejection email to candidate with reason and resubmit link ***
-        boolean emailSent = documentLinkService.sendRejectionEmail(documentId, request.getRejectionReason());
-        if (!emailSent) {
-            log.warn("Failed to send rejection email for document: {}", documentId);
+        // Send document rejection link to candidate with reason and resubmit link
+        boolean linkSent = documentLinkService.sendDocumentRejectionLink(documentId, request.getRejectionReason());
+        if (!linkSent) {
+            log.warn("Failed to send document rejection link for document: {}", documentId);
         }
         
         return ResponseEntity.status(HttpStatus.OK)
-                .body(ApiResponse.success("Document rejected successfully. Candidate has been notified.", response));
+                .body(ApiResponse.success("Document rejected successfully. Candidate has been notified with resubmit link.", response));
     }
     
     @GetMapping("/pending")

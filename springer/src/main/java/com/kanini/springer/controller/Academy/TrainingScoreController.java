@@ -21,7 +21,9 @@ import java.util.List;
 @RequiredArgsConstructor
 @Validated
 public class TrainingScoreController {
-    
+
+    private static final String RETRIEVED_SUCCESSFULLY = " retrieved successfully";
+
     private final ITrainingScoreService scoreService;
     
     @PostMapping
@@ -32,51 +34,22 @@ public class TrainingScoreController {
                 .body(ApiResponse.success("Training score created successfully", response));
     }
     
-    @GetMapping
-    public ResponseEntity<ApiResponse<List<TrainingScoreResponse>>> getAllScores() {
-        List<TrainingScoreResponse> response = scoreService.getAllScores();
-        return ResponseEntity.status(HttpStatus.OK)
-                .body(ApiResponse.success("All scores retrieved successfully", response));
-    }
-    
-    @GetMapping("/{scoreId}")
-    public ResponseEntity<ApiResponse<TrainingScoreResponse>> getScoreById(
-            @PathVariable Integer scoreId) {
-        TrainingScoreResponse response = scoreService.getScoreById(scoreId);
-        return ResponseEntity.status(HttpStatus.OK)
-                .body(ApiResponse.success("Score retrieved successfully", response));
-    }
-    
     @GetMapping("/student/{studentId}")
     public ResponseEntity<ApiResponse<List<TrainingScoreResponse>>> getScoresByStudent(
             @PathVariable Long studentId) {
         List<TrainingScoreResponse> response = scoreService.getScoresByStudent(studentId);
         return ResponseEntity.status(HttpStatus.OK)
-                .body(ApiResponse.success("Scores for student " + studentId + " retrieved successfully", response));
+                .body(ApiResponse.success("Scores for student " + studentId + RETRIEVED_SUCCESSFULLY, response));
     }
     
-    @GetMapping("/course/{courseId}")
-    public ResponseEntity<ApiResponse<List<TrainingScoreResponse>>> getScoresByCourse(
-            @PathVariable Integer courseId) {
-        List<TrainingScoreResponse> response = scoreService.getScoresByCourse(courseId);
+    @GetMapping("/batch")
+    public ResponseEntity<ApiResponse<List<TrainingScoreResponse>>> getScoresByBatchAndCourse(
+            @RequestParam Integer programId,
+            @RequestParam Integer batchNumber,
+            @RequestParam Integer courseId) {
+        List<TrainingScoreResponse> response = scoreService.getScoresByBatchAndCourse(programId, batchNumber, courseId);
         return ResponseEntity.status(HttpStatus.OK)
-                .body(ApiResponse.success("Scores for course " + courseId + " retrieved successfully", response));
-    }
-    
-    @GetMapping("/status/{status}")
-    public ResponseEntity<ApiResponse<List<TrainingScoreResponse>>> getScoresByStatus(
-            @PathVariable String status) {
-        List<TrainingScoreResponse> response = scoreService.getScoresByStatus(status);
-        return ResponseEntity.status(HttpStatus.OK)
-                .body(ApiResponse.success("Scores with status " + status + " retrieved successfully", response));
-    }
-    
-    @GetMapping("/reviewer/{reviewerId}")
-    public ResponseEntity<ApiResponse<List<TrainingScoreResponse>>> getScoresByReviewer(
-            @PathVariable Long reviewerId) {
-        List<TrainingScoreResponse> response = scoreService.getScoresByReviewer(reviewerId);
-        return ResponseEntity.status(HttpStatus.OK)
-                .body(ApiResponse.success("Scores reviewed by " + reviewerId + " retrieved successfully", response));
+                .body(ApiResponse.success("Scores retrieved successfully", response));
     }
     
     @PatchMapping("/{scoreId}")

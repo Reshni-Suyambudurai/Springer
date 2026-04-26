@@ -45,4 +45,5 @@ public class CandidateResponse {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private List<String> skillNames; // List of skill names
+    private Long userId; // set when intern account is activated
 }

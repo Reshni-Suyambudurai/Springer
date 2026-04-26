@@ -20,6 +20,7 @@ public class BatchAllocationMapper {
         response.setPerformance(entity.getPerformance() != null ? entity.getPerformance().toString() : null);
         response.setAttendancePercentage(entity.getAttendancePercentage());
         response.setOverallWeightedScore(entity.getOverallWeightedScore());
+        response.setTransferredFromStudentId(entity.getTransferredFromStudentId());
         // Note: presentDays, totalTrainingDays, absentDays are calculated from TrainingDayAttendance table
         // They are NOT stored in BatchAllocation entity
         response.setCreatedAt(entity.getCreatedAt());

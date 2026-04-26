@@ -1,6 +1,5 @@
 package com.kanini.springer.service.DocumentCollection.impl;
 
-import com.kanini.springer.dto.DocumentCollection.OfferLetterResponse;
 import com.kanini.springer.dto.DocumentCollection.RequiredDocumentDTO;
 import com.kanini.springer.entity.utils.EmailTemplate;
 import com.kanini.springer.repository.EmailTemplateRepository;
@@ -15,7 +14,6 @@ import org.springframework.stereotype.Service;
 import jakarta.mail.internet.MimeMessage;
 import org.springframework.core.io.ClassPathResource;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -33,8 +31,6 @@ public class EmailServiceImpl implements IEmailService {
 
     private static final DateTimeFormatter DATE_FORMATTER =
             DateTimeFormatter.ofPattern("dd MMM yyyy, hh:mm a");
-    private static final DateTimeFormatter DATE_ONLY_FORMATTER =
-            DateTimeFormatter.ofPattern("dd MMM yyyy");
 
     @Override
     public boolean sendDocumentSubmissionLink(String candidateEmail, String candidateName,
@@ -47,7 +43,6 @@ public class EmailServiceImpl implements IEmailService {
                     .orElseThrow(() -> new RuntimeException("Email template DOCUMENT_SUBMISSION_LINK not found in DB"));
             log.info("✅ Template found: {}", template.getTemplateName());
 
-            // Deduplicate documents by type (in case same document appears multiple times)
             java.util.Set<String> seenDocTypes = new java.util.HashSet<>();
             StringBuilder docListHtml = new StringBuilder();
             for (RequiredDocumentDTO doc : requiredDocuments) {
@@ -93,44 +88,75 @@ public class EmailServiceImpl implements IEmailService {
     }
 
     @Override
-    public boolean sendOfferEmail(String candidateEmail, String candidateName,
-            OfferLetterResponse offerDetails, String acceptLink, String declineLink) {
+    public boolean sendInternWelcomeEmail(String internEmail, String internName, String tempPassword) {
         try {
-            String subject = "Job Offer \u2013 Kanini Software Solutions";
-            String body = buildOfferEmailBody(candidateName, offerDetails, acceptLink, declineLink);
-            return sendHtmlEmail(candidateEmail, subject, body);
+            String subject = "Welcome to Kanini Academy \u2014 Your Login Credentials";
+            String body = "<!DOCTYPE html><html><body style='font-family:Arial,sans-serif;background:#f0f2f5;padding:40px 20px;'>" +
+                "<table width='600' cellpadding='0' cellspacing='0' style='background:#fff;margin:0 auto;border-radius:8px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,0.1);'>" +
+                "<tr><td style='background:#0F4C81;padding:28px 40px;'>" +
+                "<table width='100%'><tr>" +
+                "<td style='color:#fff;font-size:20px;font-weight:700;'>Kanini Academy</td>" +
+                "<td align='right' style='color:rgba(255,255,255,0.7);font-size:12px;'>Intern Portal</td>" +
+                "</tr></table></td></tr>" +
+                "<tr><td style='padding:40px;'>" +
+                "<h2 style='margin:0 0 16px;color:#111827;'>Welcome, " + internName + "! \uD83C\uDF89</h2>" +
+                "<p style='color:#374151;font-size:15px;line-height:1.7;'>Your intern account has been activated. You can now log in to the Kanini Academy portal to view your scores, attendance, and progress.</p>" +
+                "<table width='100%' style='background:#F9FAFB;border:1px solid #E5E7EB;border-radius:6px;margin:24px 0;'>" +
+                "<tr><td style='padding:16px 20px;'>" +
+                "<p style='margin:0 0 8px;font-size:13px;font-weight:700;color:#6B7280;text-transform:uppercase;'>Your Login Credentials</p>" +
+                "<p style='margin:0 0 6px;font-size:14px;color:#374151;'><strong>Email:</strong> " + internEmail + "</p>" +
+                "<p style='margin:0;font-size:14px;color:#374151;'><strong>Temporary Password:</strong> " + tempPassword + "</p>" +
+                "</td></tr></table>" +
+                "<table style='background:#FEF3C7;border:1px solid #FCD34D;border-radius:6px;margin:0 0 24px;'><tr><td style='padding:12px 16px;'>" +
+                "<p style='margin:0;font-size:13px;color:#92400E;'><strong>\u26A0 Important:</strong> Please change your password after your first login for security.</p>" +
+                "</td></tr></table>" +
+                "<p style='color:#374151;font-size:14px;'>Warm regards,<br><strong>Kanini Talent Acquisition Team</strong></p>" +
+                "</td></tr>" +
+                "<tr><td style='background:#F9FAFB;border-top:1px solid #E5E7EB;padding:16px 40px;text-align:center;'>" +
+                "<p style='margin:0;font-size:11px;color:#9CA3AF;'>\u00A9 2026 Kanini Software Solutions</p>" +
+                "</td></tr></table></body></html>";
+            return sendHtmlEmail(internEmail, subject, body);
         } catch (Exception e) {
-            log.error("Failed to send offer email: {}", e.getMessage(), e);
+            log.error("Failed to send intern welcome email: {}", e.getMessage());
             return false;
         }
     }
 
     @Override
-    public boolean sendOfferAcceptanceConfirmation(String candidateEmail, String candidateName,
-            LocalDate joiningDate) {
+    public boolean sendWarningEmail(String internEmail, String internName,
+            String warningType, String severity, String message, String issuedBy) {
         try {
-            String subject = "Welcome to Kanini Software Solutions!";
-            String body = buildAcceptanceEmailBody(candidateName, joiningDate);
-            return sendHtmlEmail(candidateEmail, subject, body);
+            String subject = "Warning Issued \u2014 Kanini Academy";
+            String severityColor = severity.equals("SEVERE") ? "#C62828"
+                    : severity.equals("MODERATE") ? "#E65100" : "#F9A825";
+            String body = "<!DOCTYPE html><html><body style='font-family:Arial,sans-serif;background:#f4f4f4;padding:30px 0;'>" +
+                "<table width='600' cellpadding='0' cellspacing='0' style='background:#fff;margin:0 auto;border-radius:8px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.08);'>" +
+                "<tr><td style='background:#0F4C81;padding:24px 40px;'>" +
+                "<p style='margin:0;color:#fff;font-size:18px;font-weight:700;'>Kanini Academy</p></td></tr>" +
+                "<tr><td style='padding:32px 40px;'>" +
+                "<p style='font-size:15px;color:#222;'>Dear <strong>" + internName + "</strong>,</p>" +
+                "<p style='font-size:14px;color:#444;line-height:1.7;'>A warning has been issued to you by <strong>" + issuedBy + "</strong>. Please log in to the portal to acknowledge it.</p>" +
+                "<table width='100%' style='background:#f9fafb;border:1px solid #e5e7eb;border-radius:6px;margin:20px 0;'>" +
+                "<tr><td style='padding:16px 20px;'>" +
+                "<p style='margin:0 0 8px;font-size:12px;font-weight:700;color:#6b7280;text-transform:uppercase;'>Warning Details</p>" +
+                "<p style='margin:0 0 6px;font-size:14px;color:#374151;'><strong>Type:</strong> " + warningType.replace("_", " ") + "</p>" +
+                "<p style='margin:0 0 6px;font-size:14px;'><strong>Severity:</strong> <span style='color:" + severityColor + ";font-weight:700;'>" + severity + "</span></p>" +
+                "<p style='margin:0;font-size:14px;color:#374151;'><strong>Message:</strong> " + message + "</p>" +
+                "</td></tr></table>" +
+                "<p style='font-size:13px;color:#666;'>Please log in to the Kanini Academy portal to acknowledge this warning.</p>" +
+                "<p style='font-size:13px;color:#666;margin-top:24px;'>Regards,<br><strong>Kanini Talent Acquisition Team</strong></p>" +
+                "</td></tr>" +
+                "<tr><td style='background:#f5f5f5;padding:14px 40px;text-align:center;border-top:1px solid #eee;'>" +
+                "<p style='margin:0;color:#aaa;font-size:11px;'>\u00A9 2026 Kanini Software Solutions</p>" +
+                "</td></tr></table></body></html>";
+            return sendHtmlEmail(internEmail, subject, body);
         } catch (Exception e) {
-            log.error("Failed to send acceptance confirmation: {}", e.getMessage(), e);
+            log.error("Failed to send warning email to {}: {}", internEmail, e.getMessage());
             return false;
         }
     }
 
-    @Override
-    public boolean sendOfferDeclineConfirmation(String candidateEmail, String candidateName) {
-        try {
-            String subject = "Offer Status Update \u2013 Kanini Software Solutions";
-            String body = buildDeclineEmailBody(candidateName);
-            return sendHtmlEmail(candidateEmail, subject, body);
-        } catch (Exception e) {
-            log.error("Failed to send decline confirmation: {}", e.getMessage(), e);
-            return false;
-        }
-    }
-
-    // ─── Core send method with CID inline images ─────────────────────────────
+    // ─── Core send methods ────────────────────────────────────────────────────
 
     private boolean sendHtmlEmailWithCid(String to, String subject, String htmlBody) {
         try {
@@ -140,14 +166,11 @@ public class EmailServiceImpl implements IEmailService {
             helper.setTo(to);
             helper.setSubject(subject);
 
-            // Replace DB placeholder URLs with cid: references
             String body = htmlBody
                 .replace("cid-right-logo", "cid:right-logo")
                 .replace("cid-signature", "cid:signature");
 
             helper.setText(body, true);
-
-            // Attach images inline with CID
             helper.addInline("right-logo", new ClassPathResource("static/images/right-logo.png"));
             helper.addInline("signature", new ClassPathResource("static/images/siganture.png"));
 
@@ -155,7 +178,7 @@ public class EmailServiceImpl implements IEmailService {
             log.info("✅ Email sent successfully to: {}", to);
             return true;
         } catch (Exception e) {
-            log.error("❌ EMAIL SEND FAILED to: {} | Error type: {} | Message: {}", to, e.getClass().getSimpleName(), e.getMessage());
+            log.error("❌ EMAIL SEND FAILED to: {} | Error: {}", to, e.getMessage());
             Throwable root = getRootCause(e);
             log.error("❌ Root cause: {} — {}", root.getClass().getSimpleName(), root.getMessage());
             return false;
@@ -175,7 +198,6 @@ public class EmailServiceImpl implements IEmailService {
             return true;
         } catch (Exception e) {
             log.error("EMAIL SEND FAILED to {} — root cause: {}", to, getRootCause(e).getMessage());
-            log.error("Full email error:", e);
             return false;
         }
     }
@@ -185,8 +207,6 @@ public class EmailServiceImpl implements IEmailService {
         while (cause.getCause() != null) cause = cause.getCause();
         return cause;
     }
-
-    // ─── Helper: format enum name to readable ────────────────────────────────
 
     private String formatDocumentName(String enumName) {
         if (enumName == null) return "";
@@ -200,66 +220,5 @@ public class EmailServiceImpl implements IEmailService {
             }
         }
         return result.toString().trim();
-    }
-
-    // ─── Offer email bodies (no DB template needed — kept inline) ────────────
-
-    private String buildOfferEmailBody(String candidateName, OfferLetterResponse offer,
-            String acceptLink, String declineLink) {
-        return "<!DOCTYPE html><html><body style='font-family:Arial,sans-serif;background:#f4f4f4;padding:30px 0;'>" +
-               "<table width='650' cellpadding='0' cellspacing='0' style='background:#fff;margin:0 auto;border-radius:8px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.08);'>" +
-               "<tr><td style='background:#0D47A1;height:6px;'></td></tr>" +
-               "<tr><td style='padding:30px 40px 20px 40px;text-align:right;'>" +
-               "<img src='https://www.kanini.com/wp-content/uploads/2022/03/kanini-logo.png' alt='Kanini' style='width:90px;'></td></tr>" +
-               "<tr><td style='padding:10px 40px 30px 40px;'>" +
-               "<p style='font-size:16px;color:#222;'>Dear <strong>" + candidateName + "</strong>,</p>" +
-               "<p style='font-size:15px;color:#444;line-height:1.7;'>We are delighted to extend an offer of employment to you at <strong>Kanini Software Solutions</strong>.</p>" +
-               "<table width='100%' style='margin:20px 0;background:#f0f4ff;border-left:4px solid #0D47A1;border-radius:0 6px 6px 0;'>" +
-               "<tr><td style='padding:20px;'>" +
-               "<p style='margin:0 0 8px;color:#0D47A1;font-weight:700;font-size:14px;text-transform:uppercase;'>Offer Details</p>" +
-               "<p style='margin:0 0 6px;font-size:14px;color:#333;'><strong>Issue Date:</strong>&nbsp;" + offer.getIssueDate() + "</p>" +
-               "</td></tr></table>" +
-               "<table width='100%' style='margin:24px 0;'><tr>" +
-               "<td align='center' style='padding-right:10px;'><a href='" + acceptLink + "' style='display:inline-block;background:#2E7D32;color:#fff;padding:13px 36px;font-size:14px;font-weight:700;border-radius:5px;text-decoration:none;'>ACCEPT OFFER</a></td>" +
-               "<td align='center' style='padding-left:10px;'><a href='" + declineLink + "' style='display:inline-block;background:#C62828;color:#fff;padding:13px 36px;font-size:14px;font-weight:700;border-radius:5px;text-decoration:none;'>DECLINE OFFER</a></td>" +
-               "</tr></table>" +
-               "<p style='font-size:13px;color:#666;'>For assistance, contact <a href='mailto:hrops.india@kanini.com' style='color:#0D47A1;'>hrops.india@kanini.com</a></p>" +
-               "</td></tr>" +
-               "<tr><td style='background:#f5f5f5;padding:16px 40px;text-align:center;border-top:1px solid #eee;'>" +
-               "<p style='margin:0;color:#aaa;font-size:11px;'>Automated mail from <a href='https://myhrms.kanini.com' style='color:#0D47A1;'>https://myhrms.kanini.com</a></p>" +
-               "</td></tr></table></body></html>";
-    }
-
-    private String buildAcceptanceEmailBody(String candidateName, LocalDate joiningDate) {
-        return "<!DOCTYPE html><html><body style='font-family:Arial,sans-serif;background:#f4f4f4;padding:30px 0;'>" +
-               "<table width='650' cellpadding='0' cellspacing='0' style='background:#fff;margin:0 auto;border-radius:8px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.08);'>" +
-               "<tr><td style='background:#2E7D32;height:6px;'></td></tr>" +
-               "<tr><td style='padding:30px 40px 20px 40px;text-align:right;'>" +
-               "<img src='https://www.kanini.com/wp-content/uploads/2022/03/kanini-logo.png' alt='Kanini' style='width:90px;'></td></tr>" +
-               "<tr><td style='padding:10px 40px 30px 40px;'>" +
-               "<p style='font-size:16px;color:#222;'>Dear <strong>" + candidateName + "</strong>,</p>" +
-               "<p style='font-size:15px;color:#444;line-height:1.7;'>We are thrilled to welcome you to the <strong>Kanini family</strong>! Your joining date is confirmed as <strong>" + joiningDate.format(DATE_ONLY_FORMATTER) + "</strong>.</p>" +
-               "<p style='font-size:14px;color:#666;'>Further onboarding details will be shared with you shortly. We look forward to having you on board!</p>" +
-               "<p style='font-size:13px;color:#666;'>For assistance, contact <a href='mailto:hrops.india@kanini.com' style='color:#0D47A1;'>hrops.india@kanini.com</a></p>" +
-               "</td></tr>" +
-               "<tr><td style='background:#f5f5f5;padding:16px 40px;text-align:center;border-top:1px solid #eee;'>" +
-               "<p style='margin:0;color:#aaa;font-size:11px;'>Automated mail from <a href='https://myhrms.kanini.com' style='color:#0D47A1;'>https://myhrms.kanini.com</a></p>" +
-               "</td></tr></table></body></html>";
-    }
-
-    private String buildDeclineEmailBody(String candidateName) {
-        return "<!DOCTYPE html><html><body style='font-family:Arial,sans-serif;background:#f4f4f4;padding:30px 0;'>" +
-               "<table width='650' cellpadding='0' cellspacing='0' style='background:#fff;margin:0 auto;border-radius:8px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.08);'>" +
-               "<tr><td style='background:#0D47A1;height:6px;'></td></tr>" +
-               "<tr><td style='padding:30px 40px 20px 40px;text-align:right;'>" +
-               "<img src='https://www.kanini.com/wp-content/uploads/2022/03/kanini-logo.png' alt='Kanini' style='width:90px;'></td></tr>" +
-               "<tr><td style='padding:10px 40px 30px 40px;'>" +
-               "<p style='font-size:16px;color:#222;'>Dear <strong>" + candidateName + "</strong>,</p>" +
-               "<p style='font-size:15px;color:#444;line-height:1.7;'>Thank you for considering a career at <strong>Kanini Software Solutions</strong>. We respect your decision and wish you all the very best in your future endeavours.</p>" +
-               "<p style='font-size:13px;color:#666;'>For assistance, contact <a href='mailto:hrops.india@kanini.com' style='color:#0D47A1;'>hrops.india@kanini.com</a></p>" +
-               "</td></tr>" +
-               "<tr><td style='background:#f5f5f5;padding:16px 40px;text-align:center;border-top:1px solid #eee;'>" +
-               "<p style='margin:0;color:#aaa;font-size:11px;'>Automated mail from <a href='https://myhrms.kanini.com' style='color:#0D47A1;'>https://myhrms.kanini.com</a></p>" +
-               "</td></tr></table></body></html>";
     }
 }

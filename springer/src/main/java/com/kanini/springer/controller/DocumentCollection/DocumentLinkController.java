@@ -31,8 +31,8 @@ public class DocumentLinkController {
     private final IDocumentLinkService documentLinkService;
 
     /**
-     * Generate and send document submission link to candidate
-     * Initiates document collection process
+     * Send document submission link to candidate
+     * Initiates document collection process via secure link
      */
     @PostMapping("/send-submission-link")
     public ResponseEntity<ApiResponse<DocumentLinkResponse>> sendSubmissionLink(
@@ -50,7 +50,7 @@ public class DocumentLinkController {
         return new ResponseEntity<>(
             new ApiResponse<>(
                 true,
-                "Document submission link sent to candidate email successfully",
+                "Document submission link sent to candidate successfully",
                 response
             ),
             HttpStatus.CREATED
@@ -58,7 +58,8 @@ public class DocumentLinkController {
     }
 
     /**
-     * Resend document submission link (if candidate didn't receive)
+     * Resend document submission link to candidate
+     * Used when candidate needs the link again or wants to submit additional documents
      * @param documentTypeIds optional comma-separated list of document type IDs to resend
      */
     @PostMapping("/resend-submission-link")
@@ -75,26 +76,26 @@ public class DocumentLinkController {
             docTypeIds = java.util.Arrays.stream(documentTypeIds.split(","))
                 .map(String::trim)
                 .map(Long::parseLong)
-                .collect(java.util.stream.Collectors.toList());
+                .toList();
         }
 
         boolean sent = documentLinkService.resendSubmissionLink(candidateId, cycleId, docTypeIds, submissionDeadline);
 
         if (sent) {
             return ResponseEntity.ok(
-                new ApiResponse<>(true, "Submission link resent to candidate email successfully", null)
+                new ApiResponse<>(true, "Submission link resent to candidate successfully", null)
             );
         } else {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
-                new ApiResponse<>(false, "Failed to resend submission link. Please try again.", null)
+            return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(
+                new ApiResponse<>(false, "No pending or rejected documents to resend for this candidate.", null)
             );
         }
     }
 
     /**
-     * Send submission links to multiple candidates at once
-     * All candidates receive the same document type list
-     * One click from UI to notify all selected candidates
+     * Send submission links to multiple candidates in bulk
+     * Efficiently distribute document collection links to multiple candidates
+     * All candidates receive the same document type list and deadline
      */
     @PostMapping("/send-submission-link/bulk")
     public ResponseEntity<ApiResponse<Map<String, String>>> sendBulkSubmissionLinks(

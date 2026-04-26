@@ -50,6 +50,15 @@ public class AttendanceController {
                 .body(ApiResponse.success("Attendance summary retrieved successfully", response));
     }
 
+    @GetMapping("/batch/summary")
+    public ResponseEntity<ApiResponse<List<AttendanceStatsResponse>>> getAttendanceSummaryByBatch(
+            @RequestParam Integer programId,
+            @RequestParam Integer batchNumber) {
+        List<AttendanceStatsResponse> response = attendanceService.getAttendanceSummaryByBatch(programId, batchNumber);
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(ApiResponse.success("Batch attendance summary retrieved successfully", response));
+    }
+
     @GetMapping("/{studentId}/records")
     public ResponseEntity<ApiResponse<List<AttendanceResponse>>> getAttendanceRecords(
             @PathVariable Long studentId) {

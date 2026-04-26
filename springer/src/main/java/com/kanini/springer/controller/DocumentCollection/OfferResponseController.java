@@ -46,4 +46,12 @@ public class OfferResponseController {
         return ResponseEntity.status(HttpStatus.OK)
                 .body(ApiResponse.success("Candidate offer retrieved successfully", response));
     }
+
+        @PutMapping("/{offerId}/response")
+        public ResponseEntity<ApiResponse<OfferResponseResponse>> updateResponse(
+                        @PathVariable Long offerId,
+                        @Valid @RequestBody OfferResponseRequest request) {
+                OfferResponseResponse response = responseService.updateResponse(offerId, request);
+                return ResponseEntity.ok(ApiResponse.success("Offer response updated successfully", response));
+        }
 }

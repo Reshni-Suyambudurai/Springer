@@ -14,12 +14,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class DocumentTypeServiceImpl implements IDocumentTypeService {
-    
+
+    private static final String DOC_TYPE_NOT_FOUND = "Document type not found with ID: ";
+
     private final DocumentTypeRepository typeRepository;
     private final DocumentTypeMapper mapper;
     
@@ -52,7 +53,7 @@ public class DocumentTypeServiceImpl implements IDocumentTypeService {
     @Transactional(readOnly = true)
     public DocumentTypeResponse getTypeById(Long documentTypeId) {
         DocumentType type = typeRepository.findById(documentTypeId)
-                .orElseThrow(() -> new ResourceNotFoundException("Document type not found with ID: " + documentTypeId));
+                .orElseThrow(() -> new ResourceNotFoundException(DOC_TYPE_NOT_FOUND + documentTypeId));
         return mapper.toResponse(type);
     }
     
@@ -61,14 +62,14 @@ public class DocumentTypeServiceImpl implements IDocumentTypeService {
     public List<DocumentTypeResponse> getAllTypes() {
         return typeRepository.findAll().stream()
                 .map(mapper::toResponse)
-                .collect(Collectors.toList());
+                .toList();
     }
     
     @Override
     @Transactional
     public DocumentTypeResponse updateType(Long documentTypeId, DocumentTypeRequest request) {
         DocumentType type = typeRepository.findById(documentTypeId)
-                .orElseThrow(() -> new ResourceNotFoundException("Document type not found with ID: " + documentTypeId));
+                .orElseThrow(() -> new ResourceNotFoundException(DOC_TYPE_NOT_FOUND + documentTypeId));
         
         if (request.getDocumentType() != null && !request.getDocumentType().trim().isEmpty()) {
             Enums.DocumentType newDocTypeEnum;
@@ -93,7 +94,7 @@ public class DocumentTypeServiceImpl implements IDocumentTypeService {
     @Transactional
     public void deleteType(Long documentTypeId) {
         DocumentType type = typeRepository.findById(documentTypeId)
-                .orElseThrow(() -> new ResourceNotFoundException("Document type not found with ID: " + documentTypeId));
+                .orElseThrow(() -> new ResourceNotFoundException(DOC_TYPE_NOT_FOUND + documentTypeId));
         
         typeRepository.delete(type);
     }

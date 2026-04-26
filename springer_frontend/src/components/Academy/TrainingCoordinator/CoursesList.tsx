@@ -2,8 +2,9 @@ import { useState, useEffect } from 'react';
 import {
   Box, Card, TextField, InputAdornment, Button, Typography, Stack,
   IconButton, Table, TableBody, TableCell, TableContainer, TableHead,
-  TableRow, TablePagination, CircularProgress,
+  TableRow, TablePagination, CircularProgress, Chip,
   Dialog, DialogTitle, DialogContent, DialogActions,
+  Checkbox, FormControlLabel,
 } from '@mui/material';
 import {
   Add as AddIcon, Search as SearchIcon,
@@ -15,8 +16,15 @@ import type { TrainingCourseResponse, TrainingCourseRequest, AcademyContextProps
 import '../../../css/Academy/TrainingCoordinator/CoursesList.css';
 
 const EMPTY_FORM: TrainingCourseRequest = {
-  courseName: '', description: '', minScore: 0, weightage: 0,
+  courseName: '', description: '', minScore: 0, weightage: 0, isCommunication: false,
+  communicationTemplate: '',
 };
+
+const DEFAULT_COMM_FIELDS = [
+  { name: 'Grammar',       maxScore: 20 },
+  { name: 'Proactiveness', maxScore: 20 },
+  { name: 'Fluency',       maxScore: 10 },
+];
 
 const CoursesList = ({ context }: { context: AcademyContextProps }) => {
   const [courses, setCourses] = useState<TrainingCourseResponse[]>([]);
@@ -28,6 +36,7 @@ const CoursesList = ({ context }: { context: AcademyContextProps }) => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editCourse, setEditCourse] = useState<TrainingCourseResponse | null>(null);
   const [form, setForm] = useState<TrainingCourseRequest>(EMPTY_FORM);
+  const [commFields, setCommFields] = useState(DEFAULT_COMM_FIELDS.map(f => ({ ...f })));
   const [submitting, setSubmitting] = useState(false);
 
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -59,6 +68,7 @@ const CoursesList = ({ context }: { context: AcademyContextProps }) => {
   const openCreate = () => {
     setEditCourse(null);
     setForm(EMPTY_FORM);
+    setCommFields(DEFAULT_COMM_FIELDS.map(f => ({ ...f })));
     setDialogOpen(true);
   };
 
@@ -66,23 +76,46 @@ const CoursesList = ({ context }: { context: AcademyContextProps }) => {
     e.stopPropagation();
     setEditCourse(course);
     setForm({
-      courseName:  course.courseName,
-      description: course.description ?? '',
-      minScore:    course.minScore,
-      weightage:   course.weightage,
+      courseName:      course.courseName,
+      description:     course.description ?? '',
+      minScore:        course.minScore,
+      weightage:       course.weightage ?? 0,
+      isCommunication: course.isCommunication ?? false,
+      communicationTemplate: course.communicationTemplate ?? '',
     });
+    // Parse existing template into commFields for editing
+    if (course.isCommunication && course.communicationTemplate) {
+      try {
+        setCommFields(JSON.parse(course.communicationTemplate));
+      } catch { setCommFields(DEFAULT_COMM_FIELDS.map(f => ({ ...f }))); }
+    } else {
+      setCommFields(DEFAULT_COMM_FIELDS.map(f => ({ ...f })));
+    }
     setDialogOpen(true);
   };
 
   const handleSubmit = async () => {
     if (!form.courseName.trim()) { showToast('Course name is required', 'error'); return; }
     if (form.minScore < 0 || form.minScore > 100) { showToast('Min score must be between 0 and 100', 'error'); return; }
-    if (form.weightage < 1 || form.weightage > 100) { showToast('Weightage must be between 1 and 100', 'error'); return; }
+    if (!form.isCommunication) {
+      if (!form.weightage || form.weightage < 1 || form.weightage > 100) {
+        showToast('Weightage must be between 1 and 100', 'error'); return;
+      }
+    }
+    if (form.isCommunication) {
+      if (commFields.some(f => !f.name.trim())) { showToast('All sub-field names are required', 'error'); return; }
+      if (commFields.some(f => f.maxScore < 1)) { showToast('All max scores must be at least 1', 'error'); return; }
+    }
+    const payload: TrainingCourseRequest = {
+      ...form,
+      weightage: form.isCommunication ? undefined : form.weightage,
+      communicationTemplate: form.isCommunication ? JSON.stringify(commFields) : undefined,
+    };
     try {
       setSubmitting(true);
       const res = editCourse
-        ? await trainingCourseApi.updateCourse(editCourse.courseId, form)
-        : await trainingCourseApi.createCourse(form);
+        ? await trainingCourseApi.updateCourse(editCourse.courseId, payload)
+        : await trainingCourseApi.createCourse(payload);
       if (res.success) {
         showToast(editCourse ? 'Course updated successfully' : 'Course created successfully', 'success');
         setDialogOpen(false);
@@ -154,13 +187,14 @@ const CoursesList = ({ context }: { context: AcademyContextProps }) => {
                       <TableCell className="crs-table-head-cell">Description</TableCell>
                       <TableCell className="crs-table-head-cell">Min Score</TableCell>
                       <TableCell className="crs-table-head-cell">Weightage</TableCell>
+                      <TableCell className="crs-table-head-cell">Type</TableCell>
                       <TableCell className="crs-table-head-cell crs-table-head-cell--actions">Actions</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
                     {paginated.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={5} className="crs-empty-cell">
+                        <TableCell colSpan={6} className="crs-empty-cell">
                           <MenuBookIcon className="crs-empty-icon" />
                           <Typography className="crs-empty-text">No courses found</Typography>
                           <Typography className="crs-empty-text" sx={{ fontSize: 'var(--text-xs)', mt: 0.5 }}>
@@ -193,6 +227,12 @@ const CoursesList = ({ context }: { context: AcademyContextProps }) => {
                         </TableCell>
                         <TableCell className="crs-table-cell">
                           <Typography className="crs-row-secondary">{course.weightage}%</Typography>
+                        </TableCell>
+                        <TableCell className="crs-table-cell">
+                          {course.isCommunication ? (
+                            <Chip label="Communication" size="small" variant="outlined"
+                              sx={{ fontSize: 'var(--text-xs)', borderColor: 'var(--color-primary)', color: 'var(--color-primary)' }} />
+                          ) : <Typography className="crs-row-secondary">—</Typography>}
                         </TableCell>
                         <TableCell className="crs-table-cell crs-table-cell--actions">
                           <Stack direction="row" spacing={0.5} justifyContent="flex-end">
@@ -255,18 +295,97 @@ const CoursesList = ({ context }: { context: AcademyContextProps }) => {
               }}
               inputProps={{ inputMode: 'numeric', pattern: '[0-9]*' }}
               className="crs-dialog-field"
+              helperText={form.isCommunication
+                ? 'Minimum passing score out of 100 (after normalization)'
+                : 'Minimum passing score'}
             />
-            <TextField
-              label="Weightage (%) *" size="small" fullWidth
-              value={form.weightage === 0 ? '' : String(form.weightage)}
-              onChange={e => {
-                const val = e.target.value.replace(/[^0-9]/g, '');
-                setForm(prev => ({ ...prev, weightage: val ? Number(val) : 0 }));
-              }}
-              inputProps={{ inputMode: 'numeric', pattern: '[0-9]*' }}
-              className="crs-dialog-field"
-              helperText="Dates and trainer are set when linking this course to a batch"
+
+            {/* Weightage — only for technical courses */}
+            {!form.isCommunication && (
+              <TextField
+                label="Weightage (%) *" size="small" fullWidth
+                value={!form.weightage ? '' : String(form.weightage)}
+                onChange={e => {
+                  const val = e.target.value.replace(/[^0-9]/g, '');
+                  setForm(prev => ({ ...prev, weightage: val ? Number(val) : 0 }));
+                }}
+                inputProps={{ inputMode: 'numeric', pattern: '[0-9]*' }}
+                className="crs-dialog-field"
+                helperText="How much this course contributes to overall weighted score"
+              />
+            )}
+
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={!!form.isCommunication}
+                  onChange={e => {
+                    const checked = e.target.checked;
+                    setForm(prev => ({ ...prev, isCommunication: checked, weightage: checked ? 0 : prev.weightage }));
+                    if (checked) setCommFields(DEFAULT_COMM_FIELDS.map(f => ({ ...f })));
+                  }}
+                  size="small"
+                />
+              }
+              label={
+                <Typography sx={{ fontSize: 'var(--text-sm)' }}>
+                  Communication Course
+                  <Typography component="span" sx={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-secondary)', ml: 1 }}>
+                    (score shown separately, not in overall weighted score)
+                  </Typography>
+                </Typography>
+              }
             />
+
+            {/* Sub-field template builder — only for communication courses */}
+            {form.isCommunication && (
+              <Box sx={{ border: '1px solid var(--color-border)', borderRadius: 1, p: 1.5 }}>
+                <Typography sx={{ fontSize: 'var(--text-xs)', fontWeight: 600, mb: 1.5 }}>
+                  Sub-score Fields
+                  <Typography component="span" sx={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-secondary)', ml: 1, fontWeight: 400 }}>
+                    Total max: {commFields.reduce((s, f) => s + (f.maxScore || 0), 0)} → normalized to 100
+                  </Typography>
+                </Typography>
+                {commFields.map((field, idx) => (
+                  <Box key={idx} sx={{ display: 'flex', gap: 1, mb: 1, alignItems: 'center' }}>
+                    <TextField
+                      size="small" label="Field Name" value={field.name}
+                      onChange={e => setCommFields(prev => {
+                        const u = [...prev];
+                        u[idx] = { ...u[idx], name: e.target.value };
+                        return u;
+                      })}
+                      sx={{ flex: 2 }}
+                    />
+                    <TextField
+                      size="small" label="Max Score" value={field.maxScore === 0 ? '' : String(field.maxScore)}
+                      onChange={e => {
+                        const v = e.target.value.replace(/[^0-9]/g, '');
+                        setCommFields(prev => {
+                          const u = [...prev];
+                          u[idx] = { ...u[idx], maxScore: v ? Number(v) : 0 };
+                          return u;
+                        });
+                      }}
+                      inputProps={{ inputMode: 'numeric', pattern: '[0-9]*' }}
+                      error={field.maxScore < 1}
+                      helperText={field.maxScore < 1 ? 'Min 1' : ''}
+                      sx={{ flex: 1 }}
+                    />
+                    <Button size="small" color="error"
+                      disabled={commFields.length <= 1}
+                      onClick={() => setCommFields(prev => prev.filter((_, i) => i !== idx))}>
+                      ✕
+                    </Button>
+                  </Box>
+                ))}
+                <Button size="small" variant="outlined"
+                  onClick={() => setCommFields(prev => [...prev, { name: '', maxScore: 10 }])}
+                  sx={{ mt: 0.5, fontSize: 'var(--text-xs)' }}>
+                  + Add Field
+                </Button>
+              </Box>
+            )}
           </Stack>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>

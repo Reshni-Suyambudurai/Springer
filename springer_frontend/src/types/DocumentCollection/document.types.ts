@@ -121,6 +121,7 @@ export interface OfferLetterResponse {
   response: string;               // PENDING | ACCEPTED | DECLINED
   respondedDate: string | null;
   declineReason: string | null;
+  applicationStage: string | null; // candidate's academy stage — editable only when ACCEPTED
 }
 
 // ==================== OFFER RESPONSE ====================

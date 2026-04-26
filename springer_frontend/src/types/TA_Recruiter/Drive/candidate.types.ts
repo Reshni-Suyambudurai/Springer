@@ -16,6 +16,8 @@ export const ApplicationStage = {
   SELECTED: 'SELECTED',
   OFFERED: 'OFFERED',
   JOINED: 'JOINED',
+  NOT_JOINED: 'NOT_JOINED',
+  OFFER_REJECTED: 'OFFER_REJECTED',
   REJECTED: 'REJECTED',
   ACCEPTED: 'ACCEPTED',
   DROPPED: 'DROPPED'
@@ -137,6 +139,7 @@ export interface CandidateResponse {
   createdAt: string; // ISO-8601 format from LocalDateTime
   updatedAt: string; // ISO-8601 format from LocalDateTime
   skillNames: string[];
+  userId?: number;
 }
 
 /**
