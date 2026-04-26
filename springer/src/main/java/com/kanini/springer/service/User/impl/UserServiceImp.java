@@ -37,18 +37,23 @@ public class UserServiceImp implements IUserService {
         // Find all users with this email (same email can have different roles/passwords)
         List<User> users = userRepository.findAllByEmailWithRole(email);
         
-        // Check password — supports both BCrypt encoded (interns) and plain text (seeded staff)
-        boolean passwordMatches = passwordEncoder.matches(password, user.getPassword())
-                || user.getPassword().equals(password);
-        if (!passwordMatches) {
+        if (users.isEmpty()) {
             throw new ValidationException("Invalid email or password");
         }
         
         // Match by password to pick the correct account
-        User user = users.stream()
-                .filter(u -> u.getPassword().equals(password))
-                .findFirst()
-                .orElseThrow(() -> new ValidationException("Invalid email or password"));
+        User user = null;
+        for (User u : users) {
+            // Check BCrypt encoded password
+            if (passwordEncoder.matches(password, u.getPassword())) {
+                user = u;
+                break;
+            }
+        }
+        
+        if (user == null) {
+            throw new ValidationException("Invalid email or password");
+        }
         
         // Check if user is active
         if (!user.getIsActive()) {

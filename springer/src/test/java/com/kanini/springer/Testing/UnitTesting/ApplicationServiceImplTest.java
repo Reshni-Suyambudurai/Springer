@@ -415,11 +415,7 @@ class ApplicationServiceImplTest {
             Drive drive = buildDrive(1L);
             Candidate candidate = buildCandidate(1L, ApplicationStage.SCHEDULED, true);
             Application app = buildApplication(1L, drive, candidate);
-<<<<<<< HEAD
-            app.setApplicationStatus(ApplicationStatus.IN_DRIVE);
-=======
             // app starts as ALLOTED — valid transition is ALLOTED → IN_DRIVE
->>>>>>> origin/Mano-Branch
             Application updated = buildApplication(1L, drive, candidate);
             updated.setApplicationStatus(ApplicationStatus.IN_DRIVE);
 

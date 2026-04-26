@@ -118,8 +118,8 @@ function App() {
           <Route path="/ta-head/settings/skills" element={<SkillsManagement />} />
         </Route>
 
-        {/* TA_RECRUITER */}
-        <Route element={<ProtectedRoute allowedRoles={['TA_RECRUITER']} />}>
+        {/* TA_MANAGER */}
+        <Route element={<ProtectedRoute allowedRoles={['TA_MANAGER']} />}>
           <Route path="/ta-recruiter/dashboard" element={<DashboardTAR />} />
           <Route path="/ta-recruiter/hiring-cycles" element={<TARHiringCycleList />} />
           <Route path="/ta-recruiter/hiring-cycles/:cycleId" element={<TARHiringCycleDetails />} />

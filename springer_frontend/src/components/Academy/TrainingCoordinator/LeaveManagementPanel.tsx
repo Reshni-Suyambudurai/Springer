@@ -16,7 +16,7 @@ const statusLabel: Record<string, { label: string; cls: string }> = {
 const LeaveManagementPanel = ({ context: _context }: { context: AcademyContextProps }) => {
   const user     = tokenstore.getUser();
   const userRole = user?.roleName?.toUpperCase() || '';
-  const isTA     = userRole === 'TA_RECRUITER' || userRole === 'TA_HEAD';
+  const isTA     = userRole === 'TA_MANAGER' || userRole === 'TA_HEAD';
 
   const [leaves, setLeaves]             = useState<LeaveRequestResponse[]>([]);
   const [loading, setLoading]           = useState(true);

@@ -94,7 +94,7 @@ function Sidebar() {
       },
     ],
 
-    TA_RECRUITER: [
+    TA_MANAGER: [
         {
           name: "Dashboard",
           path: "/ta-recruiter/dashboard",
