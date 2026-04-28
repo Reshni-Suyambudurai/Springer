@@ -13,7 +13,10 @@ import { showToast } from "../../utils/toast";
 import type { AppError } from "../../services/api.error";
 import type { DriveAssignmentResponse } from "../../types/TA_Recruiter/DriveSchedule/driveAssignment.types";
 import { AssignmentStatus } from "../../types/TA_Recruiter/DriveSchedule/driveAssignment.types";
-import "../../css/Panel_Member/PanelAssignments.css";
+import "../../css/TA_Recruiter/DriveProcess/PanelAllocation.css";
+
+import "../../css/Panel_Member/PanelAssignments.css"; // Reuse styles for status chips and empty state
+ 
 
 const PanelAssignments = () => {
   const navigate = useNavigate();
@@ -22,6 +25,16 @@ const PanelAssignments = () => {
   const [error, setError] = useState("");
   const [searchName, setSearchName] = useState("");
   const [filterStatus, setFilterStatus] = useState<string>("ALL");
+  const [filterDate, setFilterDate] = useState<string>("ALL");
+
+  // Extract unique dates from assignments
+  const distinctDates = Array.from(
+    new Set(
+      assignments
+        .map((a) => a.createdAt && new Date(a.createdAt).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }))
+        .filter((d): d is string => !!d)
+    )
+  );
 
   useEffect(() => {
     const fetchAssignments = async () => {
@@ -54,7 +67,11 @@ const PanelAssignments = () => {
   const filtered = assignments.filter((a) => {
     const matchesName = !searchName || a.candidateName.toLowerCase().includes(searchName.toLowerCase());
     const matchesStatus = filterStatus === "ALL" || a.status === filterStatus;
-    return matchesName && matchesStatus;
+    const assignmentDate = a.createdAt
+      ? new Date(a.createdAt).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })
+      : "";
+    const matchesDate = filterDate === "ALL" || assignmentDate === filterDate;
+    return matchesName && matchesStatus && matchesDate;
   });
 
   const handleRowClick = async (assignment: DriveAssignmentResponse) => {
@@ -89,6 +106,19 @@ const PanelAssignments = () => {
       });
     } catch (err: unknown) {
       showToast((err as AppError).message || "Failed to load round template.", "error");
+    }
+  };
+
+  // Use the same status chip class logic as AllocationHistory
+  const getStatusChipClass = (status: string) => {
+    switch (status) {
+      case "PLANNED": return "t-chip-info";
+      case "HOLD": return "t-chip-hold";
+      case "DRAFT": return "t-chip-warning";
+      case "SELECTED": return "t-chip-success";
+      case "REJECTED": return "t-chip-error";
+      case "CANCELLED": return "t-chip-cancelled";
+      default: return "t-chip-info";
     }
   };
 
@@ -129,10 +159,23 @@ const PanelAssignments = () => {
             onChange={(e) => setFilterStatus(e.target.value)}
             size="small"
             className="pm-assign-status-select"
+            sx={{ minWidth: 120, marginRight: 1 }}
           >
             <MenuItem value="ALL">All Status</MenuItem>
-            {Object.values(AssignmentStatus).map((s) => (
+            {[AssignmentStatus.PLANNED, AssignmentStatus.DRAFT, AssignmentStatus.HOLD].map((s) => (
               <MenuItem key={s} value={s}>{s}</MenuItem>
+            ))}
+          </Select>
+          <Select
+            value={filterDate}
+            onChange={(e) => setFilterDate(e.target.value)}
+            size="small"
+            className="pm-assign-date-select"
+            sx={{ minWidth: 150, marginRight: 1 }}
+          >
+            <MenuItem value="ALL">All Dates</MenuItem>
+            {distinctDates.map((date) => (
+              <MenuItem key={date} value={date}>{date}</MenuItem>
             ))}
           </Select>
           <Box className="t-filter-spacer" />
@@ -208,8 +251,13 @@ const PanelAssignments = () => {
                             )}
                           </TableCell>
                           <TableCell className="t-cell">
-                            <Chip label={a.status} size="small" className="t-chip-info" />
+                            <Chip
+                              label={a.status}
+                              size="small"
+                              className={getStatusChipClass(a.status)}
+                            />
                           </TableCell>
+                       
                           <TableCell className="t-cell">
                             <Typography className="t-row-secondary">
                               {a.createdAt

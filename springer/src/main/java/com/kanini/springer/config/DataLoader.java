@@ -89,7 +89,21 @@ public class DataLoader {
             // 7. Seed Skills
             seedSkills();
 
+            // 8. Seed Round Templates
+            seedRoundTemplates();
+
             log.info("Data seeding completed successfully!");
+        };
+    }
+
+    @Bean
+    @Transactional
+    public CommandLineRunner loadRoundTemplates() {
+        return args -> {
+            // Seed round templates independently if they don't exist
+            if (roundTemplateRepository.count() == 0) {
+                seedRoundTemplates();
+            }
         };
     }
 
@@ -137,9 +151,9 @@ public class DataLoader {
             createUser("Priya", "priya@kanini.com", "password123", "Talent Acquisition", "Chennai", taManagerRole),
             createUser("Parthiban", "parthiban@kanini.com", "password123", "Product Engineering", "Bangalore", hiringManagerRole),
             createUser("Ramesh", "ramesh@kanini.com", "password123", "Product Engineering", "Coimbatore", membersRole),
-              createUser("Priya Rajagopalan", "priya@kanini.com", "password@123", "Product Engineering", "Coimbatore", membersRole),
-                createUser("Mozhiarasan", "mozhi@kanini.com", "password@123", "Product Engineering", "Coimbatore", membersRole),
-                  createUser("Praveen Kumar", "praveen@kanini.com", "password123", "Product Engineering", "Coimbatore", membersRole),
+            createUser("Priya Rajagopalan", "priya@kanini.com", "password@123", "Product Engineering", "Coimbatore", membersRole),
+            createUser("Mozhiarasan", "mozhi@kanini.com", "password@123", "Product Engineering", "Coimbatore", membersRole),
+            createUser("Praveen Kumar", "praveen@kanini.com", "password123", "Product Engineering", "Coimbatore", membersRole),
             createUser("Reshni", "reshni@kanini.com", "password123", "Data Analytics & AI", "Coimbatore", adminRole),
             createUser("Lavanya", "lavanya@kanini.com", "password123", "Data Analytics & AI", "Coimbatore", trainingCoordinatorRole),
             createUser("John", "john@kanini.com", "password123", "Training", "Coimbatore", internRole),

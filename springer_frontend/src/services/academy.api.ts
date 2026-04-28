@@ -22,7 +22,6 @@ import type {
   UserSummary,
   JoiningStatusUpdateRequest,
   JoiningTrackerRequest,
-  JoiningTrackerCandidate,
   BatchCandidateResponse,
   ExcelUploadResponse,
 } from '../types/Academy/academy.types';

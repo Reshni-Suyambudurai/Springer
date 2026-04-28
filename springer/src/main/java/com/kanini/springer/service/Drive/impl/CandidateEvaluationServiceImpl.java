@@ -197,8 +197,14 @@ public class CandidateEvaluationServiceImpl implements ICandidateEvaluationServi
             // If Round 3 (Technical) and PASS → Mark application as SELECTED
             if (roundTemplate.getRoundNo() != null && roundTemplate.getRoundNo() == 3) {
                 appStatus = ApplicationStatus.SELECTED;
-            } else if (application.getApplicationStatus() != ApplicationStatus.IN_DRIVE) {
-                appStatus = ApplicationStatus.IN_DRIVE;
+            } else {
+                // For other rounds, update to IN_DRIVE unless already SELECTED
+                ApplicationStatus prevStatus = application.getApplicationStatus();
+                if (prevStatus == ApplicationStatus.SELECTED) {
+                    appStatus = ApplicationStatus.SELECTED;
+                } else {
+                    appStatus = ApplicationStatus.IN_DRIVE;
+                }
             }
         } else if (evaluationStatus == EvaluationStatus.FAIL) {
             assignmentStatus = AssignmentStatus.REJECTED;

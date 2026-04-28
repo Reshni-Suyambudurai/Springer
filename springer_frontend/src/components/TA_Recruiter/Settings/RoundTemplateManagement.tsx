@@ -131,10 +131,10 @@ const RoundTemplateManagement = () => {
               <Typography className="t-page-subtitle">Configure interview round templates</Typography>
             </Stack>
           </Stack>
-          <Button variant="contained" startIcon={<AddIcon />} className="t-btn-primary" onClick={openAdd}
+          {/* <Button variant="contained" startIcon={<AddIcon />} className="t-btn-primary" onClick={openAdd}
             sx={{ backgroundColor: 'var(--color-primary)', '&:hover': { backgroundColor: 'var(--color-primary-dark)' } }}>
             Add Template
-          </Button>
+          </Button> */}
         </Box>
 
         <Box className="t-separator" />
