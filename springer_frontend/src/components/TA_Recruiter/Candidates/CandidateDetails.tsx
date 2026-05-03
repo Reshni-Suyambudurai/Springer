@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams,  useLocation } from "react-router-dom";
 import { candidateApi } from "../../../services/drive.api";
 import { overrideApi } from "../../../services/override.api";
 import type { CandidateResponse, CandidateUpdateRequest } from "../../../types/TA_Recruiter/Drive/candidate.types";
@@ -27,6 +27,9 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
 } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import PersonIcon from "@mui/icons-material/Person";
@@ -36,12 +39,15 @@ import AssignmentIndIcon from "@mui/icons-material/AssignmentInd";
 import TimelineIcon from "@mui/icons-material/Timeline";
 import WorkIcon from "@mui/icons-material/Work";
 import RocketLaunchIcon from "@mui/icons-material/RocketLaunch";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { internApi } from "../../../services/intern.api";
+import ApplicationHistory from "../DriveProcess/ApplicationHistory";
 import "../../../css/TA_Recruiter/Candidates/CandidateDetails.css";
 
 const CandidateDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
+  
+  const location = useLocation();
   const [candidate, setCandidate] = useState<CandidateResponse | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [editDialogOpen, setEditDialogOpen] = useState<boolean>(false);
@@ -61,6 +67,7 @@ const CandidateDetails: React.FC = () => {
   const [activateDialogOpen, setActivateDialogOpen] = useState(false);
   const [outlookEmail, setOutlookEmail] = useState("");
   const [activating, setActivating] = useState(false);
+  const [driveDetailsExpanded, setDriveDetailsExpanded] = useState(false);
 
   const fetchCandidateDetails = useCallback(async (candidateId: number) => {
     setLoading(true);
@@ -172,9 +179,6 @@ const CandidateDetails: React.FC = () => {
     }
   };
 
-  const handleBack = () => {
-    navigate("/ta-recruiter/candidates");
-  };
 
   const handleActivateIntern = async () => {
     if (!outlookEmail.trim()) {
@@ -244,6 +248,15 @@ const CandidateDetails: React.FC = () => {
     setStatusUpdateMode(!statusUpdateMode);
   };
 
+  const locationState = location.state as { driveId?: number } | null;
+  const candidateWithDrive = candidate as (CandidateResponse & { driveId?: number }) | null;
+  const driveIdForHistory = locationState?.driveId ?? candidateWithDrive?.driveId;
+  const showApplicationHistory = Boolean(
+    candidate &&
+    driveIdForHistory &&
+    !["APPLIED", "SHORTLISTED"].includes(candidate.applicationStage)
+  );
+
   if (loading) {
     return (
       <Box className="t-loading">
@@ -257,7 +270,7 @@ const CandidateDetails: React.FC = () => {
     return (
       <Box className="candidate-details-error">
         <Typography variant="h6">Candidate not found</Typography>
-        <BackButton onClick={handleBack} inline={true} />
+        <BackButton variant="header" />
       </Box>
     );
   }
@@ -269,7 +282,7 @@ const CandidateDetails: React.FC = () => {
         <CardContent className="header-card-content-compact">
           <Box className="header-layout-inline">
             <Box className="header-left">
-              <BackButton onClick={handleBack} inline={true} />
+              <BackButton variant="header" />
             </Box>
             
             <Box className="header-center">
@@ -714,6 +727,32 @@ const CandidateDetails: React.FC = () => {
                 )}
               </CardContent>
             </Card>
+          </Grid>
+        )}
+
+        {showApplicationHistory && (
+          <Grid size={{ xs: 12 }}>
+            <Accordion 
+              expanded={driveDetailsExpanded} 
+              onChange={(_, isExpanded) => setDriveDetailsExpanded(isExpanded)}
+              className="drive-details-accordion"
+            >
+              <AccordionSummary 
+                expandIcon={<ExpandMoreIcon />}
+                className="drive-details-accordion-summary"
+              >
+                <Typography variant="h6">Drive Details</Typography>
+              </AccordionSummary>
+              <AccordionDetails className="drive-details-accordion-details">
+                {driveDetailsExpanded && (
+                  <ApplicationHistory
+                    driveId={Number(driveIdForHistory)}
+                    candidateId={candidate.candidateId}
+                    embeddedInCandidateDetails={true}
+                  />
+                )}
+              </AccordionDetails>
+            </Accordion>
           </Grid>
         )}
       </Grid>

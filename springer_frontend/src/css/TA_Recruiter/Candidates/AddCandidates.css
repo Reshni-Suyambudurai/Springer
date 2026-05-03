@@ -251,6 +251,7 @@
   flex: 1;
   overflow: auto;
   max-height: 65vh;
+  padding-bottom: 10px;
 }
 
 .add-candidates-bulk-table tbody tr { transition: background-color 0.2s ease; }

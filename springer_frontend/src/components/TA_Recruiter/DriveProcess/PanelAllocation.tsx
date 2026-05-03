@@ -4,7 +4,6 @@ import { Box, Typography, Card, Select, MenuItem, Button, IconButton } from "@mu
 import EditIcon from "@mui/icons-material/Edit";
 import AddIcon from "@mui/icons-material/Add";
 import RemoveCircleOutlineIcon from "@mui/icons-material/RemoveCircleOutline";
-import SwapHorizIcon from "@mui/icons-material/SwapHoriz";
 import BackButton from "../../Common/BackButton";
 import { userApi } from "../../../services/hiring.api";
 import { driveAssignmentApi } from "../../../services/driveschedule.api";

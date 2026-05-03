@@ -165,3 +165,12 @@ export interface ApplicationUpdateDetail {
   newStage: string;
   applicationStatus: string;
 }
+
+// Batch Time Update Types
+export interface BatchTimeUpdateRequest {
+  driveId: number;
+  applicationId: number;
+  oldBatchTime: string; // ISO-8601 format (LocalDateTime)
+  newBatchTime: string; // ISO-8601 format (LocalDateTime)
+  updatedBy: number;
+}

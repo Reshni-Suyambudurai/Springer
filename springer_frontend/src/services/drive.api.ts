@@ -29,7 +29,7 @@ import type {
   CandidateValidationResponse,
   FilterOptionsResponse
 } from "../types/TA_Recruiter/Drive/candidate.types";
-import type { DriveDashboardResponse } from "../types/TA_Recruiter/Drive/dashboard.types";
+import type { DriveDashboardResponse, DriveDetailsAnalysisResponse, CollegeAnalysisResponse } from "../types/TA_Recruiter/Drive/dashboard.types";
 
 // ==================== ROUND TEMPLATE APIs ====================
 export const roundTemplateApi = {
@@ -373,6 +373,32 @@ export const driveDashboardApi = {
   async getDriveSummary(cycleId: number): Promise<ApiResponse<DriveDashboardResponse>> {
     try {
       const response = await http.post('/dashboards/drive/summary', { cycleId });
+      return response.data;
+    } catch (error) {
+      throw handleAxiosError(error);
+    }
+  },
+
+  /**
+   * Get drive details analysis for a cycle
+   * POST /api/dashboards/drive/drive-details-analysis
+   */
+  async getDriveDetailsAnalysis(cycleId: number): Promise<ApiResponse<DriveDetailsAnalysisResponse>> {
+    try {
+      const response = await http.post('/dashboards/drive/drive-details-analysis', { cycleId });
+      return response.data;
+    } catch (error) {
+      throw handleAxiosError(error);
+    }
+  },
+
+  /**
+   * Get college analysis for a cycle
+   * POST /api/dashboards/drive/college-analysis
+   */
+  async getCollegeAnalysis(cycleId: number): Promise<ApiResponse<CollegeAnalysisResponse[]>> {
+    try {
+      const response = await http.post('/dashboards/drive/college-analysis', { cycleId });
       return response.data;
     } catch (error) {
       throw handleAxiosError(error);

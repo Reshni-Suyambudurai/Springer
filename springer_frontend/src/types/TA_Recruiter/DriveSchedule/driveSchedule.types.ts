@@ -132,4 +132,23 @@ export interface DriveAnalyticsResponse {
   distinctBatchTimeCount: number;
   /** Key = batch time ISO-8601 string (or "unscheduled"), Value = application count */
   applicationsPerBatchTime: Record<string, number>;
+  /** Application status counts: Key = ApplicationStatus, Value = count */
+  applicationStatusCounts: Record<string, number>;
+  /** Round 1 (Aptitude) evaluation analytics */
+  round1Analytics: RoundAnalytics | null;
+  /** Round 2 (Communication) evaluation analytics */
+  round2Analytics: RoundAnalytics | null;
+  /** Round 3 (Technical) evaluation analytics */
+  round3Analytics: RoundAnalytics | null;
+}
+
+/**
+ * Round-wise evaluation analytics
+ */
+export interface RoundAnalytics {
+  roundConfigId: number;
+  roundName: string;
+  totalAttended: number;
+  /** Evaluation status counts: Key = EvaluationStatus, Value = count */
+  statusCounts: Record<string, number>;
 }

@@ -1,0 +1,288 @@
+/* ===== Institute Analytics ===== */
+
+.institute-section {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 8px;
+}
+
+.institute-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.institute-title {
+  font-size: var(--text-lg);
+  font-weight: 700;
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.institute-sort-chips {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.institute-sort-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border: 1.5px solid var(--color-border-light);
+  border-radius: 14px;
+  background-color: var(--color-surface);
+  color: var(--color-text-secondary);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+/* Default text + border colors per variant */
+.institute-sort-chip-applied { color: var(--color-blue-500); border-color: var(--color-blue-500); }
+.institute-sort-chip-selected { color: var(--color-green-500); border-color: var(--color-green-500); }
+.institute-sort-chip-rejected { color: var(--color-red-500); border-color: var(--color-red-500); }
+.institute-sort-chip-dropped { color: var(--color-grey-375); border-color: var(--color-grey-375); }
+.institute-sort-chip-accepted { color: var(--color-yellow-500); border-color: var(--color-yellow-500); }
+.institute-sort-chip-joined { color: var(--color-purple-600); border-color: var(--color-purple-600); }
+
+/* Hover: light tinted background */
+.institute-sort-chip-applied:hover { background-color: var(--color-blue-50); }
+.institute-sort-chip-selected:hover { background-color: var(--color-green-50); }
+.institute-sort-chip-rejected:hover { background-color: var(--color-red-50); }
+.institute-sort-chip-dropped:hover { background-color: var(--color-grey-100); }
+.institute-sort-chip-accepted:hover { background-color: var(--color-yellow-50); }
+.institute-sort-chip-joined:hover { background-color: var(--color-purple-50); }
+
+/* Active: filled background, white text */
+.institute-sort-chip-active.institute-sort-chip-applied { background-color: var(--color-blue-500); color: #fff; border-color: var(--color-blue-500); }
+.institute-sort-chip-active.institute-sort-chip-selected { background-color: var(--color-green-500); color: #fff; border-color: var(--color-green-500); }
+.institute-sort-chip-active.institute-sort-chip-rejected { background-color: var(--color-red-500); color: #fff; border-color: var(--color-red-500); }
+.institute-sort-chip-active.institute-sort-chip-dropped { background-color: var(--color-grey-375); color: #fff; border-color: var(--color-grey-375); }
+.institute-sort-chip-active.institute-sort-chip-accepted { background-color: var(--color-yellow-500); color: #fff; border-color: var(--color-yellow-500); }
+.institute-sort-chip-active.institute-sort-chip-joined { background-color: var(--color-purple-600); color: #fff; border-color: var(--color-purple-600); }
+
+/* Arrow icon */
+.institute-sort-arrow {
+  flex-shrink: 0;
+  transition: transform 0.2s;
+}
+
+.institute-sort-chip-active .institute-sort-arrow {
+  transform: rotate(180deg);
+}
+
+.institute-loading,
+.institute-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 0;
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+  font-weight: 500;
+}
+
+.institute-layout {
+  display: grid;
+  grid-template-columns: 420px 1fr;
+  gap: 18px;
+  min-height: 320px;
+  align-items: stretch;
+}
+
+/* ===== College Card List ===== */
+.institute-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: calc(100vh - 400px);
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-grey-350) transparent;
+  padding-right: 4px;
+}
+
+.institute-list::-webkit-scrollbar {
+  width: 5px;
+}
+
+.institute-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.institute-list::-webkit-scrollbar-thumb {
+  background-color: var(--color-grey-350);
+  border-radius: 4px;
+}
+
+.institute-card {
+  background-color: var(--color-surface);
+  border: 1.5px solid var(--color-border-light);
+  border-radius: 10px;
+  padding: 14px 16px;
+  cursor: pointer;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.institute-card:hover {
+  border-color: var(--color-primary);
+  box-shadow: 0 1px 6px rgba(15, 76, 129, 0.08);
+}
+
+.institute-card-active {
+  border-color: var(--color-primary);
+  background-color: var(--color-primary-light);
+  box-shadow: 0 2px 8px rgba(15, 76, 129, 0.10);
+}
+
+.institute-card-name {
+  font-size: var(--text-sm);
+  font-weight: 700;
+  color: var(--color-primary);
+  margin-bottom: 8px;
+}
+
+.institute-card-stats {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.institute-stat {
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+}
+
+.institute-stat strong {
+  color: var(--color-text-primary);
+  font-weight: 700;
+}
+
+/* ===== Funnel Panel ===== */
+.institute-funnel-panel {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border-light);
+  border-radius: 12px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.institute-funnel-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+  font-weight: 500;
+}
+
+.institute-funnel-title {
+  font-size: var(--text-md);
+  font-weight: 700;
+  color: var(--color-primary);
+}
+
+.institute-funnel-extra {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 4px;
+}
+
+.institute-extra-chip {
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+  background-color: var(--color-grey-100);
+  padding: 3px 10px;
+  border-radius: 8px;
+}
+
+.institute-extra-chip strong {
+  color: var(--color-text-primary);
+  font-weight: 700;
+}
+
+/* ===== Funnel Bars ===== */
+.institute-funnel-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.institute-funnel-layer {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.institute-funnel-label {
+  width: 80px;
+  font-size: var(--text-sm);
+  font-weight: 700;
+  text-align: right;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  flex-shrink: 0;
+}
+
+.institute-funnel-bar-track {
+  flex: 1;
+  height: 40px;
+  background-color: var(--color-bg-primary);
+  border-radius: 8px;
+  overflow: hidden;
+  position: relative;
+}
+
+.institute-funnel-bar-fill {
+  height: 100%;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: width 0.4s ease;
+  min-width: 48px;
+}
+
+.institute-funnel-bar-value {
+  font-size: var(--text-sm);
+  font-weight: 800;
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+/* Funnel color variants */
+.funnel-applied .institute-funnel-label { color: var(--color-primary); }
+.funnel-applied .institute-funnel-bar-fill { background: linear-gradient(135deg, var(--color-primary), var(--color-blue-700)); }
+
+.funnel-selected .institute-funnel-label { color: var(--color-success-dark); }
+.funnel-selected .institute-funnel-bar-fill { background: linear-gradient(135deg, var(--color-success-dark), var(--color-green-600)); }
+
+.funnel-accepted .institute-funnel-label { color: var(--color-yellow-500); }
+.funnel-accepted .institute-funnel-bar-fill { background: linear-gradient(135deg, var(--color-yellow-500), var(--color-yellow-600)); }
+
+.funnel-joined .institute-funnel-label { color: var(--color-purple-600); }
+.funnel-joined .institute-funnel-bar-fill { background: linear-gradient(135deg, var(--color-purple-600), var(--color-purple-700)); }
+
+.funnel-dropped .institute-funnel-label { color: var(--color-grey-375); }
+.funnel-dropped .institute-funnel-bar-fill { background: linear-gradient(135deg, var(--color-grey-375), var(--color-grey-500)); }
+
+.funnel-rejected .institute-funnel-label { color: var(--color-error-dark); }
+.funnel-rejected .institute-funnel-bar-fill { background: linear-gradient(135deg, var(--color-error-dark), var(--color-red-600)); }
+
+/* ===== Responsive ===== */
+@media (max-width: 900px) {
+  .institute-layout {
+    grid-template-columns: 1fr;
+  }
+}
