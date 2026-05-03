@@ -203,6 +203,7 @@ public class DataLoader {
         log.info("Seeding institutes...");
 
         Institute[] institutes = {
+            createInstitute("OTHERS College", "TIER_1", "Tamil Nadu", "Chennai"),
             createInstitute("Anna University", "TIER_1", "Tamil Nadu", "Chennai"),
             createInstitute("SSN College of Engineering", "TIER_1", "Tamil Nadu", "Chennai"),
             createInstitute("PSG College of Technology", "TIER_2", "Tamil Nadu", "Coimbatore"),
@@ -210,8 +211,8 @@ public class DataLoader {
             createInstitute("VIT University", "TIER_1", "Tamil Nadu", "Vellore"),
             createInstitute("SRM Institute of Science and Technology", "TIER_2", "Tamil Nadu", "Chennai"),
             createInstitute("Karunya Institute of Technology", "TIER_2", "Tamil Nadu", "Coimbatore"),
-            createInstitute("CEG - College of Engineering Guindy", "TIER_1", "Tamil Nadu", "Chennai"),
-            createInstitute("OTHERS College", "TIER_1", "Tamil Nadu", "Chennai")
+            createInstitute("CEG - College of Engineering Guindy", "TIER_1", "Tamil Nadu", "Chennai")
+            
         };
 
         instituteRepository.saveAll(java.util.Arrays.asList(institutes));

@@ -4,6 +4,7 @@ import com.kanini.springer.dto.Authentication.ApiResponse;
 import com.kanini.springer.dto.Drive.ApplicationRequest;
 import com.kanini.springer.dto.Drive.ApplicationResponse;
 import com.kanini.springer.dto.Drive.ApplicationStatusUpdateRequest;
+import com.kanini.springer.dto.Drive.BatchTimeUpdateRequest;
 import com.kanini.springer.dto.Drive.BulkApplicationResponse;
 import com.kanini.springer.dto.Drive.BulkApplicationStatusUpdateRequest;
 import com.kanini.springer.dto.Drive.BulkApplicationStatusUpdateResponse;
@@ -79,6 +80,23 @@ public class ApplicationController {
             @RequestBody BulkApplicationStatusUpdateRequest request) {
         BulkApplicationStatusUpdateResponse response = applicationService.bulkUpdateApplicationStatus(request);
         return ResponseEntity.ok(new ApiResponse<>(true, "Bulk application status update processed successfully", response));
+    }
+
+    @GetMapping("/drive/{driveId}/batch-times")
+    @Operation(summary = "Get distinct batch times for a drive",
+               description = "Returns all distinct non-null batch times for the given drive, sorted ascending.")
+    public ResponseEntity<ApiResponse<List<String>>> getDistinctBatchTimes(@PathVariable Long driveId) {
+        List<String> batchTimes = applicationService.getDistinctBatchTimesByDriveId(driveId);
+        return ResponseEntity.ok(new ApiResponse<>(true, "Batch times retrieved successfully", batchTimes));
+    }
+
+    @PatchMapping("/batch-time-update")
+    @Operation(summary = "Update batch time of an application",
+               description = "Updates batchTime for a specific application. Validates driveId, applicationId and oldBatchTime match.")
+    public ResponseEntity<ApiResponse<ApplicationResponse>> updateBatchTime(
+            @RequestBody BatchTimeUpdateRequest request) {
+        ApplicationResponse response = applicationService.updateApplicationBatchTime(request);
+        return ResponseEntity.ok(new ApiResponse<>(true, "Batch time updated successfully", response));
     }
 
     @GetMapping("/drive/{driveId}/batches")

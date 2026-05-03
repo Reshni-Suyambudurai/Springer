@@ -30,4 +30,38 @@ public class DriveAnalyticsResponse {
      * Value = count of applications in that batch
      */
     private Map<String, Long> applicationsPerBatchTime;
+
+    /**
+     * Application status counts.
+     * Key   = ApplicationStatus (ALLOTED, IN_DRIVE, DROPPED, FAILED, SELECTED)
+     * Value = count
+     */
+    private Map<String, Long> applicationStatusCounts;
+
+    /** Evaluation analytics for Aptitude Round (roundConfigId = 1) */
+    private RoundAnalytics round1Analytics;
+    
+    /** Evaluation analytics for Communication Round (roundConfigId = 2) */
+    private RoundAnalytics round2Analytics;
+    
+    /** Evaluation analytics for Technical Round (roundConfigId = 3) */
+    private RoundAnalytics round3Analytics;
+
+    /**
+     * Nested class for round-wise evaluation analytics
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class RoundAnalytics {
+        private Long roundConfigId;
+        private String roundName;
+        private Long totalAttended;
+        /**
+         * Evaluation status counts.
+         * Key   = EvaluationStatus (PASS, FAIL, ABSENT, HOLD, SKIP, PENDING)
+         * Value = count
+         */
+        private Map<String, Long> statusCounts;
+    }
 }
