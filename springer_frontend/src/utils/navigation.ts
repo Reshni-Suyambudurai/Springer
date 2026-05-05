@@ -2,6 +2,7 @@ export const getDashboardPathByRole = (roleName: string): string => {
   switch (roleName) {
     case "TA_HEAD":
       return "/ta-head/dashboard";
+    case "TA_MANAGER":
     case "TA_RECRUITER":
       return "/ta-recruiter/dashboard";
     case "HIRING_MANAGER":
@@ -14,6 +15,10 @@ export const getDashboardPathByRole = (roleName: string): string => {
       return "/training-coordinator/dashboard";
     case "INTERN":
       return "/intern/dashboard";
+    case "HR_OPERATIONS":
+      return "/hr-operations/dashboard";
+    case "BU_SPOC":
+      return "/bu-spoc/dashboard";
     default:
       return "/unauthorized";
   }   

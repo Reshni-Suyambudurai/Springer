@@ -6,7 +6,7 @@ import {
   Dialog, DialogTitle, DialogContent, DialogActions, InputAdornment,
 } from '@mui/material';
 import { Person as PersonIcon, Search as SearchIcon } from '@mui/icons-material';
-import { joiningTrackerApi, batchCandidateApi } from '../../../services/academy.api';
+import { joiningTrackerApi } from '../../../services/academy.api';
 import { internApi } from '../../../services/intern.api';
 import { showToast } from '../../../utils/toast';
 import { handleAxiosError } from '../../../services/api.error';
@@ -89,10 +89,7 @@ const JoiningTracker = ({ context }: { context: AcademyContextProps }) => {
       return;
     }
     setLoading(true);
-    batchCandidateApi.getCandidatesByCycleAndStages({
-      cycleId: selectedCycleId,
-      applicationStages: ['ACCEPTED', 'JOINED', 'NOT_JOINED'],
-    })
+    joiningTrackerApi.getCandidatesByCycle(selectedCycleId)
       .then(res => {
         const all = (res.success && res.data) ? res.data : [];
         const normalized: JoiningTrackerCandidate[] = all.map(c => ({

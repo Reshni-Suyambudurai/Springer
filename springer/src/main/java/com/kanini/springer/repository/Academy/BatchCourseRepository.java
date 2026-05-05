@@ -10,8 +10,6 @@ import java.util.Optional;
 @Repository
 public interface BatchCourseRepository extends JpaRepository<BatchCourse, Integer> {
     
-    Optional<BatchCourse> findByBatchCourseId(Integer batchCourseId);
-    
     List<BatchCourse> findByProgram_ProgramIdAndBatchNo(Integer programId, Integer batchNo);
     
     List<BatchCourse> findByProgram_ProgramId(Integer programId);

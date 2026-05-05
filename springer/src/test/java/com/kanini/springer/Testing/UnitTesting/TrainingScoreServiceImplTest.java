@@ -54,6 +54,7 @@ class TrainingScoreServiceImplTest {
     private BatchAllocation buildAllocation(Long studentId) {
         BatchAllocation a = new BatchAllocation();
         a.setStudentId(studentId);
+        a.setIsActive(true);
         a.setOverallWeightedScore(BigDecimal.ZERO);
         com.kanini.springer.entity.Drive.Candidate candidate = new com.kanini.springer.entity.Drive.Candidate();
         candidate.setCandidateId(10L);

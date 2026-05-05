@@ -119,7 +119,7 @@ function App() {
         </Route>
 
         {/* TA_MANAGER */}
-        <Route element={<ProtectedRoute allowedRoles={['TA_MANAGER']} />}>
+        <Route element={<ProtectedRoute allowedRoles={['TA_MANAGER', 'TA_RECRUITER']} />}>
           <Route path="/ta-recruiter/dashboard" element={<DashboardTAR />} />
           <Route path="/ta-recruiter/hiring-cycles" element={<TARHiringCycleList />} />
           <Route path="/ta-recruiter/hiring-cycles/:cycleId" element={<TARHiringCycleDetails />} />
@@ -194,6 +194,16 @@ function App() {
         <Route element={<ProtectedRoute allowedRoles={['TRAINING_COORDINATOR']} />}>
           <Route path="/training-coordinator/dashboard" element={<TrainingCoordinatorDashboard />} />
           <Route path="/training-coordinator/academy" element={<AcademyDashboard />} />
+        </Route>
+
+        {/* HR_OPERATIONS — redirect to unauthorized (no dedicated dashboard yet) */}
+        <Route element={<ProtectedRoute allowedRoles={['HR_OPERATIONS']} />}>
+          <Route path="/hr-operations/dashboard" element={<Unauthorized />} />
+        </Route>
+
+        {/* BU_SPOC — redirect to unauthorized (no dedicated dashboard yet) */}
+        <Route element={<ProtectedRoute allowedRoles={['BU_SPOC']} />}>
+          <Route path="/bu-spoc/dashboard" element={<Unauthorized />} />
         </Route>
 
       </Route>

@@ -15,7 +15,7 @@ import {
   CalendarMonth as CalendarIcon,
   SwapHoriz as TransferIcon,
 } from '@mui/icons-material';
-import { batchAllocationApi, trainingProgramApi, batchScheduleApi, batchCandidateApi } from '../../../services/academy.api';
+import { batchAllocationApi, trainingProgramApi, batchScheduleApi } from '../../../services/academy.api';
 import { candidateApi } from '../../../services/drive.api';
 import { showToast } from '../../../utils/toast';
 import type {

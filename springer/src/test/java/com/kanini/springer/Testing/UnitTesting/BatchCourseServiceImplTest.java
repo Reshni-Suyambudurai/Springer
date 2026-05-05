@@ -13,6 +13,7 @@ import com.kanini.springer.mapper.Academy.BatchCourseMapper;
 import com.kanini.springer.repository.Academy.BatchCourseRepository;
 import com.kanini.springer.repository.Academy.TrainingCourseRepository;
 import com.kanini.springer.repository.Academy.TrainingProgramRepository;
+import com.kanini.springer.repository.Academy.TrainingScoreRepository;
 import com.kanini.springer.repository.Hiring.UserRepository;
 import com.kanini.springer.service.Academy.impl.BatchCourseServiceImpl;
 import com.kanini.springer.service.Common.INotificationService;
@@ -42,6 +43,7 @@ class BatchCourseServiceImplTest {
     @Mock private BatchCourseRepository batchCourseRepository;
     @Mock private TrainingProgramRepository programRepository;
     @Mock private TrainingCourseRepository courseRepository;
+    @Mock private TrainingScoreRepository scoreRepository;
     @Mock private UserRepository userRepository;
     @Mock private BatchCourseMapper mapper;
     @Mock private INotificationService notificationService;
@@ -197,7 +199,7 @@ class BatchCourseServiceImplTest {
             BatchCourseResponse response = buildResponse(1);
             response.setStatus("CANCELLED");
 
-            when(batchCourseRepository.findByBatchCourseId(1)).thenReturn(Optional.of(bc));
+            when(batchCourseRepository.findById(1)).thenReturn(Optional.of(bc));
             when(batchCourseRepository.save(bc)).thenReturn(bc);
             when(mapper.toResponse(bc)).thenReturn(response);
 
@@ -210,7 +212,7 @@ class BatchCourseServiceImplTest {
             BatchCourse bc = buildBatchCourse(1);
             bc.setStartDate(LocalDateTime.now().plusDays(5));
 
-            when(batchCourseRepository.findByBatchCourseId(1)).thenReturn(Optional.of(bc));
+            when(batchCourseRepository.findById(1)).thenReturn(Optional.of(bc));
 
             assertThatThrownBy(() -> service.updateBatchCourseStatus(1, "ACTIVE"))
                     .isInstanceOf(ValidationException.class);
@@ -221,7 +223,7 @@ class BatchCourseServiceImplTest {
             BatchCourse bc = buildBatchCourse(1);
             bc.setEndDate(LocalDateTime.now().plusDays(5));
 
-            when(batchCourseRepository.findByBatchCourseId(1)).thenReturn(Optional.of(bc));
+            when(batchCourseRepository.findById(1)).thenReturn(Optional.of(bc));
 
             assertThatThrownBy(() -> service.updateBatchCourseStatus(1, "COMPLETED"))
                     .isInstanceOf(ValidationException.class);
@@ -229,7 +231,7 @@ class BatchCourseServiceImplTest {
 
         @Test @DisplayName("failure - throws ResourceNotFoundException for unknown ID")
         void update_notFound_throwsNotFound() {
-            when(batchCourseRepository.findByBatchCourseId(99)).thenReturn(Optional.empty());
+            when(batchCourseRepository.findById(99)).thenReturn(Optional.empty());
 
             assertThatThrownBy(() -> service.updateBatchCourseStatus(99, "CANCELLED"))
                     .isInstanceOf(ResourceNotFoundException.class);
@@ -246,7 +248,7 @@ class BatchCourseServiceImplTest {
             BatchCourse bc = buildBatchCourse(1);
             BatchCourseResponse response = buildResponse(1);
 
-            when(batchCourseRepository.findByBatchCourseId(1)).thenReturn(Optional.of(bc));
+            when(batchCourseRepository.findById(1)).thenReturn(Optional.of(bc));
             when(mapper.toResponse(bc)).thenReturn(response);
 
             assertThat(service.getBatchCourseById(1).getBatchCourseId()).isEqualTo(1);
@@ -254,7 +256,7 @@ class BatchCourseServiceImplTest {
 
         @Test @DisplayName("failure - throws ResourceNotFoundException for unknown ID")
         void getById_notFound_throwsNotFound() {
-            when(batchCourseRepository.findByBatchCourseId(99)).thenReturn(Optional.empty());
+            when(batchCourseRepository.findById(99)).thenReturn(Optional.empty());
 
             assertThatThrownBy(() -> service.getBatchCourseById(99))
                     .isInstanceOf(ResourceNotFoundException.class);
@@ -370,7 +372,7 @@ class BatchCourseServiceImplTest {
         @Test @DisplayName("success - deletes batch course")
         void remove_found_deletes() {
             BatchCourse bc = buildBatchCourse(1);
-            when(batchCourseRepository.findByBatchCourseId(1)).thenReturn(Optional.of(bc));
+            when(batchCourseRepository.findById(1)).thenReturn(Optional.of(bc));
 
             service.removeCourseFromBatch(1);
 
@@ -379,7 +381,7 @@ class BatchCourseServiceImplTest {
 
         @Test @DisplayName("failure - throws ResourceNotFoundException for unknown ID")
         void remove_notFound_throwsNotFound() {
-            when(batchCourseRepository.findByBatchCourseId(99)).thenReturn(Optional.empty());
+            when(batchCourseRepository.findById(99)).thenReturn(Optional.empty());
 
             assertThatThrownBy(() -> service.removeCourseFromBatch(99))
                     .isInstanceOf(ResourceNotFoundException.class);

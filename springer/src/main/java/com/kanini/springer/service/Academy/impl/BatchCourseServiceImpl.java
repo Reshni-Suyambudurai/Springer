@@ -92,7 +92,7 @@ public class BatchCourseServiceImpl implements IBatchCourseService {
     @Override
     @Transactional
     public BatchCourseResponse updateBatchCourseStatus(Integer batchCourseId, String status) {
-        BatchCourse batchCourse = batchCourseRepository.findByBatchCourseId(batchCourseId)
+        BatchCourse batchCourse = batchCourseRepository.findById(batchCourseId)
                 .orElseThrow(() -> new ResourceNotFoundException(BATCH_COURSE_NOT_FOUND + batchCourseId));
 
         CourseStatus newStatus = CourseStatus.valueOf(status);
@@ -123,7 +123,7 @@ public class BatchCourseServiceImpl implements IBatchCourseService {
     @Override
     @Transactional(readOnly = true)
     public BatchCourseResponse getBatchCourseById(Integer batchCourseId) {
-        return mapper.toResponse(batchCourseRepository.findByBatchCourseId(batchCourseId)
+        return mapper.toResponse(batchCourseRepository.findById(batchCourseId)
                 .orElseThrow(() -> new ResourceNotFoundException(BATCH_COURSE_NOT_FOUND + batchCourseId)));
     }
 
@@ -171,7 +171,7 @@ public class BatchCourseServiceImpl implements IBatchCourseService {
     @Override
     @Transactional
     public void removeCourseFromBatch(Integer batchCourseId) {
-        BatchCourse batchCourse = batchCourseRepository.findByBatchCourseId(batchCourseId)
+        BatchCourse batchCourse = batchCourseRepository.findById(batchCourseId)
                 .orElseThrow(() -> new ResourceNotFoundException(BATCH_COURSE_NOT_FOUND + batchCourseId));
 
         // Cannot unlink if course is currently ACTIVE or COMPLETED
@@ -207,7 +207,7 @@ public class BatchCourseServiceImpl implements IBatchCourseService {
     @Override
     @Transactional
     public BatchCourseResponse rescheduleBatchCourse(Integer batchCourseId, java.time.LocalDate startDate, java.time.LocalDate endDate) {
-        BatchCourse batchCourse = batchCourseRepository.findByBatchCourseId(batchCourseId)
+        BatchCourse batchCourse = batchCourseRepository.findById(batchCourseId)
                 .orElseThrow(() -> new ResourceNotFoundException(BATCH_COURSE_NOT_FOUND + batchCourseId));
 
         if (batchCourse.getStatus() == CourseStatus.COMPLETED) {

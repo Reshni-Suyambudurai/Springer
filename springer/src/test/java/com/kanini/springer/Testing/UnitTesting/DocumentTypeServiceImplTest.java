@@ -7,6 +7,7 @@ import com.kanini.springer.entity.enums.Enums;
 import com.kanini.springer.exception.ResourceNotFoundException;
 import com.kanini.springer.exception.ValidationException;
 import com.kanini.springer.mapper.DocumentCollection.DocumentTypeMapper;
+import com.kanini.springer.repository.DocumentCollection.DocumentSubmissionRepository;
 import com.kanini.springer.repository.DocumentCollection.DocumentTypeRepository;
 import com.kanini.springer.service.DocumentCollection.impl.DocumentTypeServiceImpl;
 import org.junit.jupiter.api.DisplayName;
@@ -41,6 +42,9 @@ class DocumentTypeServiceImplTest {
 
     @Mock
     private DocumentTypeRepository typeRepository;
+
+    @Mock
+    private DocumentSubmissionRepository submissionRepository;
 
     @Mock
     private DocumentTypeMapper mapper;

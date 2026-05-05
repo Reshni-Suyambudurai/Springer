@@ -422,7 +422,7 @@ function Sidebar() {
     ]
   };
 
-  const links = menu[role as keyof typeof menu] || [];
+  const links = menu[(role === 'TA_MANAGER' ? 'TA_RECRUITER' : role) as keyof typeof menu] || [];
 
   return (
     <aside className="sidebar">
