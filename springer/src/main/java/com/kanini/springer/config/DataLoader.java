@@ -1,6 +1,7 @@
 package com.kanini.springer.config;
 
 import com.kanini.springer.entity.HiringReq.*;
+import com.kanini.springer.entity.Drive.RoundTemplate;
 import com.kanini.springer.entity.enums.Enums.*;
 import com.kanini.springer.entity.utils.EmailTemplate;
 import com.kanini.springer.repository.Hiring.HiringCycleRepository;
@@ -10,6 +11,7 @@ import com.kanini.springer.repository.Hiring.ProgramRepository;
 import com.kanini.springer.repository.Hiring.RoleRepository;
 import com.kanini.springer.repository.Hiring.SkillRepository;
 import com.kanini.springer.repository.Hiring.UserRepository;
+import com.kanini.springer.repository.Drive.RoundTemplateRepository;
 import com.kanini.springer.repository.EmailTemplateRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -17,6 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
@@ -38,6 +41,8 @@ public class DataLoader {
     private final ProgramRepository programRepository;
     private final InstituteProgramRepository instituteProgramRepository;
     private final EmailTemplateRepository emailTemplateRepository;
+    private final RoundTemplateRepository roundTemplateRepository;
+    private final PasswordEncoder passwordEncoder;
 
     @Bean
     @Transactional
@@ -51,15 +56,15 @@ public class DataLoader {
                 seedEmailTemplates();
             }
 
-            // Ensure INTERN role exists even on existing DBs
-            if (roleRepository.findByRoleName(RoleName.INTERN).isEmpty()) {
-                roleRepository.save(createRole(RoleName.INTERN));
-                log.info("Seeded missing INTERN role");
-            }
-
-            // Check if data already exists
-            if (roleRepository.count() > 0) {
+            // Check if main data already exists (check for TA_HEAD instead of just count)
+            if (roleRepository.findByRoleName(RoleName.TA_HEAD).isPresent()) {
                 log.info("Data already exists. Skipping seed data loading.");
+                
+                // Ensure INTERN role exists even on existing DBs
+                if (roleRepository.findByRoleName(RoleName.INTERN).isEmpty()) {
+                    roleRepository.save(createRole(RoleName.INTERN));
+                    log.info("Seeded missing INTERN role");
+                }
                 return;
             }
 
@@ -93,7 +98,7 @@ public class DataLoader {
 
         Role[] roles = {
             createRole(RoleName.TA_HEAD),
-            createRole(RoleName.TA_RECRUITER),
+            createRole(RoleName.TA_MANAGER),
             createRole(RoleName.HIRING_MANAGER),
             createRole(RoleName.MEMBERS),
             createRole(RoleName.HR_OPERATIONS),
@@ -119,20 +124,26 @@ public class DataLoader {
 
         // Get roles
         Role taHeadRole = roleRepository.findByRoleName(RoleName.TA_HEAD).orElseThrow();
-        Role taRecruiterRole = roleRepository.findByRoleName(RoleName.TA_RECRUITER).orElseThrow();
+        Role taManagerRole = roleRepository.findByRoleName(RoleName.TA_MANAGER).orElseThrow();
         Role hiringManagerRole = roleRepository.findByRoleName(RoleName.HIRING_MANAGER).orElseThrow();
         Role membersRole = roleRepository.findByRoleName(RoleName.MEMBERS).orElseThrow();
         Role adminRole = roleRepository.findByRoleName(RoleName.SYSTEM_ADMIN).orElseThrow();
         Role trainingCoordinatorRole = roleRepository.findByRoleName(RoleName.TRAINING_COORDINATOR).orElseThrow();
+        Role internRole = roleRepository.findByRoleName(RoleName.INTERN).orElseThrow();
         // Create users
         User[] users = {
             createUser("Sudha", "sudha@kanini.com", "password123", "Talent Acquisition", "Chennai", taHeadRole),
-            createUser("Mozhi", "mozhi@kanini.com", "password123", "Talent Acquisition", "Bangalore", taRecruiterRole),
-            createUser("Priya", "priya@kanini.com", "password123", "Product Engineering", "Chennai", hiringManagerRole),
-            createUser("Soundharya", "soundharya@kanini.com", "password123", "HR & Analytics", "Bangalore", hiringManagerRole),
+            createUser("Mozhi", "mozhi@kanini.com", "password123", "Talent Acquisition", "Bangalore", taManagerRole),
+            createUser("Priya", "priya@kanini.com", "password123", "Talent Acquisition", "Chennai", taManagerRole),
+            createUser("Parthiban", "parthiban@kanini.com", "password123", "Product Engineering", "Bangalore", hiringManagerRole),
             createUser("Ramesh", "ramesh@kanini.com", "password123", "Product Engineering", "Coimbatore", membersRole),
+            createUser("Priya Rajagopalan", "priya.r@kanini.com", "password@123", "Product Engineering", "Coimbatore", membersRole),
+            createUser("Mozhiarasan", "mozhiarasan@kanini.com", "password@123", "Product Engineering", "Coimbatore", membersRole),
+            createUser("Praveen Kumar", "praveen@kanini.com", "password123", "Product Engineering", "Coimbatore", membersRole),
             createUser("Reshni", "reshni@kanini.com", "password123", "Data Analytics & AI", "Coimbatore", adminRole),
-            createUser("Lavanya", "lavanya@kanini.com", "password123", "Data Analytics & AI", "Coimbatore", trainingCoordinatorRole)
+            createUser("Lavanya", "lavanya@kanini.com", "password123", "Data Analytics & AI", "Coimbatore", trainingCoordinatorRole),
+            createUser("John", "john@kanini.com", "password123", "Training", "Coimbatore", internRole),
+            createUser("Joe", "joe@kanini.com", "password123", "Training", "Coimbatore", internRole)
         };
 
         userRepository.saveAll(java.util.Arrays.asList(users));
@@ -143,7 +154,7 @@ public class DataLoader {
         User user = new User();
         user.setUsername(name);
         user.setEmail(email);
-        user.setPassword(password); // TODO: Encode password in production
+        user.setPassword(passwordEncoder.encode(password)); // Password encrypted with BCrypt
         user.setDepartment(department);
         user.setLocation(location);
         user.setRole(role);
@@ -185,7 +196,8 @@ public class DataLoader {
             createInstitute("VIT University", "TIER_1", "Tamil Nadu", "Vellore"),
             createInstitute("SRM Institute of Science and Technology", "TIER_2", "Tamil Nadu", "Chennai"),
             createInstitute("Karunya Institute of Technology", "TIER_2", "Tamil Nadu", "Coimbatore"),
-            createInstitute("CEG - College of Engineering Guindy", "TIER_1", "Tamil Nadu", "Chennai")
+            createInstitute("CEG - College of Engineering Guindy", "TIER_1", "Tamil Nadu", "Chennai"),
+            createInstitute("OTHERS College", "TIER_1", "Tamil Nadu", "Chennai")
         };
 
         instituteRepository.saveAll(java.util.Arrays.asList(institutes));
@@ -330,6 +342,51 @@ public class DataLoader {
                 }
             }
         }
+    }
+
+    private void seedRoundTemplates() {
+        log.info("Seeding round templates...");
+
+        User createdBy = userRepository.findById(2L).orElse(null);
+
+        // Round 1: Aptitude
+        RoundTemplate aptitude = new RoundTemplate();
+        aptitude.setRoundNo(1);
+        aptitude.setRoundName("Aptitude Round");
+        aptitude.setOutoffScore(120);
+        aptitude.setMinScore(80);
+        aptitude.setWeightage(40);
+        aptitude.setSections("[{\"sectionName\":\"Technical\",\"outOf\":30},{\"sectionName\":\"Aptitude\",\"outOf\":20},{\"sectionName\":\"Verbal\",\"outOf\":20},{\"sectionName\":\"Logical\",\"outOf\":20},{\"sectionName\":\"Coding\",\"outOf\":30}]");
+        aptitude.setIsActive(true);
+        aptitude.setCreatedAt(LocalDateTime.now());
+        aptitude.setCreatedBy(createdBy);
+
+        // Round 2: Communication
+        RoundTemplate communication = new RoundTemplate();
+        communication.setRoundNo(2);
+        communication.setRoundName("Communication Round");
+        communication.setOutoffScore(100);
+        communication.setMinScore(70);
+        communication.setWeightage(40);
+        communication.setSections("[{\"sectionName\":\"Listening\",\"outOf\":30},{\"sectionName\":\"Writing\",\"outOf\":30},{\"sectionName\":\"Speaking\",\"outOf\":40}]");
+        communication.setIsActive(true);
+        communication.setCreatedAt(LocalDateTime.now());
+        communication.setCreatedBy(createdBy);
+
+        // Round 3: Technical
+        RoundTemplate technical = new RoundTemplate();
+        technical.setRoundNo(3);
+        technical.setRoundName("Technical Round");
+        technical.setOutoffScore(100);
+        technical.setMinScore(70);
+        technical.setWeightage(30);
+        technical.setSections("[{\"sectionName\":\"Problem_Solving\",\"outOf\":30},{\"sectionName\":\"Coding_Proficiency\",\"outOf\":30},{\"sectionName\":\"Communication_Skill\",\"outOf\":40}]");
+        technical.setIsActive(true);
+        technical.setCreatedAt(LocalDateTime.now());
+        technical.setCreatedBy(createdBy);
+
+        roundTemplateRepository.saveAll(java.util.Arrays.asList(aptitude, communication, technical));
+        log.info("Seeded 3 round templates");
     }
 
     private void seedEmailTemplates() {

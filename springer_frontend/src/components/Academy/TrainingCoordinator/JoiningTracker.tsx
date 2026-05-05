@@ -6,7 +6,7 @@ import {
   Dialog, DialogTitle, DialogContent, DialogActions, InputAdornment,
 } from '@mui/material';
 import { Person as PersonIcon, Search as SearchIcon } from '@mui/icons-material';
-import { joiningTrackerApi } from '../../../services/academy.api';
+import { joiningTrackerApi, batchCandidateApi } from '../../../services/academy.api';
 import { internApi } from '../../../services/intern.api';
 import { showToast } from '../../../utils/toast';
 import { handleAxiosError } from '../../../services/api.error';
@@ -49,6 +49,7 @@ const JoiningTracker = ({ context }: { context: AcademyContextProps }) => {
   const handleActivateIntern = async () => {
     if (!activateDialog.candidateId) return;
     if (!outlookEmail.trim()) { showToast('Outlook email is required', 'error'); return; }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(outlookEmail.trim())) { showToast('Please enter a valid email address', 'error'); return; }
     setActivating(true);
     try {
       const res = await internApi.activateIntern(activateDialog.candidateId, { outlookEmail: outlookEmail.trim() });
@@ -88,7 +89,10 @@ const JoiningTracker = ({ context }: { context: AcademyContextProps }) => {
       return;
     }
     setLoading(true);
-    joiningTrackerApi.getCandidatesByCycle(selectedCycleId)
+    batchCandidateApi.getCandidatesByCycleAndStages({
+      cycleId: selectedCycleId,
+      applicationStages: ['ACCEPTED', 'JOINED', 'NOT_JOINED'],
+    })
       .then(res => {
         const all = (res.success && res.data) ? res.data : [];
         const normalized: JoiningTrackerCandidate[] = all.map(c => ({
@@ -437,6 +441,8 @@ const JoiningTracker = ({ context }: { context: AcademyContextProps }) => {
             placeholder="Enter reason"
             value={statusReason}
             onChange={(e) => setStatusReason(e.target.value)}
+            inputProps={{ maxLength: 500 }}
+            helperText={`${statusReason.length}/500`}
             sx={{ mt: 2 }}
           />
         </DialogContent>

@@ -76,4 +76,15 @@ public class AttendanceController {
         String message = response.getSavedCount() + " record(s) saved, " + response.getFailedCount() + " failed out of " + response.getTotalRows();
         return ResponseEntity.ok(ApiResponse.success(message, response));
     }
+
+    @GetMapping("/check")
+    public ResponseEntity<ApiResponse<Boolean>> checkAttendanceExists(
+            @RequestParam Integer programId,
+            @RequestParam Integer batchNumber,
+            @RequestParam String date) {
+        java.time.LocalDate attendanceDate = java.time.LocalDate.parse(date);
+        boolean exists = attendanceService.isAttendanceMarkedForBatch(programId, batchNumber, attendanceDate);
+        String msg = exists ? "Attendance already marked for this batch on " + date : "No attendance found";
+        return ResponseEntity.ok(ApiResponse.success(msg, exists));
+    }
 }

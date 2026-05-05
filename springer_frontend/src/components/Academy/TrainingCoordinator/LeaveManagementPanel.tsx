@@ -13,17 +13,24 @@ const statusLabel: Record<string, { label: string; cls: string }> = {
   REJECTED: { label: 'Rejected', cls: 'lmg-status--rejected' },
 };
 
-const LeaveManagementPanel = ({ context: _context }: { context: AcademyContextProps }) => {
+const LeaveManagementPanel = ({ context }: { context: AcademyContextProps }) => {
+  const { programs: yearPrograms } = context;
   const user     = tokenstore.getUser();
   const userRole = user?.roleName?.toUpperCase() || '';
   const isTA     = userRole === 'TA_RECRUITER' || userRole === 'TA_HEAD';
 
   const [leaves, setLeaves]             = useState<LeaveRequestResponse[]>([]);
+  const [totalElements, setTotalElements] = useState(0);
   const [loading, setLoading]           = useState(true);
   const [filterStatus, setFilterStatus] = useState('ALL');
   const [filterProgram, setFilterProgram] = useState('all');
   const [filterBatch, setFilterBatch]   = useState('all');
   const [search, setSearch]             = useState('');
+  const [page, setPage]                 = useState(0);
+  const [rowsPerPage, setRowsPerPage]   = useState(20);
+
+  // Stats (fetched once on mount from unfiltered endpoint)
+  const [stats, setStats] = useState({ total: 0, pending: 0, approved: 0, rejected: 0 });
 
   // Review dialog — only TA
   const [reviewLeave, setReviewLeave] = useState<LeaveRequestResponse | null>(null);
@@ -31,19 +38,46 @@ const LeaveManagementPanel = ({ context: _context }: { context: AcademyContextPr
   const [remarks, setRemarks]         = useState('');
   const [submitting, setSubmitting]   = useState(false);
 
-  useEffect(() => { fetchLeaves(); }, []);
+  // Fetch stats once on mount
+  useEffect(() => {
+    leaveApi.getAllLeaves().then(res => {
+      if (res.success && res.data) {
+        setStats({
+          total: res.data.length,
+          pending: res.data.filter(l => l.status === 'PENDING').length,
+          approved: res.data.filter(l => l.status === 'APPROVED').length,
+          rejected: res.data.filter(l => l.status === 'REJECTED').length,
+        });
+      }
+    }).catch(() => {});
+  }, []);
+
+  // Fetch paginated data whenever filters change
+  useEffect(() => { fetchLeaves(); }, [filterStatus, filterProgram, filterBatch, search, page, rowsPerPage]);
 
   const fetchLeaves = async () => {
     try {
       setLoading(true);
-      const res = await leaveApi.getAllLeaves();
-      if (res.success && res.data) setLeaves(res.data);
+      const res = await leaveApi.getLeavesFiltered({
+        programId: filterProgram !== 'all' ? Number(filterProgram) : undefined,
+        batchNumber: filterBatch !== 'all' ? Number(filterBatch) : undefined,
+        status: filterStatus !== 'ALL' ? filterStatus : undefined,
+        search: search.trim() || undefined,
+        page,
+        size: rowsPerPage,
+      });
+      if (res.success && res.data) {
+        setLeaves(res.data.content);
+        setTotalElements(res.data.totalElements);
+      }
     } catch { /* silent */ }
     finally { setLoading(false); }
   };
 
   const handleReview = async () => {
     if (!reviewLeave) return;
+    // Confirmation for reject action
+    if (decision === 'REJECT' && !window.confirm(`Are you sure you want to REJECT the leave request from ${reviewLeave.studentName}?`)) return;
     try {
       setSubmitting(true);
       const res = await leaveApi.reviewLeave(reviewLeave.leaveId, {
@@ -56,6 +90,17 @@ const LeaveManagementPanel = ({ context: _context }: { context: AcademyContextPr
         setReviewLeave(null);
         setRemarks('');
         fetchLeaves();
+        // Refresh stats
+        leaveApi.getAllLeaves().then(r => {
+          if (r.success && r.data) {
+            setStats({
+              total: r.data.length,
+              pending: r.data.filter(l => l.status === 'PENDING').length,
+              approved: r.data.filter(l => l.status === 'APPROVED').length,
+              rejected: r.data.filter(l => l.status === 'REJECTED').length,
+            });
+          }
+        }).catch(() => {});
       }
     } catch (error) {
       const err = handleAxiosError(error);
@@ -63,24 +108,14 @@ const LeaveManagementPanel = ({ context: _context }: { context: AcademyContextPr
     } finally { setSubmitting(false); }
   };
 
-  const availablePrograms = Array.from(new Set(leaves.map(l => l.programName))).sort();
-  const availableBatches  = Array.from(new Set(
-    leaves
-      .filter(l => filterProgram === 'all' || l.programName === filterProgram)
-      .map(l => l.batchNumber)
-  )).sort((a, b) => a - b);
+  const availablePrograms = yearPrograms;
+  const availableBatches: number[] = filterProgram !== 'all'
+    ? Array.from({ length: yearPrograms.find(p => p.programId === Number(filterProgram))?.numberOfBatches ?? 0 }, (_, i) => i + 1)
+    : [];
 
-  const filtered = leaves.filter(l => {
-    const matchStatus  = filterStatus === 'ALL'  || l.status === filterStatus;
-    const matchProgram = filterProgram === 'all' || l.programName === filterProgram;
-    const matchBatch   = filterBatch === 'all'   || String(l.batchNumber) === filterBatch;
-    const matchSearch  = search.trim() === ''    || l.studentName.toLowerCase().includes(search.toLowerCase());
-    return matchStatus && matchProgram && matchBatch && matchSearch;
-  });
-
-  const pendingCount  = leaves.filter(l => l.status === 'PENDING').length;
-  const approvedCount = leaves.filter(l => l.status === 'APPROVED').length;
-  const rejectedCount = leaves.filter(l => l.status === 'REJECTED').length;
+  const pendingCount  = stats.pending;
+  const approvedCount = stats.approved;
+  const rejectedCount = stats.rejected;
 
   return (
     <div className="lmg-page">
@@ -88,7 +123,7 @@ const LeaveManagementPanel = ({ context: _context }: { context: AcademyContextPr
       {/* Stats */}
       <div className="lmg-stats">
         <div className="lmg-stat">
-          <span className="lmg-stat-val">{leaves.length}</span>
+          <span className="lmg-stat-val">{stats.total}</span>
           <span className="lmg-stat-label">Total</span>
         </div>
         <div className="lmg-stat">
@@ -119,29 +154,29 @@ const LeaveManagementPanel = ({ context: _context }: { context: AcademyContextPr
           style={{ minWidth: 180 }}
           placeholder="Search student..."
           value={search}
-          onChange={e => setSearch(e.target.value)}
+          onChange={e => { setSearch(e.target.value); setPage(0); }}
         />
-        <select className="lmg-filter-select" value={filterProgram} onChange={e => { setFilterProgram(e.target.value); setFilterBatch('all'); }}>
+        <select className="lmg-filter-select" value={filterProgram} onChange={e => { setFilterProgram(e.target.value); setFilterBatch('all'); setPage(0); }}>
           <option value="all">All Programs</option>
-          {availablePrograms.map(p => <option key={p} value={p}>{p}</option>)}
+          {availablePrograms.map(p => <option key={p.programId} value={String(p.programId)}>{p.programName}</option>)}
         </select>
-        <select className="lmg-filter-select" value={filterBatch} onChange={e => setFilterBatch(e.target.value)}>
+        <select className="lmg-filter-select" value={filterBatch} onChange={e => { setFilterBatch(e.target.value); setPage(0); }}>
           <option value="all">All Batches</option>
           {availableBatches.map(b => <option key={b} value={String(b)}>Batch {b}</option>)}
         </select>
-        <select className="lmg-filter-select" value={filterStatus} onChange={e => setFilterStatus(e.target.value)}>
+        <select className="lmg-filter-select" value={filterStatus} onChange={e => { setFilterStatus(e.target.value); setPage(0); }}>
           <option value="ALL">All Status</option>
           <option value="PENDING">Pending</option>
           <option value="APPROVED">Approved</option>
           <option value="REJECTED">Rejected</option>
         </select>
-        <span className="lmg-count">{filtered.length} request{filtered.length !== 1 ? 's' : ''}</span>
+        <span className="lmg-count">{totalElements} request{totalElements !== 1 ? 's' : ''}</span>
       </div>
 
       {/* Table */}
       {loading ? (
         <div className="lmg-empty">Loading leave requests...</div>
-      ) : filtered.length === 0 ? (
+      ) : leaves.length === 0 ? (
         <div className="lmg-empty">No leave requests found.</div>
       ) : (
         <div className="lmg-table-wrap">
@@ -160,7 +195,7 @@ const LeaveManagementPanel = ({ context: _context }: { context: AcademyContextPr
               </tr>
             </thead>
             <tbody>
-              {filtered.map(l => {
+              {leaves.map(l => {
                 const st = statusLabel[l.status] ?? { label: l.status, cls: '' };
                 return (
                   <tr key={l.leaveId} className="lmg-row">
@@ -205,6 +240,15 @@ const LeaveManagementPanel = ({ context: _context }: { context: AcademyContextPr
         </div>
       )}
 
+      {/* Pagination */}
+      {!loading && totalElements > rowsPerPage && (
+        <div className="lmg-filters" style={{ justifyContent: 'flex-end', marginTop: 8 }}>
+          <button className="lmg-review-btn" disabled={page === 0} onClick={() => setPage(p => p - 1)}>← Prev</button>
+          <span className="lmg-count">Page {page + 1} of {Math.ceil(totalElements / rowsPerPage)}</span>
+          <button className="lmg-review-btn" disabled={(page + 1) * rowsPerPage >= totalElements} onClick={() => setPage(p => p + 1)}>Next →</button>
+        </div>
+      )}
+
       {/* Review dialog — TA only */}
       {reviewLeave && isTA && (
         <div className="lmg-overlay" onClick={() => setReviewLeave(null)}>
@@ -233,7 +277,9 @@ const LeaveManagementPanel = ({ context: _context }: { context: AcademyContextPr
                 <label className="lmg-label">Remarks (optional)</label>
                 <textarea className="lmg-textarea" rows={2} value={remarks}
                   onChange={e => setRemarks(e.target.value)}
+                  maxLength={500}
                   placeholder="Add a note for the intern..." />
+                <span style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>{remarks.length}/500</span>
               </div>
               <div className="lmg-dialog-actions">
                 <button className="lmg-cancel-btn" onClick={() => setReviewLeave(null)}>Cancel</button>

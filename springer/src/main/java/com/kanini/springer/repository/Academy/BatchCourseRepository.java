@@ -19,4 +19,6 @@ public interface BatchCourseRepository extends JpaRepository<BatchCourse, Intege
     List<BatchCourse> findByCourse_CourseId(Integer courseId);
     
     List<BatchCourse> findByBatchNo(Integer batchNo);
+
+    List<BatchCourse> findByConductedBy_UserId(Long userId);
 }

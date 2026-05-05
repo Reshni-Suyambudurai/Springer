@@ -9,6 +9,7 @@ import {
   Add as AddIcon, Link as LinkIcon,
   LinkOff as LinkOffIcon, MenuBook as MenuBookIcon,
   CheckCircle as CheckCircleIcon, PlayArrow as PlayArrowIcon,
+  EditCalendar as EditCalendarIcon,
 } from '@mui/icons-material';
 import { batchCourseApi, trainingCourseApi, userApi } from '../../../services/academy.api';
 import { hiringCycleApi } from '../../../services/hiring.api';
@@ -69,6 +70,14 @@ const BatchCoursesList = ({ context }: { context: AcademyContextProps }) => {
   const [statusDialog, setStatusDialog] = useState<{ open: boolean; bc: BatchCourseResponse | null }>({ open: false, bc: null });
   const [statusUpdating, setStatusUpdating] = useState(false);
 
+  // Unlink confirmation dialog
+  const [unlinkDialog, setUnlinkDialog] = useState<{ open: boolean; batchCourseId: number | null; courseName: string }>({ open: false, batchCourseId: null, courseName: '' });
+
+  // Reschedule dialog
+  const [rescheduleDialog, setRescheduleDialog] = useState<{ open: boolean; bc: BatchCourseResponse | null }>({ open: false, bc: null });
+  const [rescheduleForm, setRescheduleForm] = useState({ startDate: '', endDate: '' });
+  const [rescheduling, setRescheduling] = useState(false);
+
   useEffect(() => {
     fetchData();
     setFilterProgram('all'); setFilterBatch('all'); setFilterStatus('all'); setPage(0);
@@ -77,12 +86,13 @@ const BatchCoursesList = ({ context }: { context: AcademyContextProps }) => {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const [bcRes, crsRes, cycleRes, tcRes, memRes] = await Promise.all([
+      const [bcRes, crsRes, cycleRes, tcRes, memRes, tarRes] = await Promise.all([
         batchCourseApi.getAllBatchCourses(),
         trainingCourseApi.getAllCourses(),
         hiringCycleApi.getAllCycles(),
         userApi.getUsersByRole('TRAINING_COORDINATOR'),
         userApi.getUsersByRole('MEMBERS'),
+        userApi.getUsersByRole('TA_MANAGER'),
       ]);
       if (bcRes.success && bcRes.data) setBatchCourses(bcRes.data);
       if (crsRes.success && crsRes.data) setAllCourses(crsRes.data);
@@ -90,6 +100,7 @@ const BatchCoursesList = ({ context }: { context: AcademyContextProps }) => {
       const combined: UserSummary[] = [];
       if (tcRes.success && tcRes.data) combined.push(...tcRes.data);
       if (memRes.success && memRes.data) combined.push(...memRes.data);
+      if (tarRes.success && tarRes.data) combined.push(...tarRes.data);
       setTrainers(combined);
     } catch (err: any) {
       showToast(err.message || 'Failed to load data', 'error');
@@ -160,11 +171,13 @@ const BatchCoursesList = ({ context }: { context: AcademyContextProps }) => {
     } catch (err: any) {
       showToast(err.message || 'Failed to unlink', 'error');
     }
+    setUnlinkDialog({ open: false, batchCourseId: null, courseName: '' });
   };
 
   const handleRemove = async (batchCourseId: number, e: React.MouseEvent) => {
     e.stopPropagation();
-    await handleUnlink(batchCourseId);
+    const bc = batchCourses.find(c => c.batchCourseId === batchCourseId);
+    setUnlinkDialog({ open: true, batchCourseId, courseName: bc?.courseName || 'this course' });
   };
 
   // ── Status update ──
@@ -184,6 +197,37 @@ const BatchCoursesList = ({ context }: { context: AcademyContextProps }) => {
       showToast(err.message || 'Failed to update status', 'error');
     } finally {
       setStatusUpdating(false);
+    }
+  };
+
+  // ── Reschedule ──
+  const openReschedule = (bc: BatchCourseResponse, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setRescheduleForm({
+      startDate: bc.startDate ? bc.startDate.split('T')[0] : '',
+      endDate: bc.endDate ? bc.endDate.split('T')[0] : '',
+    });
+    setRescheduleDialog({ open: true, bc });
+  };
+
+  const handleReschedule = async () => {
+    if (!rescheduleDialog.bc) return;
+    if (!rescheduleForm.startDate || !rescheduleForm.endDate) { showToast('Both dates are required', 'error'); return; }
+    if (rescheduleForm.endDate < rescheduleForm.startDate) { showToast('End date cannot be before start date', 'error'); return; }
+    try {
+      setRescheduling(true);
+      const res = await batchCourseApi.rescheduleBatchCourse(
+        rescheduleDialog.bc.batchCourseId, rescheduleForm.startDate, rescheduleForm.endDate
+      );
+      if (res.success) {
+        showToast('Course rescheduled successfully', 'success');
+        setRescheduleDialog({ open: false, bc: null });
+        fetchData();
+      }
+    } catch (err: any) {
+      showToast(err.message || 'Failed to reschedule', 'error');
+    } finally {
+      setRescheduling(false);
     }
   };
 
@@ -351,6 +395,11 @@ const BatchCoursesList = ({ context }: { context: AcademyContextProps }) => {
                                   </IconButton>
                                 );
                               })()}
+                              <IconButton size="small" className="bc-action-button"
+                                title="Reschedule Dates" onClick={e => openReschedule(bc, e)}
+                                disabled={bc.status === 'COMPLETED'}>
+                                <EditCalendarIcon className="bc-action-icon" />
+                              </IconButton>
                               <IconButton size="small" className="bc-action-button bc-action-button--remove"
                                 title="Remove Link" onClick={e => handleRemove(bc.batchCourseId, e)}>
                                 <LinkOffIcon className="bc-action-icon--remove" />
@@ -416,13 +465,13 @@ const BatchCoursesList = ({ context }: { context: AcademyContextProps }) => {
                           <MenuBookIcon className="bc-course-card-icon" />
                         </Box>
                         <Box className="bc-course-card-info">
-                          <Typography className="bc-course-card-name">
-                            {course.courseName}
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+                            <Typography className="bc-course-card-name">{course.courseName}</Typography>
                             {course.isCommunication && (
                               <Chip label="Communication" size="small" variant="outlined"
-                                sx={{ ml: 1, fontSize: '10px', borderColor: 'var(--color-primary)', color: 'var(--color-primary)' }} />
+                                sx={{ fontSize: '10px', borderColor: 'var(--color-primary)', color: 'var(--color-primary)' }} />
                             )}
-                          </Typography>
+                          </Box>
                           <Typography className="bc-course-card-meta">
                             Min: {course.minScore}
                             {!course.isCommunication && ` · Weight: ${course.weightage}%`}
@@ -555,6 +604,55 @@ const BatchCoursesList = ({ context }: { context: AcademyContextProps }) => {
           <Button variant="contained" onClick={handleStatusUpdate} disabled={statusUpdating}
             className="bc-dialog-submit-btn">
             {statusUpdating ? 'Updating...' : 'Confirm'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* ── Unlink Confirmation Dialog ── */}
+      <Dialog open={unlinkDialog.open} onClose={() => setUnlinkDialog({ open: false, batchCourseId: null, courseName: '' })} maxWidth="xs" fullWidth>
+        <DialogTitle className="bc-dialog-title">Confirm Unlink</DialogTitle>
+        <DialogContent>
+          <Typography sx={{ mt: 1, fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>
+            Are you sure you want to unlink <strong>{unlinkDialog.courseName}</strong> from this batch?
+            This action cannot be undone if the course has no scores.
+          </Typography>
+          <Typography sx={{ mt: 1, fontSize: 'var(--text-xs)', color: 'var(--color-error)' }}>
+            Note: If students already have scores for this course, the unlink will be blocked by the server.
+          </Typography>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button onClick={() => setUnlinkDialog({ open: false, batchCourseId: null, courseName: '' })} className="bc-dialog-cancel-btn">Cancel</Button>
+          <Button variant="contained" color="error" onClick={() => unlinkDialog.batchCourseId && handleUnlink(unlinkDialog.batchCourseId)}
+            className="bc-dialog-submit-btn">
+            Unlink
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* ── Reschedule Dialog ── */}
+      <Dialog open={rescheduleDialog.open} onClose={() => setRescheduleDialog({ open: false, bc: null })} maxWidth="xs" fullWidth>
+        <DialogTitle className="bc-dialog-title">Reschedule Course</DialogTitle>
+        <DialogContent>
+          <Typography sx={{ mt: 1, mb: 2, fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>
+            Change dates for <strong>{rescheduleDialog.bc?.courseName}</strong>
+          </Typography>
+          <Stack spacing={2}>
+            <TextField label="Start Date" type="date" size="small" fullWidth
+              value={rescheduleForm.startDate}
+              onChange={e => setRescheduleForm(prev => ({ ...prev, startDate: e.target.value }))}
+              InputLabelProps={{ shrink: true }} />
+            <TextField label="End Date" type="date" size="small" fullWidth
+              value={rescheduleForm.endDate}
+              onChange={e => setRescheduleForm(prev => ({ ...prev, endDate: e.target.value }))}
+              InputLabelProps={{ shrink: true }}
+              inputProps={{ min: rescheduleForm.startDate }} />
+          </Stack>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button onClick={() => setRescheduleDialog({ open: false, bc: null })} className="bc-dialog-cancel-btn">Cancel</Button>
+          <Button variant="contained" onClick={handleReschedule} disabled={rescheduling}
+            className="bc-dialog-submit-btn">
+            {rescheduling ? 'Saving...' : 'Reschedule'}
           </Button>
         </DialogActions>
       </Dialog>

@@ -5,6 +5,7 @@ import com.kanini.springer.dto.Academy.LeaveRequestResponse;
 import com.kanini.springer.dto.Academy.LeaveReviewRequest;
 import com.kanini.springer.dto.Authentication.ApiResponse;
 import com.kanini.springer.service.Academy.ILeaveRequestService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -22,7 +23,7 @@ public class LeaveRequestController {
     // Intern applies leave
     @PostMapping
     public ResponseEntity<ApiResponse<LeaveRequestResponse>> applyLeave(
-            @RequestBody LeaveRequestRequest request) {
+            @Valid @RequestBody LeaveRequestRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success("Leave request submitted", leaveService.applyLeave(request)));
     }
@@ -31,6 +32,19 @@ public class LeaveRequestController {
     @GetMapping
     public ResponseEntity<ApiResponse<List<LeaveRequestResponse>>> getAllLeaves() {
         return ResponseEntity.ok(ApiResponse.success("All leaves retrieved", leaveService.getAllLeaves()));
+    }
+
+    // Paginated + filtered leaves — for large datasets
+    @GetMapping("/filtered")
+    public ResponseEntity<ApiResponse<org.springframework.data.domain.Page<LeaveRequestResponse>>> getLeavesFiltered(
+            @RequestParam(required = false) Integer programId,
+            @RequestParam(required = false) Integer batchNumber,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String search,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        var result = leaveService.getLeavesFiltered(programId, batchNumber, status, search, page, size);
+        return ResponseEntity.ok(ApiResponse.success("Leaves retrieved", result));
     }
 
     // Get leaves by batch — useful for TC to see their batch
@@ -60,7 +74,7 @@ public class LeaveRequestController {
     @PatchMapping("/{leaveId}/review")
     public ResponseEntity<ApiResponse<LeaveRequestResponse>> reviewLeave(
             @PathVariable Long leaveId,
-            @RequestBody LeaveReviewRequest request) {
+            @Valid @RequestBody LeaveReviewRequest request) {
         return ResponseEntity.ok(ApiResponse.success("Leave reviewed", leaveService.reviewLeave(leaveId, request)));
     }
 }

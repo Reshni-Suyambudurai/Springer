@@ -7,6 +7,7 @@ import com.kanini.springer.entity.enums.Enums;
 import com.kanini.springer.exception.ResourceNotFoundException;
 import com.kanini.springer.exception.ValidationException;
 import com.kanini.springer.mapper.DocumentCollection.DocumentTypeMapper;
+import com.kanini.springer.repository.DocumentCollection.DocumentSubmissionRepository;
 import com.kanini.springer.repository.DocumentCollection.DocumentTypeRepository;
 import com.kanini.springer.service.DocumentCollection.IDocumentTypeService;
 import lombok.RequiredArgsConstructor;
@@ -22,6 +23,7 @@ public class DocumentTypeServiceImpl implements IDocumentTypeService {
     private static final String DOC_TYPE_NOT_FOUND = "Document type not found with ID: ";
 
     private final DocumentTypeRepository typeRepository;
+    private final DocumentSubmissionRepository submissionRepository;
     private final DocumentTypeMapper mapper;
     
     @Override
@@ -95,7 +97,15 @@ public class DocumentTypeServiceImpl implements IDocumentTypeService {
     public void deleteType(Long documentTypeId) {
         DocumentType type = typeRepository.findById(documentTypeId)
                 .orElseThrow(() -> new ResourceNotFoundException(DOC_TYPE_NOT_FOUND + documentTypeId));
-        
+
+        // Guard: cannot delete if submissions exist for this type
+        long submissionCount = submissionRepository.countByDocumentTypeId(documentTypeId);
+        if (submissionCount > 0) {
+            throw new ValidationException("Cannot delete this document type — "
+                    + submissionCount + " candidate submission(s) already exist for it. "
+                    + "Remove all submissions first or archive this type instead.");
+        }
+
         typeRepository.delete(type);
     }
 }

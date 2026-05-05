@@ -4,6 +4,7 @@ import com.kanini.springer.dto.Academy.AcademyEventRequest;
 import com.kanini.springer.dto.Academy.AcademyEventResponse;
 import com.kanini.springer.dto.Authentication.ApiResponse;
 import com.kanini.springer.service.Academy.IAcademyEventService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -20,7 +21,7 @@ public class AcademyEventController {
 
     @PostMapping
     public ResponseEntity<ApiResponse<AcademyEventResponse>> createEvent(
-            @RequestBody AcademyEventRequest request) {
+            @Valid @RequestBody AcademyEventRequest request) {
         AcademyEventResponse response = eventService.createEvent(request);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success("Event created and notifications sent", response));

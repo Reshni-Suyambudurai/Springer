@@ -79,8 +79,8 @@ const BASE_CONFIG = {
 };
 
 export const getAcademyConfig = async (role?: string): Promise<AcademyConfig> => {
-  const isCoordinator = role?.toUpperCase() === 'TRAINING_COORDINATOR'
-    || role?.toUpperCase() === 'MEMBERS';
+  const upper = role?.toUpperCase() ?? '';
+  const isCoordinator = upper === 'TRAINING_COORDINATOR' || upper === 'MEMBERS';
   const groups = isCoordinator ? COORDINATOR_GROUPS : RECRUITER_GROUPS;
   const tabs = groups.flatMap(g => g.tabs);
   return { ...BASE_CONFIG, tabGroups: groups, tabs };

@@ -278,12 +278,14 @@ const CoursesList = ({ context }: { context: AcademyContextProps }) => {
               label="Course Name *" size="small" fullWidth
               value={form.courseName}
               onChange={e => setForm(prev => ({ ...prev, courseName: e.target.value }))}
+              inputProps={{ maxLength: 100 }}
               className="crs-dialog-field"
             />
             <TextField
               label="Description" size="small" fullWidth multiline rows={2}
               value={form.description}
               onChange={e => setForm(prev => ({ ...prev, description: e.target.value }))}
+              inputProps={{ maxLength: 500 }}
               className="crs-dialog-field"
             />
             <TextField

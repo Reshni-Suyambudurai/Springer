@@ -71,7 +71,7 @@ const BatchAttendancePanel = ({ context, readOnly = false }: { context: AcademyC
         : [];
       if (scopedPrograms.length > 0) {
         const allocResults = await Promise.allSettled(
-          scopedPrograms.map(p => batchAllocationApi.getAllocationsByProgram(p.programId))
+          scopedPrograms.map(p => batchAllocationApi.getAllocationsByProgram(p.programId, true))
         );
         const allAllocs: BatchAllocationResponse[] = [];
         allocResults.forEach(r => {
@@ -89,6 +89,15 @@ const BatchAttendancePanel = ({ context, readOnly = false }: { context: AcademyC
       setLoading(false);
     }
   };
+
+  // After allocations load, fetch stats for all unique program+batch combos
+  useEffect(() => {
+    if (allocations.length === 0) return;
+    const combos = Array.from(
+      new Map(allocations.map(a => [`${a.programId}-${a.batchNumber}`, { programId: a.programId, batchNumber: a.batchNumber }])).values()
+    );
+    combos.forEach(({ programId, batchNumber }) => fetchBatchStats(programId, batchNumber));
+  }, [allocations]);
 
   // Single call returns stats for ALL students in a batch — replaces N+1 calls
   const fetchBatchStats = async (programId: number, batchNumber: number) => {
@@ -159,6 +168,18 @@ const BatchAttendancePanel = ({ context, readOnly = false }: { context: AcademyC
     setDlgOpen(true);
   };
 
+  // Pre-check if attendance already exists when user changes date in the dialog
+  const handleDateChange = async (newDate: string) => {
+    setDlgDate(newDate);
+    if (!filterProgramId || !filterBatchNo || !newDate) return;
+    try {
+      const res = await attendanceApi.checkAttendanceExists(filterProgramId, Number(filterBatchNo), newDate);
+      if (res.success && res.data === true) {
+        showToast('⚠️ Attendance has already been marked for this batch on ' + newDate + '. Submitting again will skip already-marked students.', 'warning');
+      }
+    } catch { /* ignore check failure */ }
+  };
+
   const downloadAttendanceTemplate = () => {
     if (!filterProgramId || !filterBatchNo) {
       showToast('Select Program and Batch before downloading template', 'error');
@@ -188,6 +209,7 @@ const BatchAttendancePanel = ({ context, readOnly = false }: { context: AcademyC
     if (!file) return;
     e.target.value = '';
     if (!file.name.endsWith('.xlsx')) { showToast('Only .xlsx files are supported', 'error'); return; }
+    if (file.size > 10 * 1024 * 1024) { showToast('File size must be under 10MB', 'error'); return; }
     if (!filterProgramId || !filterBatchNo) {
       showToast('Select Program and Batch before uploading', 'error'); return;
     }
@@ -456,7 +478,7 @@ const BatchAttendancePanel = ({ context, readOnly = false }: { context: AcademyC
           <Box className="atp-dlg-selectors">
             <TextField label="Date *" type="date" size="small"
               value={dlgDate}
-              onChange={e => setDlgDate(e.target.value)}
+              onChange={e => handleDateChange(e.target.value)}
               inputProps={{ max: new Date().toISOString().split('T')[0] }}
               InputLabelProps={{ shrink: true }}
               className="atp-dlg-field" />

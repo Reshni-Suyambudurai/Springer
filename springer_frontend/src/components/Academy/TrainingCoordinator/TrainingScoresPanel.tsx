@@ -37,7 +37,8 @@ const TrainingScoresPanel = ({ context, readOnly = false }: { context: AcademyCo
   const { programYear, programs: yearPrograms, cycles: ctxCycles = [] } = context;
   const loggedInUser = tokenstore.getUser();
   const userRole = loggedInUser?.roleName?.toUpperCase() ?? '';
-  const isTrainer = userRole === 'TRAINING_COORDINATOR' || userRole === 'MEMBERS';
+  const userId = loggedInUser?.userId ?? 0;
+  const isTrainer = userRole === 'TRAINING_COORDINATOR' || userRole === 'MEMBERS' || userRole === 'TA_MANAGER';
   const canEdit = !readOnly && isTrainer;
 
   // ── Base data ──
@@ -160,9 +161,12 @@ const TrainingScoresPanel = ({ context, readOnly = false }: { context: AcademyCo
     : [];
 
   // Courses linked to selected program+batch (view) — all statuses visible
+  // For TA_MANAGER and MEMBERS, only show courses assigned to them (conductedBy)
+  const isRoleFiltered = userRole === 'TA_MANAGER' || userRole === 'MEMBERS';
   const coursesForBatch = (filterProgramId && filterBatchNo)
     ? batchCourses
         .filter(bc => bc.programId === filterProgramId && bc.batchNo === filterBatchNo)
+        .filter(bc => !isRoleFiltered || bc.conductedBy === userId)
         .map(bc => allCourses.find(c => c.courseId === bc.courseId))
         .filter((c): c is TrainingCourseResponse => !!c)
     : [];
@@ -308,6 +312,15 @@ const TrainingScoresPanel = ({ context, readOnly = false }: { context: AcademyCo
           if (isNaN(n) || n < 0 || n > field.maxScore) { showToast(`"${field.name}" score must be between 0 and ${field.maxScore}`, 'error'); return; }
         }
       }
+    }
+
+    // Check if any entries will overwrite existing scores
+    const overwriteCount = entries.filter(([studentIdStr]) => {
+      const studentId = Number(studentIdStr);
+      return scores.some(sc => sc.courseId === filterCourseId && sc.studentId === studentId);
+    }).length;
+    if (overwriteCount > 0) {
+      if (!window.confirm(`${overwriteCount} student(s) already have scores for this course. Their scores will be updated. Continue?`)) return;
     }
 
     try {

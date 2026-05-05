@@ -52,6 +52,8 @@ public interface CandidatesRepository extends JpaRepository<Candidate, Long>, Jp
      * Find candidates by cycle ID
      */
     List<Candidate> findByCycleCycleId(Long cycleId);
+
+    List<Candidate> findByCycleCycleIdAndApplicationStageIn(Long cycleId, List<ApplicationStage> stages);
     
     /**
      * Find candidates by cycle ID with institute and skills eagerly loaded

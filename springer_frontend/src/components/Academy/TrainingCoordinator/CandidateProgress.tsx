@@ -120,7 +120,7 @@ const CandidateProgress = ({ context }: { context: AcademyContextProps }) => {
       const progIds = yearPrograms.map(p => p.programId);
       if (progIds.length === 0) { setAllocations([]); return; }
       const results = await Promise.allSettled(
-        progIds.map(id => batchAllocationApi.getAllocationsByProgram(id))
+        progIds.map(id => batchAllocationApi.getAllocationsByProgram(id, true))
       );
       const allocs: BatchAllocationResponse[] = [];
       results.forEach(r => {
@@ -760,7 +760,9 @@ const CandidateProgress = ({ context }: { context: AcademyContextProps }) => {
                           fontSize: 'var(--text-xs)', resize: 'vertical', fontFamily: 'inherit',
                           background: 'var(--color-surface)', color: 'var(--color-text-primary)' }}
                         placeholder="Describe the reason for this warning..."
+                        maxLength={1000}
                         value={warnMessage} onChange={e => setWarnMessage(e.target.value)} />
+                      <span style={{ fontSize: '0.7rem', color: 'var(--color-text-secondary)', textAlign: 'right' }}>{warnMessage.length}/1000</span>
                     </Box>
                     <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
                       <button className="cp-action-btn"
@@ -768,6 +770,7 @@ const CandidateProgress = ({ context }: { context: AcademyContextProps }) => {
                         style={{ opacity: issuingWarn ? 0.6 : 1, cursor: issuingWarn || !warnMessage.trim() ? 'not-allowed' : 'pointer' }}
                         onClick={async () => {
                           if (!selected || !warnMessage.trim()) return;
+                          if (warnSeverity === 'SEVERE' && !window.confirm('Are you sure you want to issue a SEVERE warning? This action is significant.')) return;
                           try {
                             setIssuingWarn(true);
                             const res = await warningApi.issueWarning({

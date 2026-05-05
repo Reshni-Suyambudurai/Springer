@@ -116,7 +116,7 @@ const AcademyDashboard = () => {
       case 'batch-courses':      return <BatchCoursesList context={ctx} />;
       case 'batch-allocations':  return <BatchAllocationsList context={ctx} />;
       case 'attendance':         return <BatchAttendancePanel context={attCtx} />;
-      case 'scores':             return <TrainingScoresPanel context={ctx} readOnly={userRole === 'TA_RECRUITER'} />;
+      case 'scores':             return <TrainingScoresPanel context={ctx} />;
       case 'candidate-progress': return <CandidateProgress context={ctx} />;
       case 'joining-tracker':    return <JoiningTracker context={ctx} />;
       case 'calendar':           return <AcademyCalendar context={ctx} />;

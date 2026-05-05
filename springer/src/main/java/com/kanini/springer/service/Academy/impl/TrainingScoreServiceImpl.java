@@ -10,6 +10,7 @@ import com.kanini.springer.entity.Academy.TrainingScore;
 import com.kanini.springer.entity.enums.Enums.ScoreStatus;
 import com.kanini.springer.entity.HiringReq.User;
 import com.kanini.springer.exception.ResourceNotFoundException;
+import com.kanini.springer.exception.ValidationException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.kanini.springer.mapper.Academy.TrainingScoreMapper;
@@ -57,8 +58,20 @@ public class TrainingScoreServiceImpl implements ITrainingScoreService {
         BatchAllocation student = allocationRepository.findByStudentId(request.getStudentId())
                 .orElseThrow(() -> new ResourceNotFoundException("Batch Allocation (Student) not found with ID: " + request.getStudentId()));
 
+        // Active student check
+        if (!Boolean.TRUE.equals(student.getIsActive())) {
+            throw new ValidationException("Cannot assign score to an inactive student (ID: " + request.getStudentId() + ").");
+        }
+
         User reviewer = userRepository.findById(request.getReviewedBy())
                 .orElseThrow(() -> new ResourceNotFoundException(REVIEWER_NOT_FOUND + request.getReviewedBy()));
+
+        // Prevent duplicate score — if score already exists for this student+course, reject
+        List<TrainingScore> existingScores = scoreRepository.findByStudent_StudentIdAndCourse_CourseId(
+                request.getStudentId(), request.getCourseId());
+        if (!existingScores.isEmpty()) {
+            throw new ValidationException("Score already exists for this student and course. Use the update endpoint to modify it.");
+        }
 
         TrainingScore score = mapper.toEntity(request);
         score.setCourse(course);

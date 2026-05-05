@@ -4,6 +4,7 @@ import com.kanini.springer.dto.Academy.TrainingCourseRequest;
 import com.kanini.springer.dto.Academy.TrainingCourseResponse;
 import com.kanini.springer.entity.Academy.TrainingCourse;
 import com.kanini.springer.exception.ResourceNotFoundException;
+import com.kanini.springer.exception.ValidationException;
 import com.kanini.springer.mapper.Academy.TrainingCourseMapper;
 import com.kanini.springer.repository.Academy.TrainingCourseRepository;
 import com.kanini.springer.service.Academy.ITrainingCourseService;
@@ -25,6 +26,14 @@ public class TrainingCourseServiceImpl implements ITrainingCourseService {
     @Override
     @Transactional
     public TrainingCourseResponse createCourse(TrainingCourseRequest request) {
+        // Check for duplicate course name (excluding archived)
+        List<TrainingCourse> existing = courseRepository.findByCourseName(request.getCourseName().trim());
+        boolean duplicateExists = existing.stream()
+                .anyMatch(c -> !c.getCourseName().startsWith("[ARCHIVED] "));
+        if (duplicateExists) {
+            throw new ValidationException("A course with the name '" + request.getCourseName().trim() + "' already exists.");
+        }
+
         TrainingCourse course = mapper.toEntity(request);
         return mapper.toResponse(courseRepository.save(course));
     }

@@ -16,8 +16,15 @@ const scoreColor = (score: number | null, min?: number) => {
   return 'var(--color-error)';
 };
 
-const rankLabel = (r: number) =>
-  r === 1 ? '1st' : r === 2 ? '2nd' : r === 3 ? '3rd' : `${r}th`;
+const rankLabel = (r: number) => {
+  if (r % 100 >= 11 && r % 100 <= 13) return `${r}th`;
+  switch (r % 10) {
+    case 1: return `${r}st`;
+    case 2: return `${r}nd`;
+    case 3: return `${r}rd`;
+    default: return `${r}th`;
+  }
+};
 
 const rankMedal = (r: number) =>
   r === 1 ? '🥇' : r === 2 ? '🥈' : r === 3 ? '🥉' : null;

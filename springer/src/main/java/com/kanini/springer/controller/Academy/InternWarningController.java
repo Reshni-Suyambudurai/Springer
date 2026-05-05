@@ -34,6 +34,20 @@ public class InternWarningController {
                 warningService.getAllWarnings()));
     }
 
+    // Paginated + filtered warnings — for large datasets
+    @GetMapping("/filtered")
+    public ResponseEntity<ApiResponse<org.springframework.data.domain.Page<InternWarningResponse>>> getWarningsFiltered(
+            @RequestParam(required = false) Integer programId,
+            @RequestParam(required = false) Integer batchNumber,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String warningType,
+            @RequestParam(required = false) String search,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        var result = warningService.getWarningsFiltered(programId, batchNumber, status, warningType, search, page, size);
+        return ResponseEntity.ok(ApiResponse.success("Warnings retrieved", result));
+    }
+
     // Get all warnings for a specific intern
     @GetMapping("/student/{studentId}")
     public ResponseEntity<ApiResponse<List<InternWarningResponse>>> getByStudent(

@@ -346,6 +346,7 @@ const ProgramsList = ({ context }: { context: AcademyContextProps }) => {
               fullWidth
               value={form.programName}
               onChange={(e) => setForm({ ...form, programName: e.target.value })}
+              inputProps={{ maxLength: 100 }}
               className="prog-dialog-field"
             />
             <TextField

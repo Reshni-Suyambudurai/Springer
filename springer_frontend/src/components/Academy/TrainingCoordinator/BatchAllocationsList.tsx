@@ -15,15 +15,14 @@ import {
   CalendarMonth as CalendarIcon,
   SwapHoriz as TransferIcon,
 } from '@mui/icons-material';
-import { batchAllocationApi, trainingProgramApi, batchScheduleApi } from '../../../services/academy.api';
+import { batchAllocationApi, trainingProgramApi, batchScheduleApi, batchCandidateApi } from '../../../services/academy.api';
 import { candidateApi } from '../../../services/drive.api';
 import { showToast } from '../../../utils/toast';
 import type {
   BatchAllocationResponse, BatchAllocationRequest, BatchTransferRequest,
   TrainingProgramResponse, AcademyContextProps,
-  BatchScheduleResponse,
+  BatchScheduleResponse, BatchCandidateResponse,
 } from '../../../types/Academy/academy.types';
-import type { CandidateResponse } from '../../../types/TA_Recruiter/Drive/candidate.types';
 import FilterSelect from '../../Common/FilterSelect';
 import '../../../css/Academy/TrainingCoordinator/BatchAllocationsList.css';
 
@@ -52,7 +51,7 @@ const BatchAllocationsList = ({ context }: { context: AcademyContextProps }) => 
   // Bulk allocation dialog
   const [bulkDialogOpen, setBulkDialogOpen] = useState(false);
   const [selectedProgramId, setSelectedProgramId] = useState(0);
-  const [candidates, setCandidates] = useState<CandidateResponse[]>([]);
+  const [candidates, setCandidates] = useState<BatchCandidateResponse[]>([]);
   const [loadingCandidates, setLoadingCandidates] = useState(false);
   // Per-candidate batch selection: candidateId -> batchNumber
   const [candidateBatchMap, setCandidateBatchMap] = useState<Record<number, number>>({});
@@ -101,7 +100,7 @@ const BatchAllocationsList = ({ context }: { context: AcademyContextProps }) => 
           ? progRes.data.map(p => p.programId)
           : progRes.data.filter(p => p.programYear === programYear).map(p => p.programId);
         const allocResults = await Promise.allSettled(
-          scopedIds.map(id => batchAllocationApi.getAllocationsByProgram(id))
+          scopedIds.map(id => batchAllocationApi.getAllocationsByProgram(id, true))
         );
         const allAllocs: BatchAllocationResponse[] = [];
         allocResults.forEach(r => {

@@ -44,6 +44,7 @@ const VerifyDocumentsTab = ({ context }: { context: DocProcessingContextProps })
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<FilterType>('all');
+  const [filterStage, setFilterStage] = useState('all');
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [expandedId, setExpandedId] = useState<number | null>(null);
@@ -51,10 +52,11 @@ const VerifyDocumentsTab = ({ context }: { context: DocProcessingContextProps })
   const [rejectDialog, setRejectDialog] = useState<{ open: boolean; doc: DocumentSubmissionResponse | null }>({ open: false, doc: null });
   const [rejectReason, setRejectReason] = useState('');
   const [rejecting, setRejecting] = useState(false);
+  const [approveConfirm, setApproveConfirm] = useState<{ open: boolean; doc: DocumentSubmissionResponse | null }>({ open: false, doc: null });
 
   useEffect(() => {
     if (cycleId) fetchData();
-    setSearch(''); setFilter('all'); setExpandedId(null); setPage(0);
+    setSearch(''); setFilter('all'); setFilterStage('all'); setExpandedId(null); setPage(0);
   }, [cycleId]);
 
   const fetchData = async () => {
@@ -62,7 +64,17 @@ const VerifyDocumentsTab = ({ context }: { context: DocProcessingContextProps })
       setLoading(true);
       const [subRes, candRes] = await Promise.all([
         documentSubmissionApi.getAllSubmissions({ cycleId, size: 2000 }),
-        candidateApi.getCandidatesByCycleId(cycleId),
+        Promise.all([
+          candidateApi.getCandidatesByCycleIdAndStage(cycleId, 'SELECTED'),
+          candidateApi.getCandidatesByCycleIdAndStage(cycleId, 'OFFERED'),
+          candidateApi.getCandidatesByCycleIdAndStage(cycleId, 'ACCEPTED'),
+          candidateApi.getCandidatesByCycleIdAndStage(cycleId, 'JOINED'),
+          candidateApi.getCandidatesByCycleIdAndStage(cycleId, 'NOT_JOINED'),
+          candidateApi.getCandidatesByCycleIdAndStage(cycleId, 'OFFER_REJECTED'),
+        ]).then(results => ({
+          success: true,
+          data: results.flatMap(r => (r.success && r.data) ? r.data : []),
+        })),
       ]);
       const submissions = (subRes.success && subRes.data) ? subRes.data : [];
       const candidates = (candRes.success && candRes.data) ? candRes.data : [];
@@ -159,9 +171,9 @@ const VerifyDocumentsTab = ({ context }: { context: DocProcessingContextProps })
       filter === 'awaiting-review' ? item.collectedCount > 0 :
       filter === 'not-uploaded'    ? item.notUploadedCount > 0 :
       filter === 'approved'        ? item.approvedCount === item.docs.length && item.docs.length > 0 :
-      filter === 'rejected'        ? item.rejectedCount > 0 :
-      true;
-    return matchSearch && matchFilter;
+      filter === 'rejected'        ? item.rejectedCount > 0 : true;
+    const matchStage = filterStage === 'all' || item.candidate.applicationStage === filterStage;
+    return matchSearch && matchFilter && matchStage;
   });
 
   const paginated = filtered.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
@@ -191,6 +203,15 @@ const VerifyDocumentsTab = ({ context }: { context: DocProcessingContextProps })
               <MenuItem value="not-uploaded">Not Yet Uploaded ({totalNotUploaded} docs)</MenuItem>
               <MenuItem value="approved">Fully Approved</MenuItem>
               <MenuItem value="rejected">Has Rejections ({totalRejected} docs)</MenuItem>
+            </FilterSelect>
+            <FilterSelect label="Stage" value={filterStage} onChange={v => { setFilterStage(v); setPage(0); }}>
+              <MenuItem value="all">All Stages</MenuItem>
+              <MenuItem value="SELECTED">Selected</MenuItem>
+              <MenuItem value="OFFERED">Offered</MenuItem>
+              <MenuItem value="ACCEPTED">Accepted</MenuItem>
+              <MenuItem value="JOINED">Joined</MenuItem>
+              <MenuItem value="NOT_JOINED">Not Joined</MenuItem>
+              <MenuItem value="OFFER_REJECTED">Offer Rejected</MenuItem>
             </FilterSelect>
             <Box className="vdt-filter-spacer" />
             <Box className="vdt-stats-inline">
@@ -349,7 +370,7 @@ const VerifyDocumentsTab = ({ context }: { context: DocProcessingContextProps })
                                           title="Approve"
                                           className="vdt-action-approve"
                                           disabled={approvingId === doc.documentId}
-                                          onClick={() => handleApprove(doc)}
+                                          onClick={() => setApproveConfirm({ open: true, doc })}
                                         >
                                           {approvingId === doc.documentId ? <CircularProgress size={14} /> : <ApproveIcon fontSize="small" />}
                                         </IconButton>
@@ -388,6 +409,29 @@ const VerifyDocumentsTab = ({ context }: { context: DocProcessingContextProps })
           )}
         </Box>
       </Card>
+
+      {/* Approve Confirmation Dialog */}
+      <Dialog open={approveConfirm.open} onClose={() => setApproveConfirm({ open: false, doc: null })} maxWidth="xs" fullWidth>
+        <DialogTitle>Confirm Approval</DialogTitle>
+        <DialogContent>
+          <Typography sx={{ mt: 1 }}>
+            Are you sure you want to approve <strong>{approveConfirm.doc?.documentType.replace(/_/g, ' ')}</strong>? This action cannot be undone.
+          </Typography>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button onClick={() => setApproveConfirm({ open: false, doc: null })}>Cancel</Button>
+          <Button
+            variant="contained"
+            color="success"
+            onClick={() => {
+              if (approveConfirm.doc) handleApprove(approveConfirm.doc);
+              setApproveConfirm({ open: false, doc: null });
+            }}
+          >
+            Approve
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       {/* Reject Dialog */}
       <Dialog open={rejectDialog.open} onClose={() => setRejectDialog({ open: false, doc: null })} maxWidth="sm" fullWidth>

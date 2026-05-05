@@ -6,11 +6,13 @@ import com.kanini.springer.dto.Authentication.ApiResponse;
 import com.kanini.springer.service.Academy.IBatchCourseService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -85,5 +87,21 @@ public class BatchCourseController {
         batchCourseService.removeCourseFromBatch(batchCourseId);
         return ResponseEntity.status(HttpStatus.OK)
                 .body(ApiResponse.success("Course removed from batch successfully", null));
+    }
+
+    @GetMapping("/conducted-by/{userId}")
+    public ResponseEntity<ApiResponse<List<BatchCourseResponse>>> getCoursesByConductor(
+            @PathVariable Long userId) {
+        List<BatchCourseResponse> response = batchCourseService.getCoursesByConductor(userId);
+        return ResponseEntity.ok(ApiResponse.success("Courses conducted by user" + RETRIEVED_SUCCESSFULLY, response));
+    }
+
+    @PatchMapping("/{batchCourseId}/reschedule")
+    public ResponseEntity<ApiResponse<BatchCourseResponse>> rescheduleBatchCourse(
+            @PathVariable Integer batchCourseId,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
+        BatchCourseResponse response = batchCourseService.rescheduleBatchCourse(batchCourseId, startDate, endDate);
+        return ResponseEntity.ok(ApiResponse.success("Batch course rescheduled successfully", response));
     }
 }

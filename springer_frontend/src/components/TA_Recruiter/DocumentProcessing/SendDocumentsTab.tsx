@@ -38,6 +38,7 @@ const SendDocumentsTab = ({ context }: { context: DocProcessingContextProps }) =
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [filterSubmission, setFilterSubmission] = useState('all');
+  const [filterStage, setFilterStage] = useState('all');
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [selectedCandidateIds, setSelectedCandidateIds] = useState<Set<number>>(new Set());
@@ -54,6 +55,7 @@ const SendDocumentsTab = ({ context }: { context: DocProcessingContextProps }) =
     setSelectedCandidateIds(new Set());
     setSearch('');
     setFilterSubmission('all');
+    setFilterStage('all');
     setPage(0);
     setSubmissionDeadline(getDefaultSubmissionDeadline());
   }, [cycleId]);
@@ -61,10 +63,17 @@ const SendDocumentsTab = ({ context }: { context: DocProcessingContextProps }) =
   const fetchData = async () => {
     try {
       setLoading(true);
-      const [typeRes, candRes, subRes] = await Promise.all([
+      const [typeRes, subRes, candRes] = await Promise.all([
         documentTypeApi.getAllTypes(),
-        candidateApi.getCandidatesByCycleId(cycleId),
         documentSubmissionApi.getAllSubmissions({ cycleId, size: 2000 }),
+        Promise.all([
+          candidateApi.getCandidatesByCycleIdAndStage(cycleId, 'SELECTED'),
+          candidateApi.getCandidatesByCycleIdAndStage(cycleId, 'OFFERED'),
+          candidateApi.getCandidatesByCycleIdAndStage(cycleId, 'ACCEPTED'),
+        ]).then(results => ({
+          success: true,
+          data: results.flatMap(r => (r.success && r.data) ? r.data : []),
+        })),
       ]);
       if (typeRes.success && typeRes.data) {
         setDocTypes(typeRes.data);
@@ -135,8 +144,9 @@ const SendDocumentsTab = ({ context }: { context: DocProcessingContextProps }) =
 
   const getSubmissionStatus = (candidateId: number): 'none' | 'partial' | 'full' => {
     const submitted = submissions[candidateId] || 0;
+    const total = docTypes.length;
     if (submitted === 0) return 'none';
-    if (submitted >= docTypes.length && docTypes.length > 0) return 'full';
+    if (total > 0 && submitted >= total) return 'full';
     return 'partial';
   };
 
@@ -148,9 +158,9 @@ const SendDocumentsTab = ({ context }: { context: DocProcessingContextProps }) =
       filterSubmission === 'all'     ? true :
       filterSubmission === 'none'    ? status === 'none' :
       filterSubmission === 'partial' ? status === 'partial' :
-      filterSubmission === 'full'    ? status === 'full' :
-      status !== 'none'; // 'any-submitted'
-    return matchSearch && matchSubmission;
+      filterSubmission === 'full'    ? status === 'full' : true;
+    const matchStage = filterStage === 'all' || c.applicationStage === filterStage;
+    return matchSearch && matchSubmission && matchStage;
   });
 
   const paginated = filtered.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
@@ -256,6 +266,12 @@ const SendDocumentsTab = ({ context }: { context: DocProcessingContextProps }) =
                 <MenuItem value="none">Not Yet Submitted</MenuItem>
                 <MenuItem value="partial">Partially Submitted</MenuItem>
                 <MenuItem value="full">Fully Submitted</MenuItem>
+              </FilterSelect>
+              <FilterSelect label="Stage" value={filterStage} onChange={v => { setFilterStage(v); setPage(0); }} className="sdt-submission-select">
+                <MenuItem value="all">All Stages</MenuItem>
+                <MenuItem value="SELECTED">Selected</MenuItem>
+                <MenuItem value="OFFERED">Offered</MenuItem>
+                <MenuItem value="ACCEPTED">Accepted</MenuItem>
               </FilterSelect>
             </Box>
             <Box className="sdt-filter-right">

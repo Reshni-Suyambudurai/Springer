@@ -32,8 +32,6 @@ interface CandidateOfferRow {
 }
 
 const today = () => new Date().toISOString().split('T')[0];
-const OFFER_PAGE_SIZE = 200;
-const OFFER_MAX_PAGES = 10; // max 2000 offers per cycle — safe upper bound
 
 const OffersTab = ({ context }: { context: DocProcessingContextProps }) => {
   const { cycleId } = context;
@@ -68,27 +66,8 @@ const OffersTab = ({ context }: { context: DocProcessingContextProps }) => {
   }, [cycleId]);
 
   const fetchAllOffersByCycle = async () => {
-    const all: OfferLetterResponse[] = [];
-    const seen = new Set<number>();
-
-    for (let pageNo = 0; pageNo < OFFER_MAX_PAGES; pageNo += 1) {
-      const res = await offerApi.getAllOffers({ cycleId, page: pageNo, size: OFFER_PAGE_SIZE });
-      const rows = (res.success && res.data) ? res.data : [];
-      if (rows.length === 0) break;
-
-      let newCount = 0;
-      rows.forEach((row) => {
-        if (!seen.has(row.offerId)) {
-          seen.add(row.offerId);
-          all.push(row);
-          newCount += 1;
-        }
-      });
-
-      if (rows.length < OFFER_PAGE_SIZE || newCount === 0) break;
-    }
-
-    return all;
+    const res = await offerApi.getAllOffers({ cycleId, size: 1000 });
+    return (res.success && res.data) ? res.data : [];
   };
 
   const fetchEligible = async () => {

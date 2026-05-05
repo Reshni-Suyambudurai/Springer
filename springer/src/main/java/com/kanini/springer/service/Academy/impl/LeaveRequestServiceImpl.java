@@ -15,6 +15,8 @@ import com.kanini.springer.repository.Hiring.UserRepository;
 import com.kanini.springer.service.Academy.ILeaveRequestService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -45,11 +47,30 @@ public class LeaveRequestServiceImpl implements ILeaveRequestService {
         BatchAllocation student = allocationRepository.findByStudentId(request.getStudentId())
                 .orElseThrow(() -> new ResourceNotFoundException("Student not found: " + request.getStudentId()));
 
+        // Active student check
+        if (!Boolean.TRUE.equals(student.getIsActive())) {
+            throw new ValidationException("Cannot apply leave for an inactive student.");
+        }
+
         LocalDate from = LocalDate.parse(request.getFromDate());
         LocalDate to   = LocalDate.parse(request.getToDate());
 
         if (to.isBefore(from))
             throw new ValidationException("To date cannot be before From date");
+
+        // Past date validation — leave cannot start in the past (allow today)
+        if (from.isBefore(LocalDate.now()))
+            throw new ValidationException("Leave start date cannot be in the past. Earliest allowed date is today.");
+
+        // Maximum leave duration check (30 days)
+        long days = java.time.temporal.ChronoUnit.DAYS.between(from, to) + 1;
+        if (days > 30)
+            throw new ValidationException("Leave duration cannot exceed 30 days. Requested: " + days + " days.");
+
+        // Overlapping leave check — no PENDING or APPROVED leave should overlap
+        if (leaveRepository.existsOverlappingLeave(request.getStudentId(), from, to)) {
+            throw new ValidationException("You already have a leave request (pending or approved) that overlaps with these dates.");
+        }
 
         LeaveType leaveType;
         try {
@@ -127,6 +148,20 @@ public class LeaveRequestServiceImpl implements ILeaveRequestService {
     public LeaveRequestResponse getLeaveById(Long leaveId) {
         return toResponse(leaveRepository.findById(leaveId)
                 .orElseThrow(() -> new ResourceNotFoundException("Leave request not found: " + leaveId)));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<LeaveRequestResponse> getLeavesFiltered(
+            Integer programId, Integer batchNumber, String status, String search, int page, int size) {
+        LeaveStatus leaveStatus = null;
+        if (status != null && !status.isBlank()) {
+            try { leaveStatus = LeaveStatus.valueOf(status.toUpperCase(java.util.Locale.ROOT)); }
+            catch (IllegalArgumentException ignored) { /* invalid status — treat as no filter */ }
+        }
+        String searchParam = (search != null && !search.isBlank()) ? search.trim() : null;
+        return leaveRepository.findFiltered(programId, batchNumber, leaveStatus, searchParam,
+                PageRequest.of(page, size)).map(this::toResponse);
     }
 
     // ── Mapper ────────────────────────────────────────────────────────────────

@@ -7,6 +7,7 @@ import com.kanini.springer.dto.Academy.BulkAttendanceMarkRequest;
 import com.kanini.springer.dto.Academy.ExcelUploadResponse;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.LocalDate;
 import java.util.List;
 
 public interface IAttendanceService {
@@ -17,4 +18,5 @@ public interface IAttendanceService {
     List<AttendanceStatsResponse> getAttendanceSummaryByBatch(Integer programId, Integer batchNumber);
     List<AttendanceResponse> getAttendanceRecords(Long studentId);
     ExcelUploadResponse uploadAttendanceFromExcel(MultipartFile file, Integer programId, Integer batchNumber);
+    boolean isAttendanceMarkedForBatch(Integer programId, Integer batchNumber, LocalDate date);
 }

@@ -61,8 +61,11 @@ public class BatchAllocationController {
 
     @GetMapping("/program/{programId}")
     public ResponseEntity<ApiResponse<List<BatchAllocationResponse>>> getAllocationsByProgram(
-            @PathVariable Integer programId) {
-        List<BatchAllocationResponse> response = allocationService.getAllocationsByProgram(programId);
+            @PathVariable Integer programId,
+            @RequestParam(required = false) Boolean isActive) {
+        List<BatchAllocationResponse> response = isActive != null
+                ? allocationService.getAllocationsByProgram(programId, isActive)
+                : allocationService.getAllocationsByProgram(programId);
         return ResponseEntity.status(HttpStatus.OK)
                 .body(ApiResponse.success("Allocations for program " + programId + RETRIEVED_SUCCESSFULLY, response));
     }
@@ -109,7 +112,7 @@ public class BatchAllocationController {
     @PatchMapping("/{studentId}/transfer")
     public ResponseEntity<ApiResponse<BatchAllocationResponse>> transferStudent(
             @PathVariable Long studentId,
-            @RequestBody BatchTransferRequest request) {
+            @Valid @RequestBody BatchTransferRequest request) {
         BatchAllocationResponse response = allocationService.transferStudent(studentId, request);
         return ResponseEntity.status(HttpStatus.OK)
                 .body(ApiResponse.success("Student transferred successfully", response));

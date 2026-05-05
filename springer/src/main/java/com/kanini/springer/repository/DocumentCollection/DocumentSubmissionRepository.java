@@ -61,4 +61,7 @@ public interface DocumentSubmissionRepository extends JpaRepository<DocumentSubm
 
     @Query("SELECT ds FROM DocumentSubmission ds WHERE ds.candidate.candidateId = ?1 AND ds.documentType.documentTypeId = ?2 AND ds.cycle.cycleId = ?3 AND ds.verificationStatus != com.kanini.springer.entity.enums.Enums.VerificationStatus.REJECTED AND ds.verificationStatus != com.kanini.springer.entity.enums.Enums.VerificationStatus.PENDING")
     Optional<DocumentSubmission> findActiveSubmission(Long candidateId, Long documentTypeId, Long cycleId);
+
+    @Query("SELECT COUNT(ds) FROM DocumentSubmission ds WHERE ds.documentType.documentTypeId = ?1")
+    long countByDocumentTypeId(Long documentTypeId);
 }

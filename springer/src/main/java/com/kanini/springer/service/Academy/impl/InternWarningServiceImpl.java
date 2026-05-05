@@ -9,6 +9,7 @@ import com.kanini.springer.entity.enums.Enums.WarningSeverity;
 import com.kanini.springer.entity.enums.Enums.WarningStatus;
 import com.kanini.springer.entity.enums.Enums.WarningType;
 import com.kanini.springer.exception.ResourceNotFoundException;
+import com.kanini.springer.exception.ValidationException;
 import com.kanini.springer.repository.Academy.BatchAllocationRepository;
 import com.kanini.springer.repository.Academy.InternWarningRepository;
 import com.kanini.springer.repository.Hiring.UserRepository;
@@ -16,6 +17,8 @@ import com.kanini.springer.service.Academy.IInternWarningService;
 import com.kanini.springer.service.DocumentCollection.IEmailService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -38,8 +41,22 @@ public class InternWarningServiceImpl implements IInternWarningService {
         BatchAllocation student = allocationRepository.findByStudentId(request.getStudentId())
                 .orElseThrow(() -> new ResourceNotFoundException("Student not found: " + request.getStudentId()));
 
+        // Active student check
+        if (!Boolean.TRUE.equals(student.getIsActive())) {
+            throw new ValidationException("Cannot issue a warning to an inactive student.");
+        }
+
         User issuedBy = userRepository.findById(request.getIssuedBy())
                 .orElseThrow(() -> new ResourceNotFoundException("User not found: " + request.getIssuedBy()));
+
+        // Deduplication — prevent same type+severity active warning for same student
+        WarningType wType = WarningType.valueOf(request.getWarningType());
+        WarningSeverity wSeverity = WarningSeverity.valueOf(request.getSeverity());
+        if (warningRepository.existsActiveWarning(request.getStudentId(), wType, wSeverity)) {
+            throw new ValidationException("An active warning of the same type ('" + request.getWarningType()
+                    + "') and severity ('" + request.getSeverity() + "') already exists for this student. "
+                    + "Wait for the student to acknowledge it before issuing another.");
+        }
 
         InternWarning warning = new InternWarning();
         warning.setStudent(student);
@@ -112,11 +129,33 @@ public class InternWarningServiceImpl implements IInternWarningService {
         if (acknowledgementComment == null || acknowledgementComment.trim().isEmpty()) {
             throw new IllegalStateException("Acknowledgement comment is required");
         }
+        if (acknowledgementComment.trim().length() > 1000) {
+            throw new IllegalStateException("Acknowledgement comment cannot exceed 1000 characters");
+        }
         warning.setStatus(WarningStatus.ACKNOWLEDGED);
         warning.setAcknowledgedAt(LocalDateTime.now());
         warning.setAcknowledgementComment(acknowledgementComment.trim());
         log.info("Warning {} acknowledged by intern with comment", warningId);
         return toResponse(warningRepository.save(warning));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<InternWarningResponse> getWarningsFiltered(
+            Integer programId, Integer batchNumber, String status, String warningType, String search, int page, int size) {
+        WarningStatus warningStatus = null;
+        if (status != null && !status.isBlank()) {
+            try { warningStatus = WarningStatus.valueOf(status.toUpperCase(java.util.Locale.ROOT)); }
+            catch (IllegalArgumentException ignored) { /* invalid status — treat as no filter */ }
+        }
+        WarningType warnType = null;
+        if (warningType != null && !warningType.isBlank()) {
+            try { warnType = WarningType.valueOf(warningType.toUpperCase(java.util.Locale.ROOT)); }
+            catch (IllegalArgumentException ignored) { /* invalid type — treat as no filter */ }
+        }
+        String searchParam = (search != null && !search.isBlank()) ? search.trim() : null;
+        return warningRepository.findFiltered(programId, batchNumber, warningStatus, warnType, searchParam,
+                PageRequest.of(page, size)).map(this::toResponse);
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────

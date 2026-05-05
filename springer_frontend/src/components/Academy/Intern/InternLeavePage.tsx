@@ -45,7 +45,9 @@ const InternLeavePage = () => {
     if (!fromDate) { showToast('From date is required', 'error'); return; }
     if (!toDate)   { showToast('To date is required', 'error'); return; }
     if (!reason.trim()) { showToast('Reason is required', 'error'); return; }
+    if (fromDate < new Date().toISOString().split('T')[0]) { showToast('From date cannot be in the past', 'error'); return; }
     if (toDate < fromDate) { showToast('To date cannot be before From date', 'error'); return; }
+    if (totalDays(fromDate, toDate) > 30) { showToast('Leave duration cannot exceed 30 days', 'error'); return; }
 
     try {
       setSubmitting(true);
@@ -123,7 +125,7 @@ const InternLeavePage = () => {
               <div className="ilv-form-field">
                 <label className="ilv-label">From Date *</label>
                 <input className="ilv-input" type="date" value={fromDate}
-                  onChange={e => setFromDate(e.target.value)} />
+                  onChange={e => setFromDate(e.target.value)} min={new Date().toISOString().split('T')[0]} />
               </div>
               <div className="ilv-form-field">
                 <label className="ilv-label">To Date *</label>
@@ -140,13 +142,16 @@ const InternLeavePage = () => {
             {fromDate && toDate && toDate >= fromDate && (
               <p className="ilv-days-info">
                 📅 {totalDays(fromDate, toDate)} day{totalDays(fromDate, toDate) > 1 ? 's' : ''} leave
+                {totalDays(fromDate, toDate) > 30 && <span style={{ color: 'var(--color-error, #d32f2f)', marginLeft: 8 }}>(max 30 days)</span>}
               </p>
             )}
             <div className="ilv-form-field">
               <label className="ilv-label">Reason *</label>
               <textarea className="ilv-input ilv-textarea" rows={3}
                 placeholder="Explain your reason for leave..."
+                maxLength={1000}
                 value={reason} onChange={e => setReason(e.target.value)} />
+              <span style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>{reason.length}/1000</span>
             </div>
             <div className="ilv-form-actions">
               <button className="ilv-cancel-btn" onClick={() => setShowForm(false)}>Cancel</button>

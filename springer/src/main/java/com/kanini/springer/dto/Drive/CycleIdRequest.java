@@ -1,5 +1,6 @@
 package com.kanini.springer.dto.Drive;
 
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -11,5 +12,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class CycleIdRequest {
+    @NotNull(message = "Cycle ID is required")
     private Long cycleId;
 }

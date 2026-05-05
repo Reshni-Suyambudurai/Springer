@@ -47,7 +47,16 @@ const InternDashboard = () => {
     : data.attendancePercentage < 85 ? 'var(--color-warning-text)'
     : 'var(--color-success-dark)';
 
-  const rankLabel = data.rank === 1 ? '1st' : data.rank === 2 ? '2nd' : data.rank === 3 ? '3rd' : `${data.rank}th`;
+  const getOrdinal = (n: number) => {
+    if (n % 100 >= 11 && n % 100 <= 13) return `${n}th`;
+    switch (n % 10) {
+      case 1: return `${n}st`;
+      case 2: return `${n}nd`;
+      case 3: return `${n}rd`;
+      default: return `${n}th`;
+    }
+  };
+  const rankLabel = getOrdinal(data.rank);
 
   const statusLabel = data.status === 'PROJECT_READY' ? 'Project Ready'
     : data.status === 'AT_RISK' ? 'At Risk'

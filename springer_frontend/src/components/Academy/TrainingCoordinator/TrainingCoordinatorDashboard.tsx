@@ -61,7 +61,7 @@ const TrainingCoordinatorDashboard = () => {
       }
 
       const allocResults = await Promise.allSettled(
-        currentYearPrograms.map(p => batchAllocationApi.getAllocationsByProgram(p.programId))
+        currentYearPrograms.map(p => batchAllocationApi.getAllocationsByProgram(p.programId, true))
       );
       const allocations: BatchAllocationResponse[] = [];
       allocResults.forEach(r => {

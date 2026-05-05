@@ -13,6 +13,7 @@ public interface IBatchAllocationService {
     BatchAllocationResponse getAllocationById(Long studentId);
     List<BatchAllocationResponse> getAllAllocations();
     List<BatchAllocationResponse> getAllocationsByProgram(Integer programId);
+    List<BatchAllocationResponse> getAllocationsByProgram(Integer programId, Boolean isActive);
     List<BatchAllocationResponse> getAllocationsByBatch(Integer programId, Integer batchNumber);
     BatchAllocationResponse updateAllocation(Long studentId, BatchAllocationRequest request);
     void deleteAllocation(Long studentId);

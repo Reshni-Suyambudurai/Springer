@@ -225,6 +225,26 @@ export const batchCourseApi = {
       throw handleAxiosError(error);
     }
   },
+
+  async getCoursesByConductor(userId: number): Promise<ApiResponse<BatchCourseResponse[]>> {
+    try {
+      const response = await http.get(`/academy/batch-courses/conducted-by/${userId}`);
+      return response.data;
+    } catch (error) {
+      throw handleAxiosError(error);
+    }
+  },
+
+  async rescheduleBatchCourse(batchCourseId: number, startDate: string, endDate: string): Promise<ApiResponse<BatchCourseResponse>> {
+    try {
+      const response = await http.patch(`/academy/batch-courses/${batchCourseId}/reschedule`, null, {
+        params: { startDate, endDate },
+      });
+      return response.data;
+    } catch (error) {
+      throw handleAxiosError(error);
+    }
+  },
 };
 
 // ==================== BATCH SCHEDULE APIs ====================
@@ -279,9 +299,10 @@ export const batchAllocationApi = {
     }
   },
 
-  async getAllocationsByProgram(programId: number): Promise<ApiResponse<BatchAllocationResponse[]>> {
+  async getAllocationsByProgram(programId: number, isActive?: boolean): Promise<ApiResponse<BatchAllocationResponse[]>> {
     try {
-      const response = await http.get(`/academy/batch-allocations/program/${programId}`);
+      const params = isActive !== undefined ? { isActive } : {};
+      const response = await http.get(`/academy/batch-allocations/program/${programId}`, { params });
       return response.data;
     } catch (error) {
       throw handleAxiosError(error);
@@ -398,6 +419,15 @@ export const attendanceApi = {
       throw handleAxiosError(error);
     }
   },
+
+  async checkAttendanceExists(programId: number, batchNumber: number, date: string): Promise<ApiResponse<boolean>> {
+    try {
+      const response = await http.get('/academy/attendance/check', { params: { programId, batchNumber, date } });
+      return response.data;
+    } catch (error) {
+      throw handleAxiosError(error);
+    }
+  },
 };
 
 // ==================== EXCEL UPLOAD APIs ====================
@@ -409,7 +439,7 @@ export const excelUploadApi = {
       form.append('file', file);
       const response = await http.post(
         `/academy/scores/upload?programId=${programId}&batchNumber=${batchNumber}&courseId=${courseId}&reviewedBy=${reviewedBy}`,
-        form, { headers: { 'Content-Type': 'multipart/form-data' } }
+        form
       );
       return response.data;
     } catch (error) { throw handleAxiosError(error); }
@@ -421,7 +451,7 @@ export const excelUploadApi = {
       form.append('file', file);
       const response = await http.post(
         `/academy/attendance/upload?programId=${programId}&batchNumber=${batchNumber}`,
-        form, { headers: { 'Content-Type': 'multipart/form-data' } }
+        form
       );
       return response.data;
     } catch (error) { throw handleAxiosError(error); }

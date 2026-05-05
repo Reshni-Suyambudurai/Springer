@@ -9,6 +9,7 @@ public class Enums {
     public enum RoleName {
         TA_HEAD,
         TA_RECRUITER,
+        TA_MANAGER,
         HIRING_MANAGER,
         MEMBERS,
         HR_OPERATIONS,
