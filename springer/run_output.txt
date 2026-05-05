@@ -1,0 +1,143 @@
+WARNING: A restricted method in java.lang.System has been called
+WARNING: java.lang.System::load has been called by org.fusesource.jansi.internal.JansiLoader in an unnamed module (file:/C:/maven/apache-maven-3.9.6/lib/jansi-2.4.0.jar)
+WARNING: Use --enable-native-access=ALL-UNNAMED to avoid a warning for callers in this module
+WARNING: Restricted methods will be blocked in a future release unless native access is enabled
+
+WARNING: A terminally deprecated method in sun.misc.Unsafe has been called
+WARNING: sun.misc.Unsafe::objectFieldOffset has been called by com.google.common.util.concurrent.AbstractFuture$UnsafeAtomicHelper (file:/C:/maven/apache-maven-3.9.6/lib/guava-32.0.1-jre.jar)
+WARNING: Please consider reporting this to the maintainers of class com.google.common.util.concurrent.AbstractFuture$UnsafeAtomicHelper
+WARNING: sun.misc.Unsafe::objectFieldOffset will be removed in a future release
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] ------------------------< com.kanini:springer >-------------------------
+[INFO] Building springer 0.0.1-SNAPSHOT
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] >>> spring-boot:3.5.11:run (default-cli) > test-compile @ springer >>>
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ springer ---
+[INFO] Copying 3 resources from src\main\resources to target\classes
+[INFO] Copying 2 resources from src\main\resources to target\classes
+[INFO] 
+[INFO] --- compiler:3.14.1:compile (default-compile) @ springer ---
+[INFO] Recompiling the module because of changed source code.
+[INFO] Compiling 366 source files with javac [debug parameters release 21] to target\classes
+[INFO] /C:/Users/BavigaddaManohar/Downloads/Springer/springer/src/main/java/com/kanini/springer/util/JwtUtil.java: C:\Users\BavigaddaManohar\Downloads\Springer\springer\src\main\java\com\kanini\springer\util\JwtUtil.java uses or overrides a deprecated API.
+[INFO] /C:/Users/BavigaddaManohar/Downloads/Springer/springer/src/main/java/com/kanini/springer/util/JwtUtil.java: Recompile with -Xlint:deprecation for details.
+[INFO] 
+[INFO] --- resources:3.3.1:testResources (default-testResources) @ springer ---
+[INFO] Copying 0 resource from src\test\resources to target\test-classes
+[INFO] 
+[INFO] --- compiler:3.14.1:testCompile (default-testCompile) @ springer ---
+[INFO] Recompiling the module because of changed dependency.
+[INFO] Compiling 25 source files with javac [debug parameters release 21] to target\test-classes
+[INFO] 
+[INFO] <<< spring-boot:3.5.11:run (default-cli) < test-compile @ springer <<<
+[INFO] 
+[INFO] 
+[INFO] --- spring-boot:3.5.11:run (default-cli) @ springer ---
+[INFO] Attaching agents: []
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::               (v3.5.11)
+
+2026-04-22 11:31:38 - Starting SpringerApplication using Java 25.0.2 with PID 22552 (C:\Users\BavigaddaManohar\Downloads\Springer\springer\target\classes started by BavigaddaManohar in C:\Users\BavigaddaManohar\Downloads\Springer\springer)
+2026-04-22 11:31:38 - Running with Spring Boot v3.5.11, Spring v6.2.16
+2026-04-22 11:31:38 - The following 1 profile is active: "dev"
+2026-04-22 11:31:38 - Devtools property defaults active! Set 'spring.devtools.add-properties' to 'false' to disable
+2026-04-22 11:31:38 - For additional web related logging consider setting the 'logging.level.web' property to 'DEBUG'
+2026-04-22 11:31:39 - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-04-22 11:31:39 - Finished Spring Data repository scanning in 190 ms. Found 38 JPA repository interfaces.
+2026-04-22 11:31:40 - Tomcat initialized with port 8080 (http)
+2026-04-22 11:31:40 - Starting service [Tomcat]
+2026-04-22 11:31:40 - Starting Servlet engine: [Apache Tomcat/10.1.52]
+2026-04-22 11:31:40 - Initializing Spring embedded WebApplicationContext
+2026-04-22 11:31:40 - Root WebApplicationContext: initialization completed in 2016 ms
+2026-04-22 11:31:40 - HHH000204: Processing PersistenceUnitInfo [name: default]
+2026-04-22 11:31:40 - HHH000412: Hibernate ORM core version 6.6.42.Final
+2026-04-22 11:31:40 - HHH000026: Second-level cache disabled
+2026-04-22 11:31:40 - No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-04-22 11:31:40 - HikariPool-1 - Starting...
+2026-04-22 11:31:41 - HikariPool-1 - Added connection com.mysql.cj.jdbc.ConnectionImpl@585e061a
+2026-04-22 11:31:41 - HikariPool-1 - Start completed.
+2026-04-22 11:31:41 - HHH90000025: MySQLDialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)
+2026-04-22 11:31:41 - HHH10001005: Database info:
+	Database JDBC URL [Connecting through datasource 'HikariDataSource (HikariPool-1)']
+	Database driver: undefined/unknown
+	Database version: 8.0.45
+	Autocommit mode: undefined/unknown
+	Isolation level: undefined/unknown
+	Minimum pool size: undefined/unknown
+	Maximum pool size: undefined/unknown
+2026-04-22 11:31:43 - HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-04-22 11:31:43 - 
+    alter table roles 
+       modify column role_name enum ('BU_SPOC','HIRING_MANAGER','HR_OPERATIONS','INTERN','MEMBERS','SYSTEM_ADMIN','TA_HEAD','TA_RECRUITER','TRAINING_COORDINATOR')
+Hibernate: 
+    alter table roles 
+       modify column role_name enum ('BU_SPOC','HIRING_MANAGER','HR_OPERATIONS','INTERN','MEMBERS','SYSTEM_ADMIN','TA_HEAD','TA_RECRUITER','TRAINING_COORDINATOR')
+2026-04-22 11:31:43 - Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-04-22 11:31:43 - Hibernate is in classpath; If applicable, HQL parser will be used.
+2026-04-22 11:31:44 - Filter 'jwtAuthenticationFilter' configured for use
+2026-04-22 11:31:45 - 
+    select
+        bc1_0.batch_course_id,
+        bc1_0.batch_no,
+        bc1_0.conducted_by,
+        bc1_0.course_id,
+        bc1_0.created_at,
+        bc1_0.end_date,
+        bc1_0.program_id,
+        bc1_0.start_date,
+        bc1_0.status 
+    from
+        batch_courses bc1_0
+Hibernate: 
+    select
+        bc1_0.batch_course_id,
+        bc1_0.batch_no,
+        bc1_0.conducted_by,
+        bc1_0.course_id,
+        bc1_0.created_at,
+        bc1_0.end_date,
+        bc1_0.program_id,
+        bc1_0.start_date,
+        bc1_0.status 
+    from
+        batch_courses bc1_0
+2026-04-22 11:31:46 - Global AuthenticationManager configured with UserDetailsService bean with name userDetailsService
+2026-04-22 11:31:46 - Unable to start LiveReload server
+2026-04-22 11:31:46 - Exception encountered during context initialization - cancelling refresh attempt: org.springframework.context.ApplicationContextException: Failed to start bean 'webServerStartStop'
+2026-04-22 11:31:46 - Closing JPA EntityManagerFactory for persistence unit 'default'
+2026-04-22 11:31:46 - HikariPool-1 - Shutdown initiated...
+2026-04-22 11:31:46 - HikariPool-1 - Shutdown completed.
+2026-04-22 11:31:46 - 
+
+Error starting ApplicationContext. To display the condition evaluation report re-run your application with 'debug' enabled.
+2026-04-22 11:31:46 - 
+
+***************************
+APPLICATION FAILED TO START
+***************************
+
+Description:
+
+Web server failed to start. Port 8080 was already in use.
+
+Action:
+
+Identify and stop the process that's listening on port 8080 or configure this application to listen on another port.
+
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  36.579 s
+[INFO] Finished at: 2026-04-22T11:31:46+05:30
+[INFO] ------------------------------------------------------------------------
