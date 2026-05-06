@@ -6,6 +6,7 @@ import com.kanini.springer.service.DocumentCollection.IReportService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -19,6 +20,7 @@ public class ReportController {
     
     private final IReportService reportService;
     
+    @PreAuthorize("hasAnyRole('TA_MANAGER','TA_HEAD')")
     @GetMapping("/document-completion")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getDocumentCompletionReport(
             @RequestParam Long cycleId) {
@@ -27,6 +29,7 @@ public class ReportController {
                 .body(ApiResponse.success("Document completion report retrieved successfully", report));
     }
     
+    @PreAuthorize("hasAnyRole('TA_MANAGER','TA_HEAD')")
     @GetMapping("/offer-status")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getOfferStatusReport(
             @RequestParam Long cycleId) {
@@ -35,6 +38,7 @@ public class ReportController {
                 .body(ApiResponse.success("Offer status report retrieved successfully", report));
     }
     
+    @PreAuthorize("hasAnyRole('TA_MANAGER','TA_HEAD')")
     @GetMapping("/pipeline-status")
     public ResponseEntity<ApiResponse<PipelineStatusResponse>> getPipelineStatusReport(
             @RequestParam Long cycleId) {

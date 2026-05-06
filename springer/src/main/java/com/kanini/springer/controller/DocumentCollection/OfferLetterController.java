@@ -10,6 +10,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -23,6 +24,7 @@ public class OfferLetterController {
 
     private final IOfferLetterService offerService;
 
+    @PreAuthorize("hasAnyRole('TA_MANAGER','TA_HEAD')")
     @PostMapping("/generate")
     public ResponseEntity<ApiResponse<OfferLetterResponse>> generateOfferLetter(
             @Valid @RequestBody OfferLetterRequest request) {
@@ -31,6 +33,7 @@ public class OfferLetterController {
                 .body(ApiResponse.success("Offer generated successfully", response));
     }
 
+    @PreAuthorize("hasAnyRole('TA_MANAGER','TA_HEAD')")
     @PostMapping("/bulk-generate")
     public ResponseEntity<ApiResponse<BulkOfferGenerateResponse>> bulkGenerateOfferLetters(
             @Valid @RequestBody BulkOfferGenerateRequest request) {
@@ -39,6 +42,7 @@ public class OfferLetterController {
                 .body(ApiResponse.success("Bulk offer generation completed", response));
     }
 
+    @PreAuthorize("hasAnyRole('TA_MANAGER','TA_HEAD')")
     @GetMapping("/{offerId}")
     public ResponseEntity<ApiResponse<OfferLetterResponse>> getOfferById(
             @PathVariable Long offerId) {
@@ -47,6 +51,7 @@ public class OfferLetterController {
                 .body(ApiResponse.success("Offer retrieved successfully", response));
     }
 
+    @PreAuthorize("hasAnyRole('TA_MANAGER','TA_HEAD')")
     @GetMapping
     public ResponseEntity<ApiResponse<List<OfferLetterResponse>>> getAllOffers(
             @RequestParam(required = false) String offerResponse,
@@ -58,6 +63,7 @@ public class OfferLetterController {
                 .body(ApiResponse.success("Offers retrieved successfully", offers));
     }
 
+    @PreAuthorize("hasAnyRole('TA_MANAGER','TA_HEAD')")
     @GetMapping("/offer-ready")
     public ResponseEntity<ApiResponse<List<OfferLetterResponse>>> getOfferReadyCandidates(
             @RequestParam Long cycleId) {

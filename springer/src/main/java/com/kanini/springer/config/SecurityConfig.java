@@ -16,11 +16,14 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.Arrays;
 
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
+
 /**
  * Security configuration with JWT authentication
  */
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
     
@@ -40,6 +43,8 @@ public class SecurityConfig {
                 // Candidate-facing document endpoints — authenticated by JWT token in URL, not session login
                 .requestMatchers("/api/documents/submission-status").permitAll()
                 .requestMatchers("/api/documents/submissions").permitAll()
+                // WebSocket — userId passed as query param, no Bearer header on upgrade
+                .requestMatchers("/ws/**").permitAll()
                 .anyRequest().authenticated() // All other requests require authentication
             )
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);

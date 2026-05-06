@@ -8,6 +8,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -21,6 +22,7 @@ public class DocumentTypeController {
     
     private final IDocumentTypeService typeService;
     
+    @PreAuthorize("hasAnyRole('TA_MANAGER','TA_HEAD')")
     @PostMapping
     public ResponseEntity<ApiResponse<DocumentTypeResponse>> createType(
             @Valid @RequestBody DocumentTypeRequest request) {
@@ -29,6 +31,7 @@ public class DocumentTypeController {
                 .body(ApiResponse.success("Document type created successfully", response));
     }
     
+    @PreAuthorize("hasAnyRole('TA_MANAGER','TA_HEAD','TRAINING_COORDINATOR')")
     @GetMapping
     public ResponseEntity<ApiResponse<List<DocumentTypeResponse>>> getAllTypes() {
         List<DocumentTypeResponse> response = typeService.getAllTypes();
@@ -36,6 +39,7 @@ public class DocumentTypeController {
                 .body(ApiResponse.success("Document types retrieved successfully", response));
     }
     
+    @PreAuthorize("hasAnyRole('TA_MANAGER','TA_HEAD','TRAINING_COORDINATOR')")
     @GetMapping("/{documentTypeId}")
     public ResponseEntity<ApiResponse<DocumentTypeResponse>> getTypeById(
             @PathVariable Long documentTypeId) {
@@ -44,6 +48,7 @@ public class DocumentTypeController {
                 .body(ApiResponse.success("Document type retrieved successfully", response));
     }
     
+    @PreAuthorize("hasAnyRole('TA_MANAGER','TA_HEAD')")
     @PatchMapping("/{documentTypeId}")
     public ResponseEntity<ApiResponse<DocumentTypeResponse>> updateType(
             @PathVariable Long documentTypeId,
@@ -53,6 +58,7 @@ public class DocumentTypeController {
                 .body(ApiResponse.success("Document type updated successfully", response));
     }
     
+    @PreAuthorize("hasAnyRole('TA_MANAGER','TA_HEAD')")
     @DeleteMapping("/{documentTypeId}")
     public ResponseEntity<ApiResponse<Void>> deleteType(
             @PathVariable Long documentTypeId) {

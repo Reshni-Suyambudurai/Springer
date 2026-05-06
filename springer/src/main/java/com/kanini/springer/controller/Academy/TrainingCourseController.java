@@ -8,6 +8,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -21,6 +22,7 @@ public class TrainingCourseController {
     
     private final ITrainingCourseService courseService;
     
+    @PreAuthorize("hasAnyRole('TRAINING_COORDINATOR','TA_HEAD')")
     @PostMapping
     public ResponseEntity<ApiResponse<TrainingCourseResponse>> createCourse(
             @Valid @RequestBody TrainingCourseRequest request) {
@@ -29,6 +31,7 @@ public class TrainingCourseController {
                 .body(ApiResponse.success("Training course created successfully", response));
     }
     
+    @PreAuthorize("hasAnyRole('TRAINING_COORDINATOR','TA_HEAD','TA_MANAGER','INTERN')")
     @GetMapping
     public ResponseEntity<ApiResponse<List<TrainingCourseResponse>>> getAllCourses() {
         List<TrainingCourseResponse> response = courseService.getAllCourses();
@@ -36,6 +39,7 @@ public class TrainingCourseController {
                 .body(ApiResponse.success("All courses retrieved successfully", response));
     }
     
+    @PreAuthorize("hasAnyRole('TRAINING_COORDINATOR','TA_HEAD','TA_MANAGER','INTERN')")
     @GetMapping("/{courseId}")
     public ResponseEntity<ApiResponse<TrainingCourseResponse>> getCourseById(
             @PathVariable Integer courseId) {
@@ -44,6 +48,7 @@ public class TrainingCourseController {
                 .body(ApiResponse.success("Course retrieved successfully", response));
     }
     
+    @PreAuthorize("hasAnyRole('TRAINING_COORDINATOR','TA_HEAD')")
     @PatchMapping("/{courseId}")
     public ResponseEntity<ApiResponse<TrainingCourseResponse>> updateCourse(
             @PathVariable Integer courseId,
@@ -53,6 +58,7 @@ public class TrainingCourseController {
                 .body(ApiResponse.success("Training course updated successfully", response));
     }
     
+    @PreAuthorize("hasAnyRole('TRAINING_COORDINATOR','TA_HEAD')")
     @PatchMapping("/{courseId}/status")
     public ResponseEntity<ApiResponse<TrainingCourseResponse>> updateCourseStatus(
             @PathVariable Integer courseId,
@@ -62,6 +68,7 @@ public class TrainingCourseController {
                 .body(ApiResponse.success("Course status updated to " + status, response));
     }
     
+    @PreAuthorize("hasAnyRole('TRAINING_COORDINATOR','TA_HEAD')")
     @DeleteMapping("/{courseId}")
     public ResponseEntity<ApiResponse<String>> deleteCourse(@PathVariable Integer courseId) {
         courseService.deleteCourse(courseId);

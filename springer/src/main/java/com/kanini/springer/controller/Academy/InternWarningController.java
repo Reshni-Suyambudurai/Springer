@@ -8,6 +8,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -20,6 +21,7 @@ public class InternWarningController {
     private final IInternWarningService warningService;
 
     // Recruiter / TC issues a warning
+    @PreAuthorize("hasAnyRole('TRAINING_COORDINATOR','TA_MANAGER','TA_HEAD')")
     @PostMapping
     public ResponseEntity<ApiResponse<InternWarningResponse>> issueWarning(
             @Valid @RequestBody InternWarningRequest request) {
@@ -28,6 +30,7 @@ public class InternWarningController {
     }
 
     // Get all warnings — TC / Recruiter view
+    @PreAuthorize("hasAnyRole('TRAINING_COORDINATOR','TA_MANAGER','TA_HEAD')")
     @GetMapping
     public ResponseEntity<ApiResponse<List<InternWarningResponse>>> getAll() {
         return ResponseEntity.ok(ApiResponse.success("All warnings retrieved",
@@ -35,6 +38,7 @@ public class InternWarningController {
     }
 
     // Paginated + filtered warnings — for large datasets
+    @PreAuthorize("hasAnyRole('TRAINING_COORDINATOR','TA_MANAGER','TA_HEAD')")
     @GetMapping("/filtered")
     public ResponseEntity<ApiResponse<org.springframework.data.domain.Page<InternWarningResponse>>> getWarningsFiltered(
             @RequestParam(required = false) Integer programId,
@@ -49,6 +53,7 @@ public class InternWarningController {
     }
 
     // Get all warnings for a specific intern
+    @PreAuthorize("hasAnyRole('TRAINING_COORDINATOR','TA_MANAGER','TA_HEAD','INTERN')")
     @GetMapping("/student/{studentId}")
     public ResponseEntity<ApiResponse<List<InternWarningResponse>>> getByStudent(
             @PathVariable Long studentId) {
@@ -57,6 +62,7 @@ public class InternWarningController {
     }
 
     // Get all warnings for a batch — TC / Recruiter view
+    @PreAuthorize("hasAnyRole('TRAINING_COORDINATOR','TA_MANAGER','TA_HEAD')")
     @GetMapping("/batch")
     public ResponseEntity<ApiResponse<List<InternWarningResponse>>> getByBatch(
             @RequestParam Integer programId,
@@ -66,6 +72,7 @@ public class InternWarningController {
     }
 
     // Intern acknowledges a warning with a comment
+    @PreAuthorize("hasAnyRole('INTERN')")
     @PatchMapping("/{warningId}/acknowledge")
     public ResponseEntity<ApiResponse<InternWarningResponse>> acknowledge(
             @PathVariable Long warningId,

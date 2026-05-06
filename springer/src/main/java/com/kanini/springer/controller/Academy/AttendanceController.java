@@ -9,6 +9,7 @@ import com.kanini.springer.dto.Authentication.ApiResponse;
 import com.kanini.springer.service.Academy.IAttendanceService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -26,6 +27,7 @@ public class AttendanceController {
 
     private final IAttendanceService attendanceService;
 
+    @PreAuthorize("hasAnyRole('TRAINING_COORDINATOR')")
     @PostMapping("/mark")
     public ResponseEntity<ApiResponse<AttendanceResponse>> markAttendance(
             @Valid @RequestBody AttendanceMarkRequest request) {
@@ -34,6 +36,7 @@ public class AttendanceController {
                 .body(ApiResponse.success("Attendance marked successfully", response));
     }
 
+    @PreAuthorize("hasAnyRole('TRAINING_COORDINATOR')")
     @PostMapping("/mark-bulk")
     public ResponseEntity<ApiResponse<List<AttendanceResponse>>> markAttendanceBulk(
             @Valid @RequestBody BulkAttendanceMarkRequest request) {
@@ -42,6 +45,7 @@ public class AttendanceController {
                 .body(ApiResponse.success("Bulk attendance marked successfully", response));
     }
 
+    @PreAuthorize("hasAnyRole('TRAINING_COORDINATOR','TA_HEAD','INTERN')")
     @GetMapping("/{studentId}/summary")
     public ResponseEntity<ApiResponse<AttendanceStatsResponse>> getAttendanceSummary(
             @PathVariable Long studentId) {
@@ -50,6 +54,7 @@ public class AttendanceController {
                 .body(ApiResponse.success("Attendance summary retrieved successfully", response));
     }
 
+    @PreAuthorize("hasAnyRole('TRAINING_COORDINATOR','TA_HEAD','TA_MANAGER')")
     @GetMapping("/batch/summary")
     public ResponseEntity<ApiResponse<List<AttendanceStatsResponse>>> getAttendanceSummaryByBatch(
             @RequestParam Integer programId,
@@ -59,6 +64,7 @@ public class AttendanceController {
                 .body(ApiResponse.success("Batch attendance summary retrieved successfully", response));
     }
 
+    @PreAuthorize("hasAnyRole('TRAINING_COORDINATOR','TA_HEAD','INTERN')")
     @GetMapping("/{studentId}/records")
     public ResponseEntity<ApiResponse<List<AttendanceResponse>>> getAttendanceRecords(
             @PathVariable Long studentId) {
@@ -67,6 +73,7 @@ public class AttendanceController {
                 .body(ApiResponse.success("Attendance records retrieved successfully", response));
     }
 
+    @PreAuthorize("hasAnyRole('TRAINING_COORDINATOR')")
     @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApiResponse<ExcelUploadResponse>> uploadAttendance(
             @RequestPart("file") MultipartFile file,
@@ -77,6 +84,7 @@ public class AttendanceController {
         return ResponseEntity.ok(ApiResponse.success(message, response));
     }
 
+    @PreAuthorize("hasAnyRole('TRAINING_COORDINATOR','TA_HEAD','TA_MANAGER')")
     @GetMapping("/check")
     public ResponseEntity<ApiResponse<Boolean>> checkAttendanceExists(
             @RequestParam Integer programId,

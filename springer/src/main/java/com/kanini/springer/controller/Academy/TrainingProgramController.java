@@ -11,6 +11,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -24,6 +25,7 @@ public class TrainingProgramController {
     
     private final ITrainingProgramService programService;
     
+    @PreAuthorize("hasAnyRole('TRAINING_COORDINATOR','TA_HEAD','TA_MANAGER')")
     @PostMapping
     public ResponseEntity<ApiResponse<TrainingProgramResponse>> createProgram(
             @Valid @RequestBody TrainingProgramRequest request) {
@@ -32,6 +34,7 @@ public class TrainingProgramController {
                 .body(ApiResponse.success("Training program created successfully", response));
     }
     
+    @PreAuthorize("hasAnyRole('TRAINING_COORDINATOR','TA_HEAD','TA_MANAGER','INTERN')")
     @GetMapping
     public ResponseEntity<ApiResponse<List<TrainingProgramResponse>>> getAllPrograms(
             @RequestParam(required = false) Boolean active) {
@@ -45,6 +48,7 @@ public class TrainingProgramController {
                 .body(ApiResponse.success("Programs retrieved successfully", response));
     }
 
+    @PreAuthorize("hasAnyRole('TRAINING_COORDINATOR','TA_HEAD','TA_MANAGER','INTERN')")
     @GetMapping("/{programId}")
     public ResponseEntity<ApiResponse<TrainingProgramResponse>> getProgramById(
             @PathVariable Integer programId) {
@@ -53,6 +57,7 @@ public class TrainingProgramController {
                 .body(ApiResponse.success("Program retrieved successfully", response));
     }
     
+    @PreAuthorize("hasAnyRole('TRAINING_COORDINATOR','TA_HEAD','TA_MANAGER','INTERN')")
     @GetMapping("/years/all")
     public ResponseEntity<ApiResponse<List<Integer>>> getAllDistinctYears() {
         List<Integer> years = programService.getAllDistinctYears();
@@ -60,6 +65,7 @@ public class TrainingProgramController {
                 .body(ApiResponse.success("Program years retrieved successfully", years));
     }
     
+    @PreAuthorize("hasAnyRole('TRAINING_COORDINATOR','TA_HEAD','TA_MANAGER')")
     @PatchMapping("/{programId}")
     public ResponseEntity<ApiResponse<TrainingProgramResponse>> updateProgram(
             @PathVariable Integer programId,
@@ -69,6 +75,7 @@ public class TrainingProgramController {
                 .body(ApiResponse.success("Training program updated successfully", response));
     }
     
+    @PreAuthorize("hasAnyRole('TRAINING_COORDINATOR','TA_HEAD','TA_MANAGER')")
     @DeleteMapping("/{programId}")
     public ResponseEntity<ApiResponse<String>> deleteProgram(@PathVariable Integer programId) {
         programService.deleteProgram(programId);
@@ -76,6 +83,7 @@ public class TrainingProgramController {
                 .body(ApiResponse.success("Training program deleted successfully", null));
     }
     
+    @PreAuthorize("hasAnyRole('TRAINING_COORDINATOR','TA_HEAD','TA_MANAGER')")
     @PostMapping("/joining-tracker/candidates")
     public ResponseEntity<ApiResponse<List<JoiningTrackerResponse>>> getJoiningTrackerCandidates(
             @Valid @RequestBody JoiningTrackerRequest request) {
@@ -83,6 +91,7 @@ public class TrainingProgramController {
         return ResponseEntity.ok(ApiResponse.success("Candidates retrieved successfully", responses));
     }
     
+    @PreAuthorize("hasAnyRole('TRAINING_COORDINATOR','TA_HEAD','TA_MANAGER')")
     @PostMapping("/batch-allocation/candidates")
     public ResponseEntity<ApiResponse<List<BatchCandidateResponse>>> getBatchAllocationCandidates(
             @Valid @RequestBody JoiningTrackerRequest request) {

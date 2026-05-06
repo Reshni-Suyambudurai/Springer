@@ -6,6 +6,7 @@ import com.kanini.springer.dto.Authentication.ApiResponse;
 import com.kanini.springer.service.Academy.IBatchCourseService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -25,6 +26,7 @@ public class BatchCourseController {
 
     private final IBatchCourseService batchCourseService;
     
+    @PreAuthorize("hasAnyRole('TRAINING_COORDINATOR')")
     @PostMapping
     public ResponseEntity<ApiResponse<BatchCourseResponse>> linkCourseToBatch(
             @Valid @RequestBody BatchCourseRequest request) {
@@ -33,6 +35,7 @@ public class BatchCourseController {
                 .body(ApiResponse.success("Course linked to batch successfully", response));
     }
     
+    @PreAuthorize("hasAnyRole('TRAINING_COORDINATOR','TA_HEAD','TA_MANAGER','INTERN')")
     @GetMapping
     public ResponseEntity<ApiResponse<List<BatchCourseResponse>>> getAllBatchCourses() {
         List<BatchCourseResponse> response = batchCourseService.getAllBatchCourses();
@@ -40,6 +43,7 @@ public class BatchCourseController {
                 .body(ApiResponse.success("All batch-course links retrieved successfully", response));
     }
     
+    @PreAuthorize("hasAnyRole('TRAINING_COORDINATOR','TA_HEAD','TA_MANAGER','INTERN')")
     @GetMapping("/{batchCourseId}")
     public ResponseEntity<ApiResponse<BatchCourseResponse>> getBatchCourseById(
             @PathVariable Integer batchCourseId) {
@@ -48,6 +52,7 @@ public class BatchCourseController {
                 .body(ApiResponse.success("Batch course retrieved successfully", response));
     }
     
+    @PreAuthorize("hasAnyRole('TRAINING_COORDINATOR','TA_HEAD','TA_MANAGER','INTERN')")
     @GetMapping("/program/{programId}")
     public ResponseEntity<ApiResponse<List<BatchCourseResponse>>> getCoursesByProgram(
             @PathVariable Integer programId) {
@@ -56,6 +61,7 @@ public class BatchCourseController {
                 .body(ApiResponse.success("Courses for program " + programId + RETRIEVED_SUCCESSFULLY, response));
     }
     
+    @PreAuthorize("hasAnyRole('TRAINING_COORDINATOR','TA_HEAD','TA_MANAGER','INTERN')")
     @GetMapping("/program/{programId}/batch/{batchNumber}")
     public ResponseEntity<ApiResponse<List<BatchCourseResponse>>> getCoursesByBatch(
             @PathVariable Integer programId,
@@ -65,6 +71,7 @@ public class BatchCourseController {
                 .body(ApiResponse.success("Courses for batch " + batchNumber + RETRIEVED_SUCCESSFULLY, response));
     }
     
+    @PreAuthorize("hasAnyRole('TRAINING_COORDINATOR','TA_HEAD','TA_MANAGER','INTERN')")
     @GetMapping("/course/{courseId}")
     public ResponseEntity<ApiResponse<List<BatchCourseResponse>>> getCoursesByTrainingCourse(
             @PathVariable Integer courseId) {
@@ -73,6 +80,7 @@ public class BatchCourseController {
                 .body(ApiResponse.success("Batches linked to course " + courseId + RETRIEVED_SUCCESSFULLY, response));
     }
     
+    @PreAuthorize("hasAnyRole('TRAINING_COORDINATOR')")
     @PatchMapping("/{batchCourseId}/status")
     public ResponseEntity<ApiResponse<BatchCourseResponse>> updateBatchCourseStatus(
             @PathVariable Integer batchCourseId,
@@ -81,6 +89,7 @@ public class BatchCourseController {
         return ResponseEntity.ok(ApiResponse.success("Batch course status updated successfully", response));
     }
 
+    @PreAuthorize("hasAnyRole('TRAINING_COORDINATOR')")
     @DeleteMapping("/{batchCourseId}")
     public ResponseEntity<ApiResponse<String>> removeCourseFromBatch(
             @PathVariable Integer batchCourseId) {
@@ -89,6 +98,7 @@ public class BatchCourseController {
                 .body(ApiResponse.success("Course removed from batch successfully", null));
     }
 
+    @PreAuthorize("hasAnyRole('TRAINING_COORDINATOR','TA_HEAD','TA_MANAGER','INTERN')")
     @GetMapping("/conducted-by/{userId}")
     public ResponseEntity<ApiResponse<List<BatchCourseResponse>>> getCoursesByConductor(
             @PathVariable Long userId) {
@@ -96,6 +106,7 @@ public class BatchCourseController {
         return ResponseEntity.ok(ApiResponse.success("Courses conducted by user" + RETRIEVED_SUCCESSFULLY, response));
     }
 
+    @PreAuthorize("hasAnyRole('TRAINING_COORDINATOR')")
     @PatchMapping("/{batchCourseId}/reschedule")
     public ResponseEntity<ApiResponse<BatchCourseResponse>> rescheduleBatchCourse(
             @PathVariable Integer batchCourseId,
