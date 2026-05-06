@@ -39,20 +39,39 @@ function Navbar() {
         if (!user?.userId) return;
         loadNotifications();
 
-        const ws = new WebSocket(`ws://localhost:8080/ws/notifications?userId=${user.userId}`);
-        wsRef.current = ws;
+        const wsUrl = `${import.meta.env.VITE_API_URL.replace('http', 'ws').replace('/api', '')}/ws/notifications?userId=${user.userId}`;
+        let ws: WebSocket;
+        let reconnectTimer: ReturnType<typeof setTimeout>;
+        let destroyed = false;
 
-        ws.onmessage = (event) => {
-            try {
-                const newNotif: NotificationResponse = JSON.parse(event.data);
-                setNotifications(prev => [newNotif, ...prev]);
-            } catch { /* ignore parse errors */ }
+        const connect = () => {
+            if (destroyed) return;
+            ws = new WebSocket(wsUrl);
+            wsRef.current = ws;
+
+            ws.onmessage = (event) => {
+                try {
+                    const newNotif: NotificationResponse = JSON.parse(event.data);
+                    setNotifications(prev => [newNotif, ...prev]);
+                } catch { /* ignore parse errors */ }
+            };
+
+            ws.onerror = () => { /* silent — notifications still available via REST */ };
+
+            ws.onclose = () => {
+                if (!destroyed) {
+                    reconnectTimer = setTimeout(connect, 5000);
+                }
+            };
         };
 
-        ws.onerror = () => { /* silent — user still gets notifications via REST */ };
-        ws.onclose = () => { /* silent */ };
+        connect();
 
-        return () => { ws.close(); };
+        return () => {
+            destroyed = true;
+            clearTimeout(reconnectTimer);
+            ws?.close();
+        };
     }, [user?.userId]);
 
     const handleMarkAsRead = async (notificationId: number) => {
