@@ -112,6 +112,7 @@ export interface UpcomingDriveSummaryResponse {
   driveName: string;
   driveMode: DriveMode;
   startDate: string; // YYYY-MM-DD
+  location?: string;
   applicationsPerBatchTime: Record<string, number>; // batchTime ISO string → candidate count
 }
 

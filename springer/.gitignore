@@ -4,6 +4,18 @@ target/
 !**/src/main/**/target/
 !**/src/test/**/target/
 
+### Logs ###
+logs/
+*.log
+*.log.*
+*.gz
+
+### Node (should not be in backend folder) ###
+node_modules/
+package.json
+package-lock.json
+yarn.lock
+
 ### STS ###
 .apt_generated
 .classpath
@@ -31,3 +43,4 @@ build/
 
 ### VS Code ###
 .vscode/
+

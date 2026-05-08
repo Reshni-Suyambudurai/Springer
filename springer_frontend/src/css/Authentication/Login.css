@@ -202,9 +202,6 @@
   background-position: center;
   background-repeat: no-repeat;
 }
-.login-text-emoji{
-    font-size: 10px;
-}
 .login-right::after {
   content: "";
   position: absolute;

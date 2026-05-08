@@ -104,6 +104,7 @@ export const hiringCycleApi = {
     cycleName?: string;
     compensationBand?: number;
     budget?: number;
+    totalIntake?: number;
     jd?: File;
   }): Promise<ApiResponse<HiringCycleResponse>> {
     try {
@@ -112,6 +113,7 @@ export const hiringCycleApi = {
       if (data.cycleName) formData.append('cycleName', data.cycleName);
       if (data.compensationBand) formData.append('compensationBand', data.compensationBand.toString());
       if (data.budget) formData.append('budget', data.budget.toString());
+      if (data.totalIntake) formData.append('totalIntake', data.totalIntake.toString());
       if (data.jd) formData.append('jd', data.jd);
 
       const response = await http.patch(`/hiring/cycles/${cycleId}`, formData);

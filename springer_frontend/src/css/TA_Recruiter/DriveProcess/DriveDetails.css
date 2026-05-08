@@ -553,7 +553,7 @@
 
 .dd-round-card {
   flex: 1;
-  background: var(--color-primary);
+  background: var(--gradient-primary-border);
   border: none;
   padding: 2px;
   transition: all 0.3s ease;
@@ -583,9 +583,9 @@
 .dd-round-card:last-child {
   clip-path: none;
   border-radius: 0 10px 10px 0;
-  padding: 0;
-  border: 2px solid var(--color-primary);
-  background: transparent;
+  padding: 2px;
+  border: none;
+  background: var(--gradient-primary-border);
 }
 
 .dd-round-card:last-child .dd-round-card-inner {
@@ -638,12 +638,11 @@
 .dd-round-card:hover {
   transform: translateY(-2px);
   box-shadow: 0 6px 20px var(--color-primary-shadow-18);
-  background: var(--color-primary-hover);
+  background: linear-gradient(to right, var(--color-primary-hover), var(--color-blue-700), var(--color-primary-gradient-end));
 }
 
 .dd-round-card:last-child:hover {
-  border-color: var(--color-primary-hover);
-  background: transparent;
+  background: linear-gradient(to right, var(--color-primary-hover), var(--color-blue-700), var(--color-primary-gradient-end));
 }
 
 .dd-round-card:hover::before {
@@ -651,7 +650,7 @@
 }
 
 .dd-round-empty {
-  background: var(--color-grey-300);
+  background: linear-gradient(to right, var(--color-grey-300), var(--color-grey-400), var(--color-grey-500));
   border-style: dashed;
 }
 

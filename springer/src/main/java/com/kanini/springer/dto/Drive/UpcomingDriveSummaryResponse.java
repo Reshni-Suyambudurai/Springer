@@ -19,6 +19,7 @@ public class UpcomingDriveSummaryResponse {
     private String driveName;
     private DriveMode driveMode;
     private LocalDate startDate;
+    private String location;
     private Map<String, Long> applicationsPerBatchTime;
 
     public UpcomingDriveSummaryResponse(Long driveId, String driveName, DriveMode driveMode, LocalDate startDate) {

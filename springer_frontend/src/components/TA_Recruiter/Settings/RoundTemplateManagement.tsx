@@ -56,7 +56,7 @@ const RoundTemplateManagement = () => {
     finally { setLoading(false); }
   };
 
-  const openAdd = () => { setEditMode(false); setCurrent(null); setForm(EMPTY_FORM); setSections([]); setDialogOpen(true); };
+  // const openAdd = () => { setEditMode(false); setCurrent(null); setForm(EMPTY_FORM); setSections([]); setDialogOpen(true); };
 
   const openEdit = (t: Template) => {
     setEditMode(true); setCurrent(t);

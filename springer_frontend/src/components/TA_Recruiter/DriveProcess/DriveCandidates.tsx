@@ -1,6 +1,7 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { applicationApi, candidateEvaluationApi } from "../../../services/driveschedule.api";
+import { emailTemplateApi } from "../../../services/emailtemplate.api";
 import type { ApplicationResponse, BatchCandidatesMap, FinalizeApplicationsRequest } from "../../../types/TA_Recruiter/DriveSchedule/application.types";
 import type { RoundEvaluationResponse, BulkRoundSkipRequest } from "../../../types/TA_Recruiter/DriveSchedule/candidateEvaluation.types";
 import { showToast } from "../../../utils/toast";
@@ -9,10 +10,14 @@ import { tokenstore } from "../../../auth/tokenstore";
 import { Box, Card, Typography, CircularProgress, Select, MenuItem, Button, Tooltip, IconButton,
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper } from "@mui/material";
 import RefreshIcon from "@mui/icons-material/Refresh";
+import EmailIcon from "@mui/icons-material/Email";
+import ContentCopyIcon from "@mui/icons-material/ContentCopy";
+import copy from "copy-to-clipboard";
 import BackButton from "../../Common/BackButton";
 import Round1 from "./Scores/Round1";
 import type { PanelCandidate } from "./Scores/Round1";
 import "../../../css/TA_Recruiter/DriveProcess/DriveCandidates.css";
+import { EMAIL_TEMPLATE_IDS } from "../../../config/emailTemplateConfig";
 
 const ROUND_NO_MAP: Record<string, number> = {
   APTITUDE: 1,
@@ -50,6 +55,8 @@ const DriveCandidates: React.FC = () => {
   const [unfinishedCount, setUnfinishedCount] = useState<number>(0);
   const [finalizing, setFinalizing] = useState<boolean>(false);
   const [refreshing, setRefreshing] = useState<boolean>(false);
+  const [emailingSending, setEmailSending] = useState<boolean>(false);
+  const [copiedPassEmails, setCopiedPassEmails] = useState<boolean>(false);
 
   useEffect(() => {
     if (driveId) {
@@ -288,6 +295,53 @@ const DriveCandidates: React.FC = () => {
   useEffect(() => {
     setSelectedIds(new Set());
   }, [searchText, statusFilter, selectedBatch, selectedRoundFilters]);
+
+  const handleCopyPassEmails = useCallback(() => {
+    const passEmails = filteredApplications
+      .filter((app) => app.evaluationStatus === "PASS" || app.evaluationStatus === "PASSED")
+      .map((app) => app.candidateEmail)
+      .filter(Boolean) as string[];
+    if (passEmails.length === 0) {
+      showToast("No passed candidates found in the current view", "error");
+      return;
+    }
+    copy(passEmails.join(', '));
+    setCopiedPassEmails(true);
+    setTimeout(() => setCopiedPassEmails(false), 2000);
+  }, [filteredApplications]);
+
+  const handleEmailPassCandidates = useCallback(async () => {
+    const passApps = filteredApplications.filter(
+      (app) => app.evaluationStatus === "PASS" || app.evaluationStatus === "PASSED"
+    );
+
+    if (passApps.length === 0) {
+      showToast("No passed candidates found in the current view", "error");
+      return;
+    }
+
+    const roundName = selectedRound !== "ALL" ? selectedRound : null;
+
+    setEmailSending(true);
+    try {
+      await emailTemplateApi.sendPersonalizedEmail({
+        templateId: EMAIL_TEMPLATE_IDS.ROUND_PASS_INVITE,
+        driveName: driveName || undefined,
+        roundName: roundName,
+        recipients: passApps.map((app) => ({
+          email: app.candidateEmail,
+          candidateName: app.candidateName ?? null,
+          roundNo: app.latestRoundConfigId ? String(app.latestRoundConfigId) : null,
+        })),
+      });
+      showToast(`Emails sent to ${passApps.length} passed candidate(s)`, "success");
+    } catch (err: unknown) {
+      const appError = err as { message?: string };
+      showToast(appError?.message ?? "Failed to send emails", "error");
+    } finally {
+      setEmailSending(false);
+    }
+  }, [filteredApplications, selectedRound, driveName]);
 
   const toggleSelectMode = () => {
     setSelectMode((prev) => {
@@ -548,19 +602,6 @@ const DriveCandidates: React.FC = () => {
             onChange={(e) => setSearchText(e.target.value)}
           />
 
-          <Tooltip title="Refresh data">
-            <IconButton
-              onClick={handleRefresh}
-              disabled={refreshing}
-              size="small"
-              sx={{ ml: 1 }}
-            >
-              <RefreshIcon />
-            </IconButton>
-          </Tooltip>
-
-       
-
           <Button
             variant={selectMode ? "outlined" : "contained"}
             className={selectMode ? "dc-btn-select-active" : "dc-btn-action"}
@@ -588,6 +629,43 @@ const DriveCandidates: React.FC = () => {
           >
             {updating ? "Updating..." : selectedIds.size > 0 ? `Update (${selectedIds.size})` : `Update All (${filteredApplications.length})`}
           </Button>
+
+          <Box className="dc-filter-bar-spacer" />
+
+          <Tooltip title="Refresh data" arrow classes={{ tooltip: "g-tooltip", arrow: "g-tooltip-arrow" }}>
+            <IconButton
+              onClick={handleRefresh}
+              disabled={refreshing}
+              size="small"
+              className="dc-icon-btn"
+            >
+              <RefreshIcon />
+            </IconButton>
+          </Tooltip>
+
+          <Tooltip title="Send Email to Passed Candidates" arrow classes={{ tooltip: "g-tooltip", arrow: "g-tooltip-arrow" }}>
+            <span>
+              <IconButton
+                className="dc-email-btn"
+                onClick={handleEmailPassCandidates}
+                disabled={emailingSending}
+              >
+                {emailingSending ? <CircularProgress size={18} /> : <EmailIcon />}
+              </IconButton>
+            </span>
+          </Tooltip>
+
+          <Tooltip title={copiedPassEmails ? "Copied!" : "Copy passed candidates' emails"} arrow classes={{ tooltip: "g-tooltip", arrow: "g-tooltip-arrow" }}>
+            <span>
+              <IconButton
+                className={copiedPassEmails ? "dc-copy-pass-btn-copied" : "dc-copy-pass-btn"}
+                onClick={handleCopyPassEmails}
+                disabled={emailingSending}
+              >
+                <ContentCopyIcon fontSize="small" />
+              </IconButton>
+            </span>
+          </Tooltip>
         </Card>
       )}
 

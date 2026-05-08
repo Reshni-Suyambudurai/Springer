@@ -3,6 +3,7 @@ package com.kanini.springer.config;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -40,6 +41,11 @@ public class SecurityConfig {
                 // Candidate-facing document endpoints — authenticated by JWT token in URL, not session login
                 .requestMatchers("/api/documents/submission-status").permitAll()
                 .requestMatchers("/api/documents/submissions").permitAll()
+                // Public candidate registration endpoints - specific methods only
+                .requestMatchers(HttpMethod.POST, "/api/candidate-registrations/drive/*/register").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/forms/*").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/institutes").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/skills").permitAll()
                 .anyRequest().authenticated() // All other requests require authentication
             )
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);

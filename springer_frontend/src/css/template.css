@@ -291,6 +291,28 @@
 }
 .t-btn-secondary:hover { background-color: var(--color-inactive-bg) !important; border-color: var(--color-text-disabled) !important; }
 
+.t-btn-outlined-primary {
+  text-transform: none !important;
+  font-size: 0.95rem !important;
+  font-weight: 600 !important;
+  padding-left: 24px !important;
+  padding-right: 24px !important;
+  color: var(--color-primary) !important;
+  border-color: var(--color-primary) !important;
+  transition: all 0.2s ease !important;
+}
+.t-btn-outlined-primary:hover { 
+  background-color: var(--color-primary-shadow-8) !important; 
+  border-color: var(--color-primary-dark) !important;
+}
+.t-btn-outlined-primary:disabled,
+.t-btn-outlined-primary.Mui-disabled {
+  color: var(--color-text-disabled) !important;
+  border-color: var(--color-grey-350) !important;
+  cursor: not-allowed !important;
+  pointer-events: auto !important;
+}
+
 .t-btn-small {
   text-transform: none !important;
   font-size: 0.875rem !important;

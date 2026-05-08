@@ -44,6 +44,7 @@ public class HiringCycleServiceImpl implements IHiringCycleService {
         cycle.setCycleName(request.getCycleName());
         cycle.setCompensationBand(request.getCompensationBand());
         cycle.setBudget(request.getBudget());
+        cycle.setTotalIntake(request.getTotalIntake());
         cycle.setStatus(CycleStatus.OPEN); // Always set to OPEN on creation
         
         // Handle JD file upload
@@ -129,6 +130,11 @@ public class HiringCycleServiceImpl implements IHiringCycleService {
         // Update budget if provided
         if (request.getBudget() != null) {
             cycle.setBudget(request.getBudget());
+        }
+        
+        // Update totalIntake if provided
+        if (request.getTotalIntake() != null) {
+            cycle.setTotalIntake(request.getTotalIntake());
         }
         
         // Handle JD file upload (only update if new file is provided)

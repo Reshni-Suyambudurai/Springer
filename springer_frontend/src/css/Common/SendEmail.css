@@ -1,0 +1,384 @@
+/* ═══════════════════════════════════════════════════════════════════
+   SEND EMAIL COMPONENT STYLES
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ── Header ── */
+.se-header-left {
+  gap: 12px;
+}
+
+.se-title-stack {
+  gap: 2px;
+}
+
+.se-header-icon {
+  font-size: 20px;
+  color: var(--color-primary);
+}
+
+/* ── Template selector + Subject row ── */
+.se-template-subject-row {
+  display: flex;
+  flex-direction: row;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.se-template-select {
+  min-width: 220px;
+  flex-shrink: 0;
+}
+
+.se-subject-field {
+  flex: 1;
+}
+
+/* ── Loading ── */
+.se-loading-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  flex: 1;
+  padding: 64px 0;
+}
+
+.se-spinner {
+  color: var(--color-primary);
+}
+
+/* ── Body override: card fills edge-to-edge, no double padding ── */
+.se-body {
+  padding: 0 !important;
+  overflow: hidden !important;
+}
+
+/* ── Editor Card ── */
+.se-editor-card {
+  flex: 1;
+  display: flex !important;
+  flex-direction: column !important;
+  border-radius: 12px !important;
+  border: 1px solid var(--color-border-card) !important;
+  box-shadow: 0 2px 8px var(--opacity-shadow-card) !important;
+  background-color: var(--color-surface) !important;
+  overflow: hidden;
+  min-height: 0;
+}
+
+/* ── Two-column layout ── */
+.se-two-col-layout {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* ── Left Panel (editor — wide) ── */
+.se-left-panel {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  border-right: 1px solid var(--color-grey-200);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px;
+  overflow-y: auto;
+}
+
+/* ── Recipients Section (in right panel) ── */
+.se-recipients-section {
+  padding: 16px 20px;
+  background-color: var(--color-grey-100);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  border-top: 1px solid var(--color-grey-200);
+}
+
+.se-recipients-header {
+  gap: 8px;
+}
+
+.se-recipients-label {
+  flex: 1;
+}
+
+.se-copy-btn {
+  color: var(--color-primary) !important;
+  padding: 2px !important;
+  transition: color 0.2s !important;
+}
+
+.se-copy-btn:hover {
+  background-color: var(--color-primary-light, rgba(0,0,0,0.06)) !important;
+}
+
+.se-copy-btn-copied {
+  color: var(--color-success, #2e7d32) !important;
+  padding: 2px !important;
+}
+
+.se-people-icon {
+  font-size: 16px !important;
+  color: var(--color-primary) !important;
+}
+
+.se-chips-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.se-recipient-chip {
+  font-size: 0.78rem !important;
+  font-weight: 500 !important;
+  height: 26px !important;
+  background-color: var(--color-primary-light) !important;
+  color: var(--color-primary) !important;
+  border: 1px solid rgba(15, 76, 129, 0.18) !important;
+}
+
+.se-more-chip {
+  font-size: 0.78rem !important;
+  font-weight: 600 !important;
+  height: 26px !important;
+  background-color: var(--color-grey-225) !important;
+  color: var(--color-grey-600) !important;
+  border: 1px solid var(--color-grey-350) !important;
+}
+
+/* ── Right panel send area (top) ── */
+.se-right-send {
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  border-bottom: 1px solid var(--color-grey-200);
+  background-color: var(--color-white);
+}
+
+/* ── Right Panel (controls — narrow) ── */
+.se-right-panel {
+  width: 300px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--color-grey-50);
+  overflow-y: auto;
+}
+
+/* ── Subject field (full width in left panel) ── */
+.se-subject-field {
+  width: 100%;
+}
+
+/* ── Body editor container ── */
+.se-body-editor {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.se-editor-label {
+  font-size: 0.75rem !important;
+  font-weight: 700 !important;
+  color: var(--color-chip-count-text) !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.08em !important;
+  margin-bottom: 8px !important;
+}
+
+/* ── TipTap Toolbar ── */
+.se-tiptap-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 8px 10px;
+  background-color: var(--color-grey-50);
+  border: 1px solid var(--color-grey-200);
+  border-bottom: none;
+  border-radius: 8px 8px 0 0;
+  flex-wrap: wrap;
+}
+
+.se-toolbar-btn {
+  width: 30px !important;
+  height: 30px !important;
+  border-radius: 4px !important;
+  color: var(--color-grey-600) !important;
+  transition: all 0.15s ease !important;
+}
+
+.se-toolbar-btn:hover {
+  background-color: var(--color-primary-hover-6) !important;
+  color: var(--color-primary) !important;
+}
+
+.se-toolbar-btn-active {
+  width: 30px !important;
+  height: 30px !important;
+  border-radius: 4px !important;
+  background-color: var(--color-primary-light) !important;
+  color: var(--color-primary) !important;
+}
+
+.se-toolbar-divider {
+  width: 1px;
+  height: 20px;
+  background-color: var(--color-grey-200);
+  margin: 0 4px;
+  flex-shrink: 0;
+}
+
+/* ── TipTap Editor ── */
+.se-tiptap-editor {
+  background-color: var(--color-white);
+  border: 1px solid var(--color-grey-200);
+  border-radius: 0 0 8px 8px;
+  min-height: 520px;
+  max-height: 560px;
+  overflow-y: auto;
+  cursor: text;
+}
+
+.se-tiptap-editor:focus-within {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px var(--color-primary-hover-14);
+}
+
+.se-tiptap-editor .ProseMirror {
+  min-height: 520px;
+  padding: 16px;
+  outline: none;
+  font-size: 0.875rem;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: var(--color-text-secondary);
+  line-height: 1.6;
+}
+
+.se-tiptap-editor .ProseMirror p {
+  margin: 0 0 8px;
+}
+
+.se-tiptap-editor .ProseMirror h1,
+.se-tiptap-editor .ProseMirror h2,
+.se-tiptap-editor .ProseMirror h3 {
+  margin: 12px 0 6px;
+  color: var(--color-text-primary);
+}
+
+.se-tiptap-editor .ProseMirror ul,
+.se-tiptap-editor .ProseMirror ol {
+  padding-left: 20px;
+  margin: 0 0 8px;
+}
+
+.se-tiptap-editor .ProseMirror a {
+  color: var(--color-primary);
+  text-decoration: underline;
+}
+
+.se-tiptap-editor .ProseMirror img {
+  width: 100px;
+  height: 100px;
+  object-fit: contain;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.se-tiptap-editor .ProseMirror p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  color: var(--color-text-disabled);
+  pointer-events: none;
+  height: 0;
+}
+
+.se-tiptap-editor::-webkit-scrollbar { width: 6px; }
+.se-tiptap-editor::-webkit-scrollbar-track { background: var(--color-grey-100); border-radius: 3px; }
+.se-tiptap-editor::-webkit-scrollbar-thumb { background: var(--color-grey-350); border-radius: 3px; }
+.se-tiptap-editor::-webkit-scrollbar-thumb:hover { background: var(--color-grey-500); }
+
+/* ── Attachments Section ── */
+.se-attachments-section {
+  padding: 14px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  border-bottom: 1px solid var(--color-grey-200);
+}
+
+.se-attachments-header {
+  gap: 6px;
+}
+
+.se-attach-icon {
+  font-size: 15px !important;
+  color: var(--color-primary) !important;
+}
+
+.se-file-input {
+  display: none;
+}
+
+.se-attach-btn {
+  border-color: var(--color-grey-350) !important;
+  color: var(--color-text-secondary) !important;
+  font-size: 0.8rem !important;
+}
+
+.se-attachment-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.se-attachment-chip {
+  font-size: 0.75rem !important;
+  max-width: 100%;
+  justify-content: space-between;
+  background-color: var(--color-grey-100) !important;
+  border: 1px solid var(--color-grey-200) !important;
+}
+
+.se-btn-spinner {
+  color: var(--color-white) !important;
+}
+
+/* ── Image insert menu ── */
+.se-image-menu {
+  border-radius: 8px !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12) !important;
+  border: 1px solid var(--color-grey-200) !important;
+  min-width: 180px !important;
+}
+
+.se-image-menu-item {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  padding: 8px 14px !important;
+}
+
+.se-image-menu-item:hover {
+  background-color: var(--color-primary-hover-6) !important;
+}
+
+.se-image-menu-preview {
+  width: 40px;
+  height: 28px;
+  object-fit: contain;
+  border-radius: 3px;
+  border: 1px solid var(--color-grey-200);
+  background: var(--color-grey-50);
+  flex-shrink: 0;
+}
+
+.se-image-menu-label {
+  font-size: 0.825rem !important;
+  color: var(--color-text-secondary) !important;
+}

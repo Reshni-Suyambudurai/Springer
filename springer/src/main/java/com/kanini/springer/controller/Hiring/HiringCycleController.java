@@ -80,6 +80,7 @@ public class HiringCycleController {
             @RequestParam(value = "cycleName", required = false) String cycleName,
             @RequestParam(value = "compensationBand", required = false) Integer compensationBand,
             @RequestParam(value = "budget", required = false) Integer budget,
+            @RequestParam(value = "totalIntake", required = false) Integer totalIntake,
             @RequestPart(value = "jd", required = false) MultipartFile jd) {
         
         // Build request object with only provided fields
@@ -88,6 +89,7 @@ public class HiringCycleController {
         request.setCycleName(cycleName);
         request.setCompensationBand(compensationBand);
         request.setBudget(budget);
+        request.setTotalIntake(totalIntake);
         request.setJd(jd);
         
         HiringCycleResponse response = cycleService.updateCycle(cycleId, request);

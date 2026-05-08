@@ -50,22 +50,36 @@ export type Degree = typeof Degree[keyof typeof Degree];
 
 // Department constants and type (compatible with erasableSyntaxOnly)
 export const Department = {
-  CSE: 'CSE',
-  EEE: 'EEE',
-  IT: 'IT',
-  ECE: 'ECE',
-  AIML: 'AIML',
-  CIVIL: 'Civil',
-  MECH: 'Mech',
-  FOOD_TECH: 'Food Tech',
-  AGRI: 'Agri',
-  AIDS: 'AIDS',
-  CS: 'CS',
-  IOT: 'IoT',
-  CYBER_SECURITY: 'Cyber Security',
-  DATA_SCIENCE: 'Data Science'
-} as const;
+  // Core Engineering
+  CSE: 'Computer Science and Engineering',
+  IT: 'Information Technology',
+  ECE: 'Electronics and Communication Engineering',
+  EEE: 'Electrical and Electronics Engineering',
+  MECH: 'Mechanical Engineering',
+  CIVIL: 'Civil Engineering',
+  EI: 'Electronics and Instrumentation Engineering',
 
+  // Emerging / Specialized
+  AIDS: 'Artificial Intelligence and Data Science',
+  AIML: 'Artificial Intelligence and Machine Learning',
+  CSBS: 'Computer Science and Business Systems',
+  ROBOTICS: 'Robotics and Automation',
+  BIOMEDICAL: 'Biomedical Engineering',
+  BIOTECH: 'Biotechnology',
+
+  // Core + Other Engineering
+  CHEMICAL: 'Chemical Engineering',
+  AUTOMOBILE: 'Automobile Engineering',
+  AERONAUTICAL: 'Aeronautical Engineering',
+  AGRICULTURAL: 'Agricultural Engineering',
+
+  // Optional / Existing Extras (kept from your original)
+  FOOD_TECH: 'Food Technology',
+  IOT: 'Internet of Things',
+  CYBER_SECURITY: 'Cyber Security',
+  DATA_SCIENCE: 'Data Science',
+  OTHERS: 'Others'
+} as const;
 export type Department = typeof Department[keyof typeof Department];
 
 export const ValidationStatus = {

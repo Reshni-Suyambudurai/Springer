@@ -91,7 +91,15 @@ const EligibilityManagement = () => {
     updated[index] = { ...updated[index], [field]: value };
     setRules(updated);
     const err = validate(updated[index]);
-    setErrors(prev => { const n = { ...prev }; err ? (n[index] = err) : delete n[index]; return n; });
+    setErrors(prev => { 
+      const n = { ...prev }; 
+      if (err) {
+        n[index] = err;
+      } else {
+        delete n[index];
+      }
+      return n; 
+    });
   };
 
   const handleSave = async () => {

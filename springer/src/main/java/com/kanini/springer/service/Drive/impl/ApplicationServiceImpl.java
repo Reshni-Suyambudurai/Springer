@@ -2,6 +2,7 @@ package com.kanini.springer.service.Drive.impl;
 
 import com.kanini.springer.dto.Common.FieldChangeDTO;
 import com.kanini.springer.dto.Common.ManualOverrideRequest;
+import com.kanini.springer.dto.Common.PersonalizedRecipient;
 import com.kanini.springer.dto.Drive.ApplicationRequest;
 import com.kanini.springer.dto.Drive.ApplicationResponse;
 import com.kanini.springer.dto.Drive.ApplicationStatusUpdateRequest;
@@ -31,7 +32,9 @@ import com.kanini.springer.repository.Drive.CandidatesRepository;
 import com.kanini.springer.repository.Drive.DriveAssignmentRepository;
 import com.kanini.springer.repository.Drive.DriveRepository;
 import com.kanini.springer.repository.Hiring.UserRepository;
+import com.kanini.springer.repository.Common.EmailTemplateRepository;
 import com.kanini.springer.service.Drive.IApplicationService;
+import com.kanini.springer.service.Common.IEmailTemplateService;
 import com.kanini.springer.service.Common.IOverrideService;
 import com.kanini.springer.repository.Common.ManualOverrideRepository;
 import com.kanini.springer.mapper.Common.ManualOverrideMapper;
@@ -43,11 +46,14 @@ import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
 import jakarta.persistence.criteria.Root;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -56,6 +62,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class ApplicationServiceImpl implements IApplicationService {
     
     private final ApplicationRepository applicationRepository;
@@ -69,6 +76,11 @@ public class ApplicationServiceImpl implements IApplicationService {
     private final IOverrideService overrideService;
     private final ManualOverrideRepository manualOverrideRepository;
     private final ManualOverrideMapper manualOverrideMapper;
+    private final IEmailTemplateService emailTemplateService;
+    private final EmailTemplateRepository emailTemplateRepository;
+
+    @Value("${email.template.drive-invitation-id:9}")
+    private int driveInvitationTemplateId;
     
     @Override
     @Transactional
@@ -193,8 +205,65 @@ public class ApplicationServiceImpl implements IApplicationService {
         response.setTotalProcessed(totalProcessed);
         response.setSuccessCount(successCount);
         response.setFailureCount(failureCount);
+
+        // ── Trigger drive invitation emails (fire-and-forget, never fails the response) ──
+        if (successCount > 0) {
+            triggerDriveInvitationEmails(drive, savedApplications);
+        }
         
         return response;
+    }
+
+    /**
+     * Fetches the drive-invitation email template and triggers a personalized send
+     * for every successfully created application.
+     * Runs fully asynchronous inside the mail thread pool — never throws.
+     */
+    private void triggerDriveInvitationEmails(Drive drive, List<Application> savedApplications) {
+        try {
+            emailTemplateRepository.findById(driveInvitationTemplateId).ifPresentOrElse(
+                template -> {
+                    DateTimeFormatter dateFmt  = DateTimeFormatter.ofPattern("dd MMM yyyy");
+                    DateTimeFormatter timeFmt  = DateTimeFormatter.ofPattern("hh:mm a");
+
+                    String startDate = drive.getStartDate() != null
+                            ? drive.getStartDate().format(dateFmt) : "";
+
+                    List<PersonalizedRecipient> recipients = savedApplications.stream()
+                            .filter(a -> a.getCandidate() != null
+                                    && a.getCandidate().getEmail() != null)
+                            .map(a -> {
+                                String candidateName = a.getCandidate().getFirstName()
+                                        + (a.getCandidate().getLastName() != null
+                                                ? " " + a.getCandidate().getLastName() : "");
+                                String batchTime = a.getBatchTime() != null
+                                        ? a.getBatchTime().format(timeFmt) : "";
+                                return new PersonalizedRecipient(
+                                        a.getCandidate().getEmail(),
+                                        candidateName,
+                                        a.getRegistrationCode(),
+                                        batchTime,
+                                        null);
+                            })
+                            .collect(Collectors.toList());
+
+                    emailTemplateService.sendPersonalizedBulkEmail(
+                            template.getBody(),
+                            template.getSubject(),
+                            drive.getDriveName(),
+                            startDate,
+                            drive.getLocation() != null ? drive.getLocation() : "",
+                            recipients);
+
+                    log.info("📧 Drive invitation emails queued for {} recipients (drive='{}')",
+                             recipients.size(), drive.getDriveName());
+                },
+                () -> log.warn("⚠️ Drive invitation template ID={} not found — emails skipped",
+                               driveInvitationTemplateId)
+            );
+        } catch (Exception ex) {
+            log.error("⚠️ Failed to queue drive invitation emails — scheduling result unaffected", ex);
+        }
     }
     
     @Override

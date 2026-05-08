@@ -213,6 +213,7 @@ public class DriveScheduleServiceImpl implements IDriveScheduleService {
                     drive.getDriveName(),
                     drive.getDriveMode(),
                     drive.getStartDate(),
+                    drive.getLocation(),
                     batchTimeMap
                 );
             })

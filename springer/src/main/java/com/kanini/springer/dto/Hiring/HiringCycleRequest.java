@@ -19,5 +19,7 @@ public class HiringCycleRequest {
     
     private Integer budget;
     
+    private Integer totalIntake;
+    
     private MultipartFile jd; // Job description file upload
 }

@@ -412,15 +412,15 @@ const PanelAllocation: React.FC = () => {
         </Box>
 
         <Box className="pa-header-actions">
-          {/* Search input before reassign icon */}
-          <input
-            type="text"
-            className="pa-search-input"
-            placeholder="Search by name..."
-            value={searchText}
-            onChange={(e) => setSearchText(e.target.value)}
-            style={{ marginRight: 16, padding: 6, borderRadius: 4, border: '1px solid #ccc', minWidth: 180 }}
-          />
+          {noneAllocated && (
+            <input
+              type="text"
+              className="pa-search-input"
+              placeholder="Search by name..."
+              value={searchText}
+              onChange={(e) => setSearchText(e.target.value)}
+            />
+          )}
           {noneAllocated && (
             <Box className="pa-global-assign">
               <Select
@@ -465,7 +465,6 @@ const PanelAllocation: React.FC = () => {
               placeholder="Search by name..."
               value={searchText}
               onChange={(e) => setSearchText(e.target.value)}
-              style={{ marginRight: 0, padding: 6, borderRadius: 4, border: '1px solid #ccc', minWidth: 180 }}
             />
            
             <Typography className="pa-reassign-label">Reassign :- </Typography>

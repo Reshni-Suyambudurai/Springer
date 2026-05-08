@@ -150,6 +150,12 @@ public class Enums {
         SKIP
     }
 
+    // Candidate registration status
+    public enum RegistrationStatus {
+        PENDING,
+        IMPORTED
+    }
+
     // Document types
     public enum DocumentType {
         RESUME,

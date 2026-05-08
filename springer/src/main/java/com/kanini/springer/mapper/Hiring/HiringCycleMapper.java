@@ -18,6 +18,7 @@ public class HiringCycleMapper {
         response.setCycleName(cycle.getCycleName());
         response.setCompensationBand(cycle.getCompensationBand());
         response.setBudget(cycle.getBudget());
+        response.setTotalIntake(cycle.getTotalIntake());
         response.setHasJd(cycle.getJd() != null && cycle.getJd().length > 0);
         response.setStatus(cycle.getStatus().toString());
         response.setCreatedAt(cycle.getCreatedAt());
@@ -41,6 +42,7 @@ public class HiringCycleMapper {
                         if (drive.getInstitute() != null) {
                             info.setInstituteName(drive.getInstitute().getInstituteName());
                         }
+                        info.setStartDate(drive.getStartDate());
                         return info;
                     })
                     .collect(Collectors.toList()));
