@@ -106,16 +106,24 @@ public class CandidateEvaluationServiceImpl implements ICandidateEvaluationServi
             throw new ValidationException("Invalid submission status: " + submitStatus + ". Must be SUBMIT, DRAFT, or HOLD");
         }
         
-        // Check for existing evaluation (same application + round + reviewer) for upsert
-        Optional<CandidateEvaluation> existingOpt = evaluationRepository
-            .findByApplicationApplicationIdAndRoundConfigRoundConfigIdAndReviewedByUserId(
-                request.getApplicationId(), request.getRoundConfigId(), request.getReviewedBy());
+        // Check for existing evaluation for upsert (optimized - single query covers all cases)
+        // Fetch all evaluations for this application + round combination
+        List<CandidateEvaluation> roundEvals = evaluationRepository
+            .findByApplicationApplicationIdAndRoundConfigRoundConfigId(
+                request.getApplicationId(), request.getRoundConfigId());
         
-        // Also check for existing evaluation (same application + round, any reviewer) with HOLD/SKIP
+        Optional<CandidateEvaluation> existingOpt = Optional.empty();
+        
+        // First, check for evaluation by this specific reviewer
+        for (CandidateEvaluation ce : roundEvals) {
+            if (ce.getReviewedBy() != null && ce.getReviewedBy().getUserId().equals(request.getReviewedBy())) {
+                existingOpt = Optional.of(ce);
+                break;
+            }
+        }
+        
+        // If not found, check for HOLD/SKIP by any reviewer (can be overridden)
         if (existingOpt.isEmpty()) {
-            List<CandidateEvaluation> roundEvals = evaluationRepository
-                .findByApplicationApplicationIdAndRoundConfigRoundConfigId(
-                    request.getApplicationId(), request.getRoundConfigId());
             for (CandidateEvaluation ce : roundEvals) {
                 EvaluationStatus existingStatus = ce.getStatus();
                 if (existingStatus == EvaluationStatus.HOLD || existingStatus == EvaluationStatus.SKIP) {
@@ -197,8 +205,14 @@ public class CandidateEvaluationServiceImpl implements ICandidateEvaluationServi
             // If Round 3 (Technical) and PASS → Mark application as SELECTED
             if (roundTemplate.getRoundNo() != null && roundTemplate.getRoundNo() == 3) {
                 appStatus = ApplicationStatus.SELECTED;
-            } else if (application.getApplicationStatus() != ApplicationStatus.IN_DRIVE) {
-                appStatus = ApplicationStatus.IN_DRIVE;
+            } else {
+                // For other rounds, update to IN_DRIVE unless already SELECTED
+                ApplicationStatus prevStatus = application.getApplicationStatus();
+                if (prevStatus == ApplicationStatus.SELECTED) {
+                    appStatus = ApplicationStatus.SELECTED;
+                } else {
+                    appStatus = ApplicationStatus.IN_DRIVE;
+                }
             }
         } else if (evaluationStatus == EvaluationStatus.FAIL) {
             assignmentStatus = AssignmentStatus.REJECTED;
@@ -386,12 +400,21 @@ public class CandidateEvaluationServiceImpl implements ICandidateEvaluationServi
         // 6. Bulk save all evaluations (1 DB hit)
         evaluationRepository.saveAll(evaluationsToSave);
         
-        // 7. Append override history for HOLD/SKIP entries that were overridden
+        // 7. Append override history for HOLD/SKIP entries that were overridden (batched by status)
         if (!overriddenAppStatus.isEmpty()) {
             String roundName = roundTemplate.getRoundName();
             String userName = updatedByUser.getUsername();
+            
+            // Group applications by override status to minimize DB hits
+            Map<String, List<Long>> appIdsByStatus = new LinkedHashMap<>();
             for (Map.Entry<Long, String> entry : overriddenAppStatus.entrySet()) {
-                appendHistoryBulk(List.of(entry.getKey()), entry.getValue() + " overridden", userName, roundName);
+                String status = entry.getValue() + " overridden";
+                appIdsByStatus.computeIfAbsent(status, k -> new ArrayList<>()).add(entry.getKey());
+            }
+            
+            // One DB hit per unique status instead of one per application
+            for (Map.Entry<String, List<Long>> entry : appIdsByStatus.entrySet()) {
+                appendHistoryBulk(entry.getValue(), entry.getKey(), userName, roundName);
             }
         }
         
@@ -984,4 +1007,103 @@ public class CandidateEvaluationServiceImpl implements ICandidateEvaluationServi
         String userName = reviewedByUser.getUsername();
         appendHistoryBulk(applicationIds, statusStr, userName, roundTemplate.getRoundName());
     }
-}
+    @Override
+    @Transactional(readOnly = true)
+    public CheckExistingEvaluationsResponse checkExistingEvaluations(CheckExistingEvaluationsRequest request) {
+        // Validate required fields
+        if (request.getDriveId() == null) {
+            throw new ValidationException("Drive ID is required");
+        }
+        if (request.getRoundConfigId() == null) {
+            throw new ValidationException("Round config ID is required");
+        }
+        if (request.getCandidates() == null || request.getCandidates().isEmpty()) {
+            throw new ValidationException("Candidates list cannot be empty");
+        }
+
+        CheckExistingEvaluationsResponse response = new CheckExistingEvaluationsResponse();
+        response.setTotalChecked(request.getCandidates().size());
+
+        // Extract registration codes and applicationIds (when provided)
+        List<String> registrationCodes = request.getCandidates().stream()
+                .map(CheckExistingEvaluationsRequest.CandidateCheckData::getRegistrationCode)
+                .filter(code -> code != null && !code.isBlank())
+                .distinct()
+                .collect(Collectors.toList());
+
+        List<Long> providedAppIds = request.getCandidates().stream()
+                .map(CheckExistingEvaluationsRequest.CandidateCheckData::getApplicationId)
+                .filter(id -> id != null && id > 0)
+                .distinct()
+                .collect(Collectors.toList());
+
+        if (registrationCodes.isEmpty() && providedAppIds.isEmpty()) {
+            response.setExistingCount(0);
+            return response;
+        }
+
+        // Resolve registration codes to applications for this drive (1 DB hit)
+        Map<String, Application> appsByRegCode = new LinkedHashMap<>();
+        if (!registrationCodes.isEmpty()) {
+            List<Application> apps = applicationRepository.findByRegistrationCodeInWithCandidate(registrationCodes);
+            // Filter to only apps belonging to the specified drive
+            apps = apps.stream()
+                    .filter(app -> app.getDrive() != null && app.getDrive().getDriveId().equals(request.getDriveId()))
+                    .collect(Collectors.toList());
+            appsByRegCode = apps.stream()
+                    .collect(Collectors.toMap(
+                            app -> app.getRegistrationCode().toLowerCase(),
+                            app -> app,
+                            (a, b) -> a
+                    ));
+        }
+
+        // Collect all applicationIds (from provided + resolved)
+        Set<Long> allApplicationIds = new HashSet<>(providedAppIds);
+        appsByRegCode.values().forEach(app -> allApplicationIds.add(app.getApplicationId()));
+
+        List<Long> applicationIds = new ArrayList<>(allApplicationIds);
+
+        if (applicationIds.isEmpty()) {
+            response.setExistingCount(0);
+            return response;
+        }
+
+        // Build map of applicationId -> registrationCode for error reporting
+        Map<Long, String> appIdToRegCode = new LinkedHashMap<>();
+        for (CheckExistingEvaluationsRequest.CandidateCheckData candidate : request.getCandidates()) {
+            if (candidate.getApplicationId() != null && candidate.getApplicationId() > 0) {
+                appIdToRegCode.put(candidate.getApplicationId(), candidate.getRegistrationCode());
+            }
+        }
+        // Add resolved mappings
+        appsByRegCode.forEach((regCode, app) -> 
+            appIdToRegCode.putIfAbsent(app.getApplicationId(), app.getRegistrationCode())
+        );
+
+        // Fetch existing evaluations for this round (1 DB hit)
+        List<CandidateEvaluation> existingEvaluations = evaluationRepository
+                .findByApplicationIdsAndRoundConfigIdFetched(applicationIds, request.getRoundConfigId());
+
+        // Build list of conflicts
+        List<CheckExistingEvaluationsResponse.ExistingEvaluationInfo> conflicts = existingEvaluations.stream()
+                .map(eval -> {
+                    Long appId = eval.getApplication().getApplicationId();
+                    String regCode = appIdToRegCode.get(appId);
+                    if (regCode == null) {
+                        regCode = eval.getApplication().getRegistrationCode();
+                    }
+                    
+                    CheckExistingEvaluationsResponse.ExistingEvaluationInfo info = 
+                            new CheckExistingEvaluationsResponse.ExistingEvaluationInfo();
+                    info.setRegistrationCode(regCode);
+                    info.setReason("Evaluation already exists for this round");
+                    return info;
+                })
+                .collect(Collectors.toList());
+
+        response.setExistingEvaluations(conflicts);
+        response.setExistingCount(conflicts.size());
+
+        return response;
+    }}

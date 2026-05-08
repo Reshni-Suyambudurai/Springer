@@ -1,2 +1,49 @@
 backend.log
 springer/compile_output.txt
+springer/fresh_seed.sql
+springer/seed_test_fresh.sql
+CLIENT_DEMO_BRIEFING.md
+springer/src/main/java/com/kanini/springer/entity/enums/brd
+
+# ── OS / Editor ────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+*.suo
+*.user
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# ── Logs ───────────────────────────────────────────────────
+*.log
+*.log.*
+*.gz
+logs/
+springer/logs/
+
+# ── Node / npm (accidental placement in backend folder) ───
+springer/node_modules/
+springer/package.json
+springer/package-lock.json
+springer/yarn.lock
+
+# ── Java / Maven ───────────────────────────────────────────
+target/
+*.class
+*.jar
+*.war
+*.ear
+.mvn/wrapper/maven-wrapper.jar
+
+# ── Frontend build output ──────────────────────────────────
+springer_frontend/dist/
+springer_frontend/dist-ssr/
+*.local
+
+# ── Environment / secrets ──────────────────────────────────
+.env
+.env.*
+!.env.example
+*.properties.local
+

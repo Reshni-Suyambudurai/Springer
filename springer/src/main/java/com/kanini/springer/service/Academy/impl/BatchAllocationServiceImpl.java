@@ -3,6 +3,7 @@ package com.kanini.springer.service.Academy.impl;
 import com.kanini.springer.dto.Academy.BatchAllocationRequest;
 import com.kanini.springer.dto.Academy.BatchAllocationResponse;
 import com.kanini.springer.entity.Academy.BatchAllocation;
+import com.kanini.springer.dto.Academy.BatchTransferRequest;
 import com.kanini.springer.entity.Academy.TrainingProgram;
 import com.kanini.springer.entity.Drive.Candidate;
 import com.kanini.springer.entity.enums.Enums.Performance;
@@ -15,17 +16,20 @@ import com.kanini.springer.repository.Academy.TrainingProgramRepository;
 import com.kanini.springer.repository.Hiring.CandidateRepository;
 import com.kanini.springer.service.Academy.IBatchAllocationService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class BatchAllocationServiceImpl implements IBatchAllocationService {
-    
+
+    private static final String ALLOCATION_NOT_FOUND = "Batch Allocation not found with Student ID: ";
+
     private final BatchAllocationRepository allocationRepository;
     private final TrainingProgramRepository programRepository;
     private final CandidateRepository candidateRepository;
@@ -60,7 +64,7 @@ public class BatchAllocationServiceImpl implements IBatchAllocationService {
     @Transactional(readOnly = true)
     public BatchAllocationResponse getAllocationById(Long studentId) {
         BatchAllocation allocation = allocationRepository.findByStudentId(studentId)
-                .orElseThrow(() -> new ResourceNotFoundException("Batch Allocation not found with Student ID: " + studentId));
+                .orElseThrow(() -> new ResourceNotFoundException(ALLOCATION_NOT_FOUND + studentId));
         return mapper.toResponse(allocation);
     }
     
@@ -69,7 +73,7 @@ public class BatchAllocationServiceImpl implements IBatchAllocationService {
     public List<BatchAllocationResponse> getAllAllocations() {
         return allocationRepository.findAll().stream()
                 .map(mapper::toResponse)
-                .collect(Collectors.toList());
+                .toList();
     }
     
     @Override
@@ -77,7 +81,7 @@ public class BatchAllocationServiceImpl implements IBatchAllocationService {
     public List<BatchAllocationResponse> getAllocationsByProgram(Integer programId) {
         return allocationRepository.findByProgram_ProgramId(programId).stream()
                 .map(mapper::toResponse)
-                .collect(Collectors.toList());
+                .toList();
     }
     
     @Override
@@ -85,22 +89,14 @@ public class BatchAllocationServiceImpl implements IBatchAllocationService {
     public List<BatchAllocationResponse> getAllocationsByBatch(Integer programId, Integer batchNumber) {
         return allocationRepository.findByProgram_ProgramIdAndBatchNumber(programId, batchNumber).stream()
                 .map(mapper::toResponse)
-                .collect(Collectors.toList());
-    }
-    
-    @Override
-    @Transactional(readOnly = true)
-    public List<BatchAllocationResponse> getAllocationsByCandidate(Long candidateId) {
-        return allocationRepository.findByCandidate_CandidateId(candidateId).stream()
-                .map(mapper::toResponse)
-                .collect(Collectors.toList());
+                .toList();
     }
     
     @Override
     @Transactional
     public BatchAllocationResponse updateAllocation(Long studentId, BatchAllocationRequest request) {
         BatchAllocation allocation = allocationRepository.findByStudentId(studentId)
-                .orElseThrow(() -> new ResourceNotFoundException("Batch Allocation not found with Student ID: " + studentId));
+                .orElseThrow(() -> new ResourceNotFoundException(ALLOCATION_NOT_FOUND + studentId));
         
         // Only update fields that are provided (not null) - PATCH behavior
         if (request.getBatchNumber() != null) {
@@ -146,25 +142,17 @@ public class BatchAllocationServiceImpl implements IBatchAllocationService {
     @Transactional
     public void deleteAllocation(Long studentId) {
         BatchAllocation allocation = allocationRepository.findByStudentId(studentId)
-                .orElseThrow(() -> new ResourceNotFoundException("Batch Allocation not found with Student ID: " + studentId));
+                .orElseThrow(() -> new ResourceNotFoundException(ALLOCATION_NOT_FOUND + studentId));
         
         allocation.setIsActive(false); // Soft delete
         allocationRepository.save(allocation);
     }
     
     @Override
-    @Transactional(readOnly = true)
-    public List<BatchAllocationResponse> getAllocationsByMinAttendance(Integer programId, double minAttendancePercentage) {
-        return allocationRepository.findByProgramAndMinAttendance(programId, BigDecimal.valueOf(minAttendancePercentage)).stream()
-                .map(mapper::toResponse)
-                .collect(Collectors.toList());
-    }
-
-    @Override
     @Transactional
     public BatchAllocationResponse markProjectReady(Long studentId) {
         BatchAllocation allocation = allocationRepository.findByStudentId(studentId)
-                .orElseThrow(() -> new ResourceNotFoundException("Batch Allocation not found with Student ID: " + studentId));
+                .orElseThrow(() -> new ResourceNotFoundException(ALLOCATION_NOT_FOUND + studentId));
 
         // Check attendance >= 75%
         if (allocation.getAttendancePercentage() == null || allocation.getAttendancePercentage().compareTo(BigDecimal.valueOf(75)) < 0) {
@@ -181,5 +169,73 @@ public class BatchAllocationServiceImpl implements IBatchAllocationService {
         allocation.setPerformance(Performance.PROJECT_READY);
         BatchAllocation updatedAllocation = allocationRepository.save(allocation);
         return mapper.toResponse(updatedAllocation);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public org.springframework.data.domain.Page<BatchAllocationResponse> getAllocationsByProgramFiltered(
+            Integer programId, Integer batchNumber, Boolean isActive,
+            String search, int page, int size) {
+        org.springframework.data.domain.Pageable pageable =
+            org.springframework.data.domain.PageRequest.of(page, size);
+        String searchParam = (search != null && !search.trim().isEmpty()) ? search.trim() : null;
+        return allocationRepository
+            .findByProgramFiltered(programId, batchNumber, isActive, searchParam, pageable)
+            .map(mapper::toResponse);
+    }
+
+    @Override
+    @Transactional
+    public BatchAllocationResponse transferStudent(Long studentId, BatchTransferRequest request) {
+        // 1. Load the current (source) allocation
+        BatchAllocation source = allocationRepository.findByStudentId(studentId)
+                .orElseThrow(() -> new ResourceNotFoundException(ALLOCATION_NOT_FOUND + studentId));
+
+        if (!Boolean.TRUE.equals(source.getIsActive())) {
+            throw new IllegalArgumentException("Cannot transfer an already inactive allocation.");
+        }
+
+        // 2. Validate target program and batch
+        TrainingProgram targetProgram = programRepository.findByProgramId(request.getTargetProgramId())
+                .orElseThrow(() -> new ResourceNotFoundException("Target program not found: " + request.getTargetProgramId()));
+
+        if (request.getTargetBatchNumber() < 1 || request.getTargetBatchNumber() > targetProgram.getNumberOfBatches()) {
+            throw new IllegalArgumentException("Invalid target batch number: " + request.getTargetBatchNumber());
+        }
+
+        // Prevent transferring to the same batch
+        if (source.getProgram().getProgramId().equals(request.getTargetProgramId())
+                && source.getBatchNumber().equals(request.getTargetBatchNumber())) {
+            throw new IllegalArgumentException("Candidate is already in this batch.");
+        }
+
+        // Prevent duplicate active allocation in target batch for same candidate
+        boolean alreadyInTarget = allocationRepository
+                .findByProgram_ProgramIdAndBatchNumber(request.getTargetProgramId(), request.getTargetBatchNumber())
+                .stream()
+                .anyMatch(a -> a.getCandidate().getCandidateId().equals(source.getCandidate().getCandidateId())
+                        && Boolean.TRUE.equals(a.getIsActive()));
+        if (alreadyInTarget) {
+            throw new IllegalArgumentException("Candidate already has an active allocation in the target batch.");
+        }
+
+        // 3. Deactivate source allocation
+        source.setIsActive(false);
+        allocationRepository.save(source);
+
+        // 4. Create new allocation in target batch
+        BatchAllocation newAllocation = new BatchAllocation();
+        newAllocation.setProgram(targetProgram);
+        newAllocation.setCandidate(source.getCandidate());
+        newAllocation.setBatchNumber(request.getTargetBatchNumber());
+        newAllocation.setIsActive(true);
+        newAllocation.setAttendancePercentage(BigDecimal.ZERO); // Fresh attendance start
+        newAllocation.setOverallWeightedScore(source.getOverallWeightedScore()); // Carry forward until recalculated
+        newAllocation.setTransferredFromStudentId(source.getStudentId());
+        // Carry forward performance rating if set
+        newAllocation.setPerformance(source.getPerformance());
+
+        BatchAllocation saved = allocationRepository.save(newAllocation);
+        return mapper.toResponse(saved);
     }
 }

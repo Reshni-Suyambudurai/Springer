@@ -507,14 +507,23 @@ const CandidateList: React.FC = () => {
                   onChange={(e) => setSelectedDrive(e.target.value as number | "")}
                 >
                   <MenuItem value="">All Drives</MenuItem>
-                  {drives.map((drive) => (
-                    <MenuItem key={drive.driveId} value={drive.driveId}>
-                      <Box className="drive-option">
-                        <span className={`drive-mode-dot ${drive.mode === "ON_CAMPUS" ? "oncampus" : "offcampus"}`} />
-                        {drive.driveName}
-                      </Box>
-                    </MenuItem>
-                  ))}
+                  {drives.map((drive) => {
+                    const isPast = drive.startDate
+                      ? new Date(drive.startDate) < new Date(new Date().toDateString())
+                      : false;
+                    return (
+                      <MenuItem
+                        key={drive.driveId}
+                        value={drive.driveId}
+                        className={isPast ? "drive-menu-item-past" : ""}
+                      >
+                        <Box className="drive-option">
+                          <span className={`drive-mode-dot ${drive.mode === "ON_CAMPUS" ? "oncampus" : "offcampus"}`} />
+                          <span className={isPast ? "drive-name-past" : ""}>{drive.driveName}</span>
+                        </Box>
+                      </MenuItem>
+                    );
+                  })}
                 </Select>
               </FormControl>
 
@@ -532,7 +541,7 @@ const CandidateList: React.FC = () => {
                       <MenuItem value="SHORTLISTED">SHORTLISTED</MenuItem>   
                                   
                      
-                      <MenuItem value="CLOSED" sx={{ color: 'var(--color-error-delete)' }}>MOVE TO HISTORY</MenuItem>
+                      <MenuItem value="CLOSED" className="cl-move-to-history">MOVE TO HISTORY</MenuItem>
                     </Select>
                   </FormControl>
 

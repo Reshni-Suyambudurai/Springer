@@ -368,21 +368,11 @@
   margin: 0 !important;
 }
 
-.ba-pagination .MuiInputBase-root { margin-right: 32px !important; }
-
-.ba-pagination .MuiIconButton-root {
-  padding: 4px !important;
-  color: var(--color-text-secondary) !important;
-}
-
-.ba-pagination .MuiIconButton-root:hover {
-  background-color: var(--opacity-shadow-very-light) !important;
-  color: var(--color-grey-550) !important;
-}
-
-.ba-pagination .MuiIconButton-root.Mui-disabled {
-  color: var(--color-grey-350) !important;
-}
+.ba-pagination .MuiTablePagination-selectLabel,
+.ba-pagination .MuiTablePagination-input { display: none !important; }
+.ba-pagination .MuiIconButton-root { padding: 4px !important; color: var(--color-text-secondary) !important; }
+.ba-pagination .MuiIconButton-root:hover { background-color: var(--opacity-shadow-very-light) !important; color: var(--color-grey-550) !important; }
+.ba-pagination .MuiIconButton-root.Mui-disabled { color: var(--color-grey-350) !important; }
 
 /* ── Dialog ── */
 .ba-dialog-title {

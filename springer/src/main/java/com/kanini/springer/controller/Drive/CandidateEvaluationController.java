@@ -115,4 +115,16 @@ public class CandidateEvaluationController {
         evaluationService.bulkRoundSkip(request);
         return ResponseEntity.ok(new ApiResponse<>(true, "Round status updated successfully", null));
     }
+
+    @PostMapping("/check-existing")
+    @Operation(summary = "Check for existing candidate evaluations",
+               description = "Validates that all applications belong to the specified drive, " +
+                             "then checks if evaluations already exist for the given roundConfigId. " +
+                             "Returns a list of registration codes with existing evaluations and reason. " +
+                             "Useful before bulk upload to prevent duplicate evaluation attempts.")
+    public ResponseEntity<ApiResponse<CheckExistingEvaluationsResponse>> checkExistingEvaluations(
+            @RequestBody CheckExistingEvaluationsRequest request) {
+        CheckExistingEvaluationsResponse response = evaluationService.checkExistingEvaluations(request);
+        return ResponseEntity.ok(new ApiResponse<>(true, "Evaluation check completed successfully", response));
+    }
 }

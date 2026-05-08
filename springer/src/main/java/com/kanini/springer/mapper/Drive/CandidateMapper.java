@@ -100,7 +100,12 @@ public class CandidateMapper {
         } else {
             response.setSkillNames(new ArrayList<>());
         }
-        
+
+        // Map userId — set when intern account is activated
+        if (candidate.getUser() != null) {
+            response.setUserId(candidate.getUser().getUserId());
+        }
+
         return response;
     }
     

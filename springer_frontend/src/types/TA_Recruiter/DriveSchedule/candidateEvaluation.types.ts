@@ -99,6 +99,40 @@ export interface BulkEvaluationStatusUpdateRequest {
   reason?: string;
 }
 
+/**
+ * Request DTO for checking if candidate evaluations already exist
+ */
+export interface CheckExistingEvaluationsRequest {
+  driveId: number;
+  roundConfigId: number;
+  candidates: CandidateCheckData[];
+}
+
+/**
+ * Inner type representing each candidate to check
+ */
+export interface CandidateCheckData {
+  applicationId: number;
+  registrationCode: string;
+}
+
+/**
+ * Response DTO for checking existing candidate evaluations
+ */
+export interface CheckExistingEvaluationsResponse {
+  totalChecked: number;
+  existingCount: number;
+  existingEvaluations: ExistingEvaluationInfo[];
+}
+
+/**
+ * Inner type representing evaluation conflict information
+ */
+export interface ExistingEvaluationInfo {
+  registrationCode: string;
+  reason: string;
+}
+
 export interface BulkRoundSkipRequest {
   applicationIds: number[];
   roundConfigId: number;

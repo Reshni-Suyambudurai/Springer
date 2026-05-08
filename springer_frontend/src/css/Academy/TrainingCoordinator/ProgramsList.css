@@ -311,23 +311,15 @@
   margin: 0 !important;
 }
 
-.prog-pagination .MuiInputBase-root {
-  margin-right: 32px !important;
-}
+.prog-pagination .MuiTablePagination-selectLabel,
+.prog-pagination .MuiTablePagination-input { display: none !important; }
 
 .prog-pagination .MuiIconButton-root {
   padding: 4px !important;
   color: var(--color-text-secondary) !important;
 }
-
-.prog-pagination .MuiIconButton-root:hover {
-  background-color: var(--opacity-shadow-very-light) !important;
-  color: var(--color-grey-550) !important;
-}
-
-.prog-pagination .MuiIconButton-root.Mui-disabled {
-  color: var(--color-grey-350) !important;
-}
+.prog-pagination .MuiIconButton-root:hover { background-color: var(--opacity-shadow-very-light) !important; color: var(--color-grey-550) !important; }
+.prog-pagination .MuiIconButton-root.Mui-disabled { color: var(--color-grey-350) !important; }
 
 /* ── Dialog ── */
 .prog-dialog-title {

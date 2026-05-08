@@ -14,6 +14,7 @@ import { showToast } from "../../utils/toast";
 import type { AppError } from "../../services/api.error";
 import type { CycleWithDrivesResponse, DriveInfo } from "../../types/TA_Recruiter/Hiring/hiringCycle.types";
 import type { DriveAssignmentResponse } from "../../types/TA_Recruiter/DriveSchedule/driveAssignment.types";
+import { AssignmentStatus } from "../../types/TA_Recruiter/DriveSchedule/driveAssignment.types";
 import "../../css/Panel_Member/AllocationHistory.css";
 
 const AllocationHistory = () => {
@@ -25,6 +26,17 @@ const AllocationHistory = () => {
   const [assignments, setAssignments] = useState<DriveAssignmentResponse[]>([]);
   const [loading, setLoading] = useState(false);
   const [cyclesLoading, setCyclesLoading] = useState(true);
+  const [filterStatus, setFilterStatus] = useState<string>("ALL");
+  const [filterDate, setFilterDate] = useState<string>("ALL");
+
+  // Extract unique dates from assignments
+  const distinctDates = Array.from(
+    new Set(
+      assignments
+        .map((a) => a.createdAt && new Date(a.createdAt).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }))
+        .filter((d): d is string => !!d)
+    )
+  );
 
   // Fetch cycles on mount
   useEffect(() => {
@@ -130,6 +142,18 @@ const AllocationHistory = () => {
     }
   };
 
+
+  // Filtered assignments for table
+  const filteredAssignments = assignments
+    .filter((a) => {
+      const assignmentDate = a.createdAt
+        ? new Date(a.createdAt).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })
+        : "";
+      const matchesDate = filterDate === "ALL" || assignmentDate === filterDate;
+      const matchesStatus = filterStatus === "ALL" || a.status === filterStatus;
+      return matchesDate && matchesStatus;
+    });
+
   return (
     <Box className="t-page">
       <Card className="t-card">
@@ -142,7 +166,7 @@ const AllocationHistory = () => {
               <Typography className="t-page-title">Allocation History</Typography>
             </Stack>
           </Stack>
-          <span className="ah-count-badge">{assignments.filter((a) => a.status !== "HOLD" && a.status !== "PLANNED" && a.status !== "DRAFT").length} assignment{assignments.filter((a) => a.status !== "HOLD" && a.status !== "PLANNED" && a.status !== "DRAFT").length !== 1 ? "s" : ""}</span>
+          <span className="ah-count-badge">{filteredAssignments.length} assignment{filteredAssignments.length !== 1 ? "s" : ""}</span>
         </Box>
 
         <Box className="t-filter-bar">
@@ -185,6 +209,34 @@ const AllocationHistory = () => {
               ))}
             </Select>
           </FormControl>
+
+          <FormControl size="small" className="ah-status-dropdown" sx={{ minWidth: 120, marginRight: 1 }}>
+            <InputLabel>Status</InputLabel>
+            <Select
+              value={filterStatus}
+              label="Status"
+              onChange={(e) => setFilterStatus(e.target.value)}
+            >
+              <MenuItem value="ALL">All Status</MenuItem>
+              {Object.values(AssignmentStatus).map((s) => (
+                <MenuItem key={s} value={s}>{s}</MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
+          <FormControl size="small" className="ah-date-dropdown" sx={{ minWidth: 150, marginRight: 1 }}>
+            <InputLabel>Date</InputLabel>
+            <Select
+              value={filterDate}
+              label="Date"
+              onChange={(e) => setFilterDate(e.target.value)}
+            >
+              <MenuItem value="ALL">All Dates</MenuItem>
+              {distinctDates.map((date) => (
+                <MenuItem key={date} value={date}>{date}</MenuItem>
+              ))}
+            </Select>
+          </FormControl>
         </Box>
 
         <Box className="t-separator" />
@@ -207,7 +259,7 @@ const AllocationHistory = () => {
               <Table stickyHeader>
                 <TableHead>
                   <TableRow className="t-head-row">
-                    <TableCell className="t-head-cell">#</TableCell>
+                    <TableCell className="t-head-cell">Index</TableCell>
                     <TableCell className="t-head-cell">Candidate</TableCell>
                     <TableCell className="t-head-cell">Round</TableCell>
                     <TableCell className="t-head-cell">Status</TableCell>
@@ -224,45 +276,44 @@ const AllocationHistory = () => {
                       </TableCell>
                     </TableRow>
                   ) : (
-                    assignments
-                      .filter((a) => a.status !== "HOLD" && a.status !== "PLANNED" && a.status !== "DRAFT")
+                    filteredAssignments
                       .map((a, idx) => (
-                      <TableRow key={a.assignmentId} onClick={() => handleRowClick(a)} className={`t-row ${idx % 2 === 0 ? "t-row--even" : "t-row--odd"} ${a.roundConfigId ? "ah-row-clickable" : ""}`}>
-                        <TableCell className="t-cell">
-                          <Typography className="t-row-secondary">{idx + 1}</Typography>
-                        </TableCell>
-                        <TableCell className="t-cell">
-                          <Stack direction="row" alignItems="center" gap={1.5}>
-                            <Box className="ah-name-icon-box">
-                              <PersonIcon className="ah-name-icon" />
-                            </Box>
-                            <Typography className="t-row-primary">{a.candidateName}</Typography>
-                          </Stack>
-                        </TableCell>
-                        <TableCell className="t-cell">
-                          {a.roundName ? (
-                            <Chip label={a.roundName} size="small" className="ah-round-chip" />
-                          ) : (
-                            <Typography className="t-row-secondary">—</Typography>
-                          )}
-                        </TableCell>
-                        <TableCell className="t-cell">
-                          <Chip label={a.status} size="small" className={getStatusChipClass(a.status)} />
-                        </TableCell>
-                        <TableCell className="t-cell">
-                          <Typography className="t-row-secondary">
-                            {a.createdAt
-                              ? new Date(a.createdAt).toLocaleDateString("en-IN", {
-                                  day: "2-digit", month: "short", year: "numeric",
-                                })
-                              : "—"}
-                          </Typography>
-                        </TableCell>
-                        <TableCell className="t-cell">
-                          <Typography className="t-row-secondary">{a.createdByName || "—"}</Typography>
-                        </TableCell>
-                      </TableRow>
-                    ))
+                        <TableRow key={a.assignmentId} onClick={() => handleRowClick(a)} className={`t-row ${idx % 2 === 0 ? "t-row--even" : "t-row--odd"} ${a.roundConfigId ? "ah-row-clickable" : ""}`}>
+                          <TableCell className="t-cell">
+                            <Typography className="t-row-secondary">{idx + 1}</Typography>
+                          </TableCell>
+                          <TableCell className="t-cell">
+                            <Stack direction="row" alignItems="center" gap={1.5}>
+                              <Box className="ah-name-icon-box">
+                                <PersonIcon className="ah-name-icon" />
+                              </Box>
+                              <Typography className="t-row-primary">{a.candidateName}</Typography>
+                            </Stack>
+                          </TableCell>
+                          <TableCell className="t-cell">
+                            {a.roundName ? (
+                              <Chip label={a.roundName} size="small" className="ah-round-chip" />
+                            ) : (
+                              <Typography className="t-row-secondary">—</Typography>
+                            )}
+                          </TableCell>
+                          <TableCell className="t-cell">
+                            <Chip label={a.status} size="small" className={getStatusChipClass(a.status)} />
+                          </TableCell>
+                          <TableCell className="t-cell">
+                            <Typography className="t-row-secondary">
+                              {a.createdAt
+                                ? new Date(a.createdAt).toLocaleDateString("en-IN", {
+                                    day: "2-digit", month: "short", year: "numeric",
+                                  })
+                                : "—"}
+                            </Typography>
+                          </TableCell>
+                          <TableCell className="t-cell">
+                            <Typography className="t-row-secondary">{a.createdByName || "—"}</Typography>
+                          </TableCell>
+                        </TableRow>
+                      ))
                   )}
                 </TableBody>
               </Table>

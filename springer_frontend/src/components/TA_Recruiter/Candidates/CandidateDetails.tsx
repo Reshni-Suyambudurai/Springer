@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams,  useLocation } from "react-router-dom";
 import { candidateApi } from "../../../services/drive.api";
 import { overrideApi } from "../../../services/override.api";
 import type { CandidateResponse, CandidateUpdateRequest } from "../../../types/TA_Recruiter/Drive/candidate.types";
@@ -27,6 +27,9 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
 } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import PersonIcon from "@mui/icons-material/Person";
@@ -35,11 +38,16 @@ import CategoryIcon from "@mui/icons-material/Category";
 import AssignmentIndIcon from "@mui/icons-material/AssignmentInd";
 import TimelineIcon from "@mui/icons-material/Timeline";
 import WorkIcon from "@mui/icons-material/Work";
+import RocketLaunchIcon from "@mui/icons-material/RocketLaunch";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import { internApi } from "../../../services/intern.api";
+import ApplicationHistory from "../DriveProcess/ApplicationHistory";
 import "../../../css/TA_Recruiter/Candidates/CandidateDetails.css";
 
 const CandidateDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
+  
+  const location = useLocation();
   const [candidate, setCandidate] = useState<CandidateResponse | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [editDialogOpen, setEditDialogOpen] = useState<boolean>(false);
@@ -54,6 +62,12 @@ const CandidateDetails: React.FC = () => {
     reason: "",
     updatedBy: 0,
   });
+
+  // Activate intern dialog
+  const [activateDialogOpen, setActivateDialogOpen] = useState(false);
+  const [outlookEmail, setOutlookEmail] = useState("");
+  const [activating, setActivating] = useState(false);
+  const [driveDetailsExpanded, setDriveDetailsExpanded] = useState(false);
 
   const fetchCandidateDetails = useCallback(async (candidateId: number) => {
     setLoading(true);
@@ -165,8 +179,34 @@ const CandidateDetails: React.FC = () => {
     }
   };
 
-  const handleBack = () => {
-    navigate("/ta-recruiter/candidates");
+
+  const handleActivateIntern = async () => {
+    if (!outlookEmail.trim()) {
+      showToast("Please enter the intern's Outlook email", "error");
+      return;
+    }
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    if (!emailRegex.test(outlookEmail.trim())) {
+      showToast("Please enter a valid email address", "error");
+      return;
+    }
+    setActivating(true);
+    try {
+      const res = await internApi.activateIntern(Number(id), { outlookEmail: outlookEmail.trim() });
+      if (res.success) {
+        showToast(res.message || "Intern activated successfully", "success");
+        setActivateDialogOpen(false);
+        setOutlookEmail("");
+        await fetchCandidateDetails(Number(id));
+      }
+    } catch (error: unknown) {
+      const errorMessage = error && typeof error === 'object' && 'message' in error
+        ? String(error.message)
+        : "Failed to activate intern";
+      showToast(errorMessage, "error");
+    } finally {
+      setActivating(false);
+    }
   };
 
   const handleStatusUpdate = async () => {
@@ -208,6 +248,15 @@ const CandidateDetails: React.FC = () => {
     setStatusUpdateMode(!statusUpdateMode);
   };
 
+  const locationState = location.state as { driveId?: number } | null;
+  const candidateWithDrive = candidate as (CandidateResponse & { driveId?: number }) | null;
+  const driveIdForHistory = locationState?.driveId ?? candidateWithDrive?.driveId;
+  const showApplicationHistory = Boolean(
+    candidate &&
+    driveIdForHistory &&
+    !["APPLIED", "SHORTLISTED"].includes(candidate.applicationStage)
+  );
+
   if (loading) {
     return (
       <Box className="t-loading">
@@ -221,7 +270,7 @@ const CandidateDetails: React.FC = () => {
     return (
       <Box className="candidate-details-error">
         <Typography variant="h6">Candidate not found</Typography>
-        <BackButton onClick={handleBack} inline={true} />
+        <BackButton variant="header" />
       </Box>
     );
   }
@@ -233,7 +282,7 @@ const CandidateDetails: React.FC = () => {
         <CardContent className="header-card-content-compact">
           <Box className="header-layout-inline">
             <Box className="header-left">
-              <BackButton onClick={handleBack} inline={true} />
+              <BackButton variant="header" />
             </Box>
             
             <Box className="header-center">
@@ -445,7 +494,10 @@ const CandidateDetails: React.FC = () => {
                             <MenuItem value="SELECTED">SELECTED</MenuItem>
                             <MenuItem value="REJECTED">REJECTED</MenuItem>
                             <MenuItem value="OFFERED">OFFERED</MenuItem>
+                            <MenuItem value="ACCEPTED">ACCEPTED</MenuItem>
                             <MenuItem value="JOINED">JOINED</MenuItem>
+                            <MenuItem value="NOT_JOINED">NOT_JOINED</MenuItem>
+                            <MenuItem value="OFFER_REJECTED">OFFER_REJECTED</MenuItem>
                             <MenuItem value="DROPPED">DROPPED</MenuItem>
                           </Select>
                         </FormControl>
@@ -590,7 +642,30 @@ const CandidateDetails: React.FC = () => {
           </Card>
         </Grid>
 
-        {/* Manual Overrides Section */}
+        {/* Activate Intern Card — shown only for JOINED candidates without user account */}
+        {candidate.applicationStage === 'JOINED' && !candidate.userId && (
+          <Grid size={{ xs: 12, md: 6 }}>
+            <Card className="details-info-card">
+              <CardContent>
+                <Typography variant="h6" className="card-section-title">
+                  <RocketLaunchIcon className="card-section-icon" />
+                  Intern Activation
+                </Typography>
+                <Typography sx={{ fontSize: '14px', color: 'var(--color-text-secondary)', mb: 2 }}>
+                  This candidate has joined. Activate their intern account to give them access to the Academy portal.
+                </Typography>
+                <Button
+                  variant="contained"
+                  startIcon={<RocketLaunchIcon />}
+                  onClick={() => { setOutlookEmail(""); setActivateDialogOpen(true); }}
+                  className="btn-status-action"
+                >
+                  Activate as Intern
+                </Button>
+              </CardContent>
+            </Card>
+          </Grid>
+        )}
         {overrides.length > 0 && (
           <Grid size={{ xs: 12 }}>
             <Card className="details-info-card override-card-compact">
@@ -654,7 +729,72 @@ const CandidateDetails: React.FC = () => {
             </Card>
           </Grid>
         )}
+
+        {showApplicationHistory && (
+          <Grid size={{ xs: 12 }}>
+            <Accordion 
+              expanded={driveDetailsExpanded} 
+              onChange={(_, isExpanded) => setDriveDetailsExpanded(isExpanded)}
+              className="drive-details-accordion"
+            >
+              <AccordionSummary 
+                expandIcon={<ExpandMoreIcon />}
+                className="drive-details-accordion-summary"
+              >
+                <Typography variant="h6">Drive Details</Typography>
+              </AccordionSummary>
+              <AccordionDetails className="drive-details-accordion-details">
+                {driveDetailsExpanded && (
+                  <ApplicationHistory
+                    driveId={Number(driveIdForHistory)}
+                    candidateId={candidate.candidateId}
+                    embeddedInCandidateDetails={true}
+                  />
+                )}
+              </AccordionDetails>
+            </Accordion>
+          </Grid>
+        )}
       </Grid>
+
+      {/* Activate Intern Dialog */}
+      <Dialog open={activateDialogOpen} onClose={() => setActivateDialogOpen(false)} maxWidth="sm" fullWidth>
+        <DialogTitle className="dialog-title">Activate Intern Account</DialogTitle>
+        <DialogContent className="dialog-content">
+          <Typography sx={{ fontSize: '14px', color: 'var(--color-text-secondary)', mb: 2, mt: 1 }}>
+            Enter the Outlook email the candidate has created (e.g. <strong>manohar.kanini@outlook.com</strong>).
+            Login credentials will be sent to this email.
+          </Typography>
+          <TextField
+            fullWidth
+            label="Intern Outlook Email *"
+            type="email"
+            value={outlookEmail}
+            onChange={e => setOutlookEmail(e.target.value)}
+            placeholder="firstname.kanini@outlook.com"
+            helperText="The intern will use this email to log in to the Academy portal"
+            className="dialog-text-field"
+          />
+        </DialogContent>
+        <DialogActions className="dialog-actions">
+          <Button
+            onClick={() => setActivateDialogOpen(false)}
+            disabled={activating}
+            variant="outlined"
+            className="t-dialog-cancel-btn"
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={handleActivateIntern}
+            variant="contained"
+            disabled={activating || !outlookEmail.trim()}
+            className="t-dialog-confirm-btn"
+          >
+            {activating ? "Activating..." : "Activate & Send Credentials"}
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       {/* Eligibility Edit Dialog */}
       <Dialog 

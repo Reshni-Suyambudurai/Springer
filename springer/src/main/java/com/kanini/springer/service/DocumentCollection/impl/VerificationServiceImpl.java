@@ -24,12 +24,13 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class VerificationServiceImpl implements IVerificationService {
-    
+
+    private static final String DOCUMENT_NOT_FOUND = "Document not found with ID: ";
+
     private final DocumentSubmissionRepository submissionRepository;
     private final DocumentTypeRepository typeRepository;
     private final AuditTrailRepository auditTrailRepository;
@@ -39,11 +40,11 @@ public class VerificationServiceImpl implements IVerificationService {
     @Transactional
     public VerificationResponse approveDocument(Long documentId, VerificationRequest request) {
         DocumentSubmission submission = submissionRepository.findById(documentId.intValue())
-                .orElseThrow(() -> new ResourceNotFoundException("Document not found with ID: " + documentId));
+                .orElseThrow(() -> new ResourceNotFoundException(DOCUMENT_NOT_FOUND + documentId));
         
-        if (submission.getVerificationStatus() != Enums.VerificationStatus.COLLECTED
-                && submission.getVerificationStatus() != Enums.VerificationStatus.PENDING) {
-            throw new ValidationException("Only COLLECTED or PENDING documents can be approved");
+        if (submission.getVerificationStatus() != Enums.VerificationStatus.COLLECTED) {
+            throw new ValidationException("Only COLLECTED documents can be approved. Current status: "
+                    + submission.getVerificationStatus().name());
         }
         
         String oldStatus = submission.getVerificationStatus().name();
@@ -76,7 +77,7 @@ public class VerificationServiceImpl implements IVerificationService {
     @Transactional
     public VerificationResponse rejectDocument(Long documentId, VerificationRequest request) {
         DocumentSubmission submission = submissionRepository.findById(documentId.intValue())
-                .orElseThrow(() -> new ResourceNotFoundException("Document not found with ID: " + documentId));
+                .orElseThrow(() -> new ResourceNotFoundException(DOCUMENT_NOT_FOUND + documentId));
 
         if (submission.getVerificationStatus() != Enums.VerificationStatus.COLLECTED
                 && submission.getVerificationStatus() != Enums.VerificationStatus.PENDING) {
@@ -121,30 +122,30 @@ public class VerificationServiceImpl implements IVerificationService {
         Pageable pageable = PageRequest.of(page, size);
 
         // Issue 6 fix: always filter by COLLECTED status directly in query, not in memory
-        Page<DocumentSubmission> page_result;
+        Page<DocumentSubmission> pageResult;
         if (cycleId != null) {
-            page_result = submissionRepository.findByVerificationStatusAndCycleId(
+            pageResult = submissionRepository.findByVerificationStatusAndCycleId(
                     Enums.VerificationStatus.COLLECTED, cycleId, pageable);
         } else {
-            page_result = submissionRepository.findByVerificationStatus(
+            pageResult = submissionRepository.findByVerificationStatus(
                     Enums.VerificationStatus.COLLECTED, pageable);
         }
 
-        return page_result.getContent().stream()
+        return pageResult.getContent().stream()
                 .map(s -> VerificationResponse.builder()
                         .documentId(s.getCandidateDocumentId().longValue())
                         .candidateId(s.getCandidate().getCandidateId())
                         .documentType(s.getDocumentType().getDocumentType().name())
                         .verificationStatus(s.getVerificationStatus().name())
                         .build())
-                .collect(Collectors.toList());
+                .toList();
     }
     
     @Override
     @Transactional(readOnly = true)
     public List<VerificationResponse> getVerificationHistory(Long documentId) {
         DocumentSubmission submission = submissionRepository.findById(documentId.intValue())
-                .orElseThrow(() -> new ResourceNotFoundException("Document not found with ID: " + documentId));
+                .orElseThrow(() -> new ResourceNotFoundException(DOCUMENT_NOT_FOUND + documentId));
         
         // Fix: Query audit trail for actual document verification history (APPROVED/REJECTED actions only)
         List<AuditTrail> auditRecords = auditTrailRepository.findByEntityTypeAndEntityId(
@@ -206,7 +207,7 @@ public class VerificationServiceImpl implements IVerificationService {
                         .status(s.getVerificationStatus() != null ? s.getVerificationStatus().name() : "PENDING")
                         .verifiedAt(s.getCreatedAt() != null ? s.getCreatedAt().toString() : "")
                         .build())
-                .collect(Collectors.toList());
+                .toList();
         
         return DocumentCompletionResponse.builder()
                 .candidateId(candidateId)

@@ -8,13 +8,14 @@ public class Enums {
     // Role names in the system
     public enum RoleName {
         TA_HEAD,
-        TA_RECRUITER,
+        TA_MANAGER,
         HIRING_MANAGER,
         MEMBERS,
         HR_OPERATIONS,
         TRAINING_COORDINATOR,
         BU_SPOC,
-        SYSTEM_ADMIN
+        SYSTEM_ADMIN,
+        INTERN
     }
 
     // Hiring cycle status
@@ -90,6 +91,8 @@ public class Enums {
         SELECTED,
         OFFERED,
         JOINED,
+        NOT_JOINED,
+        OFFER_REJECTED,
         REJECTED,
         ACCEPTED,
         DROPPED
@@ -147,6 +150,12 @@ public class Enums {
         SKIP
     }
 
+    // Candidate registration status
+    public enum RegistrationStatus {
+        PENDING,
+        IMPORTED
+    }
+
     // Document types
     public enum DocumentType {
         RESUME,
@@ -202,6 +211,43 @@ public class Enums {
         DELHI,
         COIMBATORE,
         REMOTE
+    }
+
+    // Leave request status
+    public enum LeaveStatus {
+        PENDING,
+        APPROVED,
+        REJECTED
+    }
+
+    // Leave type
+    public enum LeaveType {
+        SICK,
+        PERSONAL,
+        EMERGENCY,
+        OTHER
+    }
+
+    // Warning type
+    public enum WarningType {
+        ATTENDANCE,
+        PERFORMANCE,
+        BEHAVIOUR,
+        PUNCTUALITY,
+        OTHER
+    }
+
+    // Warning severity
+    public enum WarningSeverity {
+        MINOR,
+        MODERATE,
+        SEVERE
+    }
+
+    // Warning status
+    public enum WarningStatus {
+        ACTIVE,
+        ACKNOWLEDGED
     }
 
     // Training score status

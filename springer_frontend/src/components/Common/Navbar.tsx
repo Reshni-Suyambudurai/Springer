@@ -2,6 +2,8 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { tokenstore } from '../../auth/tokenstore';
 import { notificationApi } from '../../services/notification.api';
+import { internApi } from '../../services/intern.api';
+import { showToast } from '../../utils/toast';
 import type { NotificationResponse } from '../../types/notification.types';
 import '../../css/Common/Navbar.css';
 
@@ -10,6 +12,11 @@ function Navbar() {
     const [theme, setTheme] = useState<'light' | 'dark'>(tokenstore.getTheme());
     const [notifications, setNotifications] = useState<NotificationResponse[]>([]);
     const [showNotifications, setShowNotifications] = useState(false);
+    const [showChangePwd, setShowChangePwd] = useState(false);
+    const [oldPwd, setOldPwd] = useState('');
+    const [newPwd, setNewPwd] = useState('');
+    const [confirmPwd, setConfirmPwd] = useState('');
+    const [changingPwd, setChangingPwd] = useState(false);
     const profileRef = useRef<HTMLDivElement>(null);
     const notifRef = useRef<HTMLDivElement>(null);
     const wsRef = useRef<WebSocket | null>(null);
@@ -43,6 +50,7 @@ function Navbar() {
         };
 
         ws.onerror = () => { /* silent — user still gets notifications via REST */ };
+        ws.onclose = () => { /* silent */ };
 
         return () => { ws.close(); };
     }, [user?.userId]);
@@ -100,7 +108,28 @@ function Navbar() {
         navigate('/login');
     };
 
+    const handleChangePassword = async () => {
+        if (!newPwd || !oldPwd) { showToast('All fields are required', 'error'); return; }
+        if (newPwd !== confirmPwd) { showToast('New passwords do not match', 'error'); return; }
+        if (newPwd.length < 6) { showToast('Password must be at least 6 characters', 'error'); return; }
+        if (!user?.userId) return;
+        setChangingPwd(true);
+        try {
+            const res = await internApi.changePassword(user.userId, oldPwd, newPwd);
+            if (res.success) {
+                showToast('Password changed successfully!', 'success');
+                setShowChangePwd(false);
+                setOldPwd(''); setNewPwd(''); setConfirmPwd('');
+            }
+        } catch (err: any) {
+            showToast(err.message || 'Failed to change password', 'error');
+        } finally {
+            setChangingPwd(false);
+        }
+    };
+
     return (
+        <>
         <nav className="navbar">
             <div className="navbar-content">
                 <div className="navbar-left">
@@ -243,17 +272,11 @@ function Navbar() {
                                         <span>{user.email}</span>
                                     </div>
                                 </div>
+                                <button className="profile-change-pwd-btn" onClick={() => { setShowProfile(false); setShowChangePwd(true); }}>
+                                    🔐 Change Password
+                                </button>
                                 <button className="profile-logout-btn" onClick={handleLogout}>
-                                    <svg
-                                        width="16"
-                                        height="16"
-                                        viewBox="0 0 24 24"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        strokeWidth="2"
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                    >
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                         <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
                                         <polyline points="16 17 21 12 16 7" />
                                         <line x1="21" y1="12" x2="9" y2="12" />
@@ -266,6 +289,33 @@ function Navbar() {
                 </div>
             </div>
         </nav>
+
+        {/* Change Password Dialog */}
+        {showChangePwd && (
+            <div className="pwd-dialog-overlay" onClick={() => setShowChangePwd(false)}>
+                <div className="pwd-dialog" onClick={e => e.stopPropagation()}>
+                    <div className="pwd-dialog-header">
+                        <span>🔐 Change Password</span>
+                        <button className="pwd-dialog-close" onClick={() => setShowChangePwd(false)}>✕</button>
+                    </div>
+                    <div className="pwd-dialog-body">
+                        <input className="pwd-input" type="password" placeholder="Current Password"
+                            value={oldPwd} onChange={e => setOldPwd(e.target.value)} />
+                        <input className="pwd-input" type="password" placeholder="New Password (min 6 chars)"
+                            value={newPwd} onChange={e => setNewPwd(e.target.value)} />
+                        <input className="pwd-input" type="password" placeholder="Confirm New Password"
+                            value={confirmPwd} onChange={e => setConfirmPwd(e.target.value)} />
+                    </div>
+                    <div className="pwd-dialog-footer">
+                        <button className="pwd-cancel-btn" onClick={() => setShowChangePwd(false)}>Cancel</button>
+                        <button className="pwd-submit-btn" onClick={handleChangePassword} disabled={changingPwd}>
+                            {changingPwd ? 'Saving...' : 'Change Password'}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        )}
+        </>
     );
 }
 

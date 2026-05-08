@@ -12,13 +12,14 @@ import com.kanini.springer.repository.Hiring.RoleRepository;
 import com.kanini.springer.repository.Hiring.SkillRepository;
 import com.kanini.springer.repository.Hiring.UserRepository;
 import com.kanini.springer.repository.Drive.RoundTemplateRepository;
-import com.kanini.springer.repository.EmailTemplateRepository;
+import com.kanini.springer.repository.Common.EmailTemplateRepository;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
@@ -41,6 +42,7 @@ public class DataLoader {
     private final InstituteProgramRepository instituteProgramRepository;
     private final EmailTemplateRepository emailTemplateRepository;
     private final RoundTemplateRepository roundTemplateRepository;
+    private final PasswordEncoder passwordEncoder;
 
     @Bean
     @Transactional
@@ -54,14 +56,15 @@ public class DataLoader {
                 seedEmailTemplates();
             }
 
-            // Seed round templates independently
-            if (roundTemplateRepository.count() == 0) {
-                seedRoundTemplates();
-            }
-
-            // Check if data already exists
-            if (roleRepository.count() > 0) {
+            // Check if main data already exists (check for TA_HEAD instead of just count)
+            if (roleRepository.findByRoleName(RoleName.TA_HEAD).isPresent()) {
                 log.info("Data already exists. Skipping seed data loading.");
+                
+                // Ensure INTERN role exists even on existing DBs
+                if (roleRepository.findByRoleName(RoleName.INTERN).isEmpty()) {
+                    roleRepository.save(createRole(RoleName.INTERN));
+                    log.info("Seeded missing INTERN role");
+                }
                 return;
             }
 
@@ -86,7 +89,21 @@ public class DataLoader {
             // 7. Seed Skills
             seedSkills();
 
+            // 8. Seed Round Templates
+            seedRoundTemplates();
+
             log.info("Data seeding completed successfully!");
+        };
+    }
+
+    @Bean
+    @Transactional
+    public CommandLineRunner loadRoundTemplates() {
+        return args -> {
+            // Seed round templates independently if they don't exist
+            if (roundTemplateRepository.count() == 0) {
+                seedRoundTemplates();
+            }
         };
     }
 
@@ -95,13 +112,14 @@ public class DataLoader {
 
         Role[] roles = {
             createRole(RoleName.TA_HEAD),
-            createRole(RoleName.TA_RECRUITER),
+            createRole(RoleName.TA_MANAGER),
             createRole(RoleName.HIRING_MANAGER),
             createRole(RoleName.MEMBERS),
             createRole(RoleName.HR_OPERATIONS),
             createRole(RoleName.TRAINING_COORDINATOR),
             createRole(RoleName.BU_SPOC),
-            createRole(RoleName.SYSTEM_ADMIN)
+            createRole(RoleName.SYSTEM_ADMIN),
+            createRole(RoleName.INTERN)
         };
 
         roleRepository.saveAll(java.util.Arrays.asList(roles));
@@ -120,23 +138,26 @@ public class DataLoader {
 
         // Get roles
         Role taHeadRole = roleRepository.findByRoleName(RoleName.TA_HEAD).orElseThrow();
-        Role taRecruiterRole = roleRepository.findByRoleName(RoleName.TA_RECRUITER).orElseThrow();
+        Role taManagerRole = roleRepository.findByRoleName(RoleName.TA_MANAGER).orElseThrow();
         Role hiringManagerRole = roleRepository.findByRoleName(RoleName.HIRING_MANAGER).orElseThrow();
         Role membersRole = roleRepository.findByRoleName(RoleName.MEMBERS).orElseThrow();
         Role adminRole = roleRepository.findByRoleName(RoleName.SYSTEM_ADMIN).orElseThrow();
         Role trainingCoordinatorRole = roleRepository.findByRoleName(RoleName.TRAINING_COORDINATOR).orElseThrow();
+        Role internRole = roleRepository.findByRoleName(RoleName.INTERN).orElseThrow();
         // Create users
         User[] users = {
             createUser("Sudha", "sudha@kanini.com", "password123", "Talent Acquisition", "Chennai", taHeadRole),
-            createUser("Mozhi", "mozhi@kanini.com", "password123", "Talent Acquisition", "Bangalore", taRecruiterRole),
-            createUser("Priya", "priya@kanini.com", "password123", "Talent Acquisition", "Chennai", taRecruiterRole),
+            createUser("Mozhi", "mozhi@kanini.com", "password123", "Talent Acquisition", "Bangalore", taManagerRole),
+            createUser("Priya", "priya@kanini.com", "password123", "Talent Acquisition", "Chennai", taManagerRole),
             createUser("Parthiban", "parthiban@kanini.com", "password123", "Product Engineering", "Bangalore", hiringManagerRole),
             createUser("Ramesh", "ramesh@kanini.com", "password123", "Product Engineering", "Coimbatore", membersRole),
-              createUser("Priya Rajagopalan", "priya@kanini.com", "password@123", "Product Engineering", "Coimbatore", membersRole),
-                createUser("Mozhiarasan", "mozhi@kanini.com", "password@123", "Product Engineering", "Coimbatore", membersRole),
-                  createUser("Praveen Kumar", "praveen@kanini.com", "password123", "Product Engineering", "Coimbatore", membersRole),
-            createUser("Reshni", "reshni@kanini.com", "password123", "Data Analytics & AI", "Coimbatore", adminRole),
-            createUser("Lavanya", "lavanya@kanini.com", "password123", "Data Analytics & AI", "Coimbatore", trainingCoordinatorRole)
+            createUser("Priya Rajagopalan", "priya@kanini.com", "password@123", "Product Engineering", "Coimbatore", membersRole),
+            createUser("Mozhiarasan", "mozhi@kanini.com", "password@123", "Product Engineering", "Coimbatore", membersRole),
+            createUser("Praveen Kumar", "praveen@kanini.com", "password123", "Product Engineering", "Coimbatore", membersRole),
+            createUser("Admin", "admin@kanini.com", "admin@123", "Data Analytics & AI", "Coimbatore", adminRole),
+            createUser("Lavanya", "lavanya@kanini.com", "password123", "Data Analytics & AI", "Coimbatore", trainingCoordinatorRole),
+            createUser("John", "john@kanini.com", "password123", "Training", "Coimbatore", internRole),
+            createUser("Joe", "joe@kanini.com", "password123", "Training", "Coimbatore", internRole)
         };
 
         userRepository.saveAll(java.util.Arrays.asList(users));
@@ -147,7 +168,7 @@ public class DataLoader {
         User user = new User();
         user.setUsername(name);
         user.setEmail(email);
-        user.setPassword(password); // TODO: Encode password in production
+        user.setPassword(passwordEncoder.encode(password)); // Password encrypted with BCrypt
         user.setDepartment(department);
         user.setLocation(location);
         user.setRole(role);
@@ -182,6 +203,7 @@ public class DataLoader {
         log.info("Seeding institutes...");
 
         Institute[] institutes = {
+            createInstitute("OTHERS", "TIER_1", "Tamil Nadu", "Chennai"),
             createInstitute("Anna University", "TIER_1", "Tamil Nadu", "Chennai"),
             createInstitute("SSN College of Engineering", "TIER_1", "Tamil Nadu", "Chennai"),
             createInstitute("PSG College of Technology", "TIER_2", "Tamil Nadu", "Coimbatore"),
@@ -189,8 +211,8 @@ public class DataLoader {
             createInstitute("VIT University", "TIER_1", "Tamil Nadu", "Vellore"),
             createInstitute("SRM Institute of Science and Technology", "TIER_2", "Tamil Nadu", "Chennai"),
             createInstitute("Karunya Institute of Technology", "TIER_2", "Tamil Nadu", "Coimbatore"),
-            createInstitute("CEG - College of Engineering Guindy", "TIER_1", "Tamil Nadu", "Chennai"),
-            createInstitute("OTHERS College", "TIER_1", "Tamil Nadu", "Chennai")
+            createInstitute("CEG - College of Engineering Guindy", "TIER_1", "Tamil Nadu", "Chennai")
+            
         };
 
         instituteRepository.saveAll(java.util.Arrays.asList(institutes));
@@ -547,6 +569,128 @@ public class DataLoader {
             "</body></html>"
         );
         saveOrUpdateTemplate(rejectionTemplate);
+
+        // ── Kanini On-Campus Drive ─────────────────────────────────────────────
+        EmailTemplate onCampusTemplate = new EmailTemplate();
+        onCampusTemplate.setTemplateName("KANINI ONCAMPUS DRIVE");
+        onCampusTemplate.setSubject("Request to Conduct Kanini On-Campus Recruitment Drive");
+        onCampusTemplate.setBody(
+            "<p>Dear Sir/Madam,</p>" +
+            "<p> Greetings from Kanini Software Solutions.</p>" +
+            "<p>We hope you are doing well.</p>" +
+            "<p>We are pleased to express our interest in conducting an <strong>On-Campus Recruitment Drive</strong> at your esteemed institution for the current graduating batch.</p>" +
+            "<p>At Kanini Software Solutions, we continuously seek talented and enthusiastic graduates who can contribute to our growing organization. We believe that your institution has a strong pool of capable students, and we would be delighted to engage with them through this recruitment initiative.</p>" +
+            "<p><br></p>" +
+            "<p>Please find the proposed drive details below:</p>" +
+            "<p>Drive Name: {{DRIVE_NAME}}</p>" +
+            "<p>Proposed Drive Date: {{DRIVE_DATE}}</p>" +
+            "<p>Venue/Location: {{LOCATION}}</p>" +
+            "<p>Eligible Departments: {{ELIGIBLE_DEPARTMENTS}}</p>" +
+            "<p><br></p>" +
+            "<p>We kindly request your support in facilitating the recruitment process and coordinating the necessary arrangements for the drive.</p>" +
+            "<p>Additionally, we request you to share the list of eligible students in the prescribed format for further processing.</p>" +
+            "<p>Please let us know your confirmation and any additional requirements from our end to proceed with the coordination activities.</p>" +
+            "<p>For any queries or further discussion, feel free to contact us at <a href=\"mailto:hrops.india@kanini.com\" rel=\"noopener noreferrer\" target=\"_blank\">hrops.india@kanini.com</a>.</p>" +
+            "<p>We look forward to collaborating with your institution.</p>" +
+            "<p style=\"text-align: right;\"><br></p>" +
+            "<p style=\"text-align: right;\">Warm regards,</p>" +
+            "<p style=\"text-align: right;\">Kanini Talent Acquisition Team</p>" +
+            "<p style=\"text-align: right;\">Kanini Software Solutions</p>"
+        );
+        saveOrUpdateTemplate(onCampusTemplate);
+
+        // ── Kanini Off-Campus Drive ────────────────────────────────────────────
+        EmailTemplate offCampusTemplate = new EmailTemplate();
+        offCampusTemplate.setTemplateName("KANINI OFFCAMPUS DRIVE");
+        offCampusTemplate.setSubject("Invitation to Participate in Kanini Off-Campus Recruitment Drive");
+        offCampusTemplate.setBody(
+            "<p>Dear Sir/Madam,</p>" +
+            "<p><br></p>" +
+            "<p><strong>Greetings from Kanini Software Solutions.</strong></p>" +
+            "<p>We are pleased to invite students from your esteemed institution to participate in our upcoming Off-Campus Recruitment Drive.</p>" +
+            "<p>The drive is being organized to identify talented and aspiring graduates for opportunities at Kanini Software Solutions. We would be grateful if your institution could encourage eligible students to participate in the recruitment process.</p>" +
+            "<p><br></p>" +
+            "<p>Please find the drive details below:</p>" +
+            "<p><br></p>" +
+            "<p>Drive Date:</p>" +
+            "<p>Drive Location:</p>" +
+            "<p>Registration Deadline:</p>" +
+            "<p><br></p>" +
+            "<p>Kindly share the attached student details template with interested candidates and request them to complete the required information accurately.</p>" +
+            "<p><br></p>" +
+            "<p>Eligible students are advised to carry the necessary documents during the recruitment process, including:</p>" +
+            "<p><br></p>" +
+            "<p>\u2022 Updated Resume</p>" +
+            "<p>\u2022 College ID Card</p>" +
+            "<p>\u2022 Personal laptop</p>" +
+            "<p><br></p>" +
+            "<p>For any queries or clarification, please contact us at <a href=\"mailto:hrops.india@kanini.com\">hrops.india@kanini.com</a>.</p>" +
+            "<p><br></p>" +
+            "<p>We look forward to your institution's participation and continued collaboration.</p>" +
+            "<p style=\"text-align: right;\"><br></p>" +
+            "<p style=\"text-align: right;\">Warm regards,</p>" +
+            "<p style=\"text-align: right;\"><em>Kanini Talent Acquisition Team</em></p>" +
+            "<p style=\"text-align: right;\"><em>Kanini Software Solutions</em></p>" +
+            "<p style=\"text-align: right;\"><br></p>" +
+            "<p style=\"text-align: right;\"><img src=\"/siganture.png\"></p>"
+        );
+        saveOrUpdateTemplate(offCampusTemplate);
+
+        // ── Kanini Shortlisted Invite ──────────────────────────────────────────
+        EmailTemplate shortlistedTemplate = new EmailTemplate();
+        shortlistedTemplate.setTemplateName("KANINI SHORTLISTED INVITE");
+        shortlistedTemplate.setSubject("Shortlisted for Drive \u2013 Kanini Software Solutions");
+        shortlistedTemplate.setBody(
+            "<p>Dear {{CANDIDATE_NAME}},</p>" +
+            "<p>Greetings from Kanini Software Solutions.</p>" +
+            "<p>We are pleased to inform you that you have been successfully shortlisted to participate in the <strong>{{DRIVE_NAME}}</strong> recruitment drive.</p>" +
+            "<p><br></p>" +
+            "<p>Please find your drive details below:</p>" +
+            "<p><em>Registration Code: </em><strong><em>{{REGISTRATION_CODE}}</em></strong></p>" +
+            "<p><em>Drive Date: </em><strong><em>{{START_DATE}}</em></strong></p>" +
+            "<p><em>Reporting Batch Time: </em><strong><em>{{BATCH_TIME}}</em></strong></p>" +
+            "<p><em>Drive Location: </em><strong><em>{{LOCATION}}</em></strong></p>" +
+            "<p><br></p>" +
+            "<p>You are requested to report to the venue on time and carry the following documents for verification:</p>" +
+            "<p><br></p>" +
+            "<p>\u2022 Updated Resume</p>" +
+            "<p>\u2022 College ID Card</p>" +
+            "<p>\u2022 Personal Laptop for first round</p>" +
+            "<p><br></p>" +
+            "<p>Kindly ensure that you adhere to the reporting time and maintain professional attire throughout the recruitment process.</p>" +
+            "<p>Please keep your Registration Code handy for future communication and verification purposes.</p>" +
+            "<p><br></p>" +
+            "<p>For any queries or assistance, feel free to contact us at <a href=\"mailto:hrops.india@kanini.com\">hrops.india@kanini.com</a>.</p>" +
+            "<p>We wish you all the very best and look forward to meeting you during the drive.</p>" +
+            "<p><br></p>" +
+            "<p style=\"text-align: right;\">Warm regards,</p>" +
+            "<p style=\"text-align: right;\">Kanini Talent Acquisition Team</p>" +
+            "<p style=\"text-align: right;\">Kanini Software Solutions</p>" +
+            "<p style=\"text-align: right;\"><img src=\"/siganture.png\"></p>"
+        );
+        saveOrUpdateTemplate(shortlistedTemplate);
+
+        // ── Round Selected ─────────────────────────────────────────────────────
+        EmailTemplate roundSelectedTemplate = new EmailTemplate();
+        roundSelectedTemplate.setTemplateName("ROUND SELECTED");
+        roundSelectedTemplate.setSubject("KANINI SELECTION UPDATE");
+        roundSelectedTemplate.setBody(
+            "<p>Dear {{NAME}},</p>" +
+            "<p><br></p>" +
+            "<p>Greetings from Kanini Software Solutions.</p>" +
+            "<p><br></p>" +
+            "<p>We are pleased to inform you that you have been selected in Round {{ROUND_NO}} of the recruitment process.</p>" +
+            "<p><br></p>" +
+            "<p>Further details will be shared shortly. Kindly stay prepared and keep checking your email for updates.</p>" +
+            "<p><br></p>" +
+            "<p>We congratulate you on your progress and wish you the very best.</p>" +
+            "<p><br></p>" +
+            "<p>Warm regards,</p>" +
+            "<p>Kanini Talent Acquisition Team</p>" +
+            "<p>Kanini Software Solutions</p>" +
+            "<p><img src=\"/siganture.png\"></p>"
+        );
+        saveOrUpdateTemplate(roundSelectedTemplate);
 
         log.info("Email templates are seeded/updated successfully");
     }

@@ -14,7 +14,6 @@ import {
   AccessTime as ClockIcon,
   CheckCircleOutline as ActiveIcon,
   CancelOutlined as InactiveIcon
-
 } from "@mui/icons-material";
 import { applicationApi } from "../../../services/driveschedule.api";
 import { showToast } from "../../../utils/toast";
@@ -30,6 +29,12 @@ import "../../../css/TA_Recruiter/DriveProcess/ApplicationHistory.css";
 interface LocationState {
   driveId: number;
   candidateId: number;
+}
+
+interface ApplicationHistoryProps {
+  driveId?: number;
+  candidateId?: number;
+  embeddedInCandidateDetails?: boolean;
 }
 
 const ASSIGNMENT_CHIP: Record<string, string> = {
@@ -56,10 +61,23 @@ interface RoundSummary {
   evaluations: CandidateHistoryEvaluation[];
 }
 
-const fmtDate = (iso: string) =>
-  new Date(iso).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
-const fmtTime = (iso: string) =>
-  new Date(iso).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: true });
+const fmtDate = (iso: string) => {
+  if (!iso) return "";
+  try {
+    return new Date(iso).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
+  } catch {
+    return "";
+  }
+};
+
+const fmtTime = (iso: string) => {
+  if (!iso) return "";
+  try {
+    return new Date(iso).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: true });
+  } catch {
+    return "";
+  }
+};
 
 const STATUS_COLOR: Record<string, string> = {
   PASS: "ah-hl-green", SELECTED: "ah-hl-green",
@@ -91,10 +109,12 @@ const STATUS_LINE_CLASS: Record<string, string> = {
   ABSENT: "ah-line-absent", SKIP: "ah-line-skip",
 };
 
-const ApplicationHistory = () => {
+const ApplicationHistory = ({ driveId, candidateId, embeddedInCandidateDetails = false }: ApplicationHistoryProps) => {
   const navigate = useNavigate();
   const location = useLocation();
   const state = location.state as LocationState | null;
+  const resolvedDriveId = driveId ?? state?.driveId;
+  const resolvedCandidateId = candidateId ?? state?.candidateId;
 
   const [data, setData] = useState<CandidateHistoryResponse | null>(null);
   const [loading, setLoading] = useState(true);
@@ -103,6 +123,45 @@ const ApplicationHistory = () => {
   const [overrideDialogOpen, setOverrideDialogOpen] = useState(false);
   const [overrideReason, setOverrideReason] = useState("");
   const [overrideSubmitting, setOverrideSubmitting] = useState(false);
+  const [batchOptions, setBatchOptions] = useState<string[]>([]);
+  const [selectedBatchTime, setSelectedBatchTime] = useState<string>("");
+  const [updatingBatchTime, setUpdatingBatchTime] = useState(false);
+
+  const handleBatchTimeUpdate = async () => {
+    if (!selectedBatchTime || !data) {
+      showToast("Please select a batch time.", "error");
+      return;
+    }
+    if (selectedBatchTime === data.batchTime) {
+      showToast("Selected batch time is same as current batch time.", "error");
+      return;
+    }
+    const user = tokenstore.getUser();
+    if (!user || !user.userId) {
+      showToast("User not authenticated. Please login again.", "error");
+      return;
+    }
+    try {
+      setUpdatingBatchTime(true);
+      const res = await applicationApi.updateBatchTime({
+        driveId: data.driveId,
+        applicationId: data.applicationId,
+        oldBatchTime: data.batchTime || "",
+        newBatchTime: selectedBatchTime,
+        updatedBy: user.userId,
+      });
+      if (res.success) {
+        showToast("Batch time updated successfully.", "success");
+        setData({ ...data, batchTime: selectedBatchTime });
+      } else {
+        showToast(res.message || "Failed to update batch time.", "error");
+      }
+    } catch (err) {
+      showToast((err as AppError).message || "Failed to update batch time.", "error");
+    } finally {
+      setUpdatingBatchTime(false);
+    }
+  };
 
   const handleOverrideSubmit = async () => {
     if (!data || !overrideStatus || !overrideReason.trim()) return;
@@ -131,15 +190,15 @@ const ApplicationHistory = () => {
   };
 
   useEffect(() => {
-    if (!state?.driveId || !state?.candidateId) {
+    if (!resolvedDriveId || !resolvedCandidateId) {
       showToast("Missing drive or candidate information.", "error");
-      navigate(-1);
+      if (!driveId || !candidateId) navigate(-1);
       return;
     }
     const fetchHistory = async () => {
       try {
         setLoading(true);
-        const res = await applicationApi.getCandidateHistory(state.driveId, state.candidateId);
+        const res = await applicationApi.getCandidateHistory(resolvedDriveId, resolvedCandidateId);
         if (res.success && res.data) {
           setData(res.data);
         } else {
@@ -152,7 +211,48 @@ const ApplicationHistory = () => {
       }
     };
     fetchHistory();
-  }, [state, navigate]);
+  }, [resolvedDriveId, resolvedCandidateId, navigate, driveId, candidateId]);
+
+  useEffect(() => {
+    console.log('=== Batch Time Fetch Effect Triggered ===');
+    console.log('resolvedDriveId:', resolvedDriveId);
+    console.log('data:', data);
+    
+    if (!resolvedDriveId || !data) {
+      console.log('Early return: missing resolvedDriveId or data');
+      return;
+    }
+    
+    const fetchBatchOptions = async () => {
+      console.log('Starting fetchBatchOptions...');
+      try {
+        console.log('Calling API with driveId:', resolvedDriveId);
+        const res = await applicationApi.getDistinctBatchTimes(resolvedDriveId);
+        console.log('Full API Response:', res);
+        console.log('Response data field:', res.data);
+        console.log('Response success field:', res.success);
+        
+        if (res.success && res.data) {
+          console.log('Fetched batch times from API:', res.data);
+          console.log('Current candidate batch time (raw):', data.batchTime);
+          const currentBatchTimeNormalized = data.batchTime ? data.batchTime.substring(0, 16) : null;
+          console.log('Normalized current batch time:', currentBatchTimeNormalized);
+          const filteredOptions = res.data.filter(
+            (batch) => batch !== currentBatchTimeNormalized
+          );
+          console.log('Available batch times after filtering:', filteredOptions);
+          setBatchOptions(filteredOptions);
+        } else {
+          console.log('API call unsuccessful or no data');
+          console.log('res.success:', res.success);
+          console.log('res.data:', res.data);
+        }
+      } catch (err) {
+        console.error('Error fetching batch times:', err);
+      }
+    };
+    fetchBatchOptions();
+  }, [resolvedDriveId, data]);
 
   // Group assignments + evaluations by round for a timeline view
   const rounds: RoundSummary[] = useMemo(() => {
@@ -210,7 +310,10 @@ const ApplicationHistory = () => {
               <HistoryIcon />
             </Box>
             <Box className="ah-header-info">
-              <Typography className="ah-header-title">{data.candidateName}</Typography>
+              
+              {!embeddedInCandidateDetails && (
+                <Typography className="ah-header-title">{data.candidateName}</Typography>
+              )}
               <Typography className="ah-header-subtitle">{data.driveName}</Typography>
             </Box>
           </Box>
@@ -224,34 +327,72 @@ const ApplicationHistory = () => {
             <Box className="ah-info-pill">
               <span className="ah-pill-label">Batch</span>
               <span className="ah-pill-value">
-                {data.batchTime ? fmtDate(data.batchTime) + " " + fmtTime(data.batchTime) : "—"}
+                {data.batchTime ? `${fmtDate(data.batchTime)} - ${fmtTime(data.batchTime)}` : "—"}
               </span>
             </Box>
           </Box>
 
           {/* Right Section */}
           <Box className="ah-header-right">
-            <Select
-              value={overrideStatus}
-              onChange={(e) => setOverrideStatus(e.target.value)}
-              displayEmpty
-              size="small"
-              className="ah-override-select"
-            >
-              <MenuItem value="" disabled>Override Status</MenuItem>
-              <MenuItem value="DROPPED">DROPPED</MenuItem>
-              <MenuItem value="FAILED">FAILED</MenuItem>
-              <MenuItem value="SELECTED">SELECTED</MenuItem>
-            </Select>
-            <Button
-              variant="contained"
-              size="small"
-              className="t-btn-primary ah-override-btn"
-              disabled={!overrideStatus || overrideStatus === data.applicationStatus}
-              onClick={() => setOverrideDialogOpen(true)}
-            >
-              Update
-            </Button>
+            {embeddedInCandidateDetails ? (
+              <>
+                <Select
+                  value={selectedBatchTime}
+                  onChange={(e) => setSelectedBatchTime(e.target.value)}
+                  displayEmpty
+                  size="small"
+                  className="ah-override-select"
+                >
+                  <MenuItem value="">Select Batch Time</MenuItem>
+                  {batchOptions.length === 0 && (
+                    <MenuItem value="" disabled>No other batch times available</MenuItem>
+                  )}
+                  {batchOptions.map((batch) => {
+                    const batchDate = new Date(batch);
+                    const timeStr = batchDate.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: true });
+                    const dateStr = batchDate.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
+                    return (
+                      <MenuItem key={batch} value={batch}>
+                        {dateStr} - {timeStr}
+                      </MenuItem>
+                    );
+                  })}
+                </Select>
+                <Button
+                  variant="contained"
+                  size="small"
+                  className="t-btn-primary ah-override-btn"
+                  disabled={!selectedBatchTime || updatingBatchTime}
+                  onClick={handleBatchTimeUpdate}
+                >
+                  {updatingBatchTime ? "Updating..." : "Update"}
+                </Button>
+              </>
+            ) : (
+              <>
+                <Select
+                  value={overrideStatus}
+                  onChange={(e) => setOverrideStatus(e.target.value)}
+                  displayEmpty
+                  size="small"
+                  className="ah-override-select"
+                >
+                  <MenuItem value="" disabled>Override Status</MenuItem>
+                  <MenuItem value="DROPPED">DROPPED</MenuItem>
+                  <MenuItem value="FAILED">FAILED</MenuItem>
+                  <MenuItem value="SELECTED">SELECTED</MenuItem>
+                </Select>
+                <Button
+                  variant="contained"
+                  size="small"
+                  className="t-btn-primary ah-override-btn"
+                  disabled={!overrideStatus || overrideStatus === data.applicationStatus}
+                  onClick={() => setOverrideDialogOpen(true)}
+                >
+                  Update
+                </Button>
+              </>
+            )}
           </Box>
         </Box>
       </Card>
@@ -265,7 +406,6 @@ const ApplicationHistory = () => {
           
           <Box className="ah-level-bar-center">
             {rounds.map((round, rIdx) => {
-              // Use the most recent evaluation (last in array) for the status indicator
               const latestEval = round.evaluations.length > 0 ? round.evaluations[round.evaluations.length - 1] : null;
               const status = latestEval?.evaluationStatus || "PENDING";
               const dotCls = STATUS_DOT_CLASS[status] || "ah-dot-pending";
@@ -517,7 +657,7 @@ const ApplicationHistory = () => {
       </Box>
 
       {/* ─── Override Reason Dialog ─── */}
-      <Dialog open={overrideDialogOpen} onClose={() => setOverrideDialogOpen(false)} maxWidth="xs" fullWidth>
+      <Dialog open={!embeddedInCandidateDetails && overrideDialogOpen} onClose={() => setOverrideDialogOpen(false)} maxWidth="xs" fullWidth>
         <DialogTitle>Override Status to {overrideStatus}</DialogTitle>
         <DialogContent>
           <TextField

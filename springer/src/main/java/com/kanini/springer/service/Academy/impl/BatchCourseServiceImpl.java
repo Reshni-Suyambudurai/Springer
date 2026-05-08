@@ -20,11 +20,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class BatchCourseServiceImpl implements IBatchCourseService {
+
+    private static final String PROGRAM_NOT_FOUND = "Training Program not found with ID: ";
+    private static final String BATCH_COURSE_NOT_FOUND = "Batch Course not found with ID: ";
 
     private final BatchCourseRepository batchCourseRepository;
     private final TrainingProgramRepository programRepository;
@@ -38,7 +40,7 @@ public class BatchCourseServiceImpl implements IBatchCourseService {
     public BatchCourseResponse linkCourseToBatch(BatchCourseRequest request) {
 
         TrainingProgram program = programRepository.findByProgramId(request.getProgramId())
-                .orElseThrow(() -> new ResourceNotFoundException("Training Program not found with ID: " + request.getProgramId()));
+                .orElseThrow(() -> new ResourceNotFoundException(PROGRAM_NOT_FOUND + request.getProgramId()));
 
         TrainingCourse course = courseRepository.findByCourseId(request.getCourseId())
                 .orElseThrow(() -> new ResourceNotFoundException("Training Course not found with ID: " + request.getCourseId()));
@@ -88,8 +90,30 @@ public class BatchCourseServiceImpl implements IBatchCourseService {
     @Transactional
     public BatchCourseResponse updateBatchCourseStatus(Integer batchCourseId, String status) {
         BatchCourse batchCourse = batchCourseRepository.findByBatchCourseId(batchCourseId)
-                .orElseThrow(() -> new ResourceNotFoundException("Batch Course not found with ID: " + batchCourseId));
-        batchCourse.setStatus(CourseStatus.valueOf(status));
+                .orElseThrow(() -> new ResourceNotFoundException(BATCH_COURSE_NOT_FOUND + batchCourseId));
+
+        CourseStatus newStatus = CourseStatus.valueOf(status);
+        java.time.LocalDateTime now = java.time.LocalDateTime.now();
+
+        // Cannot manually set ACTIVE if start date hasn't arrived yet
+        if (newStatus == CourseStatus.ACTIVE
+                && batchCourse.getStartDate() != null
+                && now.isBefore(batchCourse.getStartDate())) {
+            throw new com.kanini.springer.exception.ValidationException(
+                "Cannot mark course as ACTIVE before its start date: "
+                + batchCourse.getStartDate().toLocalDate());
+        }
+
+        // Cannot manually set COMPLETED if end date hasn't passed yet
+        if (newStatus == CourseStatus.COMPLETED
+                && batchCourse.getEndDate() != null
+                && now.isBefore(batchCourse.getEndDate())) {
+            throw new com.kanini.springer.exception.ValidationException(
+                "Cannot mark course as COMPLETED before its end date: "
+                + batchCourse.getEndDate().toLocalDate());
+        }
+
+        batchCourse.setStatus(newStatus);
         return mapper.toResponse(batchCourseRepository.save(batchCourse));
     }
 
@@ -97,7 +121,7 @@ public class BatchCourseServiceImpl implements IBatchCourseService {
     @Transactional(readOnly = true)
     public BatchCourseResponse getBatchCourseById(Integer batchCourseId) {
         return mapper.toResponse(batchCourseRepository.findByBatchCourseId(batchCourseId)
-                .orElseThrow(() -> new ResourceNotFoundException("Batch Course not found with ID: " + batchCourseId)));
+                .orElseThrow(() -> new ResourceNotFoundException(BATCH_COURSE_NOT_FOUND + batchCourseId)));
     }
 
     @Override
@@ -105,30 +129,30 @@ public class BatchCourseServiceImpl implements IBatchCourseService {
     public List<BatchCourseResponse> getAllBatchCourses() {
         return batchCourseRepository.findAll().stream()
                 .map(mapper::toResponse)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<BatchCourseResponse> getCoursesByProgram(Integer programId) {
         programRepository.findByProgramId(programId)
-                .orElseThrow(() -> new ResourceNotFoundException("Training Program not found with ID: " + programId));
+                .orElseThrow(() -> new ResourceNotFoundException(PROGRAM_NOT_FOUND + programId));
         return batchCourseRepository.findByProgram_ProgramId(programId).stream()
                 .map(mapper::toResponse)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<BatchCourseResponse> getCoursesByBatch(Integer programId, Integer batchNumber) {
         TrainingProgram program = programRepository.findByProgramId(programId)
-                .orElseThrow(() -> new ResourceNotFoundException("Training Program not found with ID: " + programId));
+                .orElseThrow(() -> new ResourceNotFoundException(PROGRAM_NOT_FOUND + programId));
         if (batchNumber == null || batchNumber < 1 || batchNumber > program.getNumberOfBatches()) {
             throw new IllegalArgumentException("Invalid batch number: " + batchNumber);
         }
         return batchCourseRepository.findByProgram_ProgramIdAndBatchNo(programId, batchNumber).stream()
                 .map(mapper::toResponse)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Override
@@ -138,14 +162,14 @@ public class BatchCourseServiceImpl implements IBatchCourseService {
                 .orElseThrow(() -> new ResourceNotFoundException("Training Course not found with ID: " + courseId));
         return batchCourseRepository.findByCourse_CourseId(courseId).stream()
                 .map(mapper::toResponse)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Override
     @Transactional
     public void removeCourseFromBatch(Integer batchCourseId) {
         batchCourseRepository.findByBatchCourseId(batchCourseId)
-                .orElseThrow(() -> new ResourceNotFoundException("Batch Course not found with ID: " + batchCourseId));
+                .orElseThrow(() -> new ResourceNotFoundException(BATCH_COURSE_NOT_FOUND + batchCourseId));
         batchCourseRepository.deleteById(batchCourseId);
     }
 }

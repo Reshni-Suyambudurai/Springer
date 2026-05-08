@@ -83,7 +83,48 @@ const DriveDetails: React.FC = () => {
     );
   }
 
-  const { driveSchedule: drive, totalApplications, distinctBatchTimeCount, applicationsPerBatchTime } = analytics;
+  const { 
+    driveSchedule: drive, 
+    totalApplications, 
+    distinctBatchTimeCount, 
+    applicationsPerBatchTime,
+    applicationStatusCounts,
+    round1Analytics,
+    round2Analytics,
+    round3Analytics
+  } = analytics;
+
+  const calculatePercentage = (count: number, total: number): number => {
+    if (total === 0) return 0;
+    return Math.round((count / total) * 100);
+  };
+
+  const getStatusColor = (status: string): string => {
+    const statusMap: Record<string, string> = {
+      'ALLOTED': 'alloted',
+      'IN_DRIVE': 'in-drive',
+      'DROPPED': 'dropped',
+      'FAILED': 'failed',
+      'SELECTED': 'selected'
+    };
+    return statusMap[status] || 'default';
+  };
+
+  const getEvaluationStatusColor = (status: string): string => {
+    const statusMap: Record<string, string> = {
+      'PASS': 'pass',
+      'FAIL': 'fail',
+      'ABSENT': 'absent',
+      'PENDING': 'pending',
+      'HOLD': 'hold',
+      'SKIP': 'skip'
+    };
+    return statusMap[status] || 'default';
+  };
+
+  const formatStatusLabel = (status: string): string => {
+    return status.replace(/_/g, ' ');
+  };
 
   return (
     <Box className="dd-container">
@@ -100,6 +141,99 @@ const DriveDetails: React.FC = () => {
 
       {/* ═══ Scrollable content area ═══ */}
       <Box className="dd-content">
+
+        {/* Row 0: Drive Analytics — Top Section */}
+        <Card className="dd-card dd-analytics-card">
+          <Typography className="dd-card-heading">Drive Analytics Overview</Typography>
+          
+          <Box className="dd-analytics-container">
+            {/* Left Section: Application Status Progress Bars */}
+            <Box className="dd-analytics-left">
+              <Typography className="dd-analytics-section-title">Application Status</Typography>
+              <Box className="dd-status-list">
+                {Object.entries(applicationStatusCounts || {}).map(([status, count]) => {
+                  const percentage = calculatePercentage(count, totalApplications);
+                  return (
+                    <Box key={status} className="dd-status-item">
+                      <Box className="dd-status-header">
+                        <Typography className="dd-status-label">{formatStatusLabel(status)}</Typography>
+                        <Typography className="dd-status-count">{count}</Typography>
+                      </Box>
+                      <Box className="dd-progress-row">
+                        <Box className="dd-progress-container">
+                          <Box 
+                            className={`dd-progress-bar dd-progress-${getStatusColor(status)}`}
+                            style={{ width: `${percentage}%` }}
+                          />
+                        </Box>
+                        <Typography className="dd-status-percentage">{percentage}%</Typography>
+                      </Box>
+                    </Box>
+                  );
+                })}
+              </Box>
+            </Box>
+
+            {/* Right Section: Round Evaluations */}
+            <Box className="dd-analytics-right">
+              <Typography className="dd-analytics-section-title">Round-wise Evaluation Analytics</Typography>
+              <Box className="dd-rounds-container">
+                {[round1Analytics, round2Analytics, round3Analytics].map((roundData, index) => {
+                  if (!roundData) {
+                    return (
+                      <Box key={index} className="dd-round-card dd-round-empty">
+                        <Box className="dd-round-card-inner">
+                          <Typography className="dd-round-name">Round {index + 1}</Typography>
+                          <Typography className="dd-round-empty-text">No evaluations yet</Typography>
+                        </Box>
+                      </Box>
+                    );
+                  }
+
+                  return (
+                    <Box key={roundData.roundConfigId} className="dd-round-card">
+                      <Box className="dd-round-card-inner">
+                        <Box className="dd-round-header">
+                          <Typography className="dd-round-name">{roundData.roundName}</Typography>
+                          <Box className="dd-round-attended">
+                            <Typography className="dd-round-attended-count">{roundData.totalAttended}</Typography>
+                            <Typography className="dd-round-attended-label">Attended</Typography>
+                          </Box>
+                        </Box>
+                        <Box className="dd-round-status-list">
+                          {Object.entries(roundData.statusCounts).map(([status, count]) => {
+                            const percentage = calculatePercentage(count, roundData.totalAttended);
+                            return (
+                              <Box key={status} className="dd-round-status-item">
+                                <Box className="dd-round-progress-wrapper">
+                                  <Box 
+                                    className={`dd-round-progress-fill dd-eval-bar-${getEvaluationStatusColor(status)}`}
+                                    style={{ width: `${percentage}%` }}
+                                  />
+                                  <Box className="dd-round-progress-content">
+                                    <Typography className="dd-round-progress-label">
+                                      {formatStatusLabel(status)}
+                                    </Typography>
+                                    <Typography className="dd-round-progress-percent">
+                                      {percentage}%
+                                    </Typography>
+                                    <Typography className="dd-round-progress-count">
+                                      {count}
+                                    </Typography>
+                                  </Box>
+                                </Box>
+                              </Box>
+                            );
+                          })}
+                        </Box>
+                      </Box>
+                    </Box>
+                  );
+                })}
+              </Box>
+            </Box>
+          </Box>
+        </Card>
 
         {/* Row 1: Left card (location, institute, description) + Right card (dates) */}
         <Box className="dd-cards-row">
@@ -172,9 +306,9 @@ const DriveDetails: React.FC = () => {
           </Box>
         </Card>
 
-        {/* Row 3: Application Analytics */}
+        {/* Row 3: Batch Time Distribution */}
         <Card className="dd-card">
-          <Typography className="dd-card-heading">Application Analytics</Typography>
+          <Typography className="dd-card-heading">Batch Time Distribution</Typography>
 
           <Box className="dd-stats-row">
             <Box className="dd-stat-box">

@@ -14,7 +14,7 @@ function Sidebar() {
     TA_HEAD: [
       {
         name: "Dashboard",
-        path: "/ta-head/dashboard",
+        path: "/ta-head/drive-analytics",
         icon: (
           <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <rect x="3" y="3" width="7" height="7" />
@@ -94,7 +94,7 @@ function Sidebar() {
       },
     ],
 
-    TA_RECRUITER: [
+    TA_MANAGER: [
         {
           name: "Dashboard",
           path: "/ta-recruiter/dashboard",
@@ -194,18 +194,7 @@ function Sidebar() {
     ],
 
     HIRING_MANAGER: [
-      {
-        name: "Dashboard",
-        path: "/hiring-manager/dashboard",
-        icon: (
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <rect x="3" y="3" width="7" height="7" />
-            <rect x="14" y="3" width="7" height="7" />
-            <rect x="14" y="14" width="7" height="7" />
-            <rect x="3" y="14" width="7" height="7" />
-          </svg>
-        )
-      },
+     
       {
         name: "Hiring Cycle",
         path: "/hiring-manager/hiring-cycles",
@@ -216,26 +205,15 @@ function Sidebar() {
             <path d="M3.5 9a9 9 0 0114.13-3.36L23 10M1 14l5.37 4.36A9 9 0 0020.5 15" />
           </svg>
         )
-      },
-      {
-        name: "Request",
-        path: "/hiring-manager/requests",
-        icon: (
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <rect x="8" y="2" width="8" height="4" />
-            <path d="M16 4h3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h3" />
-            <line x1="9" y1="12" x2="15" y2="12" />
-            <line x1="9" y1="16" x2="15" y2="16" />
-          </svg>
-        )
       }
+      
       
     ],
 
     MEMBERS: [
       {
         name: "Dashboard",
-        path: "/members/dashboard",
+        path: "/members/drive-analytics",
         icon: (
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <rect x="3" y="3" width="7" height="7" />
@@ -271,26 +249,15 @@ function Sidebar() {
             <path d="M16 3.13a4 4 0 010 7.75" />
           </svg>
         )
-      },
-
-      {
-        name: "Academy Scoreboard",
-        path: "/members/academy-scoreboard",
-        icon: (
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <line x1="12" y1="20" x2="12" y2="10" />
-            <line x1="18" y1="20" x2="18" y2="4" />
-            <line x1="6" y1="20" x2="6" y2="14" />
-          </svg>
-        )
       }
+
     ],
 
 
-    SYSTEM_ADMIN: [
+    INTERN: [
       {
-        name: "Dashboard",
-        path: "/admin/dashboard",
+        name: "Overview",
+        path: "/intern/dashboard",
         icon: (
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <rect x="3" y="3" width="7" height="7" />
@@ -300,6 +267,83 @@ function Sidebar() {
           </svg>
         )
       },
+      {
+        name: "My Scores",
+        path: "/intern/scores",
+        icon: (
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <line x1="12" y1="20" x2="12" y2="10" />
+            <line x1="18" y1="20" x2="18" y2="4" />
+            <line x1="6" y1="20" x2="6" y2="16" />
+          </svg>
+        )
+      },
+      {
+        name: "Leave",
+        path: "/intern/leaves",
+        icon: (
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M9 11l3 3L22 4" />
+            <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11" />
+          </svg>
+        )
+      },
+      {
+        name: "Certificates",
+        path: "/intern/certificates",
+        icon: (
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <circle cx="12" cy="8" r="6" />
+            <path d="M15.477 12.89L17 22l-5-3-5 3 1.523-9.11" />
+          </svg>
+        )
+      },
+      {
+        name: "Calendar",
+        path: "/intern/calendar",
+        icon: (
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <rect x="3" y="4" width="18" height="18" rx="2" />
+            <line x1="16" y1="2" x2="16" y2="6" />
+            <line x1="8" y1="2" x2="8" y2="6" />
+            <line x1="3" y1="10" x2="21" y2="10" />
+          </svg>
+        )
+      },
+      {
+        name: "My Progress",
+        path: "/intern/progress",
+        icon: (
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+          </svg>
+        )
+      },
+      {
+        name: "Warnings",
+        path: "/intern/warnings",
+        icon: (
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+            <line x1="12" y1="9" x2="12" y2="13" />
+            <line x1="12" y1="17" x2="12.01" y2="17" />
+          </svg>
+        )
+      },
+      {
+        name: "My Profile",
+        path: "/intern/profile",
+        icon: (
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+            <circle cx="12" cy="7" r="4" />
+          </svg>
+        )
+      },
+    ],
+
+    SYSTEM_ADMIN: [
+     
       {
         name: "Users",
         path: "/admin/users",
@@ -311,15 +355,18 @@ function Sidebar() {
         )
       },
       {
-        name: "Settings",
-        path: "/admin/settings",
+        name: "Manage Users",
+        path: "/admin/manage",
         icon: (
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <circle cx="12" cy="12" r="3" />
-            <path d="M19.4 15a1.65 1.65 0 000-6" />
+            <path d="M17 21v-2a4 4 0 00-8 0v2" />
+            <circle cx="12" cy="7" r="4" />
+            <path d="M23 21v-2a4 4 0 00-3-3.87" />
+            <path d="M16 3.13a4 4 0 010 7.75" />
           </svg>
         )
       }
+    
     ]
   };
 

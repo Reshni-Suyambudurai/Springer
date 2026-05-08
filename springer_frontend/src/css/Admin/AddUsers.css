@@ -1,0 +1,210 @@
+/* =========================================================
+   AddUsers — Admin Create User Form
+   ========================================================= */
+
+.au-page {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background-color: var(--color-bg-secondary);
+  overflow: hidden;
+}
+
+/* ── Top bar (matches Manage) ── */
+.au-header-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 17px 24px;
+  background-color: var(--color-surface);
+  flex-shrink: 0;
+}
+
+.au-header-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.au-header-left .t-page-title {
+  margin-top: -2px !important;
+}
+
+.au-separator {
+  border-top: 1px solid var(--color-border);
+  flex-shrink: 0;
+}
+
+/* ── Body: scrollable, centers the card ── */
+.au-body {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 16px 24px;
+}
+
+.au-card {
+  width: 100%;
+  max-width: 860px;
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-card-border);
+  border-radius: 12px;
+  box-shadow: 0 1px 3px 0 var(--opacity-shadow-light),
+              0 6px 16px -2px var(--opacity-shadow-dark);
+  overflow: hidden;
+}
+
+/* ── Header (inside card — remove, replaced by top bar) ── */
+
+/* ── Form ── */
+.au-form {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* Two-column layout */
+.au-form-cols {
+  display: flex;
+  gap: 24px;
+}
+
+.au-form-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.au-field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.au-label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.au-required {
+  color: var(--color-error);
+  margin-left: 2px;
+}
+
+/* ── Text Input ── */
+.au-input {
+  width: 100%;
+  padding: 9px 12px;
+  font-size: 0.9rem;
+  font-family: inherit;
+  color: var(--color-text);
+  background-color: var(--color-surface);
+  border: 1.5px solid var(--color-border);
+  border-radius: 8px;
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  box-sizing: border-box;
+}
+
+.au-input:hover {
+  border-color: var(--color-grey-375);
+}
+
+.au-input:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-primary-shadow-8);
+}
+
+.au-input--error {
+  border-color: var(--color-error) !important;
+}
+
+.au-input--error:focus {
+  box-shadow: 0 0 0 3px rgba(192, 57, 43, 0.1) !important;
+}
+
+/* ── Password field ── */
+.au-input-password-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.au-input-password {
+  padding-right: 40px;
+}
+
+.au-toggle-pw {
+  position: absolute;
+  right: 10px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  color: var(--color-text-secondary);
+  border-radius: 4px;
+  transition: color 0.2s ease;
+}
+
+.au-toggle-pw:hover {
+  color: var(--color-primary);
+}
+
+/* ── Select ── */
+.au-select {
+  width: 100%;
+  padding: 9px 12px;
+  font-size: 0.9rem;
+  font-family: inherit;
+  color: var(--color-text);
+  background-color: var(--color-surface);
+  border: 1.5px solid var(--color-border);
+  border-radius: 8px;
+  outline: none;
+  cursor: pointer;
+  appearance: auto;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  box-sizing: border-box;
+}
+
+.au-select:hover {
+  border-color: var(--color-grey-375);
+}
+
+.au-select:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-primary-shadow-8);
+}
+
+.au-select--error {
+  border-color: var(--color-error) !important;
+}
+
+/* ── Error message — always rendered, space reserved ── */
+.au-error-msg {
+  display: block;
+  min-height: 1.1rem;
+  font-size: 0.8rem;
+  color: var(--color-error);
+  font-weight: 500;
+  line-height: 1.1rem;
+}
+
+/* ── Actions ── */
+.au-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding-top: 4px;
+}
+
+.au-spinner {
+  color: var(--color-white) !important;
+}

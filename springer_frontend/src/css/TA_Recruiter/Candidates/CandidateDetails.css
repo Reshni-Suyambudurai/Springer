@@ -435,3 +435,39 @@
   .info-line-label { min-width: 100px; }
   .performance-item { flex-direction: column; align-items: flex-start; gap: 8px; }
 }
+
+/* ── Drive Details Accordion ── */
+.drive-details-accordion {
+  border: 1px solid var(--color-primary) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 1px 3px var(--opacity-shadow-light) !important;
+  background: var(--color-surface) !important;
+}
+
+.drive-details-accordion::before {
+  display: none !important;
+}
+
+.drive-details-accordion-summary {
+  background: var(--color-surface) !important;
+  border-radius: 12px !important;
+  min-height: 56px !important;
+}
+
+.drive-details-accordion-summary:hover {
+  background: var(--color-hover-bg) !important;
+}
+
+.drive-details-accordion-summary .MuiAccordionSummary-content {
+  margin: 12px 0 !important;
+}
+
+.drive-details-accordion-summary .MuiAccordionSummary-expandIconWrapper {
+  color: var(--color-primary) !important;
+}
+
+.drive-details-accordion-details {
+  padding: 16px !important;
+  border-top: 1px solid var(--color-primary) !important;
+  background: var(--color-surface) !important;
+}

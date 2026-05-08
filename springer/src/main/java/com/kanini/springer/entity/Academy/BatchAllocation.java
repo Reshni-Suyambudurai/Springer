@@ -19,10 +19,10 @@ import com.kanini.springer.entity.enums.Enums.Performance;
 @Table(name = "batch_allocations",
     indexes = {
         @Index(name = "idx_batch_program_id", columnList = "program_id"),
-    },
-    uniqueConstraints = {
-        @UniqueConstraint(name = "uk_program_candidate", columnNames = {"program_id", "candidate_id"})
     }
+    // Note: unique constraint on (program_id, candidate_id) removed to support batch transfers.
+    // A candidate can have multiple allocations in the same program (one active, others inactive).
+    // Uniqueness of active allocation is enforced at the service layer.
 )
 @Data
 @NoArgsConstructor
@@ -55,6 +55,14 @@ public class BatchAllocation {
     private BigDecimal overallWeightedScore;
 
     private Boolean isActive; // true=in training
+
+    /**
+     * If this student was transferred from another batch,
+     * this holds the studentId of their previous BatchAllocation.
+     * Null for original allocations.
+     */
+    @Column(name = "transferred_from_student_id")
+    private Long transferredFromStudentId;
     
     @Enumerated(EnumType.STRING)
     private Performance performance; // GOOD, EXCELLENT, NEED_LEARNING, DROPPED, PROJECT_READY

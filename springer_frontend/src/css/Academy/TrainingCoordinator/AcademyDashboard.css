@@ -8,7 +8,7 @@
   overflow: hidden;
 }
 
-/* ── Header ── */
+/* ── Header shell ── */
 .acd-header {
   flex-shrink: 0;
   background-color: var(--color-surface);
@@ -16,107 +16,57 @@
   box-shadow: 0 1px 4px var(--opacity-shadow-light);
 }
 
-.acd-header-inner {
-  padding: 14px 28px 0 28px;
+/* ── Top row: group pills left, year filter right ── */
+.acd-top-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  padding: 10px 24px 8px 24px;
+  gap: 16px;
 }
 
-/* ── Year Select ── */
-.acd-year-select {
-  min-width: 140px;
-}
-
-.acd-year-select .MuiOutlinedInput-root.Mui-focused fieldset {
-  border-color: var(--color-primary);
-}
-
-.acd-year-select .MuiInputLabel-root.Mui-focused {
-  color: var(--color-primary);
-}
-
-.acd-header-text {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.acd-title {
-  font-size: var(--text-xl) !important;
-  font-weight: 700 !important;
-  color: var(--color-text-primary) !important;
-  line-height: 1.2 !important;
-  letter-spacing: -0.4px !important;
-}
-
-.acd-subtitle {
-  font-size: var(--text-sm) !important;
-  font-weight: 400 !important;
-  color: var(--color-text-secondary) !important;
-  line-height: 1.5 !important;
-}
-
-/* ── Horizontal Tab Bar ── */
-.acd-tab-bar {
-  display: flex;
-  align-items: flex-end;
-  gap: 2px;
-  padding: 12px 28px 0 28px;
-  overflow-x: auto;
-  scrollbar-width: none;
-}
-
-.acd-tab-bar::-webkit-scrollbar {
-  display: none;
-}
-
-.acd-tab-btn {
+/* ── Group pill bar ── */
+.acd-group-bar {
   display: flex;
   align-items: center;
-  padding: 10px 18px;
-  border: none;
-  border-bottom: 3px solid transparent;
+  gap: 4px;
+}
+
+.acd-group-btn {
+  padding: 6px 16px;
+  border-radius: 20px;
+  border: 1.5px solid var(--color-border);
   background: transparent;
   cursor: pointer;
-  border-radius: 8px 8px 0 0;
+  font-family: inherit;
   font-size: var(--text-sm);
   font-weight: 600;
   color: var(--color-text-secondary);
   white-space: nowrap;
-  transition: color 0.18s ease, background-color 0.18s ease, border-color 0.18s ease;
-  font-family: inherit;
-  position: relative;
-  bottom: -1px;
+  transition: all 0.18s ease;
+  line-height: 1.4;
 }
 
-.acd-tab-btn:hover {
+.acd-group-btn:hover {
+  border-color: var(--color-primary);
   color: var(--color-primary);
-  background-color: var(--color-primary-hover-6);
+  background-color: var(--color-primary-light);
 }
 
-.acd-tab-btn--active {
-  color: var(--color-primary);
-  border-bottom-color: var(--color-primary);
-  background-color: var(--color-primary-hover-4);
+.acd-group-btn--active {
+  background-color: var(--color-primary);
+  border-color: var(--color-primary);
+  color: #ffffff;
+  box-shadow: 0 2px 8px var(--color-primary-shadow-18);
 }
 
-.acd-tab-label {
-  font-size: var(--text-sm);
-  font-weight: 600;
-  line-height: 1;
+.acd-group-btn--active:hover {
+  background-color: var(--color-primary-dark);
+  border-color: var(--color-primary-dark);
+  color: #ffffff;
 }
 
-/* ── Content Area ── */
-.acd-content {
-  flex: 1;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-}
-
-/* ── Year Filter Group ── */
+/* ── Year filter ── */
 .acd-year-filter-group {
   display: flex;
   align-items: center;
@@ -124,21 +74,71 @@
   flex-shrink: 0;
 }
 
-.acd-year-filter-label {
+.acd-year-label {
   font-size: var(--text-xs) !important;
-  font-weight: 700 !important;
+  font-weight: 600 !important;
   color: var(--color-text-secondary) !important;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
   white-space: nowrap;
 }
 
-.acd-program-count {
-  font-size: var(--text-xs) !important;
-  font-weight: 600 !important;
-  color: var(--color-primary) !important;
-  background-color: var(--color-primary-light) !important;
-  padding: 3px 10px;
+.acd-year-select { min-width: 110px; }
+.acd-year-select .MuiOutlinedInput-root.Mui-focused fieldset { border-color: var(--color-primary); }
+
+.acd-program-badge {
+  font-size: var(--text-xs);
+  font-weight: 600;
+  color: var(--color-primary);
+  background-color: var(--color-primary-light);
+  border: 1px solid var(--color-blue-100);
+  padding: 2px 10px;
   border-radius: 12px;
   white-space: nowrap;
+}
+
+/* ── Tab bar (tabs inside active group) ── */
+.acd-tab-bar {
+  display: flex;
+  align-items: flex-end;
+  gap: 0;
+  padding: 0 24px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  border-top: 1px solid var(--color-grey-100);
+}
+
+.acd-tab-bar::-webkit-scrollbar { display: none; }
+
+.acd-tab-btn {
+  padding: 9px 18px;
+  border: none;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+  transition: color 0.15s ease, border-color 0.15s ease;
+  position: relative;
+  bottom: -1px;
+}
+
+.acd-tab-btn:hover {
+  color: var(--color-primary);
+}
+
+.acd-tab-btn--active {
+  color: var(--color-primary);
+  border-bottom-color: var(--color-primary);
+  font-weight: 700;
+}
+
+/* ── Content area ── */
+.acd-content {
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
 }

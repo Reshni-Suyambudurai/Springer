@@ -24,6 +24,10 @@
   flex-wrap: wrap;
 }
 
+.dc-filter-bar-spacer {
+  flex: 1;
+}
+
 .dc-filter-input {
   flex: 1;
   min-width: 180px;
@@ -217,6 +221,54 @@
   background-color: var(--color-primary-hover-4) !important;
 }
 
+/* ── Shared icon button base (Refresh, Email, etc.) ── */
+.dc-icon-btn {
+  color: var(--color-primary) !important;
+  border-radius: 8px !important;
+  transition: background-color 0.2s ease, color 0.2s ease !important;
+  height: 30px;
+  width: 30px;
+}
+
+.dc-icon-btn:hover {
+  background-color: var(--color-primary) !important;
+  color: var(--color-surface) !important;
+}
+
+/* ── Email icon button ── */
+.dc-email-btn {
+  color: var(--color-primary) !important;
+  border-radius: 8px !important;
+  transition: background-color 0.2s ease, color 0.2s ease !important;
+  height: 30px;
+  width: 30px;
+}
+
+.dc-email-btn:hover {
+  background-color: var(--color-primary) !important;
+  color: var(--color-surface) !important;
+}
+
+.dc-copy-pass-btn {
+  color: var(--color-primary) !important;
+  border-radius: 8px !important;
+  transition: background-color 0.2s ease, color 0.2s ease !important;
+  height: 30px;
+  width: 30px;
+}
+
+.dc-copy-pass-btn:hover {
+  background-color: var(--color-primary) !important;
+  color: var(--color-surface) !important;
+}
+
+.dc-copy-pass-btn-copied {
+  color: var(--color-success, #2e7d32) !important;
+  border-radius: 8px !important;
+  height: 30px;
+  width: 30px;
+}
+
 /* ========== Loading ========== */
 .dc-loading {
   display: flex;
@@ -372,7 +424,8 @@
   background: var(--color-surface) !important;
   box-shadow: none !important;
   overflow: auto;
-  max-height: calc(100vh - 210px);
+  max-height: calc(100vh - 10px);
+  padding-bottom: 48px !important;
 }
 
 .dc-table-head-row {

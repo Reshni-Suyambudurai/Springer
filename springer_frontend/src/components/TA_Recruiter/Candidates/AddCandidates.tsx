@@ -8,19 +8,26 @@ import { Degree, Department } from "../../../types/TA_Recruiter/Drive/candidate.
 import type { InstituteResponse } from "../../../types/TA_Recruiter/Hiring/institute.types";
 import type { SkillResponse } from "../../../types/TA_Recruiter/Hiring/skill.types";
 import { showToast } from "../../../utils/toast";
-import { parseExcelRow, validateFileData } from "../../../utils/candidateValidation";
-import { useBulkCandidateUpload } from "../../../hooks/useBulkCandidateUpload";
-import * as XLSX from "xlsx";
+// Commented out - used by original off-campus upload
+// import { parseExcelRow, validateFileData } from "../../../utils/candidateValidation";
+// import { useBulkCandidateUpload } from "../../../hooks/useBulkCandidateUpload";
+// import * as XLSX from "xlsx";
 import dayjs from "dayjs";
 import customParseFormat from "dayjs/plugin/customParseFormat";
 
 dayjs.extend(customParseFormat);
 
+// Type extension for window object
+declare global {
+  interface Window {
+    __openFormAddDialog?: () => void;
+  }
+}
+
 import {
   Box,
   Button,
   Card,
-  CardContent,
   TextField,
   Typography,
   Dialog,
@@ -35,12 +42,11 @@ import {
   Autocomplete,
 } from "@mui/material";
 import BackButton from "../../Common/BackButton";
-import BulkCandidateTable from "../../Common/BulkCandidateTable";
-import ErrorOverlay from "../../Common/ErrorOverlay";
+// Commented out - used by original off-campus upload
+// import ErrorOverlay from "../../Common/ErrorOverlay";
 import AddIcon from "@mui/icons-material/Add";
-import UploadIcon from "@mui/icons-material/Upload";
-import DownloadIcon from "@mui/icons-material/Download";
 import UploadONCampus from "./UploadONCampus";
+import Form from "./Form";
 import "../../../css/TA_Recruiter/Candidates/AddCandidates.css";
 
 const AddCandidates: React.FC = () => {
@@ -58,8 +64,16 @@ const AddCandidates: React.FC = () => {
   const [institutes, setInstitutes] = useState<InstituteResponse[]>([]);
   const [skills, setSkills] = useState<SkillResponse[]>([]);
 
-  const bulk = useBulkCandidateUpload({ cycleId });
+  // Commented out - used by original off-campus upload
+  // const bulk = useBulkCandidateUpload({ cycleId });
   const [fieldErrors, setFieldErrors] = useState<Record<string, boolean>>({});
+
+  // Handler for Add Form button
+  const handleAddFormClick = () => {
+    if (window.__openFormAddDialog) {
+      window.__openFormAddDialog();
+    }
+  };
 
   const clearFieldError = (field: string) => {
     if (fieldErrors[field]) {
@@ -239,6 +253,7 @@ console.log("Skills data:", response.data);
     }
   };
 
+  /* COMMENTED OUT - Functions for original Off-Campus Upload
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -280,6 +295,12 @@ console.log("Skills data:", response.data);
     link.click();
   };
 
+  const getInstituteName = (id: number) => {
+    const institute = institutes.find((inst) => inst.instituteId === id);
+    return institute ? institute.instituteName : `ID: ${id}`;
+  };
+  */
+
   const handleSkillChange = (_: unknown, newValue: SkillResponse[]) => {
     setSingleForm({
       ...singleForm,
@@ -294,10 +315,12 @@ console.log("Skills data:", response.data);
     });
   };
 
+  /* COMMENTED OUT - Function for original Off-Campus Upload
   const getInstituteName = (id: number) => {
     const institute = institutes.find((inst) => inst.instituteId === id);
     return institute ? institute.instituteName : `ID: ${id}`;
   };
+  */
 
   return (
     <Box className="add-candidates-container">
@@ -323,6 +346,17 @@ console.log("Skills data:", response.data);
         </Box>
 
         <Box className="add-candidates-header-right">
+          {uploadMode === "offcampus" && (
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={handleAddFormClick}
+              className="add-candidates-header-btn t-btn-primary"
+            >
+              Add Form
+            </Button>
+          )}
+
           <Button
             variant="contained"
             startIcon={<AddIcon />}
@@ -353,8 +387,10 @@ console.log("Skills data:", response.data);
 
       {/* Upload Area */}
       {uploadMode === "offcampus" ? (
+        <Form onAddFormClick={handleAddFormClick} />
+        /* COMMENTED OUT - Original Off-Campus Upload Section
         <>
-          {/* File Upload Zone */}
+          {/* File Upload Zone *\/}
           {bulk.bulkData.length === 0 && (
             <Card className="add-candidates-upload-zone">
               <CardContent className="upload-zone-content">
@@ -388,7 +424,7 @@ console.log("Skills data:", response.data);
             </Card>
           )}
 
-          {/* Bulk Data Table */}
+          {/* Bulk Data Table *\/}
           {bulk.bulkData.length > 0 && (
             <BulkCandidateTable
               bulkData={bulk.bulkData}
@@ -409,6 +445,7 @@ console.log("Skills data:", response.data);
             />
       )}
         </>
+        */
       ) : (
         <UploadONCampus
           cycleId={cycleId}
@@ -515,10 +552,12 @@ console.log("Skills data:", response.data);
                 className={fieldErrors.cgpa ? "ac-field-error" : ""}
                 error={!!fieldErrors.cgpa}
                 inputProps={{ step: 0.01, min: 0, max: 10 }}
-                value={singleForm.cgpa || ""}
+                value={singleForm.cgpa === 0 ? "" : singleForm.cgpa}
                 onChange={(e) => {
                   clearFieldError("cgpa");
-                  setSingleForm({ ...singleForm, cgpa: parseFloat(e.target.value) || 0 });
+                  const value = e.target.value;
+                  const newValue = value === "" ? 0 : parseFloat(value);
+                  setSingleForm({ ...singleForm, cgpa: isNaN(newValue) ? 0 : newValue });
                 }}
               />
               <TextField
@@ -529,10 +568,12 @@ console.log("Skills data:", response.data);
                 className={fieldErrors.historyOfArrears ? "ac-field-error" : ""}
                 error={!!fieldErrors.historyOfArrears}
                 inputProps={{ min: 0 }}
-                value={singleForm.historyOfArrears || ""}
+                value={singleForm.historyOfArrears === 0 ? "" : singleForm.historyOfArrears}
                 onChange={(e) => {
                   clearFieldError("historyOfArrears");
-                  setSingleForm({ ...singleForm, historyOfArrears: parseInt(e.target.value) || 0 });
+                  const value = e.target.value;
+                  const newValue = value === "" ? 0 : parseInt(value);
+                  setSingleForm({ ...singleForm, historyOfArrears: isNaN(newValue) ? 0 : newValue });
                 }}
               />
             </Box>
@@ -667,7 +708,7 @@ console.log("Skills data:", response.data);
         </DialogActions>
       </Dialog>
 
-      {/* Error Overlay */}
+      {/* Error Overlay - Commented out, used by original off-campus upload
       {bulk.showErrorOverlay && (
         <ErrorOverlay
           errorMessages={bulk.errorMessages}
@@ -677,6 +718,7 @@ console.log("Skills data:", response.data);
           onRemoveByEmail={bulk.handleRemoveByEmail}
         />
       )}
+      */}
     </Box>
   );
 };

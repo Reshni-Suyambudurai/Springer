@@ -87,15 +87,31 @@
 .sdt-filter-row {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 10px;
   flex-wrap: wrap;
+}
+
+.sdt-filter-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.sdt-filter-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
 }
 
 .sdt-search-field { width: 280px; }
 
 .sdt-search-field .MuiOutlinedInput-root.Mui-focused fieldset { border-color: var(--color-primary); }
 .sdt-search-icon { color: var(--color-primary) !important; }
-.sdt-filter-spacer { flex-grow: 1; }
+.sdt-submission-select { min-width: 200px !important; }
+.sdt-submission-select .MuiOutlinedInput-root.Mui-focused fieldset { border-color: var(--color-primary) !important; }
 
 .sdt-filter-count {
   font-size: var(--text-xs) !important;
@@ -282,3 +298,32 @@
 }
 
 .sdt-dialog-submit-btn:hover { background-color: var(--color-primary-dark) !important; }
+
+/* ── Doc Tags (submitted / pending per document) ── */
+.sdt-doc-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.sdt-doc-tag {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 600;
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+
+.sdt-doc-tag--done {
+  color: var(--color-success-dark);
+  background: var(--color-success-light);
+  border-color: var(--color-success-border);
+}
+
+.sdt-doc-tag--pending {
+  color: var(--color-text-secondary);
+  background: var(--color-bg-primary);
+  border-color: var(--color-border);
+}

@@ -14,6 +14,7 @@ import type {
   ApplicationRequest,
   ApplicationResponse,
   ApplicationStatusUpdateRequest,
+  BatchTimeUpdateRequest,
   BulkApplicationResponse,
   BulkApplicationStatusUpdateRequest,
   BulkApplicationStatusUpdateResponse,
@@ -42,6 +43,8 @@ import type {
   RoundEvaluationResponse,
   BulkEvaluationStatusUpdateRequest,
   BulkRoundSkipRequest,
+  CheckExistingEvaluationsRequest,
+  CheckExistingEvaluationsResponse,
 } from "../types/TA_Recruiter/DriveSchedule/candidateEvaluation.types";
 
 /**
@@ -272,6 +275,43 @@ export const applicationApi = {
         request
       );
       return response;
+    } catch (error) {
+      throw handleAxiosError(error);
+    }
+  },
+
+  /**
+   * Get distinct batch times for a drive
+   * Returns all distinct non-null batch times for the given drive, sorted ascending.
+   * GET /api/applications/drive/{driveId}/batch-times
+   * @param driveId - The drive schedule ID
+   * @returns List of batch time strings (ISO-8601 format)
+   */
+  async getDistinctBatchTimes(driveId: number) {
+    try {
+      const response = await http.get<ApiResponse<string[]>>(
+        `/applications/drive/${driveId}/batch-times`
+      );
+      return response.data;
+    } catch (error) {
+      throw handleAxiosError(error);
+    }
+  },
+
+  /**
+   * Update batch time of an application
+   * Updates batchTime for a specific application. Validates driveId, applicationId and oldBatchTime match.
+   * PATCH /api/applications/batch-time
+   * @param request - BatchTimeUpdateRequest with driveId, applicationId, oldBatchTime, newBatchTime
+   * @returns Updated application
+   */
+  async updateBatchTime(request: BatchTimeUpdateRequest) {
+    try {
+      const response = await http.patch<ApiResponse<ApplicationResponse>>(
+        "/applications/batch-time-update",
+        request
+      );
+      return response.data;
     } catch (error) {
       throw handleAxiosError(error);
     }
@@ -604,6 +644,22 @@ export const candidateEvaluationApi = {
   async bulkRoundSkip(data: BulkRoundSkipRequest): Promise<ApiResponse<void>> {
     try {
       const response = await http.patch('/candidate-evaluations/bulk-round-skip', data);
+      return response.data;
+    } catch (error) {
+      throw handleAxiosError(error);
+    }
+  },
+
+  /**
+   * Check for existing candidate evaluations
+   * Validates that all applications belong to the specified drive,
+   * then checks if evaluations already exist for the given roundConfigId.
+   * Returns a list of registration codes with existing evaluations and reason.
+   * POST /api/candidate-evaluations/check-existing
+   */
+  async checkExistingEvaluations(data: CheckExistingEvaluationsRequest): Promise<ApiResponse<CheckExistingEvaluationsResponse>> {
+    try {
+      const response = await http.post('/candidate-evaluations/check-existing', data);
       return response.data;
     } catch (error) {
       throw handleAxiosError(error);

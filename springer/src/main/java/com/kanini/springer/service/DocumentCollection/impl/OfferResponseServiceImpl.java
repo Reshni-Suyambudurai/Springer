@@ -16,11 +16,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class OfferResponseServiceImpl implements IOfferResponseService {
+
+    private static final String OFFER_NOT_FOUND = "Offer not found with ID: ";
 
     private final OfferLetterRepository offerRepository;
     private final CandidateRepository candidateRepository;
@@ -29,7 +30,7 @@ public class OfferResponseServiceImpl implements IOfferResponseService {
     @Transactional
     public OfferResponseResponse recordResponse(Long offerId, OfferResponseRequest request) {
         OfferLetter offer = offerRepository.findById(offerId)
-                .orElseThrow(() -> new ResourceNotFoundException("Offer not found with ID: " + offerId));
+                .orElseThrow(() -> new ResourceNotFoundException(OFFER_NOT_FOUND + offerId));
 
         if (offer.getResponse() != Enums.OfferResponse.PENDING) {
             throw new ValidationException("Offer is already " + offer.getResponse());
@@ -53,10 +54,7 @@ public class OfferResponseServiceImpl implements IOfferResponseService {
         offerRepository.save(offer);
 
         Candidate candidate = offer.getCandidate();
-        candidate.setApplicationStage(responseEnum == Enums.OfferResponse.ACCEPTED
-            ? Enums.ApplicationStage.ACCEPTED
-                : Enums.ApplicationStage.DROPPED);
-        candidateRepository.save(candidate);
+        updateCandidateStageForResponse(candidate, responseEnum);
 
         return buildResponse(offer);
     }
@@ -66,7 +64,7 @@ public class OfferResponseServiceImpl implements IOfferResponseService {
     public List<OfferResponseResponse> bulkRecordResponse(List<BulkOfferResponseRequest> requests) {
         return requests.stream().map(req -> {
             OfferLetter offer = offerRepository.findById(req.getOfferId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Offer not found with ID: " + req.getOfferId()));
+                    .orElseThrow(() -> new ResourceNotFoundException(OFFER_NOT_FOUND + req.getOfferId()));
 
             if (offer.getResponse() != Enums.OfferResponse.PENDING) {
                 throw new ValidationException("Offer ID " + req.getOfferId() + " is already " + offer.getResponse());
@@ -90,13 +88,10 @@ public class OfferResponseServiceImpl implements IOfferResponseService {
             offerRepository.save(offer);
 
             Candidate candidate = offer.getCandidate();
-            candidate.setApplicationStage(responseEnum == Enums.OfferResponse.ACCEPTED
-                    ? Enums.ApplicationStage.ACCEPTED
-                    : Enums.ApplicationStage.DROPPED);
-            candidateRepository.save(candidate);
+            updateCandidateStageForResponse(candidate, responseEnum);
 
             return buildResponse(offer);
-        }).collect(Collectors.toList());
+        }).toList();
     }
 
     @Override
@@ -105,6 +100,59 @@ public class OfferResponseServiceImpl implements IOfferResponseService {
         OfferLetter offer = offerRepository.findByCandidateId(candidateId)
                 .orElseThrow(() -> new ResourceNotFoundException("No offer found for candidate ID: " + candidateId));
         return buildResponse(offer);
+    }
+
+    @Override
+    @Transactional
+    public OfferResponseResponse updateResponse(Long offerId, OfferResponseRequest request) {
+        OfferLetter offer = offerRepository.findById(offerId)
+                .orElseThrow(() -> new ResourceNotFoundException(OFFER_NOT_FOUND + offerId));
+
+        if (offer.getResponse() == Enums.OfferResponse.PENDING) {
+            throw new ValidationException("No response recorded yet. Use Record Response instead.");
+        }
+
+        if (offer.getResponse() == Enums.OfferResponse.DECLINED) {
+            throw new ValidationException("Cannot edit offer response after it is declined.");
+        }
+
+        // Only editable while candidate is still ACCEPTED — not yet moved to JOINED or NOT_JOINED
+        Candidate candidate = offer.getCandidate();
+        Enums.ApplicationStage stage = candidate.getApplicationStage();
+        if (stage == Enums.ApplicationStage.JOINED || stage == Enums.ApplicationStage.NOT_JOINED) {
+            throw new ValidationException(
+                "Cannot edit offer response. Candidate is already " + stage + " in academy.");
+        }
+
+        Enums.OfferResponse responseEnum;
+        try {
+            responseEnum = Enums.OfferResponse.valueOf(request.getResponse().toUpperCase(java.util.Locale.ROOT));
+        } catch (IllegalArgumentException e) {
+            throw new ValidationException("Invalid response value: " + request.getResponse() + ". Must be ACCEPTED or DECLINED");
+        }
+
+        if (responseEnum == Enums.OfferResponse.DECLINED &&
+                (request.getDeclineReason() == null || request.getDeclineReason().trim().isEmpty())) {
+            throw new ValidationException("Decline reason is required when response is DECLINED");
+        }
+
+        offer.setResponse(responseEnum);
+        offer.setComment(request.getDeclineReason());
+        offer.setRespondedDate(request.getRespondedDate());
+        offerRepository.save(offer);
+
+        updateCandidateStageForResponse(candidate, responseEnum);
+
+        return buildResponse(offer);
+    }
+
+    private void updateCandidateStageForResponse(Candidate candidate, Enums.OfferResponse responseEnum) {
+        Enums.ApplicationStage targetStage = responseEnum == Enums.OfferResponse.ACCEPTED
+                ? Enums.ApplicationStage.ACCEPTED
+                : Enums.ApplicationStage.OFFER_REJECTED;
+
+        candidate.setApplicationStage(targetStage);
+        candidateRepository.save(candidate);
     }
 
     // ── Helper ────────────────────────────────────────────────────────────────

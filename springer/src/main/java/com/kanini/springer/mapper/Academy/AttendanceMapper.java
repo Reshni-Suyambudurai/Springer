@@ -17,7 +17,7 @@ public class AttendanceMapper {
      */
     public AttendanceResponse toAttendanceResponse(
             BatchAllocation student,
-            TrainingDayAttendance record,
+            TrainingDayAttendance attendanceRecord,
             long presentDays,
             long absentDays) {
 
@@ -32,8 +32,8 @@ public class AttendanceMapper {
         return AttendanceResponse.builder()
                 .studentId(student.getStudentId())
                 .studentName(studentName)
-                .attendanceDate(record.getAttendanceDate())
-                .isPresent(record.getIsPresent())
+                .attendanceDate(attendanceRecord.getAttendanceDate())
+                .isPresent(attendanceRecord.getIsPresent())
                 .presentDays(presentDays)
                 .absentDays(absentDays)
                 .attendancePercentage(percentage)

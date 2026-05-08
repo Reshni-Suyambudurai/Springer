@@ -14,7 +14,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -48,7 +47,7 @@ public class NotificationServiceImpl implements INotificationService {
     @Transactional(readOnly = true)
     public List<NotificationResponse> getNotificationsForUser(Long userId) {
         return notificationRepository.findBySentTo_UserIdOrderByCreatedAtDesc(userId)
-                .stream().map(this::toResponse).collect(Collectors.toList());
+                .stream().map(this::toResponse).toList();
     }
 
     @Override

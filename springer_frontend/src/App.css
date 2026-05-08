@@ -62,6 +62,8 @@
   --color-grey-600: #3C4555;
   --color-grey-700: #1F2937;
   --color-grey-800: #0F172A;
+  --color-silver: #A8B0B9;
+  --color-teal: #14B8A6;
 
   /* White Palette */
   --color-white: #FFFFFF;
@@ -84,6 +86,13 @@
   --color-primary-shadow-18: rgba(15, 76, 129, 0.18);
   --color-primary-shadow-28: rgba(15, 76, 129, 0.28);
   --color-primary-shadow-22: rgba(15, 76, 129, 0.22);
+  
+  /* Primary Gradient Colors */
+  --color-primary-gradient-start: #c1d6e9;
+  --color-primary-gradient-mid: #0c78d0;
+  --color-primary-gradient-end: #8cc3f1;
+  --gradient-primary-horizontal: linear-gradient(to right, var(--color-primary-gradient-start), var(--color-primary-gradient-mid), var(--color-primary-gradient-end));
+  --gradient-primary-border: linear-gradient(to right, var(--color-primary), var(--color-primary-dark), var(--color-primary-gradient-end));
   
   /* Secondary */
   --color-secondary: var(--color-green-500);

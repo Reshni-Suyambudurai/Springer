@@ -9,12 +9,15 @@ import com.kanini.springer.entity.Drive.Drive;
 import com.kanini.springer.entity.Drive.RoundTemplate;
 import com.kanini.springer.entity.HiringReq.Institute;
 import com.kanini.springer.entity.HiringReq.User;
+import com.kanini.springer.entity.enums.Enums.ApplicationStatus;
 import com.kanini.springer.entity.enums.Enums.DriveMode;
 import com.kanini.springer.entity.enums.Enums.DriveStatus;
+import com.kanini.springer.entity.enums.Enums.EvaluationStatus;
 import com.kanini.springer.exception.ResourceNotFoundException;
 import com.kanini.springer.exception.ValidationException;
 import com.kanini.springer.mapper.Drive.DriveMapper;
 import com.kanini.springer.repository.Drive.ApplicationRepository;
+import com.kanini.springer.repository.Drive.CandidateEvaluationRepository;
 import com.kanini.springer.repository.Drive.DriveRepository;
 import com.kanini.springer.repository.Drive.RoundTemplateRepository;
 import com.kanini.springer.repository.Hiring.InstituteRepository;
@@ -38,6 +41,7 @@ public class DriveScheduleServiceImpl implements IDriveScheduleService {
     private final DriveRepository driveRepository;
     private final RoundTemplateRepository roundTemplateRepository;
     private final ApplicationRepository applicationRepository;
+    private final CandidateEvaluationRepository candidateEvaluationRepository;
     private final InstituteRepository instituteRepository;
     private final UserRepository userRepository;
     private final DriveMapper mapper;
@@ -209,6 +213,7 @@ public class DriveScheduleServiceImpl implements IDriveScheduleService {
                     drive.getDriveName(),
                     drive.getDriveMode(),
                     drive.getStartDate(),
+                    drive.getLocation(),
                     batchTimeMap
                 );
             })
@@ -262,7 +267,69 @@ public class DriveScheduleServiceImpl implements IDriveScheduleService {
             applicationsPerBatchTime.put(key, count);
         }
 
-        return new DriveAnalyticsResponse(driveResponse, totalApplications, distinctBatchTimeCount, applicationsPerBatchTime);
+        // Application status counts
+        List<Object[]> statusGrouped = applicationRepository.countApplicationsByDriveIdGroupedByStatus(driveId);
+        Map<String, Long> applicationStatusCounts = new LinkedHashMap<>();
+        for (Object[] row : statusGrouped) {
+            ApplicationStatus status = (ApplicationStatus) row[0];
+            Long count = ((Number) row[1]).longValue();
+            applicationStatusCounts.put(status.toString(), count);
+        }
+
+        // Round 1 Analytics (Aptitude - roundConfigId = 1)
+        DriveAnalyticsResponse.RoundAnalytics round1Analytics = buildRoundAnalytics(driveId, 1L);
+
+        // Round 2 Analytics (Communication - roundConfigId = 2)
+        DriveAnalyticsResponse.RoundAnalytics round2Analytics = buildRoundAnalytics(driveId, 2L);
+
+        // Round 3 Analytics (Technical - roundConfigId = 3)
+        DriveAnalyticsResponse.RoundAnalytics round3Analytics = buildRoundAnalytics(driveId, 3L);
+
+        return new DriveAnalyticsResponse(
+            driveResponse, 
+            totalApplications, 
+            distinctBatchTimeCount, 
+            applicationsPerBatchTime,
+            applicationStatusCounts,
+            round1Analytics,
+            round2Analytics,
+            round3Analytics
+        );
+    }
+
+    /**
+     * Helper method to build RoundAnalytics for a specific round
+     */
+    private DriveAnalyticsResponse.RoundAnalytics buildRoundAnalytics(Long driveId, Long roundConfigId) {
+        // Get round template details
+        RoundTemplate roundTemplate = roundTemplateRepository.findById(roundConfigId).orElse(null);
+        if (roundTemplate == null) {
+            return null; // Round not configured
+        }
+
+        // Total candidates who attended this round
+        Long totalAttended = candidateEvaluationRepository.countByDriveIdAndRoundConfigId(driveId, roundConfigId);
+
+        if (totalAttended == 0) {
+            return null; // No evaluations yet
+        }
+
+        // Evaluation status counts
+        List<Object[]> statusGrouped = candidateEvaluationRepository
+            .countByDriveIdAndRoundConfigIdGroupedByStatus(driveId, roundConfigId);
+        
+        Map<String, Long> statusCounts = new LinkedHashMap<>();
+        for (Object[] row : statusGrouped) {
+            EvaluationStatus status = (EvaluationStatus) row[0];
+            Long count = ((Number) row[1]).longValue();
+            statusCounts.put(status.toString(), count);
+        }
+
+        return new DriveAnalyticsResponse.RoundAnalytics(
+            roundConfigId,
+            roundTemplate.getRoundName(),
+            totalAttended,
+            statusCounts
+        );
     }
 }
-

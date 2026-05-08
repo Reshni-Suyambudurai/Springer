@@ -101,6 +101,21 @@
   background-color: var(--color-offcampus);
 }
 
+/* ── Past drive: red name text ── */
+.drive-name-past {
+  color: var(--color-error-delete);
+}
+
+.drive-menu-item-past .drive-name-past {
+  color: var(--color-error-delete);
+  font-style: italic;
+}
+
+/* ── Move to History MenuItem ── */
+.cl-move-to-history {
+  color: var(--color-error-delete) !important;
+}
+
 /* ── Select btn active state ── */
 .select-all-btn.active {
   color: var(--color-error-delete) !important;

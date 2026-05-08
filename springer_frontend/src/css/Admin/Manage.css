@@ -1,0 +1,286 @@
+/* =========================================================
+   Manage — Admin User Management Page
+   ========================================================= */
+
+.mg-page {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background-color: var(--color-bg-secondary);
+  overflow: hidden;
+}
+
+/* ── Page Header ── */
+.mg-header-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 17px 24px;
+  background-color: var(--color-surface);
+  flex-shrink: 0;
+}
+.mg-header-left .t-page-title {
+  margin-top: -2px !important;
+}
+
+.mg-header-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.mg-separator {
+  border-top: 1px solid var(--color-border);
+  flex-shrink: 0;
+}
+
+/* ── Scrollable Content ── */
+.mg-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  min-height: 0;
+}
+
+/* ── Loading / Empty ── */
+.mg-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 60px 0;
+}
+
+.mg-spinner {
+  color: var(--color-primary) !important;
+}
+
+.mg-loading-text {
+  font-size: 0.875rem;
+  color: var(--color-text-secondary);
+}
+
+.mg-empty {
+  display: flex;
+  justify-content: center;
+  padding: 60px 0;
+}
+
+.mg-empty-text {
+  font-size: 0.9rem;
+  color: var(--color-text-secondary);
+}
+
+/* ── Role Section ── */
+.mg-role-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.mg-role-heading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.mg-role-label {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--color-chip-count-text);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.mg-role-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 10px;
+  background-color: var(--color-chip-count-bg);
+  color: var(--color-chip-count-text);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+/* ── Cards Grid — 2 per row ── */
+.mg-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px;
+}
+
+/* ── Individual Card ── */
+.mg-card {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-card-border);
+  border-radius: 10px;
+  box-shadow: 0 1px 3px 0 var(--opacity-shadow-light);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  transition: box-shadow 0.2s ease;
+}
+
+.mg-card:hover {
+  box-shadow: 0 4px 12px 0 var(--opacity-shadow-dark);
+}
+
+.mg-card--inactive {
+  background-color: var(--color-inactive-bg);
+  border-color: var(--color-inactive-border);
+}
+
+/* ── Card Header ── */
+.mg-card-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.mg-avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background-color: var(--color-primary-light);
+  color: var(--color-primary);
+  font-size: 1rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.mg-card--inactive .mg-avatar {
+  background-color: var(--color-grey-200);
+  color: var(--color-text-disabled);
+}
+
+.mg-card-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.mg-card-name {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mg-card--inactive .mg-card-name {
+  color: var(--color-text-disabled);
+}
+
+.mg-card-email {
+  font-size: 0.8rem;
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ── Status Badge ── */
+.mg-status-badge {
+  flex-shrink: 0;
+  padding: 3px 9px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.mg-status-badge--active {
+  background-color: var(--color-success-light);
+  color: var(--color-success-dark);
+  border: 1px solid var(--color-success-border);
+}
+
+.mg-status-badge--inactive {
+  background-color: var(--color-error-light);
+  color: var(--color-error-dark);
+  border: 1px solid var(--color-error-border);
+}
+
+/* ── Card Meta ── */
+.mg-card-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.mg-meta-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.8125rem;
+  color: var(--color-text-secondary);
+}
+
+.mg-meta-item svg {
+  flex-shrink: 0;
+  color: var(--color-text-disabled);
+}
+
+/* ── Card Footer ── */
+.mg-card-footer {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.mg-toggle-btn {
+  padding: 5px 14px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  font-family: inherit;
+  border-radius: 6px;
+  border: 1.5px solid transparent;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.mg-toggle-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.mg-toggle-btn--deactivate {
+  background-color: var(--color-error-light);
+  color: var(--color-error-dark);
+  border-color: var(--color-error-border);
+}
+
+.mg-toggle-btn--deactivate:hover:not(:disabled) {
+  background-color: var(--color-error-border);
+  color: var(--color-error-dark);
+}
+
+.mg-toggle-btn--activate {
+  background-color: var(--color-success-light);
+  color: var(--color-success-dark);
+  border-color: var(--color-success-border);
+}
+
+.mg-toggle-btn--activate:hover:not(:disabled) {
+  background-color: var(--color-success-border);
+  color: var(--color-success-dark);
+}
+
+.mg-btn-spinner {
+  color: currentColor !important;
+}

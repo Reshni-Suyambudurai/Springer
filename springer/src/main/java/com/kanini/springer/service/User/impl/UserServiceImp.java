@@ -17,7 +17,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.stream.Collectors;
+
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 @Service
 @RequiredArgsConstructor
@@ -28,6 +29,7 @@ public class UserServiceImp implements IUserService {
     private final UserMapper userMapper;
     private final RoleMapper roleMapper;
     private final JwtUtil jwtUtil;
+    private final PasswordEncoder passwordEncoder;
     
     @Override
     @Transactional(readOnly = true)
@@ -40,10 +42,18 @@ public class UserServiceImp implements IUserService {
         }
         
         // Match by password to pick the correct account
-        User user = users.stream()
-                .filter(u -> u.getPassword().equals(password))
-                .findFirst()
-                .orElseThrow(() -> new ValidationException("Invalid email or password"));
+        User user = null;
+        for (User u : users) {
+            // Check BCrypt encoded password
+            if (passwordEncoder.matches(password, u.getPassword())) {
+                user = u;
+                break;
+            }
+        }
+        
+        if (user == null) {
+            throw new ValidationException("Invalid email or password");
+        }
         
         // Check if user is active
         if (!user.getIsActive()) {
@@ -83,7 +93,7 @@ public class UserServiceImp implements IUserService {
         // Map to response DTOs
         return users.stream()
                 .map(userMapper::toResponse)
-                .collect(Collectors.toList());
+                .toList();
     }
     
     @Override
@@ -95,7 +105,7 @@ public class UserServiceImp implements IUserService {
         // Map to response DTOs
         return roles.stream()
                 .map(roleMapper::toResponse)
-                .collect(Collectors.toList());
+                .toList();
     }
 }
 

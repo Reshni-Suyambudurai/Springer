@@ -76,4 +76,23 @@ public interface CandidateEvaluationRepository extends JpaRepository<CandidateEv
     @Query("SELECT e.application.applicationId, e.status, e.roundConfig.roundConfigId FROM CandidateEvaluation e " +
            "WHERE e.application.applicationId IN :applicationIds ORDER BY e.scoreId DESC")
     List<Object[]> findLatestStatusByApplicationIds(@Param("applicationIds") List<Long> applicationIds);
+
+    /**
+     * Count total evaluations for a specific drive and round.
+     * Returns total number of candidates who attended the round.
+     */
+    @Query("SELECT COUNT(e) FROM CandidateEvaluation e " +
+           "WHERE e.application.drive.driveId = :driveId AND e.roundConfig.roundConfigId = :roundConfigId")
+    Long countByDriveIdAndRoundConfigId(@Param("driveId") Long driveId,
+                                         @Param("roundConfigId") Long roundConfigId);
+
+    /**
+     * Get evaluation status counts grouped by status for a specific drive and round.
+     * Returns rows of [evaluationStatus, count]
+     */
+    @Query("SELECT e.status, COUNT(e) FROM CandidateEvaluation e " +
+           "WHERE e.application.drive.driveId = :driveId AND e.roundConfig.roundConfigId = :roundConfigId " +
+           "GROUP BY e.status")
+    List<Object[]> countByDriveIdAndRoundConfigIdGroupedByStatus(@Param("driveId") Long driveId,
+                                                                   @Param("roundConfigId") Long roundConfigId);
 }

@@ -4,7 +4,6 @@ import { Box, Typography, Card, Select, MenuItem, Button, IconButton } from "@mu
 import EditIcon from "@mui/icons-material/Edit";
 import AddIcon from "@mui/icons-material/Add";
 import RemoveCircleOutlineIcon from "@mui/icons-material/RemoveCircleOutline";
-import SwapHorizIcon from "@mui/icons-material/SwapHoriz";
 import BackButton from "../../Common/BackButton";
 import { userApi } from "../../../services/hiring.api";
 import { driveAssignmentApi } from "../../../services/driveschedule.api";
@@ -379,6 +378,13 @@ const PanelAllocation: React.FC = () => {
     }
   };
 
+  const [searchText, setSearchText] = useState<string>("");
+
+  // Filtered candidates by name
+  const filteredCandidates = candidates.filter((c) =>
+    c.candidateName.toLowerCase().includes(searchText.toLowerCase())
+  );
+
   const getCardClass = (appId: number) => {
     const status = allocationStatus[appId];
     const panels = status?.additionalPanels || [];
@@ -406,6 +412,15 @@ const PanelAllocation: React.FC = () => {
         </Box>
 
         <Box className="pa-header-actions">
+          {noneAllocated && (
+            <input
+              type="text"
+              className="pa-search-input"
+              placeholder="Search by name..."
+              value={searchText}
+              onChange={(e) => setSearchText(e.target.value)}
+            />
+          )}
           {noneAllocated && (
             <Box className="pa-global-assign">
               <Select
@@ -442,82 +457,92 @@ const PanelAllocation: React.FC = () => {
       {/* Bulk Reassignment Bar */}
       {candidates.some(c => allocationStatus[c.applicationId]?.additionalPanels?.length > 0) && (
         <Card className="pa-reassign-bar">
-          <SwapHorizIcon className="pa-reassign-icon" />
-          <Typography className="pa-reassign-label">Reassign</Typography>
-          <Box className="pa-reassign-field">
-            <Typography className="pa-reassign-field-label">From</Typography>
-            <Select
-              value={reassignFrom}
-              onChange={(e) => { setReassignFrom(e.target.value as number | ""); setReassignTo(""); }}
-              displayEmpty
-              size="small"
-              className="pa-reassign-select"
-            >
-              <MenuItem value="" disabled>Select panel</MenuItem>
-              {assignedPanelMembers.map((m) => (
-                <MenuItem key={m.userId} value={m.userId}>{m.username}</MenuItem>
-              ))}
-            </Select>
-          </Box>
-          <Box className="pa-reassign-field">
-            <Typography className="pa-reassign-field-label">To</Typography>
-            <Select
-              value={reassignTo}
-              onChange={(e) => setReassignTo(e.target.value as number | "")}
-              displayEmpty
-              size="small"
-              className={`pa-reassign-select${conflictIndices.length > 0 ? " pa-reassign-select-error" : ""}`}
-              disabled={!reassignFrom}
-            >
-              <MenuItem value="" disabled>Select panel</MenuItem>
-              {panelMembers
-                .filter((m) => m.userId !== reassignFrom)
-                .map((m) => (
+          <Box style={{ display: 'flex', alignItems: 'center', gap: 16, width: '100%' }}>
+            {/* Search input to the left of reassign controls */}
+            <input
+              type="text"
+              className="pa-search-input"
+              placeholder="Search by name..."
+              value={searchText}
+              onChange={(e) => setSearchText(e.target.value)}
+            />
+           
+            <Typography className="pa-reassign-label">Reassign :- </Typography>
+            <Box className="pa-reassign-field">
+              <Typography className="pa-reassign-field-label">From</Typography>
+              <Select
+                value={reassignFrom}
+                onChange={(e) => { setReassignFrom(e.target.value as number | ""); setReassignTo(""); }}
+                displayEmpty
+                size="small"
+                className="pa-reassign-select"
+              >
+                <MenuItem value="" disabled>Select panel</MenuItem>
+                {assignedPanelMembers.map((m) => (
                   <MenuItem key={m.userId} value={m.userId}>{m.username}</MenuItem>
                 ))}
-            </Select>
+              </Select>
+            </Box>
+            <Box className="pa-reassign-field">
+              <Typography className="pa-reassign-field-label">To</Typography>
+              <Select
+                value={reassignTo}
+                onChange={(e) => setReassignTo(e.target.value as number | "")}
+                displayEmpty
+                size="small"
+                className={`pa-reassign-select${conflictIndices.length > 0 ? " pa-reassign-select-error" : ""}`}
+                disabled={!reassignFrom}
+              >
+                <MenuItem value="" disabled>Select panel</MenuItem>
+                {panelMembers
+                  .filter((m) => m.userId !== reassignFrom)
+                  .map((m) => (
+                    <MenuItem key={m.userId} value={m.userId}>{m.username}</MenuItem>
+                  ))}
+              </Select>
+            </Box>
+            {conflictIndices.length > 0 && (
+              <Typography className="pa-reassign-error-text">
+                Skiping {conflictIndices.join(", #")} (already evaluated)
+              </Typography>
+            )}
+            {reassignFrom && reassignableCount > 0 && (
+              <Typography className="pa-reassign-count">
+                {validReassignEntries.length} of {reassignableCount} candidate{reassignableCount > 1 ? "s" : ""}
+              </Typography>
+            )}
+            <Button
+              variant="contained"
+              size="small"
+              className="pa-reassign-btn"
+              disabled={!reassignFrom || !reassignTo || reassignFrom === reassignTo || validReassignEntries.length === 0 || reassigning}
+              onClick={handleBulkReassign}
+            >
+              {reassigning ? "Reassigning..." : "Reassign"}
+            </Button>
+            {extraAssignedCount > 0 && (
+              <Button
+                variant="contained"
+                size="small"
+                className="pa2-submit-btn"
+                disabled={submittingExtra}
+                onClick={handleExtraSubmit}
+              >
+                {submittingExtra ? "Submitting..." : `Submit Extra (${extraAssignedCount})`}
+              </Button>
+            )}
+            {editedCount > 0 && (
+              <Button
+                variant="contained"
+                size="small"
+                className="pa-edit-submit-btn"
+                disabled={submitting}
+                onClick={handleEditSubmit}
+              >
+                {submitting ? "Saving..." : `Save Edits (${editedCount})`}
+              </Button>
+            )}
           </Box>
-          {conflictIndices.length > 0 && (
-            <Typography className="pa-reassign-error-text">
-              Skiping {conflictIndices.join(", #")} (already evaluated)
-            </Typography>
-          )}
-          {reassignFrom && reassignableCount > 0 && (
-            <Typography className="pa-reassign-count">
-              {validReassignEntries.length} of {reassignableCount} candidate{reassignableCount > 1 ? "s" : ""}
-            </Typography>
-          )}
-          <Button
-            variant="contained"
-            size="small"
-            className="pa-reassign-btn"
-            disabled={!reassignFrom || !reassignTo || reassignFrom === reassignTo || validReassignEntries.length === 0 || reassigning}
-            onClick={handleBulkReassign}
-          >
-            {reassigning ? "Reassigning..." : "Reassign"}
-          </Button>
-          {extraAssignedCount > 0 && (
-            <Button
-              variant="contained"
-              size="small"
-              className="pa2-submit-btn"
-              disabled={submittingExtra}
-              onClick={handleExtraSubmit}
-            >
-              {submittingExtra ? "Submitting..." : `Submit Extra (${extraAssignedCount})`}
-            </Button>
-          )}
-          {editedCount > 0 && (
-            <Button
-              variant="contained"
-              size="small"
-              className="pa-edit-submit-btn"
-              disabled={submitting}
-              onClick={handleEditSubmit}
-            >
-              {submitting ? "Saving..." : `Save Edits (${editedCount})`}
-            </Button>
-          )}
         </Card>
       )}
 
@@ -529,7 +554,7 @@ const PanelAllocation: React.FC = () => {
       ) : (
         <Box className="pa-cards-scroll">
           <Box className="pa-cards-grid">
-            {candidates.map((c, idx) => {
+            {filteredCandidates.map((c, idx) => {
               const status = allocationStatus[c.applicationId];
               const panels = status?.additionalPanels || [];
               const allocated = panels.length > 0;

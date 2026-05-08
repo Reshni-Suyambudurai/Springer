@@ -102,4 +102,15 @@ public interface ICandidateEvaluationService {
      * All-or-nothing transactional.
      */
     void bulkRoundSkip(BulkRoundSkipRequest request);
+
+    /**
+     * Check if candidate evaluations already exist for a given round.
+     * Validates that all applications belong to the specified drive,
+     * then checks if evaluations exist for the given roundConfigId.
+     * Returns list of registration codes with existing evaluations and reason.
+     *
+     * @param request CheckExistingEvaluationsRequest with driveId, roundConfigId, and candidate list
+     * @return CheckExistingEvaluationsResponse with existing evaluation details
+     */
+    CheckExistingEvaluationsResponse checkExistingEvaluations(CheckExistingEvaluationsRequest request);
 }

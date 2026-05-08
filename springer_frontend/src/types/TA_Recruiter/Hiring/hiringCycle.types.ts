@@ -15,6 +15,7 @@ export interface HiringCycleResponse {
   cycleName: string;
   compensationBand: number;
   budget: number;
+  totalIntake: number;
   hasJd: boolean;
   status: string;
   createdAt: string; // ISO-8601 format from LocalDateTime
@@ -40,6 +41,7 @@ export interface DriveInfo {
   driveName: string;
   mode: string;
   instituteName?: string;
+  startDate?: string; // YYYY-MM-DD
 }
 
 // For creating/updating cycle with form data

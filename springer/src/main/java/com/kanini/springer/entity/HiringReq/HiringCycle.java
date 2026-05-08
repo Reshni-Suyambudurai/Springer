@@ -43,6 +43,8 @@ public class HiringCycle {
     
     private Integer budget;
     
+    private Integer totalIntake;
+    
     @Enumerated(EnumType.STRING)
     private CycleStatus status;
     

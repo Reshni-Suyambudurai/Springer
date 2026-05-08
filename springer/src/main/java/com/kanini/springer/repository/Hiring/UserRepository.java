@@ -1,6 +1,7 @@
 package com.kanini.springer.repository.Hiring;
 
 import com.kanini.springer.entity.HiringReq.User;
+import com.kanini.springer.entity.enums.Enums.RoleName;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -26,4 +27,12 @@ public interface UserRepository extends JpaRepository<User, Long> {
      */
     @Query("SELECT u FROM User u LEFT JOIN FETCH u.role r WHERE r.roleId IN :roleIds AND u.isActive = true")
     List<User> findByRoleIdIn(@Param("roleIds") List<Long> roleIds);
+
+    List<User> findByRole_RoleNameAndIsActiveTrue(com.kanini.springer.entity.enums.Enums.RoleName roleName);
+
+    /**
+     * Find all users whose role is NOT the given role name, with role eagerly fetched
+     */
+    @Query("SELECT u FROM User u LEFT JOIN FETCH u.role r WHERE r.roleName != :roleName")
+    List<User> findAllExceptInternRole(@Param("roleName") RoleName roleName);
 }

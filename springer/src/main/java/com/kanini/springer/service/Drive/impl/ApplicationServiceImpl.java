@@ -2,9 +2,11 @@ package com.kanini.springer.service.Drive.impl;
 
 import com.kanini.springer.dto.Common.FieldChangeDTO;
 import com.kanini.springer.dto.Common.ManualOverrideRequest;
+import com.kanini.springer.dto.Common.PersonalizedRecipient;
 import com.kanini.springer.dto.Drive.ApplicationRequest;
 import com.kanini.springer.dto.Drive.ApplicationResponse;
 import com.kanini.springer.dto.Drive.ApplicationStatusUpdateRequest;
+import com.kanini.springer.dto.Drive.BatchTimeUpdateRequest;
 import com.kanini.springer.dto.Drive.BulkApplicationResponse;
 import com.kanini.springer.dto.Drive.BulkApplicationStatusUpdateRequest;
 import com.kanini.springer.dto.Drive.BulkApplicationStatusUpdateResponse;
@@ -30,7 +32,9 @@ import com.kanini.springer.repository.Drive.CandidatesRepository;
 import com.kanini.springer.repository.Drive.DriveAssignmentRepository;
 import com.kanini.springer.repository.Drive.DriveRepository;
 import com.kanini.springer.repository.Hiring.UserRepository;
+import com.kanini.springer.repository.Common.EmailTemplateRepository;
 import com.kanini.springer.service.Drive.IApplicationService;
+import com.kanini.springer.service.Common.IEmailTemplateService;
 import com.kanini.springer.service.Common.IOverrideService;
 import com.kanini.springer.repository.Common.ManualOverrideRepository;
 import com.kanini.springer.mapper.Common.ManualOverrideMapper;
@@ -42,10 +46,14 @@ import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
 import jakarta.persistence.criteria.Root;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -54,6 +62,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class ApplicationServiceImpl implements IApplicationService {
     
     private final ApplicationRepository applicationRepository;
@@ -67,6 +76,11 @@ public class ApplicationServiceImpl implements IApplicationService {
     private final IOverrideService overrideService;
     private final ManualOverrideRepository manualOverrideRepository;
     private final ManualOverrideMapper manualOverrideMapper;
+    private final IEmailTemplateService emailTemplateService;
+    private final EmailTemplateRepository emailTemplateRepository;
+
+    @Value("${email.template.drive-invitation-id:9}")
+    private int driveInvitationTemplateId;
     
     @Override
     @Transactional
@@ -191,8 +205,65 @@ public class ApplicationServiceImpl implements IApplicationService {
         response.setTotalProcessed(totalProcessed);
         response.setSuccessCount(successCount);
         response.setFailureCount(failureCount);
+
+        // ── Trigger drive invitation emails (fire-and-forget, never fails the response) ──
+        if (successCount > 0) {
+            triggerDriveInvitationEmails(drive, savedApplications);
+        }
         
         return response;
+    }
+
+    /**
+     * Fetches the drive-invitation email template and triggers a personalized send
+     * for every successfully created application.
+     * Runs fully asynchronous inside the mail thread pool — never throws.
+     */
+    private void triggerDriveInvitationEmails(Drive drive, List<Application> savedApplications) {
+        try {
+            emailTemplateRepository.findById(driveInvitationTemplateId).ifPresentOrElse(
+                template -> {
+                    DateTimeFormatter dateFmt  = DateTimeFormatter.ofPattern("dd MMM yyyy");
+                    DateTimeFormatter timeFmt  = DateTimeFormatter.ofPattern("hh:mm a");
+
+                    String startDate = drive.getStartDate() != null
+                            ? drive.getStartDate().format(dateFmt) : "";
+
+                    List<PersonalizedRecipient> recipients = savedApplications.stream()
+                            .filter(a -> a.getCandidate() != null
+                                    && a.getCandidate().getEmail() != null)
+                            .map(a -> {
+                                String candidateName = a.getCandidate().getFirstName()
+                                        + (a.getCandidate().getLastName() != null
+                                                ? " " + a.getCandidate().getLastName() : "");
+                                String batchTime = a.getBatchTime() != null
+                                        ? a.getBatchTime().format(timeFmt) : "";
+                                return new PersonalizedRecipient(
+                                        a.getCandidate().getEmail(),
+                                        candidateName,
+                                        a.getRegistrationCode(),
+                                        batchTime,
+                                        null);
+                            })
+                            .collect(Collectors.toList());
+
+                    emailTemplateService.sendPersonalizedBulkEmail(
+                            template.getBody(),
+                            template.getSubject(),
+                            drive.getDriveName(),
+                            startDate,
+                            drive.getLocation() != null ? drive.getLocation() : "",
+                            recipients);
+
+                    log.info("📧 Drive invitation emails queued for {} recipients (drive='{}')",
+                             recipients.size(), drive.getDriveName());
+                },
+                () -> log.warn("⚠️ Drive invitation template ID={} not found — emails skipped",
+                               driveInvitationTemplateId)
+            );
+        } catch (Exception ex) {
+            log.error("⚠️ Failed to queue drive invitation emails — scheduling result unaffected", ex);
+        }
     }
     
     @Override
@@ -449,15 +520,52 @@ public class ApplicationServiceImpl implements IApplicationService {
     @Override
     @Transactional(readOnly = true)
     public Map<String, List<Long>> getBatchCandidatesByDriveId(Long driveId) {
-        if (driveId == null) {
-            throw new ValidationException("Drive ID is required");
+        if (driveId == null) throw new ValidationException("Drive ID is required");
+        // Projection query — only applicationId + batchTime, no entity hydration
+        List<Object[]> rows = applicationRepository.findApplicationIdAndBatchTimeByDriveId(driveId);
+        return rows.stream().collect(Collectors.groupingBy(
+                row -> row[1] != null ? row[1].toString() : "UNSCHEDULED",
+                Collectors.mapping(row -> (Long) row[0], Collectors.toList())
+        ));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<String> getDistinctBatchTimesByDriveId(Long driveId) {
+        if (driveId == null) throw new ValidationException("Drive ID is required");
+        return applicationRepository.findDistinctBatchTimesByDriveId(driveId)
+                .stream().map(LocalDateTime::toString).collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional
+    public ApplicationResponse updateApplicationBatchTime(BatchTimeUpdateRequest request) {
+        if (request.getDriveId() == null || request.getApplicationId() == null
+                || request.getOldBatchTime() == null || request.getNewBatchTime() == null
+                || request.getUpdatedBy() == null) {
+            throw new ValidationException("driveId, applicationId, oldBatchTime, newBatchTime and updatedBy are required");
         }
-        List<Application> applications = applicationRepository.findByDriveDriveId(driveId);
-        return applications.stream()
-                .collect(Collectors.groupingBy(
-                        a -> a.getBatchTime() != null ? a.getBatchTime().toString() : "UNSCHEDULED",
-                        Collectors.mapping(Application::getApplicationId, Collectors.toList())
-                ));
+        
+        // Fetch updatedBy user
+        User updatedByUser = userRepository.findById(request.getUpdatedBy())
+                .orElseThrow(() -> new ResourceNotFoundException("User", "ID", request.getUpdatedBy()));
+        
+        int updated = applicationRepository.updateBatchTime(
+                request.getDriveId(), request.getApplicationId(),
+                request.getOldBatchTime(), request.getNewBatchTime());
+        if (updated == 0) {
+            throw new ResourceNotFoundException("Application",
+                    "driveId/applicationId/oldBatchTime",
+                    request.getDriveId() + "/" + request.getApplicationId() + "/" + request.getOldBatchTime());
+        }
+        
+        // Fetch and update the application with updatedBy user
+        Application application = applicationRepository.findById(request.getApplicationId())
+                .orElseThrow(() -> new ResourceNotFoundException("Application", "ID", request.getApplicationId()));
+        application.setUpdatedByUser(updatedByUser);
+        applicationRepository.save(application);
+        
+        return mapper.toResponse(application);
     }
 
     @Override
@@ -557,54 +665,39 @@ public class ApplicationServiceImpl implements IApplicationService {
         
         List<FinalizeApplicationsResponse.ApplicationUpdateDetail> details = new ArrayList<>();
         
+        List<Candidate> candidatesToSave = new ArrayList<>();
         for (Application application : applications) {
             Candidate candidate = application.getCandidate();
             if (candidate == null) {
                 throw new ValidationException("Application " + application.getApplicationId() + " has no associated candidate");
             }
-            
+
             ApplicationStatus appStatus = application.getApplicationStatus();
             ApplicationStage previousStage = candidate.getApplicationStage();
-            ApplicationStage newStage;
-            
-            // Map application status to candidate stage
-            switch (appStatus) {
-                case SELECTED:
-                    newStage = ApplicationStage.SELECTED;
-                    break;
-                case FAILED:
-                    newStage = ApplicationStage.REJECTED;
-                    break;
-                case DROPPED:
-                    newStage = ApplicationStage.DROPPED;
-                    break;
-                case ALLOTED:
-                case IN_DRIVE:
-                    newStage = ApplicationStage.REJECTED;
-                    break;
-                default:
-                    // Should not happen, but handle gracefully
-                    newStage = ApplicationStage.REJECTED;
-            }
-            
-            // Update candidate stage
+            ApplicationStage newStage = switch (appStatus) {
+                case SELECTED -> ApplicationStage.SELECTED;
+                case DROPPED  -> ApplicationStage.DROPPED;
+                default       -> ApplicationStage.REJECTED; // FAILED, ALLOTED, IN_DRIVE
+            };
+
             candidate.setApplicationStage(newStage);
-            candidatesRepository.save(candidate);
-            
-            // Build detail entry
-            FinalizeApplicationsResponse.ApplicationUpdateDetail detail = 
+            candidatesToSave.add(candidate);
+
+            FinalizeApplicationsResponse.ApplicationUpdateDetail detail =
                 new FinalizeApplicationsResponse.ApplicationUpdateDetail();
             detail.setApplicationId(application.getApplicationId());
             detail.setCandidateId(candidate.getCandidateId());
-            detail.setCandidateName(candidate.getFirstName() + 
+            detail.setCandidateName(candidate.getFirstName() +
                 (candidate.getLastName() != null ? " " + candidate.getLastName() : ""));
             detail.setPreviousStage(previousStage != null ? previousStage.toString() : "NONE");
             detail.setNewStage(newStage.toString());
             detail.setApplicationStatus(appStatus.toString());
-            
             details.add(detail);
         }
-        
+
+        // Batch save all candidates — 1 query instead of N
+        candidatesRepository.saveAll(candidatesToSave);
+
         // Update Drive status to CLOSED if isClosed is true
         if (Boolean.TRUE.equals(request.getIsClosed()) && !applications.isEmpty()) {
             Application firstApp = applications.get(0);

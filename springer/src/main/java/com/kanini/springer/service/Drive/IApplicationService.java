@@ -3,6 +3,7 @@ package com.kanini.springer.service.Drive;
 import com.kanini.springer.dto.Drive.ApplicationRequest;
 import com.kanini.springer.dto.Drive.ApplicationResponse;
 import com.kanini.springer.dto.Drive.ApplicationStatusUpdateRequest;
+import com.kanini.springer.dto.Drive.BatchTimeUpdateRequest;
 import com.kanini.springer.dto.Drive.BulkApplicationResponse;
 import com.kanini.springer.dto.Drive.BulkApplicationStatusUpdateRequest;
 import com.kanini.springer.dto.Drive.BulkApplicationStatusUpdateResponse;
@@ -86,6 +87,17 @@ public interface IApplicationService {
      * Override the application status with a reason, logged to manual_override.
      */
     ApplicationResponse overrideDriveStatus(Long applicationId, ApplicationStatus status, String reason, Long userId);
+
+    /**
+     * Get all distinct non-null batch times for a drive.
+     */
+    List<String> getDistinctBatchTimesByDriveId(Long driveId);
+
+    /**
+     * Update batch time of an application after validating driveId, applicationId,
+     * and matching old batch time.
+     */
+    ApplicationResponse updateApplicationBatchTime(BatchTimeUpdateRequest request);
     
     /**
      * Finalize applications - Apply application status to candidate stages

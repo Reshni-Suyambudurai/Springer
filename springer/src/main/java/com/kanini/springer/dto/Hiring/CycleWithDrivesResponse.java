@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @Data
@@ -25,5 +26,6 @@ public class CycleWithDrivesResponse {
         private String driveName;
         private String mode;
         private String instituteName; // populated for ON_CAMPUS drives
+        private LocalDate startDate;
     }
 }

@@ -36,6 +36,24 @@ public class TrainingCourse {
 
     private Integer weightage;
 
+    /**
+     * Marks this course as a Communication course.
+     * When true, scores use sub-field breakdown instead of a single score.
+     * weightage is ignored for communication courses — score shown separately.
+     */
+    @Column(nullable = false, columnDefinition = "TINYINT(1) DEFAULT 0")
+    private Boolean isCommunication = false;
+
+    /**
+     * JSON template for Communication course sub-fields. Stored at course level
+     * so it is consistent across all batches in a program.
+     * Default: [{"name":"Grammar","maxScore":20},{"name":"Proactiveness","maxScore":20},{"name":"Fluency","maxScore":10}]
+     * Format: [{"name":"<field>","maxScore":<int>}, ...]
+     * Null for non-communication courses.
+     */
+    @Column(columnDefinition = "JSON")
+    private String communicationTemplate;
+
     private LocalDateTime createdAt;
 
     @OneToMany(mappedBy = "course", cascade = CascadeType.ALL)

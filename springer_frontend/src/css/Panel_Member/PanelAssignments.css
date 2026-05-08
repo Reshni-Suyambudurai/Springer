@@ -1,3 +1,40 @@
+/* Status Chips (same as AllocationHistory) */
+.t-chip-info {
+  background: var(--color-blue-50) !important;
+  color: var(--color-blue-700) !important;
+  border: 1.5px solid var(--color-blue-100) !important;
+  font-size: 0.75rem !important;
+  font-weight: 600 !important;
+  border-radius: 6px !important;
+  padding: 0 12px !important;
+  height: 22px !important;
+}
+.t-chip-hold {
+  background: var(--color-grey-100) !important;
+  color: var(--color-grey-600) !important;
+  border: 1.5px solid var(--color-grey-225) !important;
+  border-radius: 5px !important;
+}
+.t-chip-warning {
+  background: var(--color-yellow-50) !important;
+  color: var(--color-yellow-700) !important;
+  border: 1.5px solid var(--color-yellow-100) !important;
+}
+.t-chip-success {
+  background: var(--color-green-50) !important;
+  color: var(--color-green-700) !important;
+  border: 1.5px solid var(--color-green-100) !important;
+}
+.t-chip-error {
+  background: var(--color-red-50) !important;
+  color: var(--color-red-600) !important;
+  border: 1.5px solid var(--color-red-100) !important;
+}
+.t-chip-cancelled {
+  background: var(--color-pink-50) !important;
+  color: var(--color-pink-700) !important;
+  border: 1.5px solid var(--color-pink-100) !important;
+}
 /*
  * Panel Member — My Assignments
  * Uses CSS variables from App.css & template utility classes.

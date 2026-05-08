@@ -1,0 +1,134 @@
+.inp-page {
+  display: flex; flex-direction: column; gap: 20px;
+  padding: 20px 24px; background: var(--color-bg-primary);
+}
+
+.inp-header { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 12px; }
+.inp-title  { font-size: var(--text-xl); font-weight: 700; color: var(--color-text-primary); margin: 0 0 4px 0; }
+.inp-subtitle { font-size: var(--text-sm); color: var(--color-text-secondary); margin: 0; }
+
+/* Download button */
+.inp-download-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 18px;
+  background: var(--color-primary);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s, transform 0.1s;
+  white-space: nowrap;
+}
+.inp-download-btn:hover  { opacity: 0.88; transform: translateY(-1px); }
+.inp-download-btn:active { transform: translateY(0); }
+
+.inp-status-badge {
+  padding: 4px 14px; border-radius: 14px;
+  font-size: var(--text-xs); font-weight: 600;
+  text-transform: uppercase; letter-spacing: 0.4px;
+  border: 1.5px solid transparent;
+}
+
+.inp-status--training { color: var(--color-primary);      border-color: var(--color-primary);        background: var(--color-primary-light); }
+.inp-status--ready    { color: var(--color-success-dark);  border-color: var(--color-success-border); background: var(--color-success-light); }
+.inp-status--risk     { color: var(--color-error-dark);    border-color: var(--color-error-border);   background: var(--color-error-light); }
+.inp-status--dropped  { color: var(--color-text-secondary);border-color: var(--color-border);         background: var(--color-bg-primary); }
+
+/* Stats */
+.inp-stats-row { display: flex; gap: 12px; flex-wrap: wrap; }
+
+.inp-stat-card {
+  flex: 1; min-width: 120px;
+  display: flex; flex-direction: column; gap: 4px;
+  padding: 14px 16px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-card);
+  border-radius: 10px;
+  box-shadow: 0 1px 4px var(--opacity-shadow-very-light);
+}
+
+.inp-stat-label { font-size: var(--text-xs); font-weight: 600; color: var(--color-text-secondary); text-transform: uppercase; letter-spacing: 0.4px; }
+.inp-stat-val   { font-size: 1.4rem; font-weight: 700; color: var(--color-text-primary); line-height: 1.2; }
+
+/* Readiness */
+.inp-readiness-section {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-card);
+  border-radius: 10px; padding: 16px 20px;
+  box-shadow: 0 1px 4px var(--opacity-shadow-very-light);
+}
+
+.inp-readiness-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.inp-readiness-label  { font-size: var(--text-sm); font-weight: 600; color: var(--color-text-primary); }
+.inp-readiness-pct    { font-size: var(--text-md); font-weight: 700; color: var(--color-text-primary); }
+
+.inp-readiness-bar-bg   { height: 10px; background: var(--color-grey-225); border-radius: 5px; overflow: hidden; }
+.inp-readiness-bar-fill { height: 100%; border-radius: 5px; transition: width 0.6s ease; }
+.inp-readiness-note     { font-size: var(--text-xs); color: var(--color-text-secondary); margin: 6px 0 0 0; }
+
+/* Section title */
+.inp-section-title { font-size: var(--text-md); font-weight: 600; color: var(--color-text-primary); margin: 0; }
+
+/* Timeline */
+.inp-timeline { display: flex; flex-direction: column; gap: 0; }
+.inp-step-wrap { display: flex; flex-direction: column; }
+
+.inp-step {
+  display: flex; align-items: center; gap: 14px;
+  padding: 14px 18px; border-radius: 10px;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  transition: box-shadow 0.15s;
+}
+
+.inp-step--done    { border-color: var(--color-success-border); background: var(--color-success-light); }
+.inp-step--active  { border-color: var(--color-primary); background: var(--color-primary-light); box-shadow: 0 0 0 2px rgba(15,76,129,0.12); }
+.inp-step--pending { opacity: 0.5; }
+
+.inp-step-num {
+  width: 32px; height: 32px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: var(--text-sm); font-weight: 700;
+  background: var(--color-grey-225); color: var(--color-text-secondary);
+  flex-shrink: 0;
+}
+
+.inp-step--done  .inp-step-num { background: var(--color-success-dark); color: #fff; }
+.inp-step--active .inp-step-num { background: var(--color-primary); color: #fff; }
+
+.inp-step-label { font-size: var(--text-sm); font-weight: 600; color: var(--color-text-primary); display: block; }
+.inp-step-desc  { font-size: var(--text-xs); color: var(--color-text-secondary); display: block; margin-top: 2px; }
+
+.inp-connector { width: 2px; height: 14px; background: var(--color-border); margin-left: 33px; }
+.inp-connector--done { background: var(--color-success-dark); }
+
+/* Performance */
+.inp-perf-row { display: flex; align-items: center; gap: 10px; }
+.inp-perf-label { font-size: var(--text-sm); color: var(--color-text-secondary); font-weight: 500; }
+
+.inp-perf-badge {
+  padding: 3px 12px; border-radius: 12px;
+  font-size: var(--text-xs); font-weight: 600;
+  border: 1px solid transparent;
+}
+
+.inp-perf-badge--excellent    { color: var(--color-success-dark);  border-color: var(--color-success-border); background: var(--color-success-light); }
+.inp-perf-badge--good         { color: var(--color-primary);       border-color: var(--color-primary);        background: var(--color-primary-light); }
+.inp-perf-badge--need-learning{ color: var(--color-warning-text);  border-color: var(--color-warning-border); background: var(--color-warning-bg); }
+.inp-perf-badge--project-ready{ color: var(--color-success-dark);  border-color: var(--color-success-border); background: var(--color-success-light); }
+
+/* Dates */
+.inp-dates-row {
+  display: flex; align-items: center; gap: 20px; flex-wrap: wrap;
+  background: var(--color-surface); border: 1px solid var(--color-border-card);
+  border-radius: 10px; padding: 14px 20px;
+}
+
+.inp-date-item { display: flex; flex-direction: column; gap: 3px; }
+.inp-date-label { font-size: var(--text-xs); font-weight: 600; color: var(--color-text-secondary); text-transform: uppercase; letter-spacing: 0.4px; }
+.inp-date-val   { font-size: var(--text-sm); font-weight: 600; color: var(--color-text-primary); }
+.inp-date-sep   { width: 1px; height: 36px; background: var(--color-border); }

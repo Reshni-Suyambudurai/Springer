@@ -13,11 +13,12 @@ import {
   Edit as EditIcon,
   GroupAdd as GroupAddIcon,
   CalendarMonth as CalendarIcon,
+  SwapHoriz as TransferIcon,
 } from '@mui/icons-material';
 import { batchAllocationApi, trainingProgramApi, batchScheduleApi, batchCandidateApi } from '../../../services/academy.api';
 import { showToast } from '../../../utils/toast';
 import type {
-  BatchAllocationResponse, BatchAllocationRequest,
+  BatchAllocationResponse, BatchAllocationRequest, BatchTransferRequest,
   TrainingProgramResponse, AcademyContextProps,
   BatchScheduleResponse, BatchCandidateResponse,
 } from '../../../types/Academy/academy.types';
@@ -69,6 +70,14 @@ const BatchAllocationsList = ({ context }: { context: AcademyContextProps }) => 
   const [deactivateDialogOpen, setDeactivateDialogOpen] = useState(false);
   const [deactivateStudentId, setDeactivateStudentId] = useState<number | null>(null);
 
+  // Transfer dialog
+  const [transferDialogOpen, setTransferDialogOpen] = useState(false);
+  const [transferAlloc, setTransferAlloc] = useState<BatchAllocationResponse | null>(null);
+  const [transferProgramId, setTransferProgramId] = useState(0);
+  const [transferBatchNumber, setTransferBatchNumber] = useState(1);
+  const [transferReason, setTransferReason] = useState('');
+  const [transferSubmitting, setTransferSubmitting] = useState(false);
+
   // Batch schedule dialog
   const [scheduleDialogOpen, setScheduleDialogOpen] = useState(false);
   const [scheduleProgramId, setScheduleProgramId] = useState(0);
@@ -82,22 +91,30 @@ const BatchAllocationsList = ({ context }: { context: AcademyContextProps }) => 
   const fetchData = async () => {
     try {
       setLoading(true);
-      const [allocRes, progRes] = await Promise.all([
-        batchAllocationApi.getAllAllocations(),
-        trainingProgramApi.getAllPrograms(),
-      ]);
-      if (allocRes.success && allocRes.data) setAllocations(allocRes.data);
+      const progRes = await trainingProgramApi.getAllPrograms();
       if (progRes.success && progRes.data) {
         setAllPrograms(progRes.data);
-        // Fetch batch schedules for all programs
+        // Fetch allocations only for year-scoped programs — not all allocations
+        const scopedIds = programYear === 0
+          ? progRes.data.map(p => p.programId)
+          : progRes.data.filter(p => p.programYear === programYear).map(p => p.programId);
+        const allocResults = await Promise.allSettled(
+          scopedIds.map(id => batchAllocationApi.getAllocationsByProgram(id))
+        );
+        const allAllocs: BatchAllocationResponse[] = [];
+        allocResults.forEach(r => {
+          if (r.status === 'fulfilled' && r.value.success && r.value.data)
+            allAllocs.push(...r.value.data);
+        });
+        setAllocations(allAllocs);
+        // Fetch batch schedules for scoped programs only
         const scheduleResults = await Promise.allSettled(
-          progRes.data.map(p => batchScheduleApi.getByProgram(p.programId))
+          scopedIds.map(id => batchScheduleApi.getByProgram(id))
         );
         const allSchedules: BatchScheduleResponse[] = [];
         scheduleResults.forEach(r => {
-          if (r.status === 'fulfilled' && r.value.success && r.value.data) {
+          if (r.status === 'fulfilled' && r.value.success && r.value.data)
             allSchedules.push(...r.value.data);
-          }
         });
         setBatchSchedules(allSchedules);
       }
@@ -117,7 +134,6 @@ const BatchAllocationsList = ({ context }: { context: AcademyContextProps }) => 
     setCandidateSearch('');
     if (!programId) return;
 
-    // Use allPrograms (fetched from API) — has correct cycleId per program
     const prog = allPrograms.find(p => p.programId === programId);
     if (!prog?.cycleId) {
       showToast('This program has no linked hiring cycle', 'error');
@@ -126,18 +142,14 @@ const BatchAllocationsList = ({ context }: { context: AcademyContextProps }) => 
 
     try {
       setLoadingCandidates(true);
-      const res = await batchCandidateApi.getCandidatesByCycleAndStages({
-        cycleId: prog.cycleId,
-        applicationStages: ['JOINED'],
-      });
+      // Fetch only JOINED candidates directly from backend — no frontend filtering needed
+      const res = await candidateApi.getCandidatesByCycleIdAndStage(prog.cycleId, 'JOINED');
       if (res.success && res.data) {
-        // Exclude candidates already allocated to this program
         const allocatedIds = new Set(
           allocations.filter(a => a.programId === programId).map(a => a.candidateId)
         );
         const eligible = res.data.filter(c => !allocatedIds.has(c.candidateId));
         setCandidates(eligible);
-        // Default all to batch 1
         const defaultMap: Record<number, number> = {};
         eligible.forEach(c => { defaultMap[c.candidateId] = 1; });
         setCandidateBatchMap(defaultMap);
@@ -312,6 +324,41 @@ const BatchAllocationsList = ({ context }: { context: AcademyContextProps }) => 
     }
   };
 
+  const openTransferDialog = (alloc: BatchAllocationResponse, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setTransferAlloc(alloc);
+    setTransferProgramId(alloc.programId);
+    setTransferBatchNumber(alloc.batchNumber);
+    setTransferReason('');
+    setTransferDialogOpen(true);
+  };
+
+  const handleTransferSubmit = async () => {
+    if (!transferAlloc) return;
+    if (!transferReason.trim()) { showToast('Transfer reason is required', 'error'); return; }
+    if (transferProgramId === transferAlloc.programId && transferBatchNumber === transferAlloc.batchNumber) {
+      showToast('Please select a different batch', 'error'); return;
+    }
+    try {
+      setTransferSubmitting(true);
+      const req: BatchTransferRequest = {
+        targetProgramId: transferProgramId,
+        targetBatchNumber: transferBatchNumber,
+        transferReason: transferReason.trim(),
+      };
+      const res = await batchAllocationApi.transferStudent(transferAlloc.studentId, req);
+      if (res.success) {
+        showToast(`${transferAlloc.candidateName} transferred to Batch ${transferBatchNumber} successfully`, 'success');
+        setTransferDialogOpen(false);
+        fetchData();
+      }
+    } catch (err: any) {
+      showToast(err.message || 'Transfer failed', 'error');
+    } finally {
+      setTransferSubmitting(false);
+    }
+  };
+
   const getProgramName = (id: number) =>
     allPrograms.find(p => p.programId === id)?.programName ?? `Program ${id}`;
 
@@ -471,6 +518,10 @@ const BatchAllocationsList = ({ context }: { context: AcademyContextProps }) => 
                               <Typography className="ba-row-secondary">
                                 {alloc.department || alloc.candidateEmail || `Student #${alloc.studentId}`}
                               </Typography>
+                              {alloc.transferredFromStudentId && (
+                                <Chip label="Transferred" size="small" variant="outlined"
+                                  sx={{ fontSize: '10px', height: 18, mt: 0.3, borderColor: 'var(--color-warning)', color: 'var(--color-warning)', fontWeight: 600 }} />
+                              )}
                             </Box>
                           </Box>
                         </TableCell>
@@ -540,6 +591,12 @@ const BatchAllocationsList = ({ context }: { context: AcademyContextProps }) => 
                               onClick={e => openEditAlloc(alloc, e)}>
                               <EditIcon className="ba-action-icon" />
                             </IconButton>
+                            {alloc.isActive && (
+                              <IconButton size="small" className="ba-action-button" title="Transfer to Another Batch"
+                                onClick={e => openTransferDialog(alloc, e)}>
+                                <TransferIcon className="ba-action-icon" />
+                              </IconButton>
+                            )}
                             <IconButton size="small" className="ba-action-button" title="Mark Project Ready"
                               onClick={e => handleMarkReady(alloc.studentId, e)}>
                               <CheckCircleIcon className="ba-action-icon" />
@@ -851,6 +908,86 @@ const BatchAllocationsList = ({ context }: { context: AcademyContextProps }) => 
           <Button onClick={() => setScheduleDialogOpen(false)} className="ba-dialog-cancel-btn">Cancel</Button>
           <Button variant="contained" onClick={handleSaveSchedule} disabled={scheduleSaving} className="ba-dialog-submit-btn">
             {scheduleSaving ? 'Saving...' : 'Save Batch Dates'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+      {/* Transfer Dialog */}
+      <Dialog open={transferDialogOpen} onClose={() => setTransferDialogOpen(false)} maxWidth="sm" fullWidth>
+        <DialogTitle className="ba-dialog-title">
+          Transfer Candidate — {transferAlloc?.candidateName}
+        </DialogTitle>
+        <DialogContent>
+          <Stack spacing={2} sx={{ mt: 1 }}>
+            <Box sx={{ p: 1.5, background: 'var(--color-warning-bg)', borderRadius: 1, border: '1px solid var(--color-warning-border)' }}>
+              <Typography sx={{ fontSize: 'var(--text-xs)', color: 'var(--color-warning-text)', fontWeight: 600 }}>
+                ⚠ Transfer Rules
+              </Typography>
+              <Typography sx={{ fontSize: 'var(--text-xs)', color: 'var(--color-warning-text)', mt: 0.5 }}>
+                • Old allocation will be marked inactive — history is preserved.
+              </Typography>
+              <Typography sx={{ fontSize: 'var(--text-xs)', color: 'var(--color-warning-text)' }}>
+                • Attendance starts fresh from zero in the new batch.
+              </Typography>
+              <Typography sx={{ fontSize: 'var(--text-xs)', color: 'var(--color-warning-text)' }}>
+                • Overall score uses best score per course across all batches.
+              </Typography>
+              <Typography sx={{ fontSize: 'var(--text-xs)', color: 'var(--color-warning-text)' }}>
+                • This action cannot be undone.
+              </Typography>
+            </Box>
+
+            <Typography sx={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-secondary)' }}>
+              Current: <strong>{allPrograms.find(p => p.programId === transferAlloc?.programId)?.programName}</strong> · Batch {transferAlloc?.batchNumber}
+            </Typography>
+
+            <TextField
+              select label="Target Program *" size="small" fullWidth
+              value={transferProgramId || ''}
+              onChange={e => { setTransferProgramId(Number(e.target.value)); setTransferBatchNumber(1); }}
+              className="ba-dialog-field"
+            >
+              {allPrograms.filter(p => p.status === true).map(p => (
+                <MenuItem key={p.programId} value={p.programId}>{p.programName} ({p.programYear})</MenuItem>
+              ))}
+            </TextField>
+
+            <TextField
+              select label="Target Batch *" size="small" fullWidth
+              value={transferBatchNumber}
+              onChange={e => setTransferBatchNumber(Number(e.target.value))}
+              className="ba-dialog-field"
+              disabled={!transferProgramId}
+            >
+              {getBatchOptions(transferProgramId).map(b => (
+                <MenuItem
+                  key={b} value={b}
+                  disabled={transferProgramId === transferAlloc?.programId && b === transferAlloc?.batchNumber}
+                >
+                  Batch {b}{transferProgramId === transferAlloc?.programId && b === transferAlloc?.batchNumber ? ' (current)' : ''}
+                </MenuItem>
+              ))}
+            </TextField>
+
+            <TextField
+              label="Reason for Transfer *" size="small" fullWidth multiline rows={2}
+              placeholder="e.g. Low performance in Batch 1, needs additional time"
+              value={transferReason}
+              onChange={e => setTransferReason(e.target.value)}
+              inputProps={{ maxLength: 300 }}
+              helperText={`${transferReason.length}/300`}
+              className="ba-dialog-field"
+            />
+          </Stack>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button onClick={() => setTransferDialogOpen(false)} className="ba-dialog-cancel-btn">Cancel</Button>
+          <Button
+            variant="contained"
+            onClick={handleTransferSubmit}
+            disabled={transferSubmitting || !transferReason.trim()}
+            className="ba-dialog-submit-btn"
+          >
+            {transferSubmitting ? 'Transferring...' : 'Transfer Candidate'}
           </Button>
         </DialogActions>
       </Dialog>
