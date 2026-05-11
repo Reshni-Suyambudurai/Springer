@@ -346,10 +346,10 @@ class InstituteControllerIntegrationTest {
 
     @Test
     @Order(20)
-    @DisplayName("GET /api/institutes - returns 401 without JWT token")
+    @DisplayName("GET /api/institutes - returns 200 without JWT token (permitAll)")
     void getAllInstitutes_noAuth_returns401() throws Exception {
         mockMvc.perform(get("/api/institutes"))
-                .andExpect(status().isUnauthorized());
+                .andExpect(status().isOk());
     }
 
     @Test

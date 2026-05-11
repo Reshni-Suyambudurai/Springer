@@ -17,6 +17,7 @@ import com.kanini.springer.repository.Common.EmailTemplateRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -26,9 +27,11 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 /**
- * Data loader to seed initial/demo data into the database
+ * Data loader to seed initial/demo data into the database.
+ * Disabled by default in production — enable with app.seed-data.enabled=true
  */
 @Configuration
+@ConditionalOnProperty(name = "app.seed-data.enabled", havingValue = "true", matchIfMissing = false)
 @RequiredArgsConstructor
 @Slf4j
 public class DataLoader {

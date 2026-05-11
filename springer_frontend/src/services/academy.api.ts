@@ -462,6 +462,25 @@ export const joiningTrackerApi = {
       throw handleAxiosError(error);
     }
   },
+
+  async getCandidatesByCycleAndStages(request: JoiningTrackerRequest): Promise<ApiResponse<CandidateResponse[]>> {
+    try {
+      const response = await http.post('/candidates/filter', {
+        cycleId: request.cycleId,
+        applicationStages: request.applicationStages,
+        page: 0,
+        size: 1000,
+      });
+      const page = response.data?.data;
+      return {
+        success: response.data?.success ?? false,
+        message: response.data?.message ?? '',
+        data: page?.content ?? [],
+      };
+    } catch (error) {
+      throw handleAxiosError(error);
+    }
+  },
 };
 
 // ==================== BATCH ALLOCATION CANDIDATE APIs ====================
