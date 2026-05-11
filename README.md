@@ -56,6 +56,15 @@
 
 ### System Admin
 - Admin dashboard for system management
+- Create users, toggle status, manage roles *(Recent)*
+
+### Recent Updates
+- **Admin User Management** — Create users, toggle status, manage roles
+- **Hiring Cycle Edit** — Edit cycle info (name, year, budget, total intake, JD) via dialog
+- **Multi-Template Email Support** — SendEmail component now supports multiple template selection
+- **Email Templates** — 5 templates seeded (document submission, rejection, on-campus drive, off-campus drive, shortlist invite, round selection)
+- **Automated Deployment Scripts** — `.bat` files for one-click setup and teardown
+- **Enhanced .gitignore** — Proper exclusion of logs, node_modules, build artifacts
 
 ---
 
@@ -114,169 +123,56 @@ springer_frontend/                 # React + TypeScript frontend
 
 ---
 
-## Prerequisites
-
-### Required Software
-
-| Software | Version | Download Link |
-|----------|---------|---------------|
-| **Java JDK** | 21 or higher | [Oracle JDK](https://www.oracle.com/java/technologies/downloads/) / [OpenJDK](https://adoptium.net/) |
-| **Node.js** | 18 or higher | [Node.js Official](https://nodejs.org/) |
-| **MySQL** | 8.0 or higher | [MySQL Community](https://dev.mysql.com/downloads/mysql/) |
-| **Maven** (optional) | 3.9+ | Included via `mvnw` wrapper |
-
----
-
 ## Installation Steps
 
-### 1. Install Java 21+
+| Software | Version | Download |
+|----------|---------|----------|
+| **Java JDK** | 21+ | [Oracle JDK](https://www.oracle.com/java/technologies/downloads/) / [Adoptium](https://adoptium.net/) |
+| **Node.js** | 18+ | [nodejs.org](https://nodejs.org/) |
+| **MySQL** | 8.0+ | [MySQL Community](https://dev.mysql.com/downloads/mysql/) |
 
-**Windows:**
-1. Download JDK 21 from [Oracle](https://www.oracle.com/java/technologies/downloads/#jdk21-windows) or [Adoptium](https://adoptium.net/)
-2. Run the installer and follow the wizard
-3. Add Java to PATH:
-   - Right-click **This PC** → **Properties** → **Advanced system settings**
-   - Click **Environment Variables**
-   - Add `C:\Program Files\Java\jdk-21\bin` to **Path**
-4. Verify: `java -version` in Command Prompt
-
-**macOS/Linux:**
-```bash
-# Using SDKMAN (recommended)
-curl -s "https://get.sdkman.io" | bash
-sdk install java 21.0.1-tem
-
-# Or using Homebrew (macOS)
-brew install openjdk@21
-```
-
-### 2. Install Node.js 18+
-
-**Windows:**
-1. Download installer from [Node.js](https://nodejs.org/)
-2. Run installer (select "Automatically install necessary tools")
-3. Verify: `node -v` and `npm -v`
-
-**macOS/Linux:**
-```bash
-# Using nvm (recommended)
-curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.5/install.sh | bash
-nvm install 18
-nvm use 18
-```
-
-### 3. Install MySQL 8.0+
-
-**Windows:**
-1. Download MySQL Installer from [MySQL Downloads](https://dev.mysql.com/downloads/installer/)
-2. Run installer → Choose "Developer Default" or "Server only"
-3. During configuration:
-   - Set root password (e.g., `admin` or as per your preference)
-   - Use default port `3306`
-   - Start MySQL as Windows Service
-4. Verify: Open Services (`services.msc`) → ensure `MySQL80` is running
-
-**macOS:**
-```bash
-brew install mysql@8.0
-brew services start mysql@8.0
-mysql_secure_installation
-```
-
-**Linux:**
-```bash
-sudo apt update
-sudo apt install mysql-server
-sudo systemctl start mysql
-sudo mysql_secure_installation
-```
-
-### 4. (Optional) Add MySQL CLI to PATH
-
-**Windows:**
-- Add `C:\Program Files\MySQL\MySQL Server 8.0\bin` to system PATH
-- This allows the startup script to auto-create the database
-- If not in PATH, manually create database before first run:
-  ```sql
-  CREATE DATABASE Springer;
-  ```
+Ensure `java`, `node`, and `mysql` are available in your system PATH after installation.
 
 ---
 
-## Quick Start (Automated)
+## Running the Application
 
-### Step 1: Configure Database Credentials
+### Using `.bat` files (Windows — Recommended)
 
-Edit `config.bat` at the project root:
+1. Edit `config.bat` with your MySQL credentials:
+   ```batch
+   set DB_USER=root
+   set DB_PASS=your_mysql_password
+   set MYSQL_SERVICE=MySQL80
+   ```
+2. Double-click **`start-springer.bat`** to start backend + frontend.
+3. Double-click **`stop-springer.bat`** to stop all services.
 
-```batch
-set DB_USER=root
-set DB_PASS=your_mysql_password
-set MYSQL_SERVICE=MySQL80
-```
+App opens at **http://localhost:5173**
 
-### Step 2: Start the Application
+### Manual Setup
 
-Double-click **`start-springer.bat`**
-
-The script will automatically:
-- ✅ Check Java, Node.js, and Maven installations
-- ✅ Start MySQL service if stopped
-- ✅ Create `Springer` database if it doesn't exist (requires mysql CLI in PATH)
-- ✅ Build backend (first run only)
-- ✅ Install frontend dependencies (first run only)
-- ✅ Start Spring Boot backend on port `8080`
-- ✅ Start React frontend on port `5173`
-- ✅ Open browser at `http://localhost:5173`
-
-**Backend auto-seeding:**
-- On first run, `DataLoader.java` seeds:
-  - Roles (TA_HEAD, TA_MANAGER, HIRING_MANAGER, PANEL_MEMBER, etc.)
-  - Demo users (see credentials below)
-  - Hiring cycles (2024, 2025, 2026)
-  - Institutes (Anna University, PSG, VIT, SRM, etc.)
-  - Skills (Java, Python, React, etc.)
-  - Round templates (Aptitude, Communication, Technical)
-  - Email templates (document submission, rejection, drive invites, etc.)
-
-### Step 3: Stop the Application
-
-Double-click **`stop-springer.bat`** to stop all services.
-
----
-
-## Manual Setup (Without .bat files)
-
-### Backend Setup
-
+**Backend:**
 ```bash
 cd springer
 mvn clean install -DskipTests
 mvn spring-boot:run
 ```
+Runs on **http://localhost:8080** | Swagger: **http://localhost:8080/swagger-ui.html**
 
-Backend will start on **http://localhost:8080**  
-Swagger UI: **http://localhost:8080/swagger-ui.html** (disabled in production profile)
-
-### Frontend Setup
-
+**Frontend:**
 ```bash
 cd springer_frontend
 npm install
 npm run dev
 ```
+Runs on **http://localhost:5173**
 
-Frontend will start on **http://localhost:5173**
-
-### Database Setup (Manual)
-
-If mysql CLI is not in PATH, create the database manually:
-
+**Database:** If MySQL CLI is not in PATH, manually create the DB first:
 ```sql
 CREATE DATABASE Springer;
 ```
-
-Tables and data will be created automatically by Hibernate and DataLoader on first backend startup.
+Tables and seed data are created automatically on first backend startup.
 
 ---
 
@@ -318,17 +214,6 @@ java -jar springer.jar --spring.profiles.active=prod
 
 ---
 
-## Recent Updates
-
-- ✅ **Admin User Management** — Create users, toggle status, manage roles
-- ✅ **Hiring Cycle Edit** — Edit cycle info (name, year, budget, total intake, JD) via dialog
-- ✅ **Multi-Template Email Support** — SendEmail component now supports multiple template selection
-- ✅ **Email Templates** — 5 templates seeded (document submission, rejection, on-campus drive, off-campus drive, shortlist invite, round selection)
-- ✅ **Automated Deployment Scripts** — `.bat` files for one-click setup and teardown
-- ✅ **Enhanced .gitignore** — Proper exclusion of logs, node_modules, build artifacts
-
----
-
 ## Troubleshooting
 
 **Backend won't start:**
@@ -355,8 +240,4 @@ java -jar springer.jar --spring.profiles.active=prod
 
 Proprietary — Internal project for Kanini Software Solutions
 
----
-
-## Contributors
-
-Kanini Team - Talent Acquisition Module Development (2026)
+Kanini Team - Talent Enblement Module Development (2026)
