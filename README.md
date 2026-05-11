@@ -22,7 +22,7 @@
 - View academy dashboard and analytics
 - Configure system settings (eligibility rules, round templates, skills)
 
-### TA Recruiter
+### TA Manager
 - Manage partner institutes and TPO contacts
 - Add candidates individually or via bulk Excel upload
 - Schedule campus drives (on-campus / off-campus) with calendar view
