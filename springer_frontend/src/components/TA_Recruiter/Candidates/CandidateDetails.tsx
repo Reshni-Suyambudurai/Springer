@@ -491,14 +491,7 @@ const CandidateDetails: React.FC = () => {
                           >
                             <MenuItem value="APPLIED">APPLIED</MenuItem>
                             <MenuItem value="SHORTLISTED">SHORTLISTED</MenuItem>
-                            <MenuItem value="SELECTED">SELECTED</MenuItem>
-                            <MenuItem value="REJECTED">REJECTED</MenuItem>
-                            <MenuItem value="OFFERED">OFFERED</MenuItem>
-                            <MenuItem value="ACCEPTED">ACCEPTED</MenuItem>
-                            <MenuItem value="JOINED">JOINED</MenuItem>
-                            <MenuItem value="NOT_JOINED">NOT_JOINED</MenuItem>
-                            <MenuItem value="OFFER_REJECTED">OFFER_REJECTED</MenuItem>
-                            <MenuItem value="DROPPED">DROPPED</MenuItem>
+              
                           </Select>
                         </FormControl>
                         <Box className="status-btn-group">

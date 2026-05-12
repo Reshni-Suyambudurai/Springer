@@ -56,6 +56,7 @@ public class CandidateEvaluationServiceImpl implements ICandidateEvaluationServi
     private final RoundTemplateMapper roundTemplateMapper;
     private final ObjectMapper objectMapper;
     private final IOverrideService overrideService;
+    private final EvaluationEmailService evaluationEmailService;
     
     @Override
     @Transactional
@@ -244,6 +245,11 @@ public class CandidateEvaluationServiceImpl implements ICandidateEvaluationServi
         // Append history and save application
         appendHistory(application, evaluationStatus.name(), reviewedByUser.getUsername(), roundTemplate.getRoundName());
         applicationRepository.save(application);
+
+        // Trigger async evaluation email
+        if ("SUBMIT".equals(submitStatus)) {
+            triggerEvaluationEmail(evaluationStatus, application, roundTemplate);
+        }
         
         return mapper.toResponse(savedEvaluation);
     }
@@ -891,6 +897,9 @@ public class CandidateEvaluationServiceImpl implements ICandidateEvaluationServi
         }
 
         appendHistoryBulk(applicationIds, status.name(), userName, roundName);
+
+        // Trigger async evaluation emails for bulk status update
+        triggerBulkEvaluationEmails(status, applicationIds, roundName);
     }
 
     @Override
@@ -1006,6 +1015,20 @@ public class CandidateEvaluationServiceImpl implements ICandidateEvaluationServi
         // Append history
         String userName = reviewedByUser.getUsername();
         appendHistoryBulk(applicationIds, statusStr, userName, roundTemplate.getRoundName());
+
+        // Trigger async evaluation emails for HOLD/ABSENT
+        if ("HOLD".equals(statusStr) || "ABSENT".equals(statusStr)) {
+            String roundNo = roundTemplate.getRoundNo() != null ? String.valueOf(roundTemplate.getRoundNo()) : "";
+            List<EvaluationEmailService.EvaluationEmailRecipient> emailRecipients = applications.stream()
+                    .filter(app -> app.getCandidate() != null && app.getCandidate().getEmail() != null)
+                    .map(app -> {
+                        Candidate c = app.getCandidate();
+                        String name = c.getFirstName() + (c.getLastName() != null ? " " + c.getLastName() : "");
+                        return new EvaluationEmailService.EvaluationEmailRecipient(c.getEmail(), name, roundNo, statusStr);
+                    })
+                    .collect(Collectors.toList());
+            evaluationEmailService.sendEvaluationEmails(statusStr, emailRecipients);
+        }
     }
     @Override
     @Transactional(readOnly = true)
@@ -1106,4 +1129,69 @@ public class CandidateEvaluationServiceImpl implements ICandidateEvaluationServi
         response.setExistingCount(conflicts.size());
 
         return response;
-    }}
+    }
+
+    // =========================================================================
+    // Evaluation email helpers
+    // =========================================================================
+
+    /**
+     * Trigger an async evaluation email for a single candidate after createEvaluation.
+     */
+    private void triggerEvaluationEmail(EvaluationStatus status, Application application, RoundTemplate roundTemplate) {
+        try {
+            if (status != EvaluationStatus.PASS && status != EvaluationStatus.FAIL
+                    && status != EvaluationStatus.HOLD && status != EvaluationStatus.ABSENT) {
+                return;
+            }
+            Candidate candidate = application.getCandidate();
+            if (candidate == null || candidate.getEmail() == null) return;
+
+            String name = candidate.getFirstName()
+                    + (candidate.getLastName() != null ? " " + candidate.getLastName() : "");
+            String roundNo = roundTemplate.getRoundNo() != null
+                    ? String.valueOf(roundTemplate.getRoundNo()) : "";
+
+            evaluationEmailService.sendEvaluationEmail(
+                    status.name(), candidate.getEmail(), name, roundNo);
+        } catch (Exception e) {
+            // Non-blocking — log and continue
+            System.err.println("Failed to queue evaluation email: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Trigger async evaluation emails for bulk status updates.
+     * Loads applications with candidates in one query.
+     */
+    private void triggerBulkEvaluationEmails(EvaluationStatus status, List<Long> applicationIds, String roundName) {
+        try {
+            if (status != EvaluationStatus.PASS && status != EvaluationStatus.FAIL
+                    && status != EvaluationStatus.HOLD && status != EvaluationStatus.ABSENT) {
+                return;
+            }
+            List<Application> applications = applicationRepository.findAllById(applicationIds);
+
+            // Resolve round number from round name
+            String roundNo = roundTemplateRepository.findAll().stream()
+                    .filter(rt -> roundName != null && roundName.equals(rt.getRoundName()) && rt.getRoundNo() != null)
+                    .findFirst()
+                    .map(rt -> String.valueOf(rt.getRoundNo()))
+                    .orElse("");
+
+            List<EvaluationEmailService.EvaluationEmailRecipient> recipients = applications.stream()
+                    .filter(app -> app.getCandidate() != null && app.getCandidate().getEmail() != null)
+                    .map(app -> {
+                        Candidate c = app.getCandidate();
+                        String name = c.getFirstName() + (c.getLastName() != null ? " " + c.getLastName() : "");
+                        return new EvaluationEmailService.EvaluationEmailRecipient(
+                                c.getEmail(), name, roundNo, status.name());
+                    })
+                    .collect(Collectors.toList());
+
+            evaluationEmailService.sendEvaluationEmails(status.name(), recipients);
+        } catch (Exception e) {
+            System.err.println("Failed to queue bulk evaluation emails: " + e.getMessage());
+        }
+    }
+}
