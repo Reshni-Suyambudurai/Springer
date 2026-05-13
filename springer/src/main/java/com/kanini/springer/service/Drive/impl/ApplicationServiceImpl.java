@@ -245,7 +245,7 @@ public class ApplicationServiceImpl implements IApplicationService {
                                         batchTime,
                                         null);
                             })
-                            .collect(Collectors.toList());
+                            .toList();
 
                     emailTemplateService.sendPersonalizedBulkEmail(
                             template.getBody(),

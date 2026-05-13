@@ -20,7 +20,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * Service implementation for candidate registration operations
@@ -88,7 +87,7 @@ public class CandidateRegistrationServiceImpl implements ICandidateRegistrationS
         List<CandidateRegistration> registrations = registrationRepository.findByDriveDriveId(driveId);
         return registrations.stream()
                 .map(mapper::toResponse)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Override
@@ -104,7 +103,7 @@ public class CandidateRegistrationServiceImpl implements ICandidateRegistrationS
         List<CandidateRegistration> registrations = registrationRepository.findByFormFormId(formId);
         return registrations.stream()
                 .map(mapper::toResponse)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Override
@@ -149,10 +148,10 @@ public class CandidateRegistrationServiceImpl implements ICandidateRegistrationS
         if (registrations.size() != registrationIds.size()) {
             List<Long> foundIds = registrations.stream()
                     .map(CandidateRegistration::getRegistrationId)
-                    .collect(Collectors.toList());
+                    .toList();
             List<Long> notFoundIds = registrationIds.stream()
                     .filter(id -> !foundIds.contains(id))
-                    .collect(Collectors.toList());
+                    .toList();
             log.warn("Some registration IDs not found: {}", notFoundIds);
             throw new ResourceNotFoundException("Registration", "IDs", notFoundIds.toString());
         }

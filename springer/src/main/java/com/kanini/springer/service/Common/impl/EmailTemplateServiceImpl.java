@@ -35,7 +35,6 @@ import java.util.Queue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Executor;
-import java.util.stream.Collectors;
 
 /**
  * Service implementation for email template operations
@@ -137,7 +136,7 @@ public class EmailTemplateServiceImpl implements IEmailTemplateService {
         List<EmailTemplate> templates = emailTemplateRepository.findAll();
         return templates.stream()
                 .map(mapper::toResponse)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Override
@@ -156,16 +155,16 @@ public class EmailTemplateServiceImpl implements IEmailTemplateService {
         if (templates.size() != templateIds.size()) {
             List<Integer> foundIds = templates.stream()
                     .map(EmailTemplate::getTemplateId)
-                    .collect(Collectors.toList());
+                    .toList();
             List<Integer> notFoundIds = templateIds.stream()
                     .filter(id -> !foundIds.contains(id))
-                    .collect(Collectors.toList());
+                    .toList();
             log.warn("Some template IDs not found: {}", notFoundIds);
         }
 
         return templates.stream()
                 .map(mapper::toResponse)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Override
@@ -233,7 +232,7 @@ public class EmailTemplateServiceImpl implements IEmailTemplateService {
         // Filter out blank/null emails up-front
         List<String> emailList = request.getEmailIds().stream()
                 .filter(e -> e != null && !e.isBlank())
-                .collect(Collectors.toList());
+                .toList();
         int blankCount = request.getEmailIds().size() - emailList.size();
 
         // Thread-safe result buckets
@@ -276,7 +275,7 @@ public class EmailTemplateServiceImpl implements IEmailTemplateService {
                         skippedQueue.add(email.trim());
                     }
                 }, mailExecutor))
-                .collect(Collectors.toList());
+                .toList();
 
         // Block until every email attempt has finished
         CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
@@ -385,7 +384,7 @@ public class EmailTemplateServiceImpl implements IEmailTemplateService {
                                  recipient.getEmail(), root.getClass().getSimpleName(), root.getMessage());
                     }
                 }, mailExecutor))
-                .collect(Collectors.toList());
+                .toList();
 
         // Fire-and-forget: do NOT block the scheduling transaction.
         // Failures are already logged inside each future.
@@ -460,7 +459,7 @@ public class EmailTemplateServiceImpl implements IEmailTemplateService {
                                     recipient.getEmail(), root.getClass().getSimpleName(), root.getMessage());
                         }
                     }, mailExecutor))
-                    .collect(Collectors.toList());
+                    .toList();
 
             CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]))
                     .exceptionally(ex -> { log.error("sendPersonalizedEmail unexpected error", ex); return null; });

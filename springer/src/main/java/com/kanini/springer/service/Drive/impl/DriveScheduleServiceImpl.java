@@ -217,7 +217,7 @@ public class DriveScheduleServiceImpl implements IDriveScheduleService {
                     batchTimeMap
                 );
             })
-            .collect(Collectors.toList());
+            .toList();
     }
     
     @Override
@@ -233,7 +233,7 @@ public class DriveScheduleServiceImpl implements IDriveScheduleService {
         // Map to DriveResponse DTOs
         return drives.stream()
             .map(mapper::toResponse)
-            .collect(Collectors.toList());
+            .toList();
     }
 
     @Override

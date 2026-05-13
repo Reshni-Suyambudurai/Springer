@@ -191,7 +191,7 @@ public class InstituteServiceImpl implements IInstituteService {
         
         List<InstituteResponse> responses = savedInstitutes.stream()
                 .map(mapper::toResponse)
-                .collect(Collectors.toList());
+                .toList();
         
         BulkInsertResponse<InstituteResponse> response = new BulkInsertResponse<>();
         response.setSuccessfulInserts(responses);
@@ -207,7 +207,7 @@ public class InstituteServiceImpl implements IInstituteService {
     public List<InstituteResponse> getAllInstitutes() {
         return instituteRepository.findAllWithPrograms().stream()
                 .map(mapper::toResponse)
-                .collect(Collectors.toList());
+                .toList();
     }
     
     @Override
@@ -319,6 +319,6 @@ public class InstituteServiceImpl implements IInstituteService {
                         institute.getInstituteId(),
                         institute.getInstituteName()
                 ))
-                .collect(Collectors.toList());
+                .toList();
     }
 }

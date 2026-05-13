@@ -137,8 +137,8 @@ public class DriveAssignmentServiceImpl implements IDriveAssignmentService {
             .collect(Collectors.toSet());
         List<Long> applicationIds = request.getEntries().stream()
             .map(BulkDriveAssignmentRequest.AssignmentEntry::getApplicationId)
-            .collect(Collectors.toList());
-        
+            .toList();
+
         // 1 query — batch fetch all panel member users
         Map<Long, User> userMap = userRepository.findAllById(userIds)
             .stream().collect(Collectors.toMap(User::getUserId, u -> u));
@@ -284,7 +284,7 @@ public class DriveAssignmentServiceImpl implements IDriveAssignmentService {
         
         return assignments.stream()
             .map(mapper::toResponse)
-            .collect(Collectors.toList());
+            .toList();
     }
     
     @Override
@@ -311,7 +311,7 @@ public class DriveAssignmentServiceImpl implements IDriveAssignmentService {
         
         return assignments.stream()
             .map(mapper::toResponse)
-            .collect(Collectors.toList());
+            .toList();
     }
     
     @Override
@@ -465,7 +465,7 @@ public class DriveAssignmentServiceImpl implements IDriveAssignmentService {
             dto.setAdditionalPanels(panels);
             
             return dto;
-        }).collect(Collectors.toList());
+        }).toList();
     }
     
     @Override

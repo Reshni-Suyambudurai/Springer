@@ -438,7 +438,7 @@ public class CandidateEvaluationServiceImpl implements ICandidateEvaluationServi
         
         return evaluations.stream()
             .map(mapper::toResponse)
-            .collect(Collectors.toList());
+            .toList();
     }
     
     @Override
@@ -742,7 +742,7 @@ public class CandidateEvaluationServiceImpl implements ICandidateEvaluationServi
         response.setRoundTemplate(roundTemplateMapper.toResponse(roundTemplate));
         response.setEvaluations(evaluations.stream()
                 .map(mapper::toResponse)
-                .collect(Collectors.toList()));
+                .toList());
 
         return response;
     }
@@ -985,7 +985,7 @@ public class CandidateEvaluationServiceImpl implements ICandidateEvaluationServi
                 .findByApplicationIdsAndRoundConfigIdFetched(applicationIds, request.getRoundConfigId());
         List<CandidateEvaluation> conflicting = existingEvals.stream()
                 .filter(e -> e.getReviewedBy() != null && e.getReviewedBy().getUserId().equals(request.getReviewedBy()))
-                .collect(Collectors.toList());
+                .toList();
         if (!conflicting.isEmpty()) {
             String names = conflicting.stream()
                     .map(e -> {
@@ -1026,7 +1026,7 @@ public class CandidateEvaluationServiceImpl implements ICandidateEvaluationServi
                         String name = c.getFirstName() + (c.getLastName() != null ? " " + c.getLastName() : "");
                         return new EvaluationEmailService.EvaluationEmailRecipient(c.getEmail(), name, roundNo, statusStr);
                     })
-                    .collect(Collectors.toList());
+                    .toList();
             evaluationEmailService.sendEvaluationEmails(statusStr, emailRecipients);
         }
     }
@@ -1072,7 +1072,7 @@ public class CandidateEvaluationServiceImpl implements ICandidateEvaluationServi
             // Filter to only apps belonging to the specified drive
             apps = apps.stream()
                     .filter(app -> app.getDrive() != null && app.getDrive().getDriveId().equals(request.getDriveId()))
-                    .collect(Collectors.toList());
+                    .toList();
             appsByRegCode = apps.stream()
                     .collect(Collectors.toMap(
                             app -> app.getRegistrationCode().toLowerCase(),
@@ -1123,7 +1123,7 @@ public class CandidateEvaluationServiceImpl implements ICandidateEvaluationServi
                     info.setReason("Evaluation already exists for this round");
                     return info;
                 })
-                .collect(Collectors.toList());
+                .toList();
 
         response.setExistingEvaluations(conflicts);
         response.setExistingCount(conflicts.size());
@@ -1187,7 +1187,7 @@ public class CandidateEvaluationServiceImpl implements ICandidateEvaluationServi
                         return new EvaluationEmailService.EvaluationEmailRecipient(
                                 c.getEmail(), name, roundNo, status.name());
                     })
-                    .collect(Collectors.toList());
+                    .toList();
 
             evaluationEmailService.sendEvaluationEmails(status.name(), recipients);
         } catch (Exception e) {

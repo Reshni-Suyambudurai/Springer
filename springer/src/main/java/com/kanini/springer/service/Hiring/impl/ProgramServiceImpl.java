@@ -32,7 +32,7 @@ public class ProgramServiceImpl implements IProgramService {
                         program.getProgramId(),
                         program.getProgramName().name()
                 ))
-                .collect(Collectors.toList());
+                .toList();
     }
     
     @Override

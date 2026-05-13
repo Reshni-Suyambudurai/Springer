@@ -183,7 +183,7 @@ public class InstituteTPOServiceImpl implements IInstituteTPOService {
         List<InstituteContact> savedContacts = contactRepository.saveAll(contactsToInsert);
         List<InstituteContactResponse> responses = savedContacts.stream()
                 .map(mapper::toResponse)
-                .collect(Collectors.toList());
+                .toList();
         
         BulkInsertResponse<InstituteContactResponse> response = new BulkInsertResponse<>();
         response.setSuccessfulInserts(responses);
@@ -199,12 +199,12 @@ public class InstituteTPOServiceImpl implements IInstituteTPOService {
     public List<InstituteContactResponse> getContactsByInstituteId(Long instituteId) {
         // Validate that institute exists
         if (!instituteRepository.existsById(instituteId)) {
-            throw new RuntimeException("Institute not found with ID: " + instituteId);
+            throw new ResourceNotFoundException("Institute", "ID", instituteId);
         }
         
         return contactRepository.findByInstituteInstituteId(instituteId).stream()
                 .map(mapper::toResponse)
-                .collect(Collectors.toList());
+                .toList();
     }
     
     @Override
@@ -389,7 +389,7 @@ public class InstituteTPOServiceImpl implements IInstituteTPOService {
         List<InstituteContact> savedContacts = contactRepository.saveAll(contactsToInsert);
         List<InstituteContactResponse> responses = savedContacts.stream()
                 .map(mapper::toResponse)
-                .collect(Collectors.toList());
+                .toList();
         
         BulkInsertResponse<InstituteContactResponse> response = new BulkInsertResponse<>();
         response.setSuccessfulInserts(responses);
