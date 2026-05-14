@@ -892,7 +892,7 @@ const Form: React.FC<{ onAddFormClick?: () => void }> = ({ onAddFormClick }) => 
                             reg.collegeName
                           )}
                         </TableCell>
-                        <TableCell>{reg.degree}</TableCell>
+                        <TableCell>{reg.degree} {reg.department}</TableCell>
                         <TableCell>{reg.cgpa}</TableCell>
                         <TableCell>{reg.graduationYear}</TableCell>
                         <TableCell>
