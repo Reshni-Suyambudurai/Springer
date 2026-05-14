@@ -315,6 +315,63 @@
   background-color: var(--color-hover-bg) !important;
 }
 
+/* Others Institute Row */
+.table-row-others-institute td {
+  background-color: var(--color-purple-50) !important;
+}
+
+.table-row-others-institute:hover td {
+  background-color: var(--color-purple-100) !important;
+}
+
+.form-others-college-name {
+  color: var(--color-purple-600);
+  font-weight: 500;
+  cursor: default;
+  text-decoration: underline dotted var(--color-purple-500);
+  text-underline-offset: 3px;
+}
+
+.form-new-college-count {
+  color: var(--color-purple-600);
+  font-weight: 600;
+}
+
+/* Inline cell editing */
+.form-cell-editable {
+  cursor: default;
+  position: relative;
+}
+
+.form-cell-editable:not(:has(input)):hover::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border: 1.5px dashed var(--color-primary);
+  border-radius: 4px;
+  pointer-events: none;
+  opacity: 0.5;
+}
+
+.form-inline-input {
+  width: 100%;
+  min-width: 120px;
+  padding: 3px 6px;
+  border: 1.5px solid var(--color-primary);
+  border-radius: 4px;
+  font-size: inherit;
+  font-family: inherit;
+  color: var(--color-text-primary);
+  background: var(--color-white);
+  outline: none;
+  box-shadow: 0 0 0 3px var(--color-primary-shadow-8);
+}
+
+.form-inline-input:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 /* Table Styles */
 .form-table-container {
   border: 1px solid var(--color-border);

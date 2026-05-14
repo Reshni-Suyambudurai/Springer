@@ -33,7 +33,7 @@ import ErrorOverlay from "../../Common/ErrorOverlay";
 // import BackButton from "../../Common/BackButton";
 import { formApi, candidateRegistrationApi, candidateApi } from "../../../services/drive.api";
 import type { FormRequest, FormResponse } from "../../../types/TA_Recruiter/Drive/form.types";
-import type { CandidateRegistrationResponse } from "../../../types/TA_Recruiter/Drive/candidateRegistration.types";
+import type { CandidateRegistrationResponse, CandidateRegistrationUpdateRequest } from "../../../types/TA_Recruiter/Drive/candidateRegistration.types";
 import type { CandidateValidationRequest, CandidateValidationResponse, CandidateRequest } from "../../../types/TA_Recruiter/Drive/candidate.types";
 import { ValidationStatus } from "../../../types/TA_Recruiter/Drive/candidate.types";
 import { showToast } from "../../../utils/toast";
@@ -96,6 +96,9 @@ const Form: React.FC<{ onAddFormClick?: () => void }> = ({ onAddFormClick }) => 
   const [showActionButtons, setShowActionButtons] = useState(false);
   const [deleteDialog, setDeleteDialog] = useState(false);
   const [registrationToDelete, setRegistrationToDelete] = useState<CandidateRegistrationResponse | null>(null);
+  const [editingRegistrationId, setEditingRegistrationId] = useState<number | null>(null);
+  const [editValue, setEditValue] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
   const [showErrorOverlay, setShowErrorOverlay] = useState(false);
   const [uploadErrorMessages, setUploadErrorMessages] = useState<string[]>([]);
   const [uploadErrorEmailMap, setUploadErrorEmailMap] = useState<Map<number, string>>(new Map());
@@ -556,6 +559,31 @@ const Form: React.FC<{ onAddFormClick?: () => void }> = ({ onAddFormClick }) => 
     }
   }, [registrations, validationResults]);
 
+  const handleStartEdit = (reg: CandidateRegistrationResponse) => {
+    setEditingRegistrationId(reg.registrationId);
+    setEditValue(reg.collegeName || "");
+  };
+
+  const handleSaveEdit = async () => {
+    if (editingRegistrationId === null) return;
+    const trimmed = editValue.trim();
+    setEditingRegistrationId(null);
+    setEditValue("");
+    if (!trimmed) return;
+    try {
+      setIsSaving(true);
+      const payload: CandidateRegistrationUpdateRequest = { registrationId: editingRegistrationId, collegeName: trimmed };
+      await candidateRegistrationApi.updateRegistration(editingRegistrationId, payload);
+      await fetchRegistrations();
+      showToast("College name updated", "success");
+    } catch (error) {
+      const msg = (error as { response?: { data?: { message?: string } }; message?: string })?.response?.data?.message || (error as Error)?.message || "Update failed";
+      showToast(msg, "error");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   const confirmDeleteRegistration = async () => {
     if (!registrationToDelete) return;
 
@@ -709,6 +737,11 @@ const Form: React.FC<{ onAddFormClick?: () => void }> = ({ onAddFormClick }) => 
             <Box className="form-registrations-actions">
               <Typography variant="body2" className="form-registrations-count">
                 Total: {registrations.length}
+                {registrations.filter(r => r.instituteId === 1).length > 0 && (
+                  <span className="form-new-college-count">
+                    &nbsp;| New Colleges: {registrations.filter(r => r.instituteId === 1).length}
+                  </span>
+                )}
                 {isValidating && <span className="form-validating-text">- Validating...</span>}
               </Typography>            <Tooltip title="Refresh" arrow classes={{ tooltip: "g-tooltip", arrow: "g-tooltip-arrow" }}>
               <IconButton onClick={fetchRegistrations} size="small" disabled={loading} className="form-action-btn">
@@ -792,13 +825,16 @@ const Form: React.FC<{ onAddFormClick?: () => void }> = ({ onAddFormClick }) => 
                       tooltipText = validation.comment;
                     }
 
+                    const isOthersInstitute = reg.instituteId === 1;
                     const rowClassName = isBatchDuplicate
                       ? "table-row-batch-duplicate"
                       : isDuplicate
                         ? "table-row-duplicate"
                         : isOld
                           ? "table-row-old"
-                          : "";
+                          : isOthersInstitute
+                            ? "table-row-others-institute"
+                            : "";
 
                     return (
                       <TableRow key={reg.registrationId} className={rowClassName}>
@@ -830,7 +866,32 @@ const Form: React.FC<{ onAddFormClick?: () => void }> = ({ onAddFormClick }) => 
                         </TableCell>
                         <TableCell>{reg.email}</TableCell>
                         <TableCell>{reg.phone}</TableCell>
-                        <TableCell>{reg.collegeName}</TableCell>
+                        <TableCell
+                          onDoubleClick={() => handleStartEdit(reg)}
+                          className="form-cell-editable"
+                        >
+                          {editingRegistrationId === reg.registrationId ? (
+                            <input
+                              autoFocus
+                              className="form-inline-input"
+                              value={editValue}
+                              onChange={e => setEditValue(e.target.value)}
+                              onKeyDown={e => { if (e.key === 'Escape') { setEditingRegistrationId(null); setEditValue(""); } }}
+                              onBlur={handleSaveEdit}
+                              disabled={isSaving}
+                            />
+                          ) : isOthersInstitute ? (
+                            <Tooltip
+                              title={`"${reg.collegeName}" doesn't exist in our institute list`}
+                              arrow
+                              classes={{ tooltip: "g-tooltip", arrow: "g-tooltip-arrow" }}
+                            >
+                              <span className="form-others-college-name">{reg.collegeName}</span>
+                            </Tooltip>
+                          ) : (
+                            reg.collegeName
+                          )}
+                        </TableCell>
                         <TableCell>{reg.degree}</TableCell>
                         <TableCell>{reg.cgpa}</TableCell>
                         <TableCell>{reg.graduationYear}</TableCell>

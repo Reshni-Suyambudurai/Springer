@@ -9,7 +9,7 @@ set DB_HOST=localhost
 set DB_PORT=3306
 set DB_NAME=Springer
 set DB_USER=root
-set DB_PASS=Reseted@199800
+set DB_PASS=admin
 
 REM -- Server Ports --
 set BACKEND_PORT=8080

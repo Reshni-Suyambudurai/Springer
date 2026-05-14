@@ -153,8 +153,9 @@ public class DriveAssignmentServiceImpl implements IDriveAssignmentService {
             roundConfig = roundTemplateRepository.findById(request.getRoundConfigId())
                 .orElseThrow(() -> new ResourceNotFoundException("RoundTemplate", "ID", request.getRoundConfigId()));
         } else if (request.getRoundNo() != null) {
-            roundConfig = roundTemplateRepository.findByRoundNo(request.getRoundNo())
-                .orElseThrow(() -> new ResourceNotFoundException("RoundTemplate", "roundNo", request.getRoundNo()));
+            List<RoundTemplate> rts = roundTemplateRepository.findByRoundNoOrderByRoundConfigIdAsc(request.getRoundNo());
+            if (rts.isEmpty()) throw new ResourceNotFoundException("RoundTemplate", "roundNo", request.getRoundNo());
+            roundConfig = rts.stream().filter(rt -> Boolean.TRUE.equals(rt.getIsActive())).findFirst().orElse(rts.get(0));
         }
         
         // 1 query — fetch existing active assignments for upsert (keyed by applicationId + userId)
@@ -420,9 +421,15 @@ public class DriveAssignmentServiceImpl implements IDriveAssignmentService {
     @Override
     @Transactional(readOnly = true)
     public List<PanelAllocationStatusResponse> getAllocationStatus(Long driveId, Integer roundNo, List<Long> applicationIds) {
-        // 1 query — resolve roundNo → roundConfigId
-        RoundTemplate roundConfig = roundTemplateRepository.findByRoundNo(roundNo)
-            .orElseThrow(() -> new ResourceNotFoundException("RoundTemplate", "roundNo", roundNo));
+        // 1 query — resolve roundNo → roundConfigId (pick active first to handle seed duplicates)
+        List<RoundTemplate> roundTemplates = roundTemplateRepository.findByRoundNoOrderByRoundConfigIdAsc(roundNo);
+        if (roundTemplates.isEmpty()) {
+            throw new ResourceNotFoundException("RoundTemplate", "roundNo", roundNo);
+        }
+        RoundTemplate roundConfig = roundTemplates.stream()
+                .filter(rt -> Boolean.TRUE.equals(rt.getIsActive()))
+                .findFirst()
+                .orElse(roundTemplates.get(0));
         
         Long roundConfigId = roundConfig.getRoundConfigId();
         

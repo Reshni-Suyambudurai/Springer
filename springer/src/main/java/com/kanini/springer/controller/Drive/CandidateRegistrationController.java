@@ -4,6 +4,7 @@ import com.kanini.springer.dto.Authentication.ApiResponse;
 import com.kanini.springer.dto.Drive.BulkDeleteRegistrationRequest;
 import com.kanini.springer.dto.Drive.CandidateRegistrationRequest;
 import com.kanini.springer.dto.Drive.CandidateRegistrationResponse;
+import com.kanini.springer.dto.Drive.CandidateRegistrationUpdateRequest;
 import com.kanini.springer.service.Drive.ICandidateRegistrationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -69,6 +70,18 @@ public class CandidateRegistrationController {
         CandidateRegistrationResponse response = registrationService.getRegistrationById(registrationId);
         return ResponseEntity.ok(
                 new ApiResponse<>(true, "Registration retrieved successfully", response));
+    }
+
+    @PatchMapping("/{registrationId}")
+    @Operation(summary = "Partially update a registration",
+               description = "Updates collegeName, email, and/or mobile of an existing registration. Only provided fields are updated.")
+    public ResponseEntity<ApiResponse<CandidateRegistrationResponse>> updateRegistration(
+            @PathVariable Long registrationId,
+            @Valid @RequestBody CandidateRegistrationUpdateRequest request) {
+
+        CandidateRegistrationResponse response = registrationService.updateRegistration(registrationId, request);
+        return ResponseEntity.ok(
+                new ApiResponse<>(true, "Registration updated successfully", response));
     }
 
     @DeleteMapping("/{registrationId}")

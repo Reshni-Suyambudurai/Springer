@@ -9,6 +9,20 @@
   gap: 1.5rem;
 }
 
+/* Others college name input wrapper */
+.public-reg-others-college-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  width: 100%;
+  grid-column: 1 / -1;
+}
+
+.public-reg-others-college-wrapper .public-reg-full-width {
+  width: 100%;
+  grid-column: unset;
+}
+
 /* Header Card */
 .public-reg-header-card {
   width: 100%;

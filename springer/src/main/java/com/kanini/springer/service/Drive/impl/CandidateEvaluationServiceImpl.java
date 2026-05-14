@@ -729,9 +729,15 @@ public class CandidateEvaluationServiceImpl implements ICandidateEvaluationServi
             throw new ValidationException("Application IDs list cannot be empty");
         }
 
-        // Find the RoundTemplate by roundNo
-        RoundTemplate roundTemplate = roundTemplateRepository.findByRoundNo(request.getRoundNo())
-                .orElseThrow(() -> new ResourceNotFoundException("Round template", "roundNo", request.getRoundNo()));
+        // Find the RoundTemplate by roundNo — pick lowest ID to handle seed duplicates gracefully
+        List<RoundTemplate> roundTemplates = roundTemplateRepository.findByRoundNoOrderByRoundConfigIdAsc(request.getRoundNo());
+        if (roundTemplates.isEmpty()) {
+            throw new ResourceNotFoundException("Round template", "roundNo", request.getRoundNo());
+        }
+        RoundTemplate roundTemplate = roundTemplates.stream()
+                .filter(rt -> Boolean.TRUE.equals(rt.getIsActive()))
+                .findFirst()
+                .orElse(roundTemplates.get(0));
 
         // Single query with JOIN FETCH to avoid N+1 — loads application, candidate, and reviewedBy
         List<CandidateEvaluation> evaluations = evaluationRepository

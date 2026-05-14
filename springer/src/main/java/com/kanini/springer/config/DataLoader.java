@@ -17,6 +17,7 @@ import com.kanini.springer.repository.Common.EmailTemplateRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -27,10 +28,22 @@ import java.util.List;
 
 /**
  * Data loader to seed initial/demo data into the database
+ * 
+ * IMPORTANT: This DataLoader is DISABLED in production environments.
+ * In production, use Flyway migrations (V2__Seed_Data.sql) for data seeding.
+ * 
+ * Enable/Disable via property: app.data-loader.enabled
+ * - Set to 'false' in production (application-prod.properties)
+ * - Set to 'true' in dev/test (application-dev.properties, application-test.properties)
  */
 @Configuration
 @RequiredArgsConstructor
 @Slf4j
+@ConditionalOnProperty(
+    name = "app.data-loader.enabled",
+    havingValue = "true",
+    matchIfMissing = false  // Defaults to disabled if property not set
+)
 public class DataLoader {
 
     private final RoleRepository roleRepository;

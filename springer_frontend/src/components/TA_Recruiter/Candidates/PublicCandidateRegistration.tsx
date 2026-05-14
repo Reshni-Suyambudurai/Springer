@@ -131,7 +131,15 @@ const PublicCandidateRegistration: React.FC = () => {
     if (!formData.fname.trim()) errors.fname = true;
     if (!formData.email.trim()) errors.email = true;
     if (!formData.phone.trim()) errors.phone = true;
-    if (!formData.collegeName.trim()) errors.collegeName = true;
+    if (!selectedInstitute) errors.collegeName = true;
+    else if (selectedInstitute.instituteId === 1) {
+      const customName = formData.collegeName.trim();
+      const isStillDefault = customName === "" || customName.toLowerCase() === selectedInstitute.instituteName.trim().toLowerCase();
+      if (isStillDefault) {
+        errors.customCollegeName = true;
+        showToast("Please enter your full college name", "error");
+      }
+    }
     if (!formData.degree) errors.degree = true;
     if (!formData.department) errors.department = true;
     if (!formData.dob) errors.dob = true;
@@ -352,35 +360,42 @@ const PublicCandidateRegistration: React.FC = () => {
             />
 
             {/* College Name */}
-            <Autocomplete
-              freeSolo
-              options={institutes}
-              getOptionLabel={(option) => typeof option === "string" ? option : option.instituteName}
-              value={selectedInstitute}
-              onChange={(_, newValue) => {
-                if (typeof newValue === "object" && newValue) {
+            <div className="public-reg-others-college-wrapper">
+              <Autocomplete
+                options={institutes}
+                getOptionLabel={(option) => option.instituteName}
+                value={selectedInstitute}
+                onChange={(_, newValue) => {
                   setSelectedInstitute(newValue);
-                  setFormData({ ...formData, collegeName: newValue.instituteName });
+                  setFormData({ ...formData, collegeName: newValue ? newValue.instituteName : "" });
                   clearFieldError("collegeName");
-                } else {
-                  setSelectedInstitute(null);
-                }
-              }}
-              inputValue={formData.collegeName}
-              onInputChange={(_, newInputValue) => {
-                setFormData({ ...formData, collegeName: newInputValue });
-                clearFieldError("collegeName");
-              }}
-              renderInput={(params) => (
+                  clearFieldError("customCollegeName");
+                }}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label="College Name *"
+                    error={fieldErrors.collegeName}
+                    helperText={fieldErrors.collegeName && "Please select a college from the list"}
+                  />
+                )}
+                className="public-reg-full-width"
+              />
+              {selectedInstitute?.instituteId === 1 && (
                 <TextField
-                  {...params}
-                  label="College Name *"
-                  error={fieldErrors.collegeName}
-                  helperText={fieldErrors.collegeName && "College name is required"}
+                  label="Enter Full College Name *"
+                  fullWidth
+                  placeholder="Enter full college name"
+                  value={formData.collegeName === selectedInstitute.instituteName ? "" : formData.collegeName}
+                  onChange={(e) => {
+                    setFormData({ ...formData, collegeName: e.target.value });
+                    clearFieldError("customCollegeName");
+                  }}
+                  error={fieldErrors.customCollegeName}
+                  helperText={fieldErrors.customCollegeName ? "College name is required" : " "}
                 />
               )}
-              className="public-reg-full-width"
-            />
+            </div>
 
             {/* Graduation Year */}
             <TextField

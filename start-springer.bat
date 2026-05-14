@@ -8,8 +8,8 @@ echo  ============================================
 echo    SPRINGER - Application Launcher
 echo  ============================================
 echo    - Creates database if missing
-echo    - Auto-creates tables (Hibernate)
-echo    - Auto-seeds demo data (DataLoader)
+echo    - Runs Flyway migrations (schema + data)
+echo    - Auto-validates schema (Hibernate)
 echo    - Builds backend if needed
 echo    - Installs frontend deps if needed
 echo  ============================================
@@ -86,16 +86,19 @@ if %errorlevel% neq 0 (
     echo  [WARNING] Cannot reach MySQL at %DB_HOST%:%DB_PORT%
     set /p CONTINUE="  Continue anyway? (Y/N): "
     if /i not "%CONTINUE%"=="Y" exit /b 1
-) else (
-    echo        MySQL ........... Connected
-    echo        Creating database if not exists...
-    mysql -h%DB_HOST% -P%DB_PORT% -u%DB_USER% -p%DB_PASS% -e "CREATE DATABASE IF NOT EXISTS %DB_NAME%;" 2>nul
-    if %errorlevel% equ 0 (
-        echo        Database ........ Ready (%DB_NAME%)
-    ) else (
-        echo  [WARNING] Could not create database. Ensure it exists manually.
-    )
+    goto skip_db_check
 )
+
+echo        MySQL ........... Connected
+echo        Creating database if not exists...
+mysql -h%DB_HOST% -P%DB_PORT% -u%DB_USER% -p%DB_PASS% -e "CREATE DATABASE IF NOT EXISTS %DB_NAME%;" 2>nul
+if %errorlevel% equ 0 (
+    echo        Database ........ Ready (%DB_NAME%)
+    goto skip_db_check
+)
+echo  [WARNING] Could not create database. Ensure it exists manually.
+
+:skip_db_check
 
 REM -- Start Backend (skip if already running) --
 echo.
@@ -115,7 +118,7 @@ if not exist "target" (
 )
 cd /d "%~dp0"
 
-powershell -command "try { Invoke-WebRequest -Uri 'http://localhost:%BACKEND_PORT%/v3/api-docs' -UseBasicParsing -TimeoutSec 2 -ErrorAction Stop | Out-Null; exit 0 } catch { exit 1 }" >nul 2>&1
+powershell -command "try { $tcp = New-Object System.Net.Sockets.TcpClient; $tcp.Connect('localhost', %BACKEND_PORT%); $tcp.Close(); exit 0 } catch { exit 1 }" >nul 2>&1
 if %errorlevel% equ 0 (
     echo        Backend ......... Already Running
     goto backend_ready
@@ -128,7 +131,7 @@ set RETRIES=0
 :wait_backend
 timeout /t 5 /nobreak >nul
 set /a RETRIES+=1
-powershell -command "try { Invoke-WebRequest -Uri 'http://localhost:%BACKEND_PORT%/v3/api-docs' -UseBasicParsing -TimeoutSec 3 -ErrorAction Stop | Out-Null; exit 0 } catch { exit 1 }" >nul 2>&1
+powershell -command "try { $tcp = New-Object System.Net.Sockets.TcpClient; $tcp.Connect('localhost', %BACKEND_PORT%); $tcp.Close(); exit 0 } catch { exit 1 }" >nul 2>&1
 if %errorlevel% equ 0 (
     echo        Backend ......... Ready
     goto backend_ready

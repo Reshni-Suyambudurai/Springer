@@ -2,6 +2,7 @@ package com.kanini.springer.service.Drive.impl;
 
 import com.kanini.springer.dto.Drive.CandidateRegistrationRequest;
 import com.kanini.springer.dto.Drive.CandidateRegistrationResponse;
+import com.kanini.springer.dto.Drive.CandidateRegistrationUpdateRequest;
 import com.kanini.springer.entity.Drive.CandidateRegistration;
 import com.kanini.springer.entity.Drive.Drive;
 import com.kanini.springer.entity.Drive.Form;
@@ -20,6 +21,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * Service implementation for candidate registration operations
@@ -69,6 +73,11 @@ public class CandidateRegistrationServiceImpl implements ICandidateRegistrationS
         
         CandidateRegistration savedRegistration = registrationRepository.save(registration);
 
+        // Auto-resolve institute from collegeName if institute is OTHERS (id=1)
+        if (savedRegistration.getInstitute() != null && savedRegistration.getInstitute().getInstituteId() == 1L) {
+            resolveInstituteIfOthers(savedRegistration, buildInstituteNameMap());
+        }
+
         log.info("Registration successful. Registration ID: {}", savedRegistration.getRegistrationId());
         return mapper.toResponse(savedRegistration);
     }
@@ -91,7 +100,7 @@ public class CandidateRegistrationServiceImpl implements ICandidateRegistrationS
     }
 
     @Override
-    @Transactional(readOnly = true)
+    @Transactional
     public List<CandidateRegistrationResponse> getRegistrationsByFormId(Long formId) {
         log.info("Fetching all registrations for form ID: {}", formId);
 
@@ -101,6 +110,27 @@ public class CandidateRegistrationServiceImpl implements ICandidateRegistrationS
         }
 
         List<CandidateRegistration> registrations = registrationRepository.findByFormFormId(formId);
+
+        // Only attempt resolution if any record has instituteId=1
+        List<CandidateRegistration> othersRecords = registrations.stream()
+                .filter(r -> r.getInstitute() != null && r.getInstitute().getInstituteId() == 1L
+                        && r.getCollegeName() != null && !r.getCollegeName().isBlank())
+                .toList();
+
+        if (!othersRecords.isEmpty()) {
+            // Build the map once for the entire batch (1 DB hit)
+            Map<String, Institute> nameToInstitute = buildInstituteNameMap();
+            boolean anyResolved = false;
+            for (CandidateRegistration reg : othersRecords) {
+                if (resolveInstituteIfOthers(reg, nameToInstitute)) {
+                    anyResolved = true;
+                }
+            }
+            if (anyResolved) {
+                registrations = registrationRepository.findByFormFormId(formId);
+            }
+        }
+
         return registrations.stream()
                 .map(mapper::toResponse)
                 .toList();
@@ -116,6 +146,63 @@ public class CandidateRegistrationServiceImpl implements ICandidateRegistrationS
                 .orElseThrow(() -> new ResourceNotFoundException("Registration", "ID", registrationId));
 
         return mapper.toResponse(registration);
+    }
+
+    @Override
+    @Transactional
+    public CandidateRegistrationResponse updateRegistration(Long registrationId, CandidateRegistrationUpdateRequest request) {
+        log.info("Updating registration ID: {}", registrationId);
+
+        CandidateRegistration registration = registrationRepository.findById(registrationId)
+                .orElseThrow(() -> new ResourceNotFoundException("Registration", "ID", registrationId));
+
+        if (request.getCollegeName() != null && !request.getCollegeName().isBlank()) {
+            registration.setCollegeName(request.getCollegeName());
+        }
+        if (request.getEmail() != null && !request.getEmail().isBlank()) {
+            registration.setEmail(request.getEmail());
+        }
+        if (request.getMobile() != null && !request.getMobile().isBlank()) {
+            registration.setPhone(request.getMobile());
+        }
+
+        CandidateRegistration saved = registrationRepository.save(registration);
+        log.info("Registration ID: {} updated successfully", registrationId);
+        return mapper.toResponse(saved);
+    }
+
+    /**
+     * Builds a lowercase instituteName -> Institute map from all institutes (active and inactive),
+     * excluding the OTHERS placeholder (id=1).
+     */
+    private Map<String, Institute> buildInstituteNameMap() {
+        return instituteRepository.findAll().stream()
+                .filter(i -> i.getInstituteName() != null && i.getInstituteId() != 1L)
+                .collect(Collectors.toMap(
+                        i -> i.getInstituteName().trim().toLowerCase(),
+                        Function.identity(),
+                        (a, b) -> a
+                ));
+    }
+
+    /**
+     * If the registration's institute is OTHERS (id=1), attempts to match collegeName
+     * (case-insensitive) against the provided institute map. On a match, updates the
+     * registration's institute and persists it.
+     *
+     * @return true if a match was found and the record was updated
+     */
+    private boolean resolveInstituteIfOthers(CandidateRegistration registration, Map<String, Institute> nameToInstitute) {
+        String collegeNameLower = registration.getCollegeName().trim().toLowerCase();
+        Institute matched = nameToInstitute.get(collegeNameLower);
+        if (matched != null) {
+            log.info("Auto-resolved institute for registration ID {}: '{}' -> institute ID {}",
+                    registration.getRegistrationId(), registration.getCollegeName(), matched.getInstituteId());
+            registration.setInstitute(matched);
+            registrationRepository.save(registration);
+            return true;
+        }
+        return false;
     }
 
     @Override

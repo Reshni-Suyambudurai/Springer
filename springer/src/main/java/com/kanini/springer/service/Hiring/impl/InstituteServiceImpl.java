@@ -226,13 +226,12 @@ public class InstituteServiceImpl implements IInstituteService {
         
         // Partial update - only update fields that are provided
         if (request.getInstituteName() != null && !request.getInstituteName().isBlank()) {
-            // Check if new name already exists (excluding current institute)
-            instituteRepository.findByInstituteName(request.getInstituteName())
-                    .ifPresent(existingInstitute -> {
-                        if (!existingInstitute.getInstituteId().equals(instituteId)) {
-                            throw new ValidationException("Institute already exists with name: " + request.getInstituteName());
-                        }
-                    });
+            // Only check uniqueness if the name actually changed
+            if (!institute.getInstituteName().equalsIgnoreCase(request.getInstituteName())) {
+                if (instituteRepository.findByInstituteName(request.getInstituteName()).isPresent()) {
+                    throw new ValidationException("Institute already exists with name: " + request.getInstituteName());
+                }
+            }
             institute.setInstituteName(request.getInstituteName());
         }
         
