@@ -40,7 +40,6 @@ import DocumentProcessingDashboard from './components/TA_Recruiter/DocumentProce
 // Academy
 import TrainingCoordinatorDashboard from './components/Academy/TrainingCoordinator/TrainingCoordinatorDashboard'
 import AcademyDashboard from './components/Academy/TrainingCoordinator/AcademyDashboard'
-import AcademyCalendar from './components/Academy/TrainingCoordinator/AcademyCalendar'
 import InternDashboard from './components/Academy/Intern/InternDashboard'
 import InternScoresPage from './components/Academy/Intern/InternScoresPage'
 import InternAttendancePage from './components/Academy/Intern/InternAttendancePage'
@@ -172,7 +171,6 @@ function App() {
           <Route path="/members/panel-scoring" element={<PanelScoring />} />
           <Route path="/members/panel-history" element={<AllocationHistory />} />
           <Route path="/members/academy" element={<AcademyDashboard />} />
-          <Route path="/members/calendar" element={<AcademyCalendar />} />
         </Route>
 
         {/* ADMIN */}
@@ -199,7 +197,6 @@ function App() {
         <Route element={<ProtectedRoute allowedRoles={['TRAINING_COORDINATOR']} />}>
           <Route path="/training-coordinator/dashboard" element={<TrainingCoordinatorDashboard />} />
           <Route path="/training-coordinator/academy" element={<AcademyDashboard />} />
-          <Route path="/training-coordinator/calendar" element={<AcademyCalendar />} />
         </Route>
 
         {/* HR_OPERATIONS â€” redirect to unauthorized (no dedicated dashboard yet) */}
