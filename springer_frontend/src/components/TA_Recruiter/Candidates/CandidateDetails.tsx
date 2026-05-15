@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+﻿import React, { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { candidateApi } from "../../../services/drive.api";
 import { overrideApi } from "../../../services/override.api";
@@ -28,7 +28,6 @@ import {
   DialogContent,
   DialogActions,
 } from "@mui/material";
-import EditIcon from "@mui/icons-material/Edit";
 import PersonIcon from "@mui/icons-material/Person";
 import SchoolIcon from "@mui/icons-material/School";
 import CategoryIcon from "@mui/icons-material/Category";
@@ -36,6 +35,7 @@ import AssignmentIndIcon from "@mui/icons-material/AssignmentInd";
 import TimelineIcon from "@mui/icons-material/Timeline";
 import WorkIcon from "@mui/icons-material/Work";
 import RocketLaunchIcon from "@mui/icons-material/RocketLaunch";
+import { FigmaEditIcon as EditIcon } from '../../Common/FigmaIcons';
 import { internApi } from "../../../services/intern.api";
 import "../../../css/TA_Recruiter/Candidates/CandidateDetails.css";
 
@@ -629,7 +629,7 @@ const CandidateDetails: React.FC = () => {
           </Card>
         </Grid>
 
-        {/* Activate Intern Card — shown only for JOINED candidates without user account */}
+        {/* Activate Intern Card â€” shown only for JOINED candidates without user account */}
         {candidate.applicationStage === 'JOINED' && !candidate.userId && (
           <Grid size={{ xs: 12, md: 6 }}>
             <Card className="details-info-card">
@@ -699,7 +699,7 @@ const CandidateDetails: React.FC = () => {
                                   <Box key={idx} className="override-change-compact">
                                     <strong>{change.field}:</strong>
                                     <span className="change-old-compact">{String(change.old ?? 'N/A')}</span>
-                                    <span className="change-arrow-compact">→</span>
+                                    <span className="change-arrow-compact">â†’</span>
                                     <span className="change-new-compact">{String(change.newValue ?? 'N/A')}</span>
                                   </Box>
                                 ))}

@@ -1,9 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useInternData } from './useInternData';
 import { academyEventApi } from '../../../services/academyEvent.api';
 import type { AcademyEventResponse } from '../../../services/academyEvent.api';
 import { leaveApi } from '../../../services/leave.api';
 import type { LeaveRequestResponse } from '../../../services/leave.api';
+import { FigmaCloseIcon as CloseIcon } from '../../Common/FigmaIcons';
 import '../../../css/Academy/Intern/InternCalendar.css';
 
 const DAYS   = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -40,6 +41,21 @@ const InternCalendarPage = () => {
   const [leaveRequests, setLeaveRequests] = useState<LeaveRequestResponse[]>([]);
   const [extraLoading, setExtraLoading] = useState(false);
   const [selectedDay, setSelectedDay]   = useState<Date | null>(null);
+  const [viewMode, setViewMode]         = useState<'month' | 'week'>('month');
+
+  // Week days memo — must be above early returns (Rules of Hooks)
+  const weekDays = useMemo(() => {
+    const d = new Date(current);
+    const day = d.getDay();
+    const start = new Date(d);
+    start.setDate(d.getDate() - day);
+    return Array.from({ length: 7 }, (_, i) => {
+      const dt = new Date(start);
+      dt.setDate(start.getDate() + i);
+      dt.setHours(0, 0, 0, 0);
+      return dt;
+    });
+  }, [current]);
 
   // Fetch events + leaves together once studentId is known
   useEffect(() => {
@@ -129,6 +145,27 @@ const InternCalendarPage = () => {
   const nextMonth = () => setCurrent(new Date(year, month + 1, 1));
   const goToday   = () => setCurrent(new Date());
 
+  // ── Week view helpers ───────────────────────────────────────────────────────
+  const WEEK_HOURS = Array.from({ length: 13 }, (_, i) => i + 7); // 07:00 – 19:00
+
+  const barTypeClass: Record<string, string> = {
+    'batch':     'ical-wbar--batch',
+    'active':    'ical-wbar--active',
+    'planned':   'ical-wbar--planned',
+    'completed': 'ical-wbar--completed',
+    'event':     'ical-wbar--event',
+  };
+
+  const getWeekBarsForDay = (date: Date) => {
+    return bars.filter(b => isBetween(date, b.start, b.end))
+      .map(b => {
+        const evt = internEvents.find(e => b.id === `event-${e.eventId}`);
+        const timeStr = evt?.eventTime || '09:00';
+        const [h, m] = timeStr.split(':').map(Number);
+        return { bar: b, hour: h || 9, minute: m || 0, type: b.type, evt };
+      });
+  };
+
   return (
     <div className="ical-page">
 
@@ -171,10 +208,22 @@ const InternCalendarPage = () => {
             <span className="ical-legend-item"><span className="ical-dot ical-dot--absent" />Absent</span>
             <span className="ical-legend-item"><span className="ical-dot ical-dot--leave" />Leave</span>
           </div>
+          <div className="ical-view-toggle">
+            <span className="ical-view-toggle-label">View:</span>
+            <select
+              className="ical-view-select"
+              value={viewMode}
+              onChange={e => setViewMode(e.target.value as 'month' | 'week')}
+            >
+              <option value="month">Month</option>
+              <option value="week">Week</option>
+            </select>
+          </div>
         </div>
       </div>
 
       {/* ── Calendar grid ── */}
+      {viewMode === 'month' ? (
       <div className="ical-grid-wrap">
         <div className="ical-weekdays">
           {DAYS.map(d => <div key={d} className="ical-weekday">{d}</div>)}
@@ -236,6 +285,53 @@ const InternCalendarPage = () => {
           })}
         </div>
       </div>
+      ) : (
+        /* ── Week View ── */
+        <div className="ical-week-container">
+          {/* Week header with day names + dates */}
+          <div className="ical-week-header">
+            <div className="ical-week-time-gutter" />
+            {weekDays.map((d, i) => {
+              const dayIsToday = isToday(d);
+              return (
+                <div key={i} className={`ical-week-day-col-header ${dayIsToday ? 'ical-week-day-col-header--today' : ''}`}>
+                  <span className="ical-week-day-name">{DAYS[d.getDay()]}</span>
+                  <span className={`ical-week-day-num ${dayIsToday ? 'ical-week-day-num--today' : ''}`}>{d.getDate()}</span>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Time grid */}
+          <div className="ical-week-body">
+            {WEEK_HOURS.map(hour => (
+              <div key={hour} className="ical-week-row">
+                <div className="ical-week-time-gutter">
+                  <span className="ical-week-time-label">{String(hour).padStart(2, '0')}:00</span>
+                </div>
+                {weekDays.map((d, di) => {
+                  const dayBarsW = getWeekBarsForDay(d);
+                  const barsAtHour = dayBarsW.filter(b => b.hour === hour);
+                  const dayHasContent = getBars(d).length > 0 || getAtt(d) !== null || getLeave(d) !== null;
+                  return (
+                    <div key={di} className={`ical-week-cell ${isToday(d) ? 'ical-week-cell--today' : ''}`}
+                      onClick={() => { if (dayHasContent) setSelectedDay(d); }}>
+                      {barsAtHour.map(({ bar }, bi) => (
+                        <div key={bi} className={`ical-week-event ${barTypeClass[bar.type] || 'ical-wbar--active'}`}>
+                          <span className="ical-week-event-title">{bar.label}</span>
+                          {bar.venue && (
+                            <span className="ical-week-event-sub">{bar.venue}</span>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  );
+                })}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* ── Day detail popup ── */}
       {selectedDay && (() => {
@@ -254,7 +350,7 @@ const InternCalendarPage = () => {
             <div className="ical-popup" onClick={e => e.stopPropagation()}>
               <div className="ical-popup-header">
                 <span className="ical-popup-date">{dateLabel}</span>
-                <button className="ical-popup-close" onClick={() => setSelectedDay(null)}>✕</button>
+                <button className="ical-popup-close" onClick={() => setSelectedDay(null)}><CloseIcon style={{ fontSize: '1.25rem' }} /></button>
               </div>
               <div className="ical-popup-body">
 

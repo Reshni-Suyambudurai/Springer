@@ -15,6 +15,8 @@ public interface IDocumentSubmissionService {
     
     List<DocumentSubmissionResponse> getAllSubmissions(String status, Long cycleId, int page, int size);
     
+    List<DocumentSubmissionResponse> getAllSubmissions(String status, Long cycleId, String applicationStage, int page, int size);
+    
     byte[] downloadDocument(Long documentId);
     
     void deleteSubmission(Long documentId);

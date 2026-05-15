@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { FigmaCloseIcon as CloseIcon } from '../../Common/FigmaIcons';
 import { useInternData } from './useInternData';
 import { leaveApi } from '../../../services/leave.api';
 import type { LeaveRequestResponse } from '../../../services/leave.api';
@@ -118,7 +119,7 @@ const InternLeavePage = () => {
         <div className="ilv-form-card">
           <div className="ilv-form-header">
             <p className="ilv-form-title">Apply for Leave</p>
-            <button className="ilv-form-close" onClick={() => setShowForm(false)}>✕</button>
+            <button className="ilv-form-close" onClick={() => setShowForm(false)}><CloseIcon style={{ fontSize: '1.25rem' }} /></button>
           </div>
           <div className="ilv-form-body">
             <div className="ilv-form-row">

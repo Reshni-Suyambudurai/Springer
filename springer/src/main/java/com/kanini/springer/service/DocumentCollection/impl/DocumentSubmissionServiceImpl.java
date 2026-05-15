@@ -137,6 +137,12 @@ public class DocumentSubmissionServiceImpl implements IDocumentSubmissionService
     @Override
     @Transactional(readOnly = true)
     public List<DocumentSubmissionResponse> getAllSubmissions(String status, Long cycleId, int page, int size) {
+        return getAllSubmissions(status, cycleId, null, page, size);
+    }
+    
+    @Override
+    @Transactional(readOnly = true)
+    public List<DocumentSubmissionResponse> getAllSubmissions(String status, Long cycleId, String applicationStage, int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
         Page<DocumentSubmission> submissions;
         
@@ -148,7 +154,17 @@ public class DocumentSubmissionServiceImpl implements IDocumentSubmissionService
                 throw new ValidationException("Invalid verification status: " + status, e);
             }
         } else if (cycleId != null) {
-            submissions = submissionRepository.findByCycleId(cycleId, pageable);
+            // NEW: Filter by applicationStage if provided
+            if (applicationStage != null) {
+                try {
+                    Enums.ApplicationStage appStage = Enums.ApplicationStage.valueOf(applicationStage.toUpperCase(java.util.Locale.ROOT));
+                    submissions = submissionRepository.findByCycleIdAndApplicationStage(cycleId, appStage, pageable);
+                } catch (IllegalArgumentException e) {
+                    throw new ValidationException("Invalid application stage: " + applicationStage, e);
+                }
+            } else {
+                submissions = submissionRepository.findByCycleId(cycleId, pageable);
+            }
         } else if (status != null) {
             try {
                 Enums.VerificationStatus verificationStatus = Enums.VerificationStatus.valueOf(status.toUpperCase(java.util.Locale.ROOT));

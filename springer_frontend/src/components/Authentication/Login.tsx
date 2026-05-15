@@ -39,7 +39,7 @@ const Login: React.FC = () => {
       return false;
     }
     if (!emailRegex.test(email)) {
-      setEmailError("Email must end with @kanini.com");
+      setEmailError("Please enter a valid email address");
       return false;
     }
     setEmailError("");

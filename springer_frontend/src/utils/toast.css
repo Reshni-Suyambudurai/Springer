@@ -18,6 +18,26 @@
   animation: toastSlide 0.3s ease;
 }
 
+/* Warning toast */
+.notistack-MuiContent-warning {
+  background-color: var(--color-warning) !important;
+  color: white !important;
+  border-radius: 10px !important;
+  font-weight: 500;
+  box-shadow: var(--shadow-card) !important;
+  animation: toastSlide 0.3s ease;
+}
+
+/* Info toast */
+.notistack-MuiContent-info {
+  background-color: var(--color-info) !important;
+  color: white !important;
+  border-radius: 10px !important;
+  font-weight: 500;
+  box-shadow: var(--shadow-card) !important;
+  animation: toastSlide 0.3s ease;
+}
+
 /* Animation */
 @keyframes toastSlide {
   from {

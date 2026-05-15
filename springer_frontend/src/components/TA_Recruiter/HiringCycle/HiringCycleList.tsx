@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import {
   Box, Card, Typography, Stack, Chip, IconButton,
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
-  TablePagination, CircularProgress, Alert,
+  CircularProgress, Alert,
 } from '@mui/material';
 import {
   DateRange as CycleIcon,
@@ -18,8 +18,6 @@ const TARHiringCycleList = () => {
   const [cycles, setCycles] = useState<HiringCycleResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
 
   useEffect(() => {
     const fetch = async () => {
@@ -37,7 +35,7 @@ const TARHiringCycleList = () => {
     fetch();
   }, []);
 
-  const paginated = cycles.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
+
 
   return (
     <Box className="t-page">
@@ -81,7 +79,7 @@ const TARHiringCycleList = () => {
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {paginated.length === 0 ? (
+                    {cycles.length === 0 ? (
                       <TableRow>
                         <TableCell colSpan={7} align="center" className="t-empty-cell">
                           <CycleIcon className="t-empty-icon" />
@@ -89,7 +87,7 @@ const TARHiringCycleList = () => {
                         </TableCell>
                       </TableRow>
                     ) : (
-                      paginated.map((cycle, idx) => (
+                      cycles.map((cycle, idx) => (
                         <TableRow
                           key={cycle.cycleId}
                           hover
@@ -109,12 +107,12 @@ const TARHiringCycleList = () => {
                           </TableCell>
                           <TableCell className="t-cell">
                             <Typography className="t-row-secondary">
-                              {cycle.budget ? `₹ ${cycle.budget.toLocaleString('en-IN')}` : '—'}
+                              {cycle.budget ? `â‚¹ ${cycle.budget.toLocaleString('en-IN')}` : 'â€”'}
                             </Typography>
                           </TableCell>
                           <TableCell className="t-cell">
                             <Typography className="t-row-secondary">
-                              {cycle.compensationBand ? `Band ${cycle.compensationBand}` : '—'}
+                              {cycle.compensationBand ? `Band ${cycle.compensationBand}` : 'â€”'}
                             </Typography>
                           </TableCell>
                           <TableCell className="t-cell">
@@ -147,16 +145,6 @@ const TARHiringCycleList = () => {
                   </TableBody>
                 </Table>
               </TableContainer>
-              <TablePagination
-                component="div"
-                count={cycles.length}
-                page={page}
-                onPageChange={(_, newPage) => setPage(newPage)}
-                rowsPerPage={rowsPerPage}
-                onRowsPerPageChange={(e) => { setRowsPerPage(parseInt(e.target.value, 10)); setPage(0); }}
-                rowsPerPageOptions={[10, 25, 50]}
-                className="t-pagination"
-              />
             </>
           )}
         </Box>

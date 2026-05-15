@@ -53,7 +53,7 @@ class DocumentTypeServiceImplTest {
     // Helpers
     // =========================================================================
 
-    private DocumentType buildEntity(Long id, Enums.DocumentType type) {
+    private DocumentType buildEntity(Long id, String type) {
         DocumentType dt = new DocumentType();
         dt.setDocumentTypeId(id);
         dt.setDocumentType(type);
@@ -82,13 +82,12 @@ class DocumentTypeServiceImplTest {
             DocumentTypeRequest request = new DocumentTypeRequest();
             request.setDocumentType("RESUME");
 
-            DocumentType entity = buildEntity(1L, Enums.DocumentType.RESUME);
+            DocumentType entity = buildEntity(1L, "RESUME");
             DocumentTypeResponse response = buildResponse(1L, "RESUME");
 
-            when(typeRepository.existsByDocumentType(Enums.DocumentType.RESUME)).thenReturn(false);
-            when(mapper.toEntity(request)).thenReturn(entity);
+            when(typeRepository.existsByDocumentType("RESUME")).thenReturn(false);
             when(typeRepository.save(any(DocumentType.class))).thenReturn(entity);
-            when(mapper.toResponse(entity)).thenReturn(response);
+            when(mapper.toResponse(any(DocumentType.class))).thenReturn(response);
 
             DocumentTypeResponse result = service.createType(request);
 
@@ -103,7 +102,7 @@ class DocumentTypeServiceImplTest {
             DocumentTypeRequest request = new DocumentTypeRequest();
             request.setDocumentType("RESUME");
 
-            when(typeRepository.existsByDocumentType(Enums.DocumentType.RESUME)).thenReturn(true);
+            when(typeRepository.existsByDocumentType("RESUME")).thenReturn(true);
 
             assertThatThrownBy(() -> service.createType(request))
                     .isInstanceOf(ValidationException.class)
@@ -114,10 +113,10 @@ class DocumentTypeServiceImplTest {
         @DisplayName("failure - throws ValidationException for invalid document type")
         void createType_invalidType_throwsValidation() {
             DocumentTypeRequest request = new DocumentTypeRequest();
-            request.setDocumentType("INVALID_TYPE");
+            request.setDocumentType("INVALID@TYPE!");
             assertThatThrownBy(() -> service.createType(request))
                     .isInstanceOf(ValidationException.class)
-                    .hasMessageContaining("Invalid document type");
+                    .hasMessageContaining("can only contain");
         }
 
         @ParameterizedTest
@@ -143,7 +142,7 @@ class DocumentTypeServiceImplTest {
         @Test
         @DisplayName("success - returns document type for valid ID")
         void getTypeById_found_returnsResponse() {
-            DocumentType entity = buildEntity(1L, Enums.DocumentType.RESUME);
+            DocumentType entity = buildEntity(1L, "RESUME");
             DocumentTypeResponse response = buildResponse(1L, "RESUME");
 
             when(typeRepository.findById(1L)).thenReturn(Optional.of(entity));
@@ -176,7 +175,7 @@ class DocumentTypeServiceImplTest {
         @Test
         @DisplayName("success - returns list of all document types")
         void getAllTypes_returnsList() {
-            DocumentType entity = buildEntity(1L, Enums.DocumentType.RESUME);
+            DocumentType entity = buildEntity(1L, "RESUME");
             DocumentTypeResponse response = buildResponse(1L, "RESUME");
 
             when(typeRepository.findAll()).thenReturn(List.of(entity));
@@ -209,15 +208,15 @@ class DocumentTypeServiceImplTest {
         @Test
         @DisplayName("success - updates document type to PHOTO")
         void updateType_valid_success() {
-            DocumentType entity = buildEntity(1L, Enums.DocumentType.RESUME);
-            DocumentType updated = buildEntity(1L, Enums.DocumentType.PHOTO);
+            DocumentType entity = buildEntity(1L, "RESUME");
+            DocumentType updated = buildEntity(1L, "PHOTO");
             DocumentTypeResponse response = buildResponse(1L, "PHOTO");
 
             DocumentTypeRequest request = new DocumentTypeRequest();
             request.setDocumentType("PHOTO");
 
             when(typeRepository.findById(1L)).thenReturn(Optional.of(entity));
-            when(typeRepository.existsByDocumentType(Enums.DocumentType.PHOTO)).thenReturn(false);
+            when(typeRepository.existsByDocumentType("PHOTO")).thenReturn(false);
             when(typeRepository.save(any(DocumentType.class))).thenReturn(updated);
             when(mapper.toResponse(updated)).thenReturn(response);
 
@@ -238,12 +237,12 @@ class DocumentTypeServiceImplTest {
         @Test
         @DisplayName("failure - throws ValidationException for duplicate type on update")
         void updateType_duplicate_throwsValidation() {
-            DocumentType entity = buildEntity(1L, Enums.DocumentType.RESUME);
+            DocumentType entity = buildEntity(1L, "RESUME");
             DocumentTypeRequest request = new DocumentTypeRequest();
             request.setDocumentType("PHOTO");
 
             when(typeRepository.findById(1L)).thenReturn(Optional.of(entity));
-            when(typeRepository.existsByDocumentType(Enums.DocumentType.PHOTO)).thenReturn(true);
+            when(typeRepository.existsByDocumentType("PHOTO")).thenReturn(true);
 
             assertThatThrownBy(() -> service.updateType(1L, request))
                     .isInstanceOf(ValidationException.class)
@@ -262,7 +261,7 @@ class DocumentTypeServiceImplTest {
         @Test
         @DisplayName("success - deletes document type")
         void deleteType_found_deletesSuccessfully() {
-            DocumentType entity = buildEntity(1L, Enums.DocumentType.RESUME);
+            DocumentType entity = buildEntity(1L, "RESUME");
 
             when(typeRepository.findById(1L)).thenReturn(Optional.of(entity));
 

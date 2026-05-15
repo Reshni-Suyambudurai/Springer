@@ -1,21 +1,24 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect, useMemo } from 'react';
+import { useDebounce } from '../../../hooks/useDebounce';
+import { TableSkeleton } from '../../Common/TableSkeleton';
+import ProgressDialog from '../../Common/ProgressDialog';
 import {
   Box, Card, Typography, Button, CircularProgress, Chip,
   TextField, InputAdornment, Table, TableBody, TableCell,
-  TableContainer, TableHead, TableRow, TablePagination,
+  TableContainer, TableHead, TableRow,
   Stack, IconButton, Dialog, DialogTitle, DialogContent,
-  DialogActions, MenuItem, LinearProgress,
+  DialogActions, MenuItem, LinearProgress, Checkbox,
 } from '@mui/material';
 import {
-  Search as SearchIcon, CheckCircle as ApproveIcon,
-  Cancel as RejectIcon, Visibility as ViewIcon,
+  Visibility as ViewIcon,
   Person as PersonIcon, Refresh as RefreshIcon,
   ExpandMore as ExpandIcon, ExpandLess as CollapseIcon,
 } from '@mui/icons-material';
+import { FigmaSearchIcon as SearchIcon, FigmaApproveIcon as ApproveIcon, FigmaRejectIcon as RejectIcon, FigmaCloseIcon as CloseIcon } from '../../Common/FigmaIcons';
 import { documentSubmissionApi, verificationApi } from '../../../services/document.api';
-import { candidateApi } from '../../../services/drive.api';
 import { showToast } from '../../../utils/toast';
 import { tokenstore } from '../../../auth/tokenstore';
+import { useDocumentProcessing } from '../../../contexts/DocumentProcessingContext';
 import FilterSelect from '../../Common/FilterSelect';
 import type {
   DocumentSubmissionResponse, VerificationRequest,
@@ -25,61 +28,39 @@ import '../../../css/TA_Recruiter/DocumentProcessing/VerifyDocumentsTab.css';
 
 type FilterType = 'all' | 'awaiting-review' | 'not-uploaded' | 'approved' | 'rejected';
 
-// Format verification status for display
-const formatStatus = (status: string): string => {
-  const map: Record<string, string> = {
-    COLLECTED: 'Under Review',
-    PENDING:   'Not Uploaded',
-    APPROVED:  'Approved',
-    REJECTED:  'Rejected',
-  };
-  return map[status] ?? status;
-};
-
 const VerifyDocumentsTab = ({ context }: { context: DocProcessingContextProps }) => {
   const { cycleId, cycleName } = context;
   const user = tokenstore.getUser();
+  const { submissions, selectedCandidates, loadingSubmissions, loadingCandidates, refreshAll } = useDocumentProcessing();
 
   const [candidatesWithDocs, setCandidatesWithDocs] = useState<CandidateWithDocs[]>([]);
-  const [loading, setLoading] = useState(true);
+  const loading = loadingSubmissions || loadingCandidates;
   const [search, setSearch] = useState('');
+  const debouncedSearch = useDebounce(search, 300);
   const [filter, setFilter] = useState<FilterType>('all');
-  const [filterStage, setFilterStage] = useState('all');
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [approvingId, setApprovingId] = useState<number | null>(null);
   const [rejectDialog, setRejectDialog] = useState<{ open: boolean; doc: DocumentSubmissionResponse | null }>({ open: false, doc: null });
   const [rejectReason, setRejectReason] = useState('');
   const [rejecting, setRejecting] = useState(false);
   const [approveConfirm, setApproveConfirm] = useState<{ open: boolean; doc: DocumentSubmissionResponse | null }>({ open: false, doc: null });
+  const [selectedDocIds, setSelectedDocIds] = useState<Set<number>>(new Set());
+  // Progress state
+  const [progressState, setProgressState] = useState({ open: false, current: 0, total: 0, currentItem: '' });
 
   useEffect(() => {
-    if (cycleId) fetchData();
-    setSearch(''); setFilter('all'); setFilterStage('all'); setExpandedId(null); setPage(0);
+    if (cycleId) {
+      // Don't fetch here - context already fetches submissions
+      // Just reset UI state
+    }
+    setSearch(''); setFilter('all'); setExpandedId(null);
   }, [cycleId]);
 
-  const fetchData = async () => {
-    try {
-      setLoading(true);
-      const [subRes, candRes] = await Promise.all([
-        documentSubmissionApi.getAllSubmissions({ cycleId, size: 2000 }),
-        Promise.all([
-          candidateApi.getCandidatesByCycleIdAndStage(cycleId, 'SELECTED'),
-          candidateApi.getCandidatesByCycleIdAndStage(cycleId, 'OFFERED'),
-          candidateApi.getCandidatesByCycleIdAndStage(cycleId, 'ACCEPTED'),
-          candidateApi.getCandidatesByCycleIdAndStage(cycleId, 'JOINED'),
-          candidateApi.getCandidatesByCycleIdAndStage(cycleId, 'NOT_JOINED'),
-          candidateApi.getCandidatesByCycleIdAndStage(cycleId, 'OFFER_REJECTED'),
-        ]).then(results => ({
-          success: true,
-          data: results.flatMap(r => (r.success && r.data) ? r.data : []),
-        })),
-      ]);
-      const submissions = (subRes.success && subRes.data) ? subRes.data : [];
-      const candidates = (candRes.success && candRes.data) ? candRes.data : [];
+  useEffect(() => {
+    processSubmissionData();
+  }, [submissions, selectedCandidates]);
 
-      // Status priority: keep the most meaningful status per document type per candidate
+  const processSubmissionData = () => {
       const STATUS_PRIORITY: Record<string, number> = { APPROVED: 4, COLLECTED: 3, REJECTED: 2, PENDING: 1 };
 
       const deduplicateDocs = (docs: DocumentSubmissionResponse[]): DocumentSubmissionResponse[] => {
@@ -109,10 +90,13 @@ const VerifyDocumentsTab = ({ context }: { context: DocProcessingContextProps })
 
       const result: CandidateWithDocs[] = Object.entries(grouped).map(([candidateId, rawDocs]) => {
         const docs = deduplicateDocs(rawDocs);
-        const found = candidates.find(c => c.candidateId === Number(candidateId));
+        const found = selectedCandidates.find(c => c.candidateId === Number(candidateId));
+        // Use submission's candidateName as fallback when candidate isn't in selectedCandidates
+        const subName = rawDocs[0]?.candidateName || '';
+        const [subFirst, ...subRest] = subName.split(' ');
         const candidate = found
           ? { candidateId: found.candidateId, firstName: found.firstName, lastName: found.lastName, email: found.email, department: found.department, applicationStage: found.applicationStage }
-          : { candidateId: Number(candidateId), firstName: 'Candidate', lastName: `#${candidateId}`, email: '', department: '', applicationStage: 'UNKNOWN' };
+          : { candidateId: Number(candidateId), firstName: subFirst || 'Candidate', lastName: subRest.join(' ') || `#${candidateId}`, email: '', department: '', applicationStage: 'UNKNOWN' };
         return {
           candidate, docs,
           approvedCount: docs.filter(d => d.verificationStatus === 'APPROVED').length,
@@ -122,11 +106,6 @@ const VerifyDocumentsTab = ({ context }: { context: DocProcessingContextProps })
         };
       });
       setCandidatesWithDocs(result);
-    } catch (err: any) {
-      showToast(err.message || 'Failed to load submissions', 'error');
-    } finally {
-      setLoading(false);
-    }
   };
 
   const handleApprove = async (doc: DocumentSubmissionResponse) => {
@@ -135,7 +114,7 @@ const VerifyDocumentsTab = ({ context }: { context: DocProcessingContextProps })
       setApprovingId(doc.documentId);
       const req: VerificationRequest = { verifiedBy: user.userId, comment: 'Approved' };
       const res = await verificationApi.approveDocument(doc.documentId, req);
-      if (res.success) { showToast(`${doc.documentType.replace(/_/g, ' ')} approved`, 'success'); fetchData(); }
+      if (res.success) { showToast(`${doc.documentType.replace(/_/g, ' ')} approved`, 'success'); await refreshAll(cycleId); }
     } catch (err: any) {
       showToast(err.message || 'Failed to approve', 'error');
     } finally {
@@ -151,10 +130,10 @@ const VerifyDocumentsTab = ({ context }: { context: DocProcessingContextProps })
       const req: VerificationRequest = { verifiedBy: user.userId, rejectionReason: rejectReason.trim() };
       const res = await verificationApi.rejectDocument(rejectDialog.doc.documentId, req);
       if (res.success) {
-        showToast('Document rejected — candidate notified via email', 'success');
+        showToast('Document rejected â€” candidate notified via email', 'success');
         setRejectDialog({ open: false, doc: null });
         setRejectReason('');
-        fetchData();
+        await refreshAll(cycleId);
       }
     } catch (err: any) {
       showToast(err.message || 'Failed to reject', 'error');
@@ -163,20 +142,83 @@ const VerifyDocumentsTab = ({ context }: { context: DocProcessingContextProps })
     }
   };
 
-  const filtered = candidatesWithDocs.filter(item => {
-    const name = `${item.candidate.firstName} ${item.candidate.lastName}`.toLowerCase();
-    const matchSearch = search.trim() === '' || name.includes(search.toLowerCase()) || item.candidate.email?.toLowerCase().includes(search.toLowerCase());
-    const matchFilter =
-      filter === 'all'             ? true :
-      filter === 'awaiting-review' ? item.collectedCount > 0 :
-      filter === 'not-uploaded'    ? item.notUploadedCount > 0 :
-      filter === 'approved'        ? item.approvedCount === item.docs.length && item.docs.length > 0 :
-      filter === 'rejected'        ? item.rejectedCount > 0 : true;
-    const matchStage = filterStage === 'all' || item.candidate.applicationStage === filterStage;
-    return matchSearch && matchFilter && matchStage;
-  });
+  const handleBulkApprove = async () => {
+    if (selectedDocIds.size === 0) { showToast('Select documents to approve', 'error'); return; }
+    if (!user?.userId) { showToast('Session expired', 'error'); return; }
+    
+    const docList = Array.from(selectedDocIds);
+    const totalDocs = docList.length;
+    
+    try {
+      setProgressState({ open: true, current: 0, total: totalDocs, currentItem: '' });
+      
+      let successCount = 0;
+      const failedDocs: Array<{ docId: number; error: string }> = [];
+      
+      for (let i = 0; i < docList.length; i++) {
+        const docId = docList[i];
+        const doc = submissions.find(s => s.documentId === docId);
+        const docName = doc ? doc.documentType.replace(/_/g, ' ') : `Document #${docId}`;
+        
+        setProgressState({
+          open: true,
+          current: i + 1,
+          total: totalDocs,
+          currentItem: docName,
+        });
+        
+        try {
+          const req: VerificationRequest = { verifiedBy: user.userId, comment: 'Bulk approved' };
+          const res = await verificationApi.approveDocument(docId, req);
+          if (res.success) {
+            successCount++;
+          } else {
+            failedDocs.push({ docId, error: 'Approval failed' });
+          }
+        } catch (err: any) {
+          failedDocs.push({ docId, error: err.message || 'Failed to approve' });
+        }
+      }
+      
+      if (successCount > 0) {
+        showToast(`${successCount}/${totalDocs} document(s) approved`, 'success');
+      }
+      if (failedDocs.length > 0) {
+        showToast(`${failedDocs.length} document(s) failed to approve`, 'error');
+      }
+      
+      setSelectedDocIds(new Set());
+      await refreshAll(cycleId);
+    } catch (err: any) {
+      showToast(err.message || 'Bulk approval failed', 'error');
+    } finally {
+      setProgressState({ open: false, current: 0, total: 0, currentItem: '' });
+    }
+  };
 
-  const paginated = filtered.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
+  const toggleDocSelection = (docId: number) => {
+    setSelectedDocIds(prev => {
+      const next = new Set(prev);
+      next.has(docId) ? next.delete(docId) : next.add(docId);
+      return next;
+    });
+  };
+
+  const filtered = useMemo(() => {
+    return candidatesWithDocs.filter(item => {
+      const name = `${item.candidate.firstName} ${item.candidate.lastName}`.toLowerCase();
+      const matchSearch = debouncedSearch.trim() === '' || name.includes(debouncedSearch.toLowerCase()) || item.candidate.email?.toLowerCase().includes(debouncedSearch.toLowerCase());
+      const matchFilter =
+        filter === 'all'             ? true :
+        filter === 'awaiting-review' ? item.collectedCount > 0 :
+        filter === 'not-uploaded'    ? item.notUploadedCount > 0 :
+        filter === 'approved'        ? item.approvedCount === item.docs.length && item.docs.length > 0 :
+        filter === 'rejected'        ? item.rejectedCount > 0 : true;
+      return matchSearch && matchFilter;
+    });
+  }, [candidatesWithDocs, debouncedSearch, filter]);
+
+
   const totalCollected   = candidatesWithDocs.reduce((s, c) => s + c.collectedCount, 0);
   const totalNotUploaded = candidatesWithDocs.reduce((s, c) => s + c.notUploadedCount, 0);
   const totalApproved    = candidatesWithDocs.reduce((s, c) => s + c.approvedCount, 0);
@@ -193,33 +235,37 @@ const VerifyDocumentsTab = ({ context }: { context: DocProcessingContextProps })
               placeholder="Search candidate..."
               size="small"
               value={search}
-              onChange={e => { setSearch(e.target.value); setPage(0); }}
+              onChange={e => { setSearch(e.target.value); }}
               className="vdt-search-field"
               InputProps={{ startAdornment: <InputAdornment position="start"><SearchIcon fontSize="small" className="vdt-search-icon" /></InputAdornment> }}
             />
-            <FilterSelect label="Status" value={filter} onChange={v => { setFilter(v as FilterType); setPage(0); }}>
+            <FilterSelect label="Status" value={filter} onChange={v => { setFilter(v as FilterType); }}>
               <MenuItem value="all">All ({candidatesWithDocs.length})</MenuItem>
               <MenuItem value="awaiting-review">Awaiting Review ({totalCollected} docs)</MenuItem>
               <MenuItem value="not-uploaded">Not Yet Uploaded ({totalNotUploaded} docs)</MenuItem>
               <MenuItem value="approved">Fully Approved</MenuItem>
               <MenuItem value="rejected">Has Rejections ({totalRejected} docs)</MenuItem>
             </FilterSelect>
-            <FilterSelect label="Stage" value={filterStage} onChange={v => { setFilterStage(v); setPage(0); }}>
-              <MenuItem value="all">All Stages</MenuItem>
-              <MenuItem value="SELECTED">Selected</MenuItem>
-              <MenuItem value="OFFERED">Offered</MenuItem>
-              <MenuItem value="ACCEPTED">Accepted</MenuItem>
-              <MenuItem value="JOINED">Joined</MenuItem>
-              <MenuItem value="NOT_JOINED">Not Joined</MenuItem>
-              <MenuItem value="OFFER_REJECTED">Offer Rejected</MenuItem>
-            </FilterSelect>
+
             <Box className="vdt-filter-spacer" />
             <Box className="vdt-stats-inline">
               <Typography className="vdt-stat-inline vdt-stat-inline--pending">{totalCollected} awaiting review</Typography>
               <Typography className="vdt-stat-inline vdt-stat-inline--approved">{totalApproved} approved</Typography>
               <Typography className="vdt-stat-inline vdt-stat-inline--rejected">{totalRejected} rejected</Typography>
             </Box>
-            <IconButton size="small" onClick={fetchData} title="Refresh" className="vdt-refresh-btn">
+            {selectedDocIds.size > 0 && (
+              <Button
+                variant="contained"
+                color="success"
+                size="small"
+                startIcon={<ApproveIcon />}
+                onClick={handleBulkApprove}
+                sx={{ ml: 1, textTransform: 'none', fontWeight: 600 }}
+              >
+                Approve {selectedDocIds.size} Selected
+              </Button>
+            )}
+            <IconButton size="small" onClick={() => refreshAll(cycleId)} title="Refresh" className="vdt-refresh-btn">
               <RefreshIcon fontSize="small" />
             </IconButton>
           </Box>
@@ -230,10 +276,7 @@ const VerifyDocumentsTab = ({ context }: { context: DocProcessingContextProps })
         {/* Table */}
         <Box className="vdt-table-section">
           {loading ? (
-            <Box className="vdt-loading-state">
-              <CircularProgress size={32} sx={{ color: 'var(--color-primary)' }} />
-              <Typography className="vdt-empty-text">Loading submissions...</Typography>
-            </Box>
+            <TableSkeleton rows={5} columns={5} />
           ) : (
             <>
               <TableContainer className="vdt-table-container">
@@ -248,7 +291,7 @@ const VerifyDocumentsTab = ({ context }: { context: DocProcessingContextProps })
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {paginated.length === 0 ? (
+                    {filtered.length === 0 ? (
                       <TableRow>
                         <TableCell colSpan={5} className="vdt-empty-cell">
                           <PersonIcon className="vdt-empty-icon" />
@@ -260,7 +303,7 @@ const VerifyDocumentsTab = ({ context }: { context: DocProcessingContextProps })
                         </TableCell>
                       </TableRow>
                     ) : (
-                      paginated.map((item, idx) => {
+                      filtered.map((item, idx) => {
                         const isExpanded = expandedId === item.candidate.candidateId;
                         const progress = item.docs.length > 0 ? (item.approvedCount / item.docs.length) * 100 : 0;
                         const allApproved = item.approvedCount === item.docs.length && item.docs.length > 0;
@@ -273,8 +316,8 @@ const VerifyDocumentsTab = ({ context }: { context: DocProcessingContextProps })
                             >
                               <TableCell className="vdt-table-cell">
                                 <Box className="vdt-name-cell">
-                                  <Box className="vdt-name-icon-box">
-                                    <PersonIcon className="vdt-name-icon" />
+                                  <Box className="vdt-name-avatar">
+                                    {(item.candidate.firstName?.[0] || '').toUpperCase()}{(item.candidate.lastName?.[0] || '').toUpperCase()}
                                   </Box>
                                   <Box>
                                     <Typography className="vdt-row-primary">
@@ -300,12 +343,12 @@ const VerifyDocumentsTab = ({ context }: { context: DocProcessingContextProps })
                               <TableCell className="vdt-table-cell">
                                 {item.collectedCount > 0
                                   ? <Chip label={item.collectedCount} size="small" className="vdt-badge vdt-badge--pending" />
-                                  : <Typography className="vdt-row-secondary">—</Typography>}
+                                  : <Typography className="vdt-row-secondary">â€”</Typography>}
                               </TableCell>
                               <TableCell className="vdt-table-cell">
                                 {item.rejectedCount > 0
                                   ? <Chip label={item.rejectedCount} size="small" className="vdt-badge vdt-badge--rejected" />
-                                  : <Typography className="vdt-row-secondary">—</Typography>}
+                                  : <Typography className="vdt-row-secondary">â€”</Typography>}
                               </TableCell>
                               <TableCell className="vdt-table-cell vdt-table-cell--actions" onClick={e => e.stopPropagation()}>
                                 <Stack direction="row" spacing={0.5} justifyContent="flex-end" alignItems="center">
@@ -321,73 +364,87 @@ const VerifyDocumentsTab = ({ context }: { context: DocProcessingContextProps })
                               </TableCell>
                             </TableRow>
 
-                            {/* Expanded doc rows */}
-                            {isExpanded && item.docs.map(doc => (
-                              <TableRow key={doc.documentId} className="vdt-doc-row">
-                                <TableCell className="vdt-doc-cell" colSpan={2}>
-                                  <Box className="vdt-doc-info">
-                                    <Typography className="vdt-doc-type">{doc.documentType.replace(/_/g, ' ')}</Typography>
-                                    <Typography className="vdt-doc-date">
-                                      Uploaded: {doc.uploadedAt ? new Date(doc.uploadedAt).toLocaleDateString('en-IN') : '—'}
-                                    </Typography>
-                                    {doc.verifiedAt && (
-                                      <Typography className="vdt-doc-date">
-                                        Verified: {new Date(doc.verifiedAt).toLocaleDateString('en-IN')}
-                                        {doc.verifiedBy ? ` · By User #${doc.verifiedBy}` : ''}
-                                      </Typography>
-                                    )}
+                            {/* Expanded doc cards â€” 3 per row grid */}
+                            {isExpanded && (
+                              <TableRow className="vdt-doc-grid-row">
+                                <TableCell colSpan={5} className="vdt-doc-grid-cell">
+                                  <Box className="vdt-doc-grid">
+                                    {item.docs.map(doc => {
+                                      const isCollected = doc.verificationStatus === 'COLLECTED';
+                                      const isSelected = selectedDocIds.has(doc.documentId);
+                                      return (
+                                        <Box key={doc.documentId} className={`vdt-doc-card vdt-doc-card--${doc.verificationStatus.toLowerCase()}`}>
+                                          {isCollected && (
+                                            <Checkbox
+                                              size="small"
+                                              checked={isSelected}
+                                              onChange={() => toggleDocSelection(doc.documentId)}
+                                              sx={{
+                                                position: 'absolute',
+                                                top: 4,
+                                                left: 4,
+                                                color: 'var(--color-primary)',
+                                                '&.Mui-checked': { color: 'var(--color-primary)' },
+                                              }}
+                                            />
+                                          )}
+                                          <Box className="vdt-doc-card-info">
+                                            <Typography className="vdt-doc-card-type">{doc.documentType.replace(/_/g, ' ')}</Typography>
+                                            <Typography className="vdt-doc-card-date">
+                                              Uploaded: {doc.uploadedAt ? new Date(doc.uploadedAt).toLocaleDateString('en-IN') : 'â€”'}
+                                            </Typography>
+                                          </Box>
+                                          <Box className="vdt-doc-card-actions">
+                                            {doc.verificationStatus === 'COLLECTED' && (
+                                              <>
+                                                <IconButton
+                                                  size="small"
+                                                  title="Reject"
+                                                  className="vdt-action-reject"
+                                                  onClick={() => { setRejectDialog({ open: true, doc }); setRejectReason(''); }}
+                                                >
+                                                  <RejectIcon style={{ fontSize: '1.25rem' }} />
+                                                </IconButton>
+                                                <IconButton
+                                                  size="small"
+                                                  title="Approve"
+                                                  className="vdt-action-approve"
+                                                  disabled={approvingId === doc.documentId}
+                                                  onClick={() => setApproveConfirm({ open: true, doc })}
+                                                >
+                                                  {approvingId === doc.documentId ? <CircularProgress size={14} /> : <ApproveIcon style={{ fontSize: '1.25rem' }} />}
+                                                </IconButton>
+                                              </>
+                                            )}
+                                            {doc.verificationStatus === 'APPROVED' && (
+                                              <ApproveIcon style={{ fontSize: '1.25rem' }} className="vdt-card-status-icon vdt-card-status-icon--approved" />
+                                            )}
+                                            {doc.verificationStatus === 'REJECTED' && (
+                                              <RejectIcon style={{ fontSize: '1.25rem' }} className="vdt-card-status-icon vdt-card-status-icon--rejected" />
+                                            )}
+                                            <IconButton
+                                              size="small"
+                                              title="View Document"
+                                              className="vdt-action-view"
+                                              onClick={async () => {
+                                                try {
+                                                  await documentSubmissionApi.openFile(doc.documentId);
+                                                } catch (error) {
+                                                  const message = error instanceof Error ? error.message : 'Failed to open document';
+                                                  showToast(message, 'error');
+                                                }
+                                              }}
+                                            >
+                                              <ViewIcon fontSize="small" />
+                                            </IconButton>
+                                          </Box>
+                                        </Box>
+                                      );
+                                    })}
                                   </Box>
                                 </TableCell>
-                                <TableCell className="vdt-doc-cell" colSpan={2}>
-                                  <Chip
-                                    label={formatStatus(doc.verificationStatus)}
-                                    size="small"
-                                    variant="outlined"
-                                    className={`vdt-doc-status vdt-doc-status--${doc.verificationStatus.toLowerCase()}`}
-                                  />
-                                </TableCell>
-                                <TableCell className="vdt-doc-cell vdt-table-cell--actions">
-                                  <Stack direction="row" spacing={0.5} justifyContent="flex-end">
-                                    <IconButton
-                                      size="small"
-                                      title="View Document"
-                                      className="vdt-action-view"
-                                      onClick={async () => {
-                                        try {
-                                          await documentSubmissionApi.openFile(doc.documentId);
-                                        } catch (error) {
-                                          const message = error instanceof Error ? error.message : 'Failed to open document';
-                                          showToast(message, 'error');
-                                        }
-                                      }}
-                                    >
-                                      <ViewIcon fontSize="small" />
-                                    </IconButton>
-                                    {doc.verificationStatus === 'COLLECTED' && (
-                                      <>
-                                        <IconButton
-                                          size="small"
-                                          title="Approve"
-                                          className="vdt-action-approve"
-                                          disabled={approvingId === doc.documentId}
-                                          onClick={() => setApproveConfirm({ open: true, doc })}
-                                        >
-                                          {approvingId === doc.documentId ? <CircularProgress size={14} /> : <ApproveIcon fontSize="small" />}
-                                        </IconButton>
-                                        <IconButton
-                                          size="small"
-                                          title="Reject"
-                                          className="vdt-action-reject"
-                                          onClick={() => { setRejectDialog({ open: true, doc }); setRejectReason(''); }}
-                                        >
-                                          <RejectIcon fontSize="small" />
-                                        </IconButton>
-                                      </>
-                                    )}
-                                  </Stack>
-                                </TableCell>
                               </TableRow>
-                            ))}
+                            )}
                           </React.Fragment>
                         );
                       })
@@ -395,16 +452,6 @@ const VerifyDocumentsTab = ({ context }: { context: DocProcessingContextProps })
                   </TableBody>
                 </Table>
               </TableContainer>
-              <TablePagination
-                component="div"
-                count={filtered.length}
-                page={page}
-                onPageChange={(_, p) => setPage(p)}
-                rowsPerPage={rowsPerPage}
-                onRowsPerPageChange={e => { setRowsPerPage(parseInt(e.target.value, 10)); setPage(0); }}
-                rowsPerPageOptions={[10, 25, 50]}
-                className="vdt-pagination"
-              />
             </>
           )}
         </Box>
@@ -412,7 +459,10 @@ const VerifyDocumentsTab = ({ context }: { context: DocProcessingContextProps })
 
       {/* Approve Confirmation Dialog */}
       <Dialog open={approveConfirm.open} onClose={() => setApproveConfirm({ open: false, doc: null })} maxWidth="xs" fullWidth>
-        <DialogTitle>Confirm Approval</DialogTitle>
+        <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          Confirm Approval
+          <IconButton size="small" onClick={() => setApproveConfirm({ open: false, doc: null })}><CloseIcon style={{ fontSize: '1.25rem' }} /></IconButton>
+        </DialogTitle>
         <DialogContent>
           <Typography sx={{ mt: 1 }}>
             Are you sure you want to approve <strong>{approveConfirm.doc?.documentType.replace(/_/g, ' ')}</strong>? This action cannot be undone.
@@ -435,7 +485,10 @@ const VerifyDocumentsTab = ({ context }: { context: DocProcessingContextProps })
 
       {/* Reject Dialog */}
       <Dialog open={rejectDialog.open} onClose={() => setRejectDialog({ open: false, doc: null })} maxWidth="sm" fullWidth>
-        <DialogTitle className="vdt-dialog-title">Reject Document</DialogTitle>
+        <DialogTitle className="vdt-dialog-title" sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          Reject Document
+          <IconButton size="small" onClick={() => setRejectDialog({ open: false, doc: null })}><CloseIcon style={{ fontSize: '1.25rem' }} /></IconButton>
+        </DialogTitle>
         <DialogContent>
           <Typography sx={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)', mb: 2, mt: 1 }}>
             Rejecting <strong>{rejectDialog.doc?.documentType.replace(/_/g, ' ')}</strong>. The candidate will be notified via email with a resubmission link.
@@ -461,6 +514,15 @@ const VerifyDocumentsTab = ({ context }: { context: DocProcessingContextProps })
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* Progress Dialog */}
+      <ProgressDialog
+        open={progressState.open}
+        title="Approving Documents"
+        current={progressState.current}
+        total={progressState.total}
+        currentItem={progressState.currentItem}
+      />
     </Box>
   );
 };

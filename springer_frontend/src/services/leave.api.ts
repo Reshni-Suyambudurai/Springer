@@ -59,6 +59,7 @@ export const leaveApi = {
 
   async getLeavesFiltered(params: {
     programId?: number;
+    programIds?: number[];
     batchNumber?: number;
     status?: string;
     search?: string;

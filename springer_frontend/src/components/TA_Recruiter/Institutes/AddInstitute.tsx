@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+﻿import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { instituteApi } from "../../../services/hiring.api";
 import type { InstituteRequest } from "../../../types/TA_Recruiter/Hiring/institute.types";
@@ -30,12 +30,11 @@ import {
   Autocomplete,
 } from "@mui/material";
 import BackButton from "../../Common/BackButton";
-import AddIcon from "@mui/icons-material/Add";
 import UploadIcon from "@mui/icons-material/Upload";
 import DownloadIcon from "@mui/icons-material/Download";
-import CloseIcon from "@mui/icons-material/Close";
-import DeleteIcon from "@mui/icons-material/Delete";
+import { FigmaCloseIcon as CloseIcon } from '../../Common/FigmaIcons';
 import PersonAddIcon from "@mui/icons-material/PersonAdd";
+import { FigmaAddIcon as AddIcon, FigmaDeleteIcon as DeleteIcon } from '../../Common/FigmaIcons';
 import "../../../css/TA_Recruiter/Institutes/AddInstitute.css";
 
 const AddInstitute: React.FC = () => {
@@ -360,7 +359,7 @@ const AddInstitute: React.FC = () => {
                       <TableCell>{inst.instituteTier}</TableCell>
                       <TableCell>{inst.city}</TableCell>
                       <TableCell>{inst.state}</TableCell>
-                      <TableCell>{inst.tpoContact?.tpoName || "—"}</TableCell>
+                      <TableCell>{inst.tpoContact?.tpoName || "â€”"}</TableCell>
                       <TableCell>
                         <IconButton
                           size="small"

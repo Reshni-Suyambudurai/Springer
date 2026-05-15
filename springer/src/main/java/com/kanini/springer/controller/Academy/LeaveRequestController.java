@@ -35,16 +35,17 @@ public class LeaveRequestController {
         return ResponseEntity.ok(ApiResponse.success("All leaves retrieved", leaveService.getAllLeaves()));
     }
 
-    @PreAuthorize("hasAnyRole('TRAINING_COORDINATOR','TA_MANAGER','TA_HEAD')")
+    @PreAuthorize("hasAnyRole('TRAINING_COORDINATOR','TA_MANAGER','TA_HEAD','MEMBERS')")
     @GetMapping("/filtered")
     public ResponseEntity<ApiResponse<org.springframework.data.domain.Page<LeaveRequestResponse>>> getLeavesFiltered(
             @RequestParam(required = false) Integer programId,
+            @RequestParam(required = false) List<Integer> programIds,
             @RequestParam(required = false) Integer batchNumber,
             @RequestParam(required = false) String status,
             @RequestParam(required = false) String search,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
-        var result = leaveService.getLeavesFiltered(programId, batchNumber, status, search, page, size);
+        var result = leaveService.getLeavesFiltered(programId, programIds, batchNumber, status, search, page, size);
         return ResponseEntity.ok(ApiResponse.success("Leaves retrieved", result));
     }
 
@@ -57,7 +58,7 @@ public class LeaveRequestController {
                 leaveService.getLeavesByBatch(programId, batchNumber)));
     }
 
-    @PreAuthorize("hasAnyRole('INTERN','TRAINING_COORDINATOR','TA_MANAGER','TA_HEAD')")
+    @PreAuthorize("hasAnyRole('INTERN','TRAINING_COORDINATOR','TA_MANAGER','TA_HEAD','MEMBERS')")
     @GetMapping("/student/{studentId}")
     public ResponseEntity<ApiResponse<List<LeaveRequestResponse>>> getByStudent(
             @PathVariable Long studentId) {

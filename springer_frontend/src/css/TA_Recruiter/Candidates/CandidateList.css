@@ -118,7 +118,7 @@
   background: var(--color-surface) !important;
   flex: 1;
   overflow: auto;
-  max-height: calc(100vh - 130px);
+  max-height: calc(100vh - 154px);
 }
 
 .candidates-table-container table {

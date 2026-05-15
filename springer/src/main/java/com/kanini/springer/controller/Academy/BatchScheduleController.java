@@ -22,7 +22,7 @@ public class BatchScheduleController {
 
     private final IBatchScheduleService batchScheduleService;
 
-    @PreAuthorize("hasAnyRole('TRAINING_COORDINATOR')")
+    @PreAuthorize("hasAnyRole('TRAINING_COORDINATOR','TA_HEAD','TA_MANAGER')")
     @PostMapping
     public ResponseEntity<ApiResponse<BatchScheduleResponse>> saveOrUpdateBatchSchedule(
             @Valid @RequestBody BatchScheduleRequest request) {
@@ -31,7 +31,7 @@ public class BatchScheduleController {
                 .body(ApiResponse.success("Batch schedule saved successfully", response));
     }
 
-    @PreAuthorize("hasAnyRole('TRAINING_COORDINATOR','TA_HEAD','TA_MANAGER','INTERN')")
+    @PreAuthorize("hasAnyRole('TRAINING_COORDINATOR','TA_HEAD','TA_MANAGER','INTERN','MEMBERS')")
     @GetMapping("/program/{programId}")
     public ResponseEntity<ApiResponse<List<BatchScheduleResponse>>> getSchedulesByProgram(
             @PathVariable Integer programId) {
@@ -39,7 +39,7 @@ public class BatchScheduleController {
         return ResponseEntity.ok(ApiResponse.success("Batch schedules retrieved successfully", response));
     }
 
-    @PreAuthorize("hasAnyRole('TRAINING_COORDINATOR','TA_HEAD','TA_MANAGER','INTERN')")
+    @PreAuthorize("hasAnyRole('TRAINING_COORDINATOR','TA_HEAD','TA_MANAGER','INTERN','MEMBERS')")
     @GetMapping("/program/{programId}/batch/{batchNumber}")
     public ResponseEntity<ApiResponse<BatchScheduleResponse>> getScheduleByProgramAndBatch(
             @PathVariable Integer programId,

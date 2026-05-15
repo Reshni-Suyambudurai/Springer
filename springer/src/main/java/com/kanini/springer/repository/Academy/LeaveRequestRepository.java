@@ -40,6 +40,7 @@ public interface LeaveRequestRepository extends JpaRepository<LeaveRequest, Long
     // Paginated + filtered — for TC/TA panel with large datasets
     @Query("SELECT l FROM LeaveRequest l " +
            "WHERE (:programId IS NULL OR l.student.program.programId = :programId) " +
+           "AND (:programIds IS NULL OR l.student.program.programId IN :programIds) " +
            "AND (:batchNumber IS NULL OR l.student.batchNumber = :batchNumber) " +
            "AND (:status IS NULL OR l.status = :status) " +
            "AND (:search IS NULL OR LOWER(l.student.candidate.firstName) LIKE LOWER(CONCAT('%',:search,'%')) " +
@@ -47,6 +48,7 @@ public interface LeaveRequestRepository extends JpaRepository<LeaveRequest, Long
            "ORDER BY l.appliedAt DESC")
     Page<LeaveRequest> findFiltered(
             @Param("programId") Integer programId,
+            @Param("programIds") List<Integer> programIds,
             @Param("batchNumber") Integer batchNumber,
             @Param("status") LeaveStatus status,
             @Param("search") String search,

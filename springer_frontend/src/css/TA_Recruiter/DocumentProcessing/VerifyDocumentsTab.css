@@ -4,15 +4,15 @@
   display: flex;
   flex-direction: column;
   height: 100%;
-  gap: 4px;
-  background-color: var(--color-bg-secondary);
-  padding: 4px;
+  gap: 0;
+  background-color: var(--color-surface);
+  padding: 0;
 }
 
 .vdt-card {
-  border-radius: 12px !important;
-  border: 1px solid var(--color-card-border) !important;
-  box-shadow: 0 1px 3px 0 var(--opacity-shadow-light), 0 6px 16px -2px var(--opacity-shadow-dark) !important;
+  border-radius: 0 !important;
+  border: none !important;
+  box-shadow: none !important;
   background-color: var(--color-surface) !important;
   flex: 1;
   display: flex;
@@ -54,26 +54,35 @@
 .vdt-refresh-btn { color: var(--color-text-secondary) !important; }
 
 /* ── Separator ── */
-.vdt-separator { border-top: 1px solid var(--color-grey-200); }
+.vdt-separator { border-top: none; }
 
 /* ── Filter Section ── */
 .vdt-filter-section {
   flex-shrink: 0;
-  padding: 10px 24px;
+  padding: 16px 32px;
   background-color: var(--color-surface);
 }
 
-.vdt-filter-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-.vdt-search-field { width: 280px; }
-.vdt-search-field .MuiOutlinedInput-root.Mui-focused fieldset { border-color: var(--color-primary); }
-.vdt-search-icon { color: var(--color-primary) !important; }
+.vdt-filter-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+
+.vdt-search-field { width: 448px; }
+
+.vdt-search-field .MuiOutlinedInput-root {
+  background-color: var(--color-filter-bg) !important;
+  border-radius: 8px !important;
+  border: 0.8px solid transparent !important;
+}
+
+.vdt-search-field .MuiOutlinedInput-root fieldset { border: none !important; }
+.vdt-search-field .MuiOutlinedInput-root.Mui-focused { border-color: var(--color-primary) !important; }
+.vdt-search-icon { color: var(--color-filter-arrow) !important; font-size: 16px !important; }
 .vdt-filter-spacer { flex-grow: 1; }
 
 .vdt-stats-inline { display: flex; align-items: center; gap: 12px; }
 
 .vdt-stat-inline {
-  font-size: var(--text-xs) !important;
-  font-weight: 700 !important;
+  font-size: var(--text-sm) !important;
+  font-weight: 500 !important;
   white-space: nowrap;
 }
 
@@ -89,6 +98,7 @@
   overflow: hidden;
   background-color: var(--color-surface);
   min-height: 0;
+  padding: 0 32px;
 }
 
 .vdt-loading-state {
@@ -104,6 +114,8 @@
   flex: 1;
   overflow: auto !important;
   min-height: 0;
+  border: 0.8px solid var(--color-inactive-border);
+  border-radius: 10px;
   scrollbar-width: thin;
   scrollbar-color: var(--color-grey-350) var(--color-grey-150);
 }
@@ -113,28 +125,29 @@
 .vdt-table-container::-webkit-scrollbar-thumb:hover { background: var(--color-grey-500); }
 
 /* ── Table Head ── */
-.vdt-table-head-row { background-color: var(--color-bg-table-header); height: 48px; }
+.vdt-table-head-row { background-color: var(--color-inactive-bg); height: 48px; }
 
 .vdt-table-head-cell {
-  font-size: var(--text-xs) !important;
-  font-weight: 700 !important;
-  color: var(--color-grey-600) !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  color: var(--color-chip-count-text) !important;
   text-transform: uppercase !important;
-  letter-spacing: 0.75px !important;
-  background-color: var(--color-bg-table-header) !important;
+  letter-spacing: 0.6px !important;
+  background-color: var(--color-inactive-bg) !important;
   padding: 8px 16px !important;
-  border-bottom-color: var(--color-border-table) !important;
+  border-bottom: 0.8px solid var(--color-inactive-border) !important;
+  font-family: 'Inter', sans-serif !important;
 }
 
 .vdt-table-head-cell--actions { text-align: right !important; }
 
 /* ── Table Rows ── */
-.vdt-table-row { height: 68px; transition: all 0.2s ease; cursor: pointer; }
+.vdt-table-row { height: 68px; transition: background-color 0.15s ease; cursor: pointer; }
 .vdt-table-row--even { background-color: var(--color-surface); }
-.vdt-table-row--odd  { background-color: var(--color-surface-alt); }
-.vdt-table-row td { border-bottom: 1px solid var(--color-border-table); }
-.vdt-table-row:hover { background-color: var(--color-hover-bg) !important; }
-.vdt-table-row--complete { background-color: var(--color-success-light) !important; }
+.vdt-table-row--odd  { background-color: var(--color-surface); }
+.vdt-table-row td { border-bottom: 0.8px solid var(--color-border-subtle); }
+.vdt-table-row:hover { background-color: var(--color-inactive-bg) !important; }
+.vdt-table-row--complete { background-color: var(--color-status-active-bg) !important; }
 
 .vdt-table-cell { padding: 12px 16px !important; vertical-align: middle !important; }
 .vdt-table-cell--actions { text-align: right !important; }
@@ -142,29 +155,40 @@
 /* ── Name Cell ── */
 .vdt-name-cell { display: flex; align-items: center; gap: 12px; }
 
+.vdt-name-avatar {
+  width: 40px; height: 40px; border-radius: 50%;
+  background-color: var(--color-sidebar-bg);
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: white;
+  font-family: 'Inter', sans-serif;
+}
+
 .vdt-name-icon-box {
-  width: 36px; height: 36px; border-radius: 8px;
-  background-color: var(--color-icon-bg);
+  width: 40px; height: 40px; border-radius: 50%;
+  background-color: var(--color-sidebar-bg);
   display: flex; align-items: center; justify-content: center; flex-shrink: 0;
 }
 
-.vdt-name-icon { font-size: 18px !important; color: var(--color-primary) !important; }
+.vdt-name-icon { font-size: 18px !important; color: white !important; }
 
 .vdt-row-primary {
-  font-size: var(--text-sm) !important;
-  font-weight: 700 !important;
+  font-size: 16px !important;
+  font-weight: 500 !important;
   color: var(--color-text-primary) !important;
-  line-height: 1.4 !important;
+  line-height: 24px !important;
   display: flex;
   align-items: center;
   gap: 6px;
+  font-family: 'Inter', sans-serif !important;
 }
 
 .vdt-row-secondary {
-  font-size: var(--text-xs) !important;
-  font-weight: 500 !important;
+  font-size: var(--text-sm) !important;
+  font-weight: 400 !important;
   color: var(--color-text-secondary) !important;
-  line-height: 1.4 !important;
+  line-height: 20px !important;
 }
 
 .vdt-complete-icon {
@@ -186,52 +210,80 @@
 .vdt-progress-bar { background-color: var(--color-grey-225) !important; }
 
 .vdt-progress-text {
-  font-size: var(--text-xs) !important;
-  font-weight: 600 !important;
-  color: var(--color-text-secondary) !important;
+  font-size: var(--text-sm) !important;
+  font-weight: 500 !important;
+  color: var(--color-chip-count-text) !important;
   white-space: nowrap;
 }
 
 /* ── Badges ── */
-.vdt-badge { font-weight: 700 !important; font-size: var(--text-xs) !important; }
-.vdt-badge--pending  { background-color: var(--color-warning-bg) !important; color: var(--color-warning-text) !important; border: none !important; }
-.vdt-badge--rejected { background-color: var(--color-error-light) !important; color: var(--color-error) !important; border: none !important; }
+.vdt-badge { font-weight: 500 !important; font-size: 12px !important; border-radius: 8px !important; }
+.vdt-badge--pending  { background-color: var(--color-status-active-bg) !important; color: var(--color-status-active-text) !important; border: 0.8px solid var(--color-status-active-border) !important; }
+.vdt-badge--rejected { background-color: var(--color-error-light) !important; color: var(--color-error) !important; border: 0.8px solid var(--color-error-border) !important; }
 
 /* ── Expand Button ── */
 .vdt-expand-btn { color: var(--color-text-secondary) !important; }
-.vdt-expand-btn:hover { color: var(--color-primary) !important; background-color: var(--color-primary-hover-4) !important; }
+.vdt-expand-btn:hover { color: var(--color-primary) !important; background-color: var(--color-inactive-bg) !important; }
 
-/* ── Expanded Doc Rows ── */
-.vdt-doc-row { background-color: var(--color-primary-hover-4) !important; }
-.vdt-doc-row td { border-bottom: 1px solid var(--color-border-table); }
+/* ── Expanded Doc Grid (3 per row, matching Figma) ── */
+.vdt-doc-grid-row { background-color: var(--color-inactive-bg) !important; }
+.vdt-doc-grid-row td { border-bottom: 0.8px solid var(--color-inactive-border); }
 
-.vdt-doc-cell { padding: 10px 16px 10px 32px !important; vertical-align: middle !important; }
+.vdt-doc-grid-cell { padding: 16px 24px !important; }
 
-.vdt-doc-info { display: flex; flex-direction: column; gap: 2px; }
+.vdt-doc-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
 
-.vdt-doc-type {
+.vdt-doc-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px;
+  background-color: var(--color-surface);
+  border: 0.8px solid var(--color-inactive-border);
+  border-radius: 8px;
+  min-height: 64px;
+  position: relative;
+}
+
+.vdt-doc-card--approved { border-left: 3px solid var(--color-success-dark); }
+.vdt-doc-card--rejected { border-left: 3px solid var(--color-error); }
+.vdt-doc-card--collected { border-left: 3px solid var(--color-warning-text); }
+.vdt-doc-card--pending { border-left: 3px solid var(--color-text-secondary); }
+
+.vdt-doc-card-info { display: flex; flex-direction: column; gap: 2px; }
+
+.vdt-doc-card-type {
   font-size: var(--text-sm) !important;
   font-weight: 600 !important;
   color: var(--color-text-primary) !important;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
 }
 
-.vdt-doc-date {
+.vdt-doc-card-date {
   font-size: var(--text-xs) !important;
   color: var(--color-text-secondary) !important;
 }
 
-/* ── Doc Status Chips ── */
-.vdt-doc-status { font-weight: 600 !important; font-size: var(--text-xs) !important; }
-.vdt-doc-status--collected { color: var(--color-warning-text) !important; border-color: var(--color-warning) !important; }
-.vdt-doc-status--pending   { color: var(--color-text-secondary) !important; border-color: var(--color-border) !important; }
-.vdt-doc-status--approved  { color: var(--color-success-dark) !important; border-color: var(--color-success-border) !important; }
-.vdt-doc-status--rejected  { color: var(--color-error) !important; border-color: var(--color-error) !important; }
+.vdt-doc-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.vdt-card-status-icon { font-size: 20px !important; }
+.vdt-card-status-icon--approved { color: var(--color-success-dark) !important; }
+.vdt-card-status-icon--rejected { color: var(--color-error) !important; }
 
 /* ── Action Buttons ── */
 .vdt-action-view    { color: var(--color-text-secondary) !important; }
-.vdt-action-view:hover { color: var(--color-primary) !important; background-color: var(--color-primary-hover-4) !important; }
+.vdt-action-view:hover { color: var(--color-primary) !important; background-color: var(--color-inactive-bg) !important; }
 .vdt-action-approve { color: var(--color-success-dark) !important; }
-.vdt-action-approve:hover { background-color: var(--color-success-light) !important; }
+.vdt-action-approve:hover { background-color: var(--color-status-active-bg) !important; }
 .vdt-action-reject  { color: var(--color-error) !important; }
 .vdt-action-reject:hover  { background-color: var(--color-error-light) !important; }
 
@@ -242,7 +294,7 @@
 
 /* ── Pagination ── */
 .vdt-pagination {
-  border-top: 1px solid var(--color-border-dark) !important;
+  border-top: 0.8px solid var(--color-inactive-border) !important;
   background-color: var(--color-surface) !important;
   padding: 4px 10px !important;
   flex-shrink: 0;
@@ -252,7 +304,7 @@
 .vdt-pagination .MuiTablePagination-displayedRows {
   font-size: 0.8125rem !important;
   font-weight: 500 !important;
-  color: var(--color-grey-450) !important;
+  color: var(--color-chip-count-text) !important;
   margin: 0 !important;
 }
 
@@ -262,11 +314,24 @@
 .vdt-dialog-field .MuiOutlinedInput-root.Mui-focused fieldset { border-color: var(--color-primary) !important; }
 .vdt-dialog-field .MuiInputLabel-root.Mui-focused { color: var(--color-primary) !important; }
 
-.vdt-dialog-cancel-btn { text-transform: none !important; color: var(--color-text-secondary) !important; font-weight: 600 !important; }
+.vdt-dialog-cancel-btn { text-transform: none !important; color: var(--color-text-secondary) !important; font-weight: 500 !important; }
 
 .vdt-dialog-reject-btn {
   text-transform: none !important;
   background-color: var(--color-error) !important;
   color: var(--color-white) !important;
-  font-weight: 600 !important;
+  font-weight: 500 !important;
+  border-radius: 8px !important;
+}
+
+/* ── Review Button (Actions column) ── */
+.vdt-review-btn {
+  text-transform: none !important;
+  font-size: var(--text-sm) !important;
+  font-weight: 500 !important;
+  border: 0.8px solid rgba(0, 0, 0, 0.1) !important;
+  color: var(--color-text-primary) !important;
+  border-radius: 8px !important;
+  padding: 4px 16px !important;
+  background-color: white !important;
 }

@@ -20,7 +20,7 @@ public class AcademyEventController {
 
     private final IAcademyEventService eventService;
 
-    @PreAuthorize("hasAnyRole('TRAINING_COORDINATOR','TA_HEAD')")
+    @PreAuthorize("hasAnyRole('TRAINING_COORDINATOR','TA_HEAD','TA_MANAGER')")
     @PostMapping
     public ResponseEntity<ApiResponse<AcademyEventResponse>> createEvent(
             @Valid @RequestBody AcademyEventRequest request) {
@@ -42,7 +42,7 @@ public class AcademyEventController {
         return ResponseEntity.ok(ApiResponse.success("Events retrieved", eventService.getEventsForStudent(studentId)));
     }
 
-    @PreAuthorize("hasAnyRole('TRAINING_COORDINATOR','TA_HEAD')")
+    @PreAuthorize("hasAnyRole('TRAINING_COORDINATOR','TA_HEAD','TA_MANAGER')")
     @DeleteMapping("/{eventId}")
     public ResponseEntity<ApiResponse<String>> deleteEvent(@PathVariable Long eventId) {
         eventService.deleteEvent(eventId);

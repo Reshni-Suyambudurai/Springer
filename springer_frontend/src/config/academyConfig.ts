@@ -68,6 +68,11 @@ const COORDINATOR_GROUPS: AcademyTabGroup[] = [
   { key: 'management', label: 'Management', tabs: COORDINATOR_MANAGEMENT },
 ];
 
+const MEMBERS_GROUPS: AcademyTabGroup[] = [
+  { key: 'training',   label: 'Training',   tabs: COORDINATOR_TRAINING },
+  { key: 'management', label: 'Management', tabs: COORDINATOR_MANAGEMENT },
+];
+
 const BASE_CONFIG = {
   scoreStatuses: ['EXCELLENT', 'GOOD', 'AVERAGE', 'BELOW_AVERAGE'],
   paginationOptions: [10, 25, 50],
@@ -80,8 +85,9 @@ const BASE_CONFIG = {
 
 export const getAcademyConfig = async (role?: string): Promise<AcademyConfig> => {
   const upper = role?.toUpperCase() ?? '';
-  const isCoordinator = upper === 'TRAINING_COORDINATOR' || upper === 'MEMBERS';
-  const groups = isCoordinator ? COORDINATOR_GROUPS : RECRUITER_GROUPS;
+  const groups = upper === 'MEMBERS' ? MEMBERS_GROUPS
+    : upper === 'TRAINING_COORDINATOR' ? COORDINATOR_GROUPS
+    : RECRUITER_GROUPS;
   const tabs = groups.flatMap(g => g.tabs);
   return { ...BASE_CONFIG, tabGroups: groups, tabs };
 };

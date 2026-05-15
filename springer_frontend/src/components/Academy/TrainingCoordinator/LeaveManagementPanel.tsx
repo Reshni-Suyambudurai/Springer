@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { FigmaCloseIcon as CloseIcon } from '../../Common/FigmaIcons';
 import { leaveApi } from '../../../services/leave.api';
 import type { LeaveRequestResponse } from '../../../services/leave.api';
 import { tokenstore } from '../../../auth/tokenstore';
@@ -17,7 +18,7 @@ const LeaveManagementPanel = ({ context }: { context: AcademyContextProps }) => 
   const { programs: yearPrograms } = context;
   const user     = tokenstore.getUser();
   const userRole = user?.roleName?.toUpperCase() || '';
-  const isTA     = userRole === 'TA_RECRUITER' || userRole === 'TA_HEAD';
+  const isTA     = userRole === 'TA_MANAGER' || userRole === 'TA_HEAD';
 
   const [leaves, setLeaves]             = useState<LeaveRequestResponse[]>([]);
   const [totalElements, setTotalElements] = useState(0);
@@ -27,9 +28,9 @@ const LeaveManagementPanel = ({ context }: { context: AcademyContextProps }) => 
   const [filterBatch, setFilterBatch]   = useState('all');
   const [search, setSearch]             = useState('');
   const [page, setPage]                 = useState(0);
-  const [rowsPerPage, setRowsPerPage]   = useState(20);
+  const [rowsPerPage] = useState(20);
 
-  // Stats (fetched once on mount from unfiltered endpoint)
+  // Stats (derived from paginated data — no separate getAllLeaves call)
   const [stats, setStats] = useState({ total: 0, pending: 0, approved: 0, rejected: 0 });
 
   // Review dialog — only TA
@@ -38,28 +39,17 @@ const LeaveManagementPanel = ({ context }: { context: AcademyContextProps }) => 
   const [remarks, setRemarks]         = useState('');
   const [submitting, setSubmitting]   = useState(false);
 
-  // Fetch stats once on mount
-  useEffect(() => {
-    leaveApi.getAllLeaves().then(res => {
-      if (res.success && res.data) {
-        setStats({
-          total: res.data.length,
-          pending: res.data.filter(l => l.status === 'PENDING').length,
-          approved: res.data.filter(l => l.status === 'APPROVED').length,
-          rejected: res.data.filter(l => l.status === 'REJECTED').length,
-        });
-      }
-    }).catch(() => {});
-  }, []);
-
   // Fetch paginated data whenever filters change
-  useEffect(() => { fetchLeaves(); }, [filterStatus, filterProgram, filterBatch, search, page, rowsPerPage]);
+  useEffect(() => { fetchLeaves(); }, [filterStatus, filterProgram, filterBatch, search, page, rowsPerPage, yearPrograms]);
 
   const fetchLeaves = async () => {
     try {
       setLoading(true);
+      // Scope to year-selected programs when no specific program filter is set
+      const yearProgramIds = yearPrograms.map(p => p.programId);
       const res = await leaveApi.getLeavesFiltered({
         programId: filterProgram !== 'all' ? Number(filterProgram) : undefined,
+        programIds: filterProgram === 'all' && yearProgramIds.length > 0 ? yearProgramIds : undefined,
         batchNumber: filterBatch !== 'all' ? Number(filterBatch) : undefined,
         status: filterStatus !== 'ALL' ? filterStatus : undefined,
         search: search.trim() || undefined,
@@ -69,6 +59,10 @@ const LeaveManagementPanel = ({ context }: { context: AcademyContextProps }) => 
       if (res.success && res.data) {
         setLeaves(res.data.content);
         setTotalElements(res.data.totalElements);
+        // Derive stats from unfiltered total when no filters active
+        if (!filterStatus || filterStatus === 'ALL') {
+          setStats(prev => ({ ...prev, total: res.data!.totalElements }));
+        }
       }
     } catch { /* silent */ }
     finally { setLoading(false); }
@@ -90,17 +84,13 @@ const LeaveManagementPanel = ({ context }: { context: AcademyContextProps }) => 
         setReviewLeave(null);
         setRemarks('');
         fetchLeaves();
-        // Refresh stats
-        leaveApi.getAllLeaves().then(r => {
-          if (r.success && r.data) {
-            setStats({
-              total: r.data.length,
-              pending: r.data.filter(l => l.status === 'PENDING').length,
-              approved: r.data.filter(l => l.status === 'APPROVED').length,
-              rejected: r.data.filter(l => l.status === 'REJECTED').length,
-            });
-          }
-        }).catch(() => {});
+        // Update stats optimistically
+        setStats(prev => ({
+          ...prev,
+          pending: Math.max(0, prev.pending - 1),
+          approved: decision === 'APPROVE' ? prev.approved + 1 : prev.approved,
+          rejected: decision === 'REJECT' ? prev.rejected + 1 : prev.rejected,
+        }));
       }
     } catch (error) {
       const err = handleAxiosError(error);
@@ -143,7 +133,7 @@ const LeaveManagementPanel = ({ context }: { context: AcademyContextProps }) => 
       {/* Role info banner */}
       {!isTA && (
         <div className="lmg-info-banner">
-          👁 You can view leave requests. Only TA Head or TA Recruiter can approve or reject.
+          👁 You can view leave requests. Only TA Head or TA Manager can approve or reject.
         </div>
       )}
 
@@ -255,7 +245,7 @@ const LeaveManagementPanel = ({ context }: { context: AcademyContextProps }) => 
           <div className="lmg-dialog" onClick={e => e.stopPropagation()}>
             <div className="lmg-dialog-header">
               <p className="lmg-dialog-title">Review Leave — {reviewLeave.studentName}</p>
-              <button className="lmg-dialog-close" onClick={() => setReviewLeave(null)}>✕</button>
+              <button className="lmg-dialog-close" onClick={() => setReviewLeave(null)}><CloseIcon style={{ fontSize: '1.25rem' }} /></button>
             </div>
             <div className="lmg-dialog-body">
               <div className="lmg-dialog-info">

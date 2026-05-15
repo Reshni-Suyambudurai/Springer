@@ -1,7 +1,7 @@
-import { useEffect } from 'react'
+﻿import { useEffect } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 
-// TA Recruiter
+// TA Manager
 import DashboardTAR from './components/TA_Recruiter/DashboardTAR'
 import TARHiringCycleList from './components/TA_Recruiter/HiringCycle/HiringCycleList'
 import TARHiringCycleDetails from './components/TA_Recruiter/HiringCycle/HiringCycleDetails'
@@ -40,6 +40,7 @@ import DocumentProcessingDashboard from './components/TA_Recruiter/DocumentProce
 // Academy
 import TrainingCoordinatorDashboard from './components/Academy/TrainingCoordinator/TrainingCoordinatorDashboard'
 import AcademyDashboard from './components/Academy/TrainingCoordinator/AcademyDashboard'
+import AcademyCalendar from './components/Academy/TrainingCoordinator/AcademyCalendar'
 import InternDashboard from './components/Academy/Intern/InternDashboard'
 import InternScoresPage from './components/Academy/Intern/InternScoresPage'
 import InternAttendancePage from './components/Academy/Intern/InternAttendancePage'
@@ -82,6 +83,7 @@ import DocumentSubmitPage from './pages/DocumentSubmitPage'
 import Page404 from './pages/Page404'
 import Unauthorized from './pages/Unauthorized'
 
+import InternLayout from './components/Academy/Intern/InternLayout'
 import './App.css'
 
 function App() {
@@ -119,7 +121,7 @@ function App() {
         </Route>
 
         {/* TA_MANAGER */}
-        <Route element={<ProtectedRoute allowedRoles={['TA_MANAGER', 'TA_RECRUITER']} />}>
+        <Route element={<ProtectedRoute allowedRoles={['TA_MANAGER']} />}>
           <Route path="/ta-recruiter/dashboard" element={<DashboardTAR />} />
           <Route path="/ta-recruiter/hiring-cycles" element={<TARHiringCycleList />} />
           <Route path="/ta-recruiter/hiring-cycles/:cycleId" element={<TARHiringCycleDetails />} />
@@ -136,7 +138,7 @@ function App() {
           <Route path="/ta-recruiter/drive-calendar" element={<DriveCalendar />} />
           <Route path="/ta-recruiter/drive-schedules/add" element={<AddSchedule />} />
 
-          {/* 🔥 Your Drive Process */}
+          {/* ðŸ”¥ Your Drive Process */}
           <Route path="/drive-process/drive-cycle" element={<DriveCycle />} />
           <Route path="/drive-process/drive-list/:cycleId" element={<DriveList />} />
           <Route path="/drive-process/drive-details/:driveId" element={<DriveDetails />} />
@@ -170,6 +172,7 @@ function App() {
           <Route path="/members/panel-scoring" element={<PanelScoring />} />
           <Route path="/members/panel-history" element={<AllocationHistory />} />
           <Route path="/members/academy" element={<AcademyDashboard />} />
+          <Route path="/members/calendar" element={<AcademyCalendar />} />
         </Route>
 
         {/* ADMIN */}
@@ -179,29 +182,32 @@ function App() {
 
         {/* INTERN */}
         <Route element={<ProtectedRoute allowedRoles={['INTERN']} />}>
-          <Route path="/intern/dashboard"     element={<InternDashboard />} />
-          <Route path="/intern/scores"        element={<InternScoresPage />} />
-          <Route path="/intern/attendance"    element={<InternAttendancePage />} />
-          <Route path="/intern/progress"      element={<InternProgressPage />} />
-          <Route path="/intern/certificates"  element={<InternCertificatesPage />} />
-          <Route path="/intern/profile"       element={<InternProfilePage />} />
-          <Route path="/intern/calendar"      element={<InternCalendarPage />} />
-          <Route path="/intern/leaves"        element={<InternLeavePage />} />
-          <Route path="/intern/warnings"      element={<InternWarningsPage />} />
+          <Route element={<InternLayout />}>
+            <Route path="/intern/dashboard"     element={<InternDashboard />} />
+            <Route path="/intern/scores"        element={<InternScoresPage />} />
+            <Route path="/intern/attendance"    element={<InternAttendancePage />} />
+            <Route path="/intern/progress"      element={<InternProgressPage />} />
+            <Route path="/intern/certificates"  element={<InternCertificatesPage />} />
+            <Route path="/intern/profile"       element={<InternProfilePage />} />
+            <Route path="/intern/calendar"      element={<InternCalendarPage />} />
+            <Route path="/intern/leaves"        element={<InternLeavePage />} />
+            <Route path="/intern/warnings"      element={<InternWarningsPage />} />
+          </Route>
         </Route>
 
         {/* TRAINING_COORDINATOR */}
         <Route element={<ProtectedRoute allowedRoles={['TRAINING_COORDINATOR']} />}>
           <Route path="/training-coordinator/dashboard" element={<TrainingCoordinatorDashboard />} />
           <Route path="/training-coordinator/academy" element={<AcademyDashboard />} />
+          <Route path="/training-coordinator/calendar" element={<AcademyCalendar />} />
         </Route>
 
-        {/* HR_OPERATIONS — redirect to unauthorized (no dedicated dashboard yet) */}
+        {/* HR_OPERATIONS â€” redirect to unauthorized (no dedicated dashboard yet) */}
         <Route element={<ProtectedRoute allowedRoles={['HR_OPERATIONS']} />}>
           <Route path="/hr-operations/dashboard" element={<Unauthorized />} />
         </Route>
 
-        {/* BU_SPOC — redirect to unauthorized (no dedicated dashboard yet) */}
+        {/* BU_SPOC â€” redirect to unauthorized (no dedicated dashboard yet) */}
         <Route element={<ProtectedRoute allowedRoles={['BU_SPOC']} />}>
           <Route path="/bu-spoc/dashboard" element={<Unauthorized />} />
         </Route>

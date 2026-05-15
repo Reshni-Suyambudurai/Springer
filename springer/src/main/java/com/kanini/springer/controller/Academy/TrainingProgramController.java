@@ -34,7 +34,7 @@ public class TrainingProgramController {
                 .body(ApiResponse.success("Training program created successfully", response));
     }
     
-    @PreAuthorize("hasAnyRole('TRAINING_COORDINATOR','TA_HEAD','TA_MANAGER','INTERN')")
+    @PreAuthorize("hasAnyRole('TRAINING_COORDINATOR','TA_HEAD','TA_MANAGER','INTERN','MEMBERS')")
     @GetMapping
     public ResponseEntity<ApiResponse<List<TrainingProgramResponse>>> getAllPrograms(
             @RequestParam(required = false) Boolean active) {
@@ -48,7 +48,7 @@ public class TrainingProgramController {
                 .body(ApiResponse.success("Programs retrieved successfully", response));
     }
 
-    @PreAuthorize("hasAnyRole('TRAINING_COORDINATOR','TA_HEAD','TA_MANAGER','INTERN')")
+    @PreAuthorize("hasAnyRole('TRAINING_COORDINATOR','TA_HEAD','TA_MANAGER','INTERN','MEMBERS')")
     @GetMapping("/{programId}")
     public ResponseEntity<ApiResponse<TrainingProgramResponse>> getProgramById(
             @PathVariable Integer programId) {
@@ -57,7 +57,7 @@ public class TrainingProgramController {
                 .body(ApiResponse.success("Program retrieved successfully", response));
     }
     
-    @PreAuthorize("hasAnyRole('TRAINING_COORDINATOR','TA_HEAD','TA_MANAGER','INTERN')")
+    @PreAuthorize("hasAnyRole('TRAINING_COORDINATOR','TA_HEAD','TA_MANAGER','INTERN','MEMBERS')")
     @GetMapping("/years/all")
     public ResponseEntity<ApiResponse<List<Integer>>> getAllDistinctYears() {
         List<Integer> years = programService.getAllDistinctYears();

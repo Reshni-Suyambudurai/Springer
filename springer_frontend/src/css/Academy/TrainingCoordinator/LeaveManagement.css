@@ -2,6 +2,7 @@
   display: flex;
   flex-direction: column;
   gap: 14px;
+  padding: 16px 24px 0;
   height: 100%;
   overflow-y: auto;
   scrollbar-width: thin;
@@ -13,19 +14,19 @@
 /* Stats */
 .lmg-stats { display: flex; gap: 12px; flex-wrap: wrap; }
 .lmg-stat {
-  flex: 1; min-width: 100px;
+  flex: 1; min-width: 80px;
   background: var(--color-surface);
-  border: 1px solid var(--color-border-card);
-  border-radius: 10px;
-  padding: 12px 16px;
-  display: flex; flex-direction: column; align-items: center; gap: 4px;
-  box-shadow: 0 1px 4px var(--opacity-shadow-very-light);
+  border: 0.8px solid var(--color-inactive-border);
+  border-radius: 8px;
+  padding: 8px 12px;
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  box-shadow: none;
 }
-.lmg-stat-val           { font-size: var(--text-xl); font-weight: 700; color: var(--color-text-primary); }
-.lmg-stat-val--pending  { color: #f59e0b; }
+.lmg-stat-val           { font-size: var(--text-md); font-weight: 700; color: var(--color-text-primary); }
+.lmg-stat-val--pending  { color: var(--color-warning-accent); }
 .lmg-stat-val--approved { color: var(--color-success-dark); }
 .lmg-stat-val--rejected { color: var(--color-error); }
-.lmg-stat-label         { font-size: 11px; color: var(--color-text-secondary); font-weight: 500; }
+.lmg-stat-label         { font-size: var(--text-xs); color: var(--color-text-secondary); font-weight: 500; }
 
 /* Filters */
 .lmg-filters { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
@@ -45,10 +46,10 @@
 /* Table */
 .lmg-table-wrap {
   background: var(--color-surface);
-  border: 1px solid var(--color-border-card);
-  border-radius: 10px;
+  border: 0.8px solid var(--color-inactive-border);
+  border-radius: 8px;
   overflow: auto;
-  box-shadow: 0 1px 4px var(--opacity-shadow-very-light);
+  box-shadow: none;
 }
 .lmg-table { width: 100%; border-collapse: collapse; }
 .lmg-thead-row { background: var(--color-bg-table-header); border-bottom: 2px solid var(--color-primary); }
@@ -88,12 +89,12 @@
   font-size: var(--text-xs); font-weight: 700;
   color: var(--color-primary);
   background: var(--color-primary-light);
-  padding: 2px 8px; border-radius: 10px;
+  padding: 2px 8px; border-radius: 8px;
 }
 
 /* Status chips */
-.lmg-status { font-size: var(--text-xs); font-weight: 600; padding: 2px 8px; border-radius: 10px; border: 1px solid transparent; }
-.lmg-status--pending  { color: #92400e; background: #fef3c7; border-color: #fcd34d; }
+.lmg-status { font-size: var(--text-xs); font-weight: 600; padding: 2px 8px; border-radius: 8px; border: 1px solid transparent; }
+.lmg-status--pending  { color: var(--color-pending-text); background: var(--color-pending-bg); border-color: var(--color-pending-border); }
 .lmg-status--approved { color: var(--color-success-dark); background: var(--color-success-light); border-color: var(--color-success-border); }
 .lmg-status--rejected { color: var(--color-error-dark); background: var(--color-error-light); border-color: var(--color-error-border); }
 
@@ -101,7 +102,7 @@
 .lmg-review-btn {
   padding: 5px 12px;
   background: var(--color-primary);
-  color: #fff;
+  color: var(--color-white);
   border: none;
   border-radius: 6px;
   font-size: var(--text-xs);
@@ -125,7 +126,7 @@
 }
 .lmg-dialog {
   background: var(--color-surface);
-  border-radius: 12px;
+  border-radius: 8px;
   box-shadow: 0 8px 32px rgba(0,0,0,0.18);
   width: 100%;
   max-width: 440px;
@@ -143,7 +144,7 @@
   cursor: pointer; color: var(--color-text-secondary);
   padding: 2px 6px; border-radius: 4px;
 }
-.lmg-dialog-close:hover { background: var(--color-bg-secondary); }
+.lmg-dialog-close:hover { background: var(--color-surface); }
 
 .lmg-dialog-body { padding: 16px 20px 20px; display: flex; flex-direction: column; gap: 14px; }
 .lmg-dialog-info { display: flex; flex-direction: column; gap: 4px; }
@@ -180,7 +181,7 @@
 .lmg-submit-btn {
   padding: 7px 18px; border: none; border-radius: 6px;
   font-size: var(--text-sm); font-weight: 600; cursor: pointer;
-  transition: opacity 0.15s; color: #fff;
+  transition: opacity 0.15s; color: var(--color-white);
 }
 .lmg-submit-btn--approve { background: var(--color-success-dark); }
 .lmg-submit-btn--reject  { background: var(--color-error); }

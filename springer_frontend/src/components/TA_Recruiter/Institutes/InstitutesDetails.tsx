@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+﻿import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { instituteApi, instituteTPOApi, programApi } from "../../../services/hiring.api";
 import type { InstituteWithTPOsResponse, TPODetails } from "../../../types/TA_Recruiter/Hiring/institute.types";
@@ -37,9 +37,7 @@ import SchoolIcon from "@mui/icons-material/School";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
 import EmailIcon from "@mui/icons-material/Email";
 import PhoneIcon from "@mui/icons-material/Phone";
-import EditIcon from "@mui/icons-material/Edit";
-import DeleteIcon from "@mui/icons-material/Delete";
-import AddIcon from "@mui/icons-material/Add";
+import { FigmaEditIcon as EditIcon, FigmaDeleteIcon as DeleteIcon, FigmaAddIcon as AddIcon } from '../../Common/FigmaIcons';
 import "../../../css/TA_Recruiter/Institutes/InstitutesDetails.css";
 
 const InstitutesDetails: React.FC = () => {

@@ -79,7 +79,7 @@ public class InternController {
         return ResponseEntity.ok(ApiResponse.success("Profile retrieved successfully", response));
     }
 
-    @PreAuthorize("hasAnyRole('INTERN','TRAINING_COORDINATOR')")
+    @PreAuthorize("hasAnyRole('INTERN','TRAINING_COORDINATOR','TA_MANAGER')")
     @GetMapping("/profile/by-student/{studentId}")
     public ResponseEntity<ApiResponse<InternProfileResponse>> getProfileByStudent(
             @PathVariable Long studentId) {
@@ -112,7 +112,7 @@ public class InternController {
                 .body(ApiResponse.success("Certificate uploaded successfully", response));
     }
 
-    @PreAuthorize("hasAnyRole('INTERN','TRAINING_COORDINATOR')")
+    @PreAuthorize("hasAnyRole('INTERN','TRAINING_COORDINATOR','TA_MANAGER')")
     @GetMapping("/certificates/{studentId}")
     public ResponseEntity<ApiResponse<List<InternCertificateResponse>>> getCertificates(
             @PathVariable Long studentId) {

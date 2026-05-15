@@ -23,9 +23,30 @@
   --color-red-500: #C0392B;
   --color-red-600: #A00020;
 
+  /* Yellow Palette */
+  --color-yellow-50: #fef3e8;
+  --color-yellow-100: #ffc5ae;
+  --color-yellow-500: #ea6e08;
+  --color-yellow-600: #ca5a04;
+  --color-yellow-700: #A16207;
+
+  /* Purple Palette */
+  --color-purple-50: #F5F3FF;
+  --color-purple-100: #EDE9FE;
+  --color-purple-500: #8B5CF6;
+  --color-purple-600: #7C3AED;
+  --color-purple-700: #6D28D9;
+
+  /* Pink Palette */
+  --color-pink-50: #FDF2F8;
+  --color-pink-100: #FCE7F3;
+  --color-pink-500: #EC4899;
+  --color-pink-600: #DB2777;
+  --color-pink-700: #BE185D;
+
   /* Grey Palette */
   --color-grey-50: #F7F8FA;
-  --color-grey-100: #F5F3F0;
+  --color-grey-100: #F5F5F5;
   --color-grey-150: #F0F1F7;
   --color-grey-175: #EEF1F5;
   --color-grey-200: #F0F0F0;
@@ -55,6 +76,9 @@
   --color-primary: var(--color-blue-500);
   --color-primary-dark: var(--color-blue-600);
   --color-primary-light: var(--color-blue-50);
+  --color-link: #155DFC;
+  --color-program-chip-bg: #1E429F;
+  --color-program-chip-text: var(--color-white);
   --color-primary-hover-4: rgba(15, 76, 129, 0.04);
   --color-primary-hover-6: rgba(15, 76, 129, 0.06);
   --color-primary-hover-14: rgba(15, 76, 129, 0.14);
@@ -71,6 +95,7 @@
   /* Status Colors */
   --color-success: var(--color-green-700);
   --color-success-dark: #2D9D6E;
+  --color-success-trend: #00A63E;
   --color-success-light: #ECFDF3;
   --color-success-border: #6CE9A6;
   
@@ -87,6 +112,9 @@
   
   --color-info-dark: #3730A3;
   --color-info-light: #EEF2FF;
+  --color-info-text: #1d4ed8;
+  --color-info-bg: #dbeafe;
+  --color-info-border: #93c5fd;
   
   --color-inactive-bg: #F9FAFB;
   --color-inactive-border: #E5E7EB;
@@ -115,12 +143,45 @@
   --color-warning-bg: #FFFAEB;
   --color-warning-border: #F5D87A;
   --color-warning-text: #7A5C00;
+  --color-warning-accent: #f59e0b;
+  --color-warning-accent-dark: #b45309;
+  --color-warning-accent-light: rgba(245,158,11,0.12);
+  --color-warning-accent-border: rgba(245,158,11,0.4);
+  --color-pending-text: #92400e;
+  --color-pending-bg: #fef3c7;
+  --color-pending-border: #fcd34d;
+  --color-moderate-text: #9a3412;
+  --color-moderate-bg: #ffedd5;
+  --color-moderate-border: #fdba74;
   --color-error-row-bg: #FFF8F8;
+  --color-error-accent: #dc2626;
+  --color-border-subtle: #f3f4f6;
+  --color-selected-row-bg: #eff5ff;
+  --color-selected-row-border: #cee0ff;
+  --color-generate-btn: #4CAF50;
+  --color-generate-btn-hover: #43a047;
   
+  --color-status-active-bg: #F0FDF4;
+  --color-status-active-text: #008236;
+  --color-status-active-border: #B9F8CF;
+  --color-status-inactive-bg: var(--color-grey-150);
+  --color-status-inactive-text: var(--color-grey-550);
+  --color-status-inactive-border: var(--color-grey-250);
+
   --color-navbar-bg: #1D6599;
-  --color-sidebar-active-bg: #E8F2FF;
-  --color-sidebar-active-text: #083C50;
-  --color-sidebar-icon: #3D4A5E;
+  --color-sidebar-bg: #0A1F44;
+  --color-sidebar-active-bg: #4CAF50;
+  --color-institute-icon-bg: rgba(76, 175, 80, 0.1);
+  --color-institute-icon-border: #4CAF50;
+  --color-filter-bg: #F3F3F5;
+  --color-filter-border: var(--color-grey-250);
+  --color-filter-arrow: #717182;
+  --color-sidebar-active-text: #FFFFFF;
+  --color-sidebar-inactive-text: #CBD5E1;
+  --color-sidebar-hover-bg: rgba(255, 255, 255, 0.08);
+  --color-sidebar-icon: #CBD5E1;
+  --color-sidebar-border: rgba(255, 255, 255, 0.06);
+  --color-sidebar-toggle-bg: rgba(255, 255, 255, 0.1);
 
   /* Text Colors */
   --color-text-primary: var(--color-grey-800);
@@ -130,7 +191,7 @@
   
   /* Background Colors */
   --color-bg-primary: var(--color-grey-50);
-  --color-bg-secondary: var(--color-grey-100);
+  --color-bg-secondary: var(--color-white);
   --color-bg-table-header: var(--color-grey-175);
   --color-surface: var(--color-white);
   --color-surface-alt: var(--color-white-off);
@@ -145,17 +206,17 @@
   --color-card-border: #CECED0;
 
   /* Component-specific Colors */
-  --color-tier1-bg: var(--color-blue-50);
-  --color-tier1-text: var(--color-blue-500);
-  --color-tier1-border: var(--color-blue-100);
+  --color-tier1-bg: #0A1F44;
+  --color-tier1-text: var(--color-white);
+  --color-tier1-border: #0A1F44;
   
-  --color-tier2-bg: var(--color-green-50);
-  --color-tier2-text: var(--color-green-600);
-  --color-tier2-border: var(--color-green-100);
+  --color-tier2-bg: #FFF3E0;
+  --color-tier2-text: #BB4D00;
+  --color-tier2-border: #BB4D00;
   
-  --color-tier3-bg: var(--color-grey-150);
-  --color-tier3-text: var(--color-grey-550);
-  --color-tier3-border: var(--color-grey-250);
+  --color-tier3-bg: #F1F5F9;
+  --color-tier3-text: #475569;
+  --color-tier3-border: #475569;
 
   --color-icon-bg: #EAF2FA;
   --color-icon-primary: var(--color-primary);
@@ -173,6 +234,10 @@
   --color-funnel-joined:   #3730A3;
   --color-funnel-rejected: #E05252;
   --color-funnel-dropped:  #667085;
+
+  /* ========== DRIVE MODE COLORS ========== */
+  --color-oncampus: var(--color-blue-500);
+  --color-offcampus: #7C3AED;
 
   /* ========== SHADOW & OPACITY ========== */
   --opacity-shadow-very-light: rgba(0, 0, 0, 0.04);
@@ -202,11 +267,16 @@
   --opacity-primary-inset: rgba(15, 76, 129, 0.05);
 
   /* ========== TYPOGRAPHY ========== */
-  --text-xs: 0.75rem;
-  --text-sm: 0.875rem;
-  --text-md: 1rem;
-  --text-lg: 1.25rem;
-  --text-xl: 1.75rem;
+  --text-xs: 0.75rem;    /* 12px */
+  --text-sm-14: 0.875rem; /* 14px - Figma detail values */
+  --text-sm: 1rem;       /* 16px - Figma base: font-size 16px, weight 500, line-height 24px */
+  --text-stat: 1.875rem; /* 30px - Figma stat numbers */
+  --text-md: 1.125rem;   /* 18px */
+  --text-lg: 1.25rem;    /* 20px */
+  --text-xl: 1.75rem;    /* 28px */
+  --text-sidebar-label: 0.6rem;
+  --font-weight-medium: 500;
+  --line-height-base: 1.5; /* 24px / 16px */
 }
 
 /* ═════════════════════════════════════════════════════════════════════ */
@@ -268,6 +338,7 @@
   --color-primary: #5ba3d6;
   --color-primary-dark: #4a8dc4;
   --color-primary-light: #1a2f4d;
+  --color-primary-hover: rgba(91, 163, 214, 0.16);
   --color-primary-hover-4: rgba(91, 163, 214, 0.04);
   --color-primary-hover-6: rgba(91, 163, 214, 0.06);
   --color-primary-hover-14: rgba(91, 163, 214, 0.14);
@@ -300,6 +371,9 @@
   
   --color-info-dark: #6a5acd;
   --color-info-light: #3a3a5a;
+  --color-info-text: #93b5f5;
+  --color-info-bg: #1e2a4a;
+  --color-info-border: #3b5998;
   
   --color-inactive-bg: #2a2d31;
   --color-inactive-border: #4a4d52;
@@ -328,7 +402,23 @@
   --color-warning-bg: #4a4020;
   --color-warning-border: #8a6f3a;
   --color-warning-text: #ffcc99;
+  --color-warning-accent: #f5a623;
+  --color-warning-accent-dark: #e0a040;
+  --color-warning-accent-light: rgba(245,166,35,0.15);
+  --color-warning-accent-border: rgba(245,166,35,0.4);
+  --color-pending-text: #f5d87a;
+  --color-pending-bg: #4a4020;
+  --color-pending-border: #8a6f3a;
+  --color-moderate-text: #fdba74;
+  --color-moderate-bg: #4a3020;
+  --color-moderate-border: #8a5f3a;
   --color-error-row-bg: #4a2a2a;
+  --color-error-accent: #f87171;
+  --color-border-subtle: #3a3d42;
+  --color-selected-row-bg: #1e2a4a;
+  --color-selected-row-border: #3b5998;
+  --color-generate-btn: #4CAF50;
+  --color-generate-btn-hover: #43a047;
   
   --color-navbar-bg: #1a1f2e;
   --color-sidebar-active-bg: #2a3f5f;

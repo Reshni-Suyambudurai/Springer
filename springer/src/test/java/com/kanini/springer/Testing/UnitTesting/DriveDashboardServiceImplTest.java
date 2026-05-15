@@ -72,7 +72,7 @@ class DriveDashboardServiceImplTest {
                     new Object[]{ApplicationStage.SELECTED, 10L},
                     new Object[]{ApplicationStage.REJECTED, 5L},
                     new Object[]{ApplicationStage.DROPPED, 3L},
-                    new Object[]{ApplicationStage.ACCEPTED, 8L},
+                    new Object[]{ApplicationStage.OFFER_ACCEPTED, 8L},
                     new Object[]{ApplicationStage.JOINED, 6L}
             );
 
@@ -180,7 +180,7 @@ class DriveDashboardServiceImplTest {
             List<Object[]> instituteRows = List.of(
                     new Object[]{1L, "MIT", ApplicationStage.SELECTED, 4L},
                     new Object[]{1L, "MIT", ApplicationStage.REJECTED, 2L},
-                    new Object[]{2L, "VIT", ApplicationStage.ACCEPTED, 7L},
+                    new Object[]{2L, "VIT", ApplicationStage.OFFER_ACCEPTED, 7L},
                     new Object[]{2L, "VIT", ApplicationStage.JOINED, 3L}
             );
 

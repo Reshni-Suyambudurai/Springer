@@ -1,4 +1,4 @@
-
+﻿
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { candidateApi } from "../../../services/drive.api";
@@ -50,11 +50,10 @@ import {
   Tooltip,
 } from "@mui/material";
 import BackButton from "../../Common/BackButton";
-import AddIcon from "@mui/icons-material/Add";
 import UploadIcon from "@mui/icons-material/Upload";
 import DownloadIcon from "@mui/icons-material/Download";
-import DeleteIcon from "@mui/icons-material/Delete";
 import CloseIcon from "@mui/icons-material/Close";
+import { FigmaAddIcon as AddIcon, FigmaDeleteIcon as DeleteIcon } from '../../Common/FigmaIcons';
 import "../../../css/TA_Recruiter/Candidates/AddCandidates.css";
 
 const AddCandidates: React.FC = () => {

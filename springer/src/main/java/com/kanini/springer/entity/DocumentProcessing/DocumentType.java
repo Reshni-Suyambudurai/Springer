@@ -28,8 +28,7 @@ public class DocumentType {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long documentTypeId;
     
-    @Enumerated(EnumType.STRING)
-    private Enums.DocumentType documentType;
+    private String documentType;
     
     private LocalDateTime createdAt;
     

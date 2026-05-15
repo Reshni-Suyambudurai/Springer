@@ -67,7 +67,7 @@ class VerificationServiceImplTest {
 
         DocumentType docType = new DocumentType();
         docType.setDocumentTypeId(1L);
-        docType.setDocumentType(Enums.DocumentType.RESUME);
+        docType.setDocumentType("RESUME");
         sub.setDocumentType(docType);
 
         return sub;

@@ -39,6 +39,7 @@ export const warningApi = {
 
   async getWarningsFiltered(params: {
     programId?: number;
+    programIds?: number[];
     batchNumber?: number;
     status?: string;
     warningType?: string;

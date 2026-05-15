@@ -43,6 +43,7 @@ public interface InternWarningRepository extends JpaRepository<InternWarning, Lo
     @Query("SELECT w FROM InternWarning w " +
            "WHERE w.status IN (com.kanini.springer.entity.enums.Enums.WarningStatus.ACTIVE, com.kanini.springer.entity.enums.Enums.WarningStatus.ACKNOWLEDGED) " +
            "AND (:programId IS NULL OR w.student.program.programId = :programId) " +
+           "AND (:programIds IS NULL OR w.student.program.programId IN :programIds) " +
            "AND (:batchNumber IS NULL OR w.student.batchNumber = :batchNumber) " +
            "AND (:status IS NULL OR w.status = :status) " +
            "AND (:warningType IS NULL OR w.warningType = :warningType) " +
@@ -51,6 +52,7 @@ public interface InternWarningRepository extends JpaRepository<InternWarning, Lo
            "ORDER BY w.issuedAt DESC")
     Page<InternWarning> findFiltered(
             @Param("programId") Integer programId,
+            @Param("programIds") List<Integer> programIds,
             @Param("batchNumber") Integer batchNumber,
             @Param("status") WarningStatus status,
             @Param("warningType") com.kanini.springer.entity.enums.Enums.WarningType warningType,

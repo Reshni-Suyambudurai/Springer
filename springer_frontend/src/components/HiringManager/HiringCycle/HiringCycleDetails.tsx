@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import {
   Box, Card, Typography, Stack, Chip,
   CircularProgress, Alert, Button, IconButton,
@@ -8,9 +8,9 @@ import {
 import {
   Loop as CycleIcon,
   ArrowBack as ArrowBackIcon,
-  Add as AddIcon,
   FileDownload as DownloadIcon,
 } from '@mui/icons-material';
+import { FigmaAddIcon as AddIcon } from '../../Common/FigmaIcons';
 import { useNavigate, useParams } from 'react-router-dom';
 import { hiringCycleApi } from '../../../services/hiring.api';
 import { hiringDemandApi } from '../../../services/hiring.api';
@@ -116,7 +116,7 @@ const HiringCycleDetails = () => {
                   <Button
                     variant="contained"
                     size="small"
-                    startIcon={<AddIcon sx={{ fontSize: '16px !important' }} />}
+                    startIcon={<AddIcon style={{ fontSize: '16px' }} />}
                     className="hcd-add-btn"
                     onClick={() => navigate(`/hiring-manager/hiring-demands/add?cycleId=${id}`)}
                   >
@@ -166,13 +166,13 @@ const HiringCycleDetails = () => {
                 <Box className="hcd-info-field">
                   <Typography className="hcd-info-label">Budget</Typography>
                   <Typography className="hcd-info-value">
-                    {cycle.budget ? `₹ ${cycle.budget.toLocaleString('en-IN')}` : '—'}
+                    {cycle.budget ? `â‚¹ ${cycle.budget.toLocaleString('en-IN')}` : 'â€”'}
                   </Typography>
                 </Box>
                 <Box className="hcd-info-field">
                   <Typography className="hcd-info-label">Compensation Band</Typography>
                   <Typography className="hcd-info-value">
-                    {cycle.compensationBand ? `Band ${cycle.compensationBand}` : '—'}
+                    {cycle.compensationBand ? `Band ${cycle.compensationBand}` : 'â€”'}
                   </Typography>
                 </Box>
                 <Box className="hcd-info-field">

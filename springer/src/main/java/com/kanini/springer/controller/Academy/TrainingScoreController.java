@@ -27,7 +27,7 @@ public class TrainingScoreController {
 
     private final ITrainingScoreService scoreService;
     
-    @PreAuthorize("hasAnyRole('TRAINING_COORDINATOR')")
+    @PreAuthorize("hasAnyRole('TRAINING_COORDINATOR','TA_HEAD','TA_MANAGER')")
     @PostMapping
     public ResponseEntity<ApiResponse<TrainingScoreResponse>> createScore(
             @Valid @RequestBody TrainingScoreRequest request) {
@@ -36,7 +36,7 @@ public class TrainingScoreController {
                 .body(ApiResponse.success("Training score created successfully", response));
     }
     
-    @PreAuthorize("hasAnyRole('TRAINING_COORDINATOR','TA_HEAD','INTERN')")
+    @PreAuthorize("hasAnyRole('TRAINING_COORDINATOR','TA_HEAD','TA_MANAGER','MEMBERS','INTERN')")
     @GetMapping("/student/{studentId}")
     public ResponseEntity<ApiResponse<List<TrainingScoreResponse>>> getScoresByStudent(
             @PathVariable Long studentId) {
@@ -45,7 +45,7 @@ public class TrainingScoreController {
                 .body(ApiResponse.success("Scores for student " + studentId + RETRIEVED_SUCCESSFULLY, response));
     }
     
-    @PreAuthorize("hasAnyRole('TRAINING_COORDINATOR','TA_HEAD','TA_MANAGER')")
+    @PreAuthorize("hasAnyRole('TRAINING_COORDINATOR','TA_HEAD','TA_MANAGER','MEMBERS')")
     @GetMapping("/batch")
     public ResponseEntity<ApiResponse<List<TrainingScoreResponse>>> getScoresByBatchAndCourse(
             @RequestParam Integer programId,
@@ -56,7 +56,7 @@ public class TrainingScoreController {
                 .body(ApiResponse.success("Scores retrieved successfully", response));
     }
     
-    @PreAuthorize("hasAnyRole('TRAINING_COORDINATOR')")
+    @PreAuthorize("hasAnyRole('TRAINING_COORDINATOR','TA_HEAD','TA_MANAGER')")
     @PatchMapping("/{scoreId}")
     public ResponseEntity<ApiResponse<TrainingScoreResponse>> updateScore(
             @PathVariable Integer scoreId,
@@ -66,7 +66,7 @@ public class TrainingScoreController {
                 .body(ApiResponse.success("Training score updated successfully", response));
     }
     
-    @PreAuthorize("hasAnyRole('TRAINING_COORDINATOR')")
+    @PreAuthorize("hasAnyRole('TRAINING_COORDINATOR','TA_HEAD','TA_MANAGER')")
     @DeleteMapping("/{scoreId}")
     public ResponseEntity<ApiResponse<String>> deleteScore(@PathVariable Integer scoreId) {
         scoreService.deleteScore(scoreId);
@@ -74,7 +74,7 @@ public class TrainingScoreController {
                 .body(ApiResponse.success("Training score deleted successfully", null));
     }
 
-    @PreAuthorize("hasAnyRole('TRAINING_COORDINATOR')")
+    @PreAuthorize("hasAnyRole('TRAINING_COORDINATOR','TA_HEAD','TA_MANAGER')")
     @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApiResponse<ExcelUploadResponse>> uploadScores(
             @RequestPart("file") MultipartFile file,

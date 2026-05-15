@@ -50,8 +50,15 @@ public class InternWarningServiceImpl implements IInternWarningService {
                 .orElseThrow(() -> new ResourceNotFoundException("User not found: " + request.getIssuedBy()));
 
         // Deduplication — prevent same type+severity active warning for same student
-        WarningType wType = WarningType.valueOf(request.getWarningType());
-        WarningSeverity wSeverity = WarningSeverity.valueOf(request.getSeverity());
+        WarningType wType;
+        WarningSeverity wSeverity;
+        try {
+            wType = WarningType.valueOf(request.getWarningType().toUpperCase(java.util.Locale.ROOT));
+            wSeverity = WarningSeverity.valueOf(request.getSeverity().toUpperCase(java.util.Locale.ROOT));
+        } catch (IllegalArgumentException e) {
+            throw new ValidationException("Invalid warning type or severity: '"
+                    + request.getWarningType() + "' / '" + request.getSeverity() + "'");
+        }
         if (warningRepository.existsActiveWarning(request.getStudentId(), wType, wSeverity)) {
             throw new ValidationException("An active warning of the same type ('" + request.getWarningType()
                     + "') and severity ('" + request.getSeverity() + "') already exists for this student. "
@@ -61,8 +68,8 @@ public class InternWarningServiceImpl implements IInternWarningService {
         InternWarning warning = new InternWarning();
         warning.setStudent(student);
         warning.setIssuedBy(issuedBy);
-        warning.setWarningType(WarningType.valueOf(request.getWarningType()));
-        warning.setSeverity(WarningSeverity.valueOf(request.getSeverity()));
+        warning.setWarningType(wType);
+        warning.setSeverity(wSeverity);
         warning.setMessage(request.getMessage());
         warning.setCourseId(request.getCourseId());
         warning.setStatus(WarningStatus.ACTIVE);
@@ -142,7 +149,7 @@ public class InternWarningServiceImpl implements IInternWarningService {
     @Override
     @Transactional(readOnly = true)
     public Page<InternWarningResponse> getWarningsFiltered(
-            Integer programId, Integer batchNumber, String status, String warningType, String search, int page, int size) {
+            Integer programId, List<Integer> programIds, Integer batchNumber, String status, String warningType, String search, int page, int size) {
         WarningStatus warningStatus = null;
         if (status != null && !status.isBlank()) {
             try { warningStatus = WarningStatus.valueOf(status.toUpperCase(java.util.Locale.ROOT)); }
@@ -154,7 +161,8 @@ public class InternWarningServiceImpl implements IInternWarningService {
             catch (IllegalArgumentException ignored) { /* invalid type — treat as no filter */ }
         }
         String searchParam = (search != null && !search.isBlank()) ? search.trim() : null;
-        return warningRepository.findFiltered(programId, batchNumber, warningStatus, warnType, searchParam,
+        List<Integer> ids = (programIds != null && !programIds.isEmpty()) ? programIds : null;
+        return warningRepository.findFiltered(programId, ids, batchNumber, warningStatus, warnType, searchParam,
                 PageRequest.of(page, size)).map(this::toResponse);
     }
 

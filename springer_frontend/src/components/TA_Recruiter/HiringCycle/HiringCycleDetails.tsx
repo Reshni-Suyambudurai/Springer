@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+﻿import { useState, useEffect, useRef } from 'react';
 import {
   Box, Card, Typography, Stack, Chip, Button,
   CircularProgress, Alert, Table, TableBody, TableCell,
@@ -8,8 +8,8 @@ import {
   DateRange as CycleIcon,
   FileUpload as UploadIcon,
   FileDownload as DownloadIcon,
-  Add as AddIcon,
 } from '@mui/icons-material';
+import { FigmaAddIcon as AddIcon } from '../../Common/FigmaIcons';
 import { useNavigate, useParams } from 'react-router-dom';
 import BackButton from '../../Common/BackButton';
 import { hiringCycleApi, hiringDemandApi } from '../../../services/hiring.api';
@@ -187,7 +187,7 @@ const TARHiringCycleDetails = () => {
               <Box className="t-info-field">
                 <Typography className="t-info-label">Budget</Typography>
                 <Typography className="t-info-value">
-                  {cycle.budget ? `₹ ${cycle.budget.toLocaleString('en-IN')}` : '—'}
+                  {cycle.budget ? `â‚¹ ${cycle.budget.toLocaleString('en-IN')}` : 'â€”'}
                 </Typography>
               </Box>
               <Box className="t-info-field">

@@ -1,4 +1,4 @@
-import { http } from './api/https';
+﻿import { http } from './api/https';
 import { handleAxiosError } from './api.error';
 import type { ApiResponse, Page } from '../types/api.response';
 import type {
@@ -39,6 +39,17 @@ export const programYearsApi = {
 
 // ==================== USER APIs (academy-scoped) ====================
 export const userApi = {
+  // Optimized version - accepts roleId directly to avoid fetching roles repeatedly
+  async getUsersByRoleId(roleId: number): Promise<ApiResponse<UserSummary[]>> {
+    try {
+      const response = await http.get('/auth/users/by-roles', { params: { roleIds: roleId } });
+      return response.data;
+    } catch (error) {
+      throw handleAxiosError(error);
+    }
+  },
+
+  // Legacy version - kept for backward compatibility but should be avoided
   async getUsersByRole(role: string): Promise<ApiResponse<UserSummary[]>> {
     try {
       const rolesResponse = await http.get('/auth/roles');
@@ -46,14 +57,20 @@ export const userApi = {
       const matchedRole = roles.find((r: { roleId: number; roleName: string }) => r.roleName === role);
 
       if (!matchedRole) {
-        return {
-          success: true,
-          message: `No users found for role ${role}`,
-          data: [],
-        } as ApiResponse<UserSummary[]>;
+        return { success: true, message: `No users found for role ${role}`, data: [] } as ApiResponse<UserSummary[]>;
       }
 
       const response = await http.get('/auth/users/by-roles', { params: { roleIds: matchedRole.roleId } });
+      return response.data;
+    } catch (error) {
+      throw handleAxiosError(error);
+    }
+  },
+
+  // Batch fetch users for multiple roles in one call
+  async getUsersByRoleIds(roleIds: number[]): Promise<ApiResponse<UserSummary[]>> {
+    try {
+      const response = await http.get('/auth/users/by-roles', { params: { roleIds: roleIds.join(',') } });
       return response.data;
     } catch (error) {
       throw handleAxiosError(error);
@@ -461,21 +478,21 @@ export const excelUploadApi = {
 // ==================== JOINING TRACKER APIs ====================
 export const joiningTrackerApi = {
 
-  // Fetches only ACCEPTED, JOINED, NOT_JOINED candidates from backend — not all candidates
-  async getCandidatesByCycle(cycleId: number): Promise<ApiResponse<CandidateResponse[]>> {
+  // Fetches only OFFER_ACCEPTED, JOINED, NOT_JOINED candidates from backend â€” not all candidates
+  async getCandidatesByCycle(cycleId: number, page = 0, size = 500): Promise<ApiResponse<CandidateResponse[]>> {
     try {
       const response = await http.post('/candidates/filter', {
         cycleId,
-        applicationStages: ['ACCEPTED', 'JOINED', 'NOT_JOINED'],
-        page: 0,
-        size: 1000,
+        applicationStages: ['OFFER_ACCEPTED', 'JOINED', 'NOT_JOINED'],
+        page,
+        size,
       });
       // filter endpoint returns Page, unwrap content into list
-      const page = response.data?.data;
+      const pageData = response.data?.data;
       return {
         success: response.data?.success ?? false,
         message: response.data?.message ?? '',
-        data: page?.content ?? [],
+        data: pageData?.content ?? [],
       };
     } catch (error) {
       throw handleAxiosError(error);

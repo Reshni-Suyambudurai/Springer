@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+﻿import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { driveScheduleApi } from "../../../services/driveschedule.api";
 import { hiringCycleApi } from "../../../services/hiring.api";
@@ -17,9 +17,9 @@ import {
   FormControl,
   InputLabel,
 } from "@mui/material";
-import AddIcon from "@mui/icons-material/Add";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
+import { FigmaAddIcon as AddIcon } from '../../Common/FigmaIcons';
 import EditDriveModal from "./EditDriveModal";
 import "../../../css/TA_Recruiter/DriveSchedule/DriveCalendar.css";
 

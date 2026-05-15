@@ -28,7 +28,7 @@ public class DriveDashboardServiceImpl implements IDriveDashboardService {
     private static final Set<ApplicationStage> SELECTED_STAGES = EnumSet.of(ApplicationStage.SELECTED);
     private static final Set<ApplicationStage> REJECTED_STAGES = EnumSet.of(ApplicationStage.REJECTED);
     private static final Set<ApplicationStage> DROPPED_STAGES = EnumSet.of(ApplicationStage.DROPPED);
-    private static final Set<ApplicationStage> ACCEPTED_STAGES = EnumSet.of(ApplicationStage.ACCEPTED);
+    private static final Set<ApplicationStage> ACCEPTED_STAGES = EnumSet.of(ApplicationStage.OFFER_ACCEPTED);
     private static final Set<ApplicationStage> JOINED_STAGES = EnumSet.of(ApplicationStage.JOINED);
 
     @Override

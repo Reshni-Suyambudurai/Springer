@@ -1,10 +1,10 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { Box, MenuItem, TextField, Typography } from '@mui/material';
 import { useLocation } from 'react-router-dom';
 import type { TrainingProgramResponse } from '../../../types/Academy/academy.types';
 import type { AcademyTabGroup } from '../../../config/academyConfig';
 import type { HiringCycleResponse } from '../../../types/TA_Recruiter/Hiring/hiringCycle.types';
-import { trainingProgramApi, programYearsApi } from '../../../services/academy.api';
+import { trainingProgramApi } from '../../../services/academy.api';
 import { hiringCycleApi } from '../../../services/hiring.api';
 import { getCachedAcademyConfig, invalidateConfigCache } from '../../../config/academyConfig';
 import { tokenstore } from '../../../auth/tokenstore';
@@ -35,46 +35,58 @@ const AcademyDashboard = () => {
   const [activeTab, setActiveTab]     = useState<string>('');
   const [programYear, setProgramYear] = useState<number>(getCurrentYear());
   const [programs, setPrograms]       = useState<TrainingProgramResponse[]>([]);
-  const [availableYears, setAvailableYears] = useState<number[]>([
-    getCurrentYear() - 1, getCurrentYear(), getCurrentYear() + 1,
-  ]);
+  const [availableYears, setAvailableYears] = useState<number[]>([]);
   const [cycles, setCycles]               = useState<HiringCycleResponse[]>([]);
   const [loadingPrograms, setLoadingPrograms] = useState(false);
 
+  const deriveYears = (progs: TrainingProgramResponse[], cycs: HiringCycleResponse[]) => {
+    const progYears = progs.map(p => p.programYear).filter((y): y is number => y != null);
+    const cycleYears = cycs.map(c => c.cycleYear).filter((y): y is number => y != null);
+    const allYears = Array.from(new Set([...progYears, ...cycleYears])).sort((a, b) => b - a);
+    if (allYears.length === 0) {
+      const cur = getCurrentYear();
+      return [cur - 1, cur, cur + 1];
+    }
+    return allYears;
+  };
+
   useEffect(() => {
     setLoadingPrograms(true);
-    trainingProgramApi.getAllPrograms()
-      .then(res => { if (res.success && res.data) setPrograms(res.data); })
-      .catch(err => showToast(err.message || 'Failed to load programs', 'error'))
+    Promise.all([
+      trainingProgramApi.getAllPrograms(),
+      hiringCycleApi.getAllCycles(),
+    ]).then(([progRes, cyclesRes]) => {
+      const progs = progRes.success && progRes.data ? progRes.data : [];
+      const cycs = cyclesRes.success && cyclesRes.data ? cyclesRes.data : [];
+      setPrograms(progs);
+      setCycles(cycs);
+      setAvailableYears(deriveYears(progs, cycs));
+    }).catch(err => showToast(err.message || 'Failed to load programs', 'error'))
       .finally(() => setLoadingPrograms(false));
-    hiringCycleApi.getAllCycles()
-      .then(res => { if (res.success && res.data) setCycles(res.data); })
-      .catch(() => {});
   }, []);
 
   const handleProgramsChanged = () => {
-    trainingProgramApi.getAllPrograms()
-      .then(res => { if (res.success && res.data) setPrograms(res.data); })
-      .catch(() => {});
-    programYearsApi.getDistinctYears()
-      .then(res => { if (res.success && Array.isArray(res.data) && res.data.length > 0) setAvailableYears(res.data); })
-      .catch(() => {});
+    trainingProgramApi.getAllPrograms().then(progRes => {
+      const progs = progRes.success && progRes.data ? progRes.data : [];
+      setPrograms(progs);
+      setAvailableYears(deriveYears(progs, cycles));
+    }).catch(() => {});
   };
 
   useEffect(() => {
     if (programs.length === 0) return;
-    programYearsApi.getDistinctYears()
-      .then(res => { if (res.success && Array.isArray(res.data) && res.data.length > 0) setAvailableYears(res.data); })
-      .catch(() => {});
+    // years already fetched on mount; only re-fetch when handleProgramsChanged is called
   }, [programs]);
 
   useEffect(() => {
     if (availableYears.length === 0) return;
     const cur = getCurrentYear();
+    // If current programYear is valid, keep it
     if (availableYears.includes(programYear)) return;
+    // Otherwise, try to set to current year if available
     if (availableYears.includes(cur)) { setProgramYear(cur); return; }
-    const nearest = availableYears.reduce((p, c) => Math.abs(c - cur) < Math.abs(p - cur) ? c : p);
-    setProgramYear(nearest);
+    // Otherwise, set to the most recent year
+    setProgramYear(availableYears[0]);
   }, [availableYears]);
 
   useEffect(() => { invalidateConfigCache(); }, []);
@@ -130,7 +142,7 @@ const AcademyDashboard = () => {
     <Box className="acd-page">
       <Box className="acd-header">
 
-        {/* ── Single row: group pills (left) + year filter (right) ── */}
+        {/* â”€â”€ Single row: group pills (left) + year filter (right) â”€â”€ */}
         <Box className="acd-top-row">
           <Box className="acd-group-bar">
             {tabGroups.map(group => (
@@ -148,7 +160,8 @@ const AcademyDashboard = () => {
           <Box className="acd-year-filter-group">
             <Typography className="acd-year-label">Year</Typography>
             <TextField
-              select size="small" value={programYear}
+              select size="small"
+              value={availableYears.length === 0 && programYear !== 0 ? 0 : programYear}
               onChange={e => setProgramYear(Number(e.target.value))}
               className="acd-year-select"
             >
@@ -163,7 +176,7 @@ const AcademyDashboard = () => {
           </Box>
         </Box>
 
-        {/* ── Tab bar: only tabs of active group ── */}
+        {/* â”€â”€ Tab bar: only tabs of active group â”€â”€ */}
         <Box className="acd-tab-bar">
           {activeGroupTabs.map(tab => (
             <button

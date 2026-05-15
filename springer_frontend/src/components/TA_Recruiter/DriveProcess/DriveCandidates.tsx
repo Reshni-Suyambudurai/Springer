@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+﻿import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { applicationApi, candidateEvaluationApi } from "../../../services/driveschedule.api";
 import type { ApplicationResponse, BatchCandidatesMap } from "../../../types/TA_Recruiter/DriveSchedule/application.types";
@@ -204,12 +204,12 @@ const DriveCandidates: React.FC = () => {
 
   return (
     <Box className="dc-container">
-      {/* Header — mirrors InstitutesList / DriveList pattern */}
+      {/* Header â€” mirrors InstitutesList / DriveList pattern */}
       <Card className="dc-header">
         <Box className="dc-header-left">
           <BackButton variant="header" />
           <Typography variant="h6" className="dc-title">
-            {driveName ? `${driveName} — Candidates` : "Drive Candidates"}
+            {driveName ? `${driveName} â€” Candidates` : "Drive Candidates"}
           </Typography>
         </Box>
 

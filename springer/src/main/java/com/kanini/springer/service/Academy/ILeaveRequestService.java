@@ -14,5 +14,5 @@ public interface ILeaveRequestService {
     List<LeaveRequestResponse> getAllLeaves();
     List<LeaveRequestResponse> getLeavesByBatch(Integer programId, Integer batchNumber);
     LeaveRequestResponse getLeaveById(Long leaveId);
-    Page<LeaveRequestResponse> getLeavesFiltered(Integer programId, Integer batchNumber, String status, String search, int page, int size);
+    Page<LeaveRequestResponse> getLeavesFiltered(Integer programId, List<Integer> programIds, Integer batchNumber, String status, String search, int page, int size);
 }

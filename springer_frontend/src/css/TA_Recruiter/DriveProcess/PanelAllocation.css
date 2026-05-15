@@ -1,0 +1,663 @@
+﻿/* ========== Container ========== */
+.pa-container {
+  padding: 16px;
+  background-color: var(--color-bg);
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-sizing: border-box;
+  gap: 16px;
+}
+
+/* ========== Header ========== */
+.pa-header {
+  display: flex !important;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  background: var(--color-surface) !important;
+  padding: 16px 20px !important;
+  border-radius: 12px !important;
+  border: 1px solid var(--color-border) !important;
+  flex-shrink: 0;
+  box-shadow: none !important;
+}
+
+.pa-header-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.pa-header-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.pa-title {
+  font-size: var(--text-base) !important;
+  font-weight: 700 !important;
+  color: var(--color-text-primary) !important;
+}
+
+.pa-subtitle {
+  font-size: var(--text-xs) !important;
+  font-weight: 500 !important;
+  color: var(--color-text-secondary) !important;
+}
+
+/* ========== Header Actions ========== */
+.pa-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* ========== Global Assignment ========== */
+.pa-global-assign {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pa-global-select {
+  min-width: 160px !important;
+  height: 32px !important;
+}
+
+.pa-global-select .MuiSelect-select {
+  font-size: var(--text-sm) !important;
+  padding: 6px 14px !important;
+}
+
+.pa-global-apply-btn {
+  text-transform: none !important;
+  font-size: var(--text-sm) !important;
+  font-weight: 600 !important;
+  color: var(--color-primary) !important;
+  border-color: var(--color-primary) !important;
+  padding: 4px 14px !important;
+  border-radius: 8px !important;
+}
+
+.pa-global-apply-btn:disabled {
+  opacity: 0.5 !important;
+}
+
+.pa-assigned-count {
+  font-size: var(--text-sm) !important;
+  font-weight: 600 !important;
+  color: var(--color-text-secondary) !important;
+}
+
+.pa-submit-btn {
+  text-transform: none !important;
+  font-size: var(--text-sm) !important;
+  font-weight: 600 !important;
+  background-color: var(--color-primary) !important;
+  color: var(--color-white, #fff) !important;
+  padding: 6px 20px !important;
+  border-radius: 8px !important;
+}
+
+.pa-submit-btn:disabled {
+  opacity: 0.5 !important;
+}
+
+/* ========== Bulk Reassignment Bar ========== */
+.pa-reassign-bar {
+  display: flex !important;
+  align-items: center;
+  gap: 14px;
+  background: var(--color-surface) !important;
+  padding: 10px 20px !important;
+  border-radius: 10px !important;
+  border: 1px dashed var(--color-primary) !important;
+  box-shadow: none !important;
+  flex-shrink: 0;
+}
+
+.pa-reassign-icon {
+  font-size: 22px !important;
+  color: var(--color-primary) !important;
+  flex-shrink: 0;
+}
+
+.pa-reassign-label {
+  font-size: var(--text-sm) !important;
+  font-weight: 700 !important;
+  color: var(--color-text-primary) !important;
+  white-space: nowrap;
+}
+
+.pa-reassign-field {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.pa-reassign-field-label {
+  font-size: var(--text-xs) !important;
+  font-weight: 600 !important;
+  color: var(--color-text-secondary) !important;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+
+.pa-reassign-select {
+  min-width: 170px !important;
+  height: 32px !important;
+}
+
+.pa-reassign-select .MuiSelect-select {
+  font-size: var(--text-sm) !important;
+  padding: 6px 14px !important;
+}
+
+.pa-reassign-count {
+  font-size: var(--text-xs) !important;
+  font-weight: 600 !important;
+  color: var(--color-primary) !important;
+  background: var(--color-primary-hover-6, rgba(99, 102, 241, 0.06));
+  padding: 4px 10px;
+  border-radius: 6px;
+  white-space: nowrap;
+}
+
+.pa-reassign-btn {
+  text-transform: none !important;
+  font-size: var(--text-sm) !important;
+  font-weight: 600 !important;
+  background-color: var(--color-primary) !important;
+  color: var(--color-white, #fff) !important;
+  padding: 6px 18px !important;
+  border-radius: 8px !important;
+  white-space: nowrap;
+  margin-left: auto;
+}
+
+.pa-reassign-btn:disabled {
+  opacity: 0.5 !important;
+}
+
+/* ========== Scrollable Content Area ========== */
+.pa-scroll-area {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.pa-scroll-area::-webkit-scrollbar { width: 6px; }
+.pa-scroll-area::-webkit-scrollbar-track { background: var(--color-surface); border-radius: 3px; }
+.pa-scroll-area::-webkit-scrollbar-thumb { background: var(--color-primary); border-radius: 3px; }
+.pa-scroll-area::-webkit-scrollbar-thumb:hover { background: var(--color-primary-dark); }
+
+/* ========== Empty State ========== */
+.pa-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px !important;
+  background: var(--color-surface) !important;
+  border-radius: 12px !important;
+  border: 1px solid var(--color-border) !important;
+  box-shadow: none !important;
+}
+
+.pa-empty-text {
+  font-size: var(--text-sm) !important;
+  color: var(--color-text-secondary) !important;
+}
+
+/* ========== Cards Scroll Area ========== */
+.pa-cards-scroll {
+  flex: 1;
+  min-height: 0;
+}
+
+/* ========== Cards Grid ΓÇö 2 per row ========== */
+.pa-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 36px;
+  margin-left: 4%;
+  margin-right:4%;
+}
+
+/* ========== Individual Card ========== */
+.pa-card {
+  background: var(--color-surface) !important;
+  border: 1px solid var(--color-border) !important;
+  border-radius: 12px !important;
+  padding: 14px 18px !important;
+  box-shadow: none !important;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.pa-card:hover {
+  border-color: var(--color-primary) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06) !important;
+}
+
+.pa-card-assigned {
+  border-left: 3px solid var(--color-success) !important;
+}
+
+/* Already allocated (from backend) ΓÇö primary color left border */
+.pa-card-allocated {
+  border-left: 3px solid var(--color-primary) !important;
+  background: var(--color-primary-hover-4) !important;
+}
+
+/* Evaluated ΓÇö locked, muted appearance */
+.pa-card-evaluated {
+  border-left: 3px solid var(--color-success) !important;
+  background: var(--color-primary-hover-4) !important;
+  opacity: 0.75;
+}
+
+/* Evaluated badge */
+.pa-card-evaluated-badge {
+  font-size: var(--text-xs) !important;
+  font-weight: 600 !important;
+  color: var(--color-success) !important;
+  background: var(--color-success-light, rgba(34, 197, 94, 0.1));
+  padding: 2px 8px;
+  border-radius: 4px;
+  margin-left: auto;
+  white-space: nowrap;
+}
+
+/* Score badge in card header */
+.pa-card-score-badge {
+  font-size: var(--text-xs) !important;
+  font-weight: 700 !important;
+  color: var(--color-primary) !important;
+  background: var(--color-primary-hover-6, rgba(99, 102, 241, 0.06));
+  padding: 2px 10px;
+  border-radius: 4px;
+  margin-left: auto;
+  white-space: nowrap;
+}
+
+/* Card Top ΓÇö index + name */
+.pa-card-top {
+  display: flex;
+  align-items: center;
+  gap: 30px;
+}
+
+.pa-card-bottom .pa-eval-badge {
+  margin-left: auto;
+}
+
+.pa-card-index {
+  font-size: var(--text-xs) !important;
+  font-weight: 700 !important;
+  color: var(--color-white, #fff) !important;
+  background-color: var(--color-primary) !important;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.pa-card-name {
+  font-size: var(--text-sm) !important;
+  font-weight: 700 !important;
+  color: var(--color-text-primary) !important;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Card Bottom ΓÇö score + dropdown inline */
+.pa-card-bottom {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-top: 1px solid var(--color-border);
+  padding-top: 10px;
+}
+
+.pa-card-score-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.pa-card-info-left {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.pa-card-label {
+  font-size: var(--text-xs) !important;
+  font-weight: 600 !important;
+  color: var(--color-text-secondary) !important;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.pa-card-score {
+  font-size: var(--text-sm) !important;
+  font-weight: 700 !important;
+  color: var(--color-success) !important;
+}
+
+.pa-card-select {
+  max-width: 160px !important;
+  min-width: 260px !important;
+  height: 32px !important;
+  flex: 1;
+}
+
+.pa-card-select .MuiSelect-select {
+  font-size: var(--text-sm) !important;
+  padding: 6px 14px !important;
+}
+
+/* ========== Assigned Info (name + edit button) ========== */
+.pa-card-assigned-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+}
+
+.pa-card-assigned-name {
+  font-size: var(--text-sm) !important;
+  font-weight: 600 !important;
+  color: var(--color-primary) !important;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pa-card-edit-btn {
+  color: var(--color-text-secondary) !important;
+  padding: 4px !important;
+  flex-shrink: 0;
+}
+
+.pa-card-edit-btn:hover {
+  color: var(--color-primary) !important;
+  background: var(--color-primary-hover-6) !important;
+}
+
+.pa-card-edit-icon {
+  font-size: var(--text-base) !important;
+}
+
+/* ========== Responsive ========== */
+@media (max-width: 768px) {
+  .pa-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .pa-cards-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ========== Evaluation Status Badge ========== */
+.pa-eval-badge {
+  display: inline-block;
+  font-size: 0.675rem;
+  font-weight: 700;
+  padding: 2px 10px;
+  border-radius: 50px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  flex-shrink: 0;
+  margin-left: 8px;
+}
+
+.pa-eval-pass {
+  background-color: var(--color-green-50);
+  color: var(--color-green-600);
+}
+
+.pa-eval-fail {
+  background-color: var(--color-red-50);
+  color: var(--color-red-500);
+}
+
+.pa-eval-absent {
+  background-color: var(--color-pink-50);
+  color: var(--color-pink-600);
+}
+
+.pa-eval-hold {
+  background-color: var(--color-blue-50);
+  color: var(--color-blue-500);
+}
+
+.pa-eval-skip {
+  background-color: var(--color-grey-150);
+  color: var(--color-grey-600);
+}
+
+.pa-eval-pending {
+  background-color: var(--color-yellow-50);
+  color: var(--color-yellow-500);
+}
+
+/* ========== Extra Panel Allocation ========== */
+.pa2-add-btn {
+  margin-left: auto !important;
+  color: var(--color-primary) !important;
+  padding: 4px !important;
+}
+
+.pa2-add-btn:hover {
+  background: var(--color-primary-hover-6) !important;
+}
+
+.pa2-add-icon {
+  font-size: 1.1rem !important;
+}
+
+.pa2-extra-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-top: 1px dashed var(--color-border);
+  padding-top: 8px;
+  margin-top: 6px;
+}
+
+.pa2-extra-label {
+  font-size: var(--text-xs) !important;
+  font-weight: 600 !important;
+  color: var(--color-primary) !important;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+
+.pa2-select {
+  flex: 1;
+  font-size: var(--text-xs) !important;
+  border-radius: 6px !important;
+}
+
+.pa2-select .MuiSelect-select {
+  padding: 6px 14px !important;
+}
+
+.pa2-remove-btn {
+  color: var(--color-error-dark) !important;
+  padding: 4px !important;
+}
+
+.pa2-remove-btn:hover {
+  background: var(--color-red-50) !important;
+}
+
+.pa2-remove-icon {
+  font-size: 1rem !important;
+}
+
+.pa2-submit-btn {
+  font-size: var(--text-xs) !important;
+  font-weight: 600 !important;
+  text-transform: none !important;
+  border-radius: 6px !important;
+  padding: 6px 16px !important;
+  background-color: var(--color-success-dark) !important;
+  color: var(--color-white, #fff) !important;
+}
+
+.pa2-submit-btn:hover {
+  background-color: var(--color-success) !important;
+}
+
+/* ========== Panel Members List (per candidate card) ========== */
+.pa-panels-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  border-top: 1px solid var(--color-border);
+  margin-top: 4px;
+}
+
+.pa-panel-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 4px;
+  border-bottom: 1px solid var(--color-border);
+  transition: background 0.15s ease;
+}
+
+.pa-panel-row:last-child {
+  border-bottom: none;
+}
+
+.pa-panel-row:hover {
+  background: var(--color-primary-hover-4, rgba(99, 102, 241, 0.04));
+}
+
+.pa-panel-row-evaluated {
+  opacity: 0.7;
+}
+
+.pa-panel-index {
+  font-size: var(--text-xs) !important;
+  font-weight: 700 !important;
+  color: var(--color-white, #fff) !important;
+  background-color: var(--color-text-secondary) !important;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.pa-panel-name {
+  font-size: var(--text-sm) !important;
+  font-weight: 600 !important;
+  color: var(--color-text-primary) !important;
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pa-panel-score {
+  font-size: var(--text-xs) !important;
+  font-weight: 700 !important;
+  color: var(--color-success-dark) !important;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.pa-panel-edit-btn {
+  color: var(--color-text-secondary) !important;
+  padding: 2px !important;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+.pa-panel-edit-btn:hover {
+  color: var(--color-primary) !important;
+  background: var(--color-primary-hover-6) !important;
+}
+
+.pa-panel-edit-icon {
+  font-size: 0.875rem !important;
+}
+
+/* Inline edit dropdown in panel row */
+.pa-panel-edit-select {
+  flex: 1;
+  min-width: 130px !important;
+  max-width: 180px !important;
+  height: 28px !important;
+}
+
+.pa-panel-edit-select .MuiSelect-select {
+  font-size: var(--text-xs) !important;
+  padding: 4px 10px !important;
+}
+
+/* Edit submit button */
+.pa-edit-submit-btn {
+  font-size: var(--text-xs) !important;
+  font-weight: 600 !important;
+  text-transform: none !important;
+  border-radius: 6px !important;
+  padding: 6px 16px !important;
+  background-color: var(--color-primary) !important;
+  color: var(--color-white, #fff) !important;
+  white-space: nowrap;
+}
+
+.pa-edit-submit-btn:disabled {
+  opacity: 0.5 !important;
+}
+
+/* ========== Initial Assign Row ========== */
+.pa-assign-row {
+  border-top: 1px solid var(--color-border);
+  padding-top: 10px;
+  margin-top: 4px;
+}
+
+/* ========== Reassign Duplicate Error ========== */
+.pa-reassign-select-error .MuiOutlinedInput-notchedOutline {
+  border-color: var(--color-error-dark, #d32f2f) !important;
+  border-width: 2px !important;
+}
+
+.pa-reassign-select-error .MuiSelect-select {
+  color: var(--color-error-dark, #d32f2f) !important;
+}
+
+.pa-reassign-error-text {
+  font-size: var(--text-xs) !important;
+  font-weight: 600 !important;
+  color: var(--color-error-dark, #d32f2f) !important;
+  white-space: nowrap;
+}

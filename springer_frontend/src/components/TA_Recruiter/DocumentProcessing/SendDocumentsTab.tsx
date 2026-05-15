@@ -1,25 +1,28 @@
-import { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect, useMemo } from 'react';
+import { useDebounce } from '../../../hooks/useDebounce';
+import { TableSkeleton } from '../../Common/TableSkeleton';
+import ProgressDialog from '../../Common/ProgressDialog';
 import {
-  Box, Card, Typography, Button, CircularProgress, Chip,
+  Box, Card, Typography, Button, CircularProgress,
   TextField, InputAdornment, Table, TableBody, TableCell,
-  TableContainer, TableHead, TableRow, TablePagination,
+  TableContainer, TableHead, TableRow,
   Checkbox, Stack, IconButton, Dialog, DialogTitle,
   DialogContent, DialogActions, MenuItem, Tooltip,
 } from '@mui/material';
 import {
-  Send as SendIcon, Search as SearchIcon,
   Refresh as RefreshIcon, Person as PersonIcon,
 } from '@mui/icons-material';
-import { documentTypeApi, documentLinkApi, documentSubmissionApi } from '../../../services/document.api';
-import { candidateApi } from '../../../services/drive.api';
+import { FigmaSearchIcon as SearchIcon, FigmaCloseIcon as CloseIcon } from '../../Common/FigmaIcons';
+import { documentLinkApi } from '../../../services/document.api';
 import { showToast } from '../../../utils/toast';
+import { useDocumentProcessing } from '../../../contexts/DocumentProcessingContext';
 import FilterSelect from '../../Common/FilterSelect';
-import type { DocumentTypeResponse, DocProcessingContextProps } from '../../../types/DocumentCollection/document.types';
-import type { CandidateResponse } from '../../../types/TA_Recruiter/Drive/candidate.types';
+import type { DocProcessingContextProps } from '../../../types/DocumentCollection/document.types';
 import '../../../css/TA_Recruiter/DocumentProcessing/SendDocumentsTab.css';
 
 const SendDocumentsTab = ({ context }: { context: DocProcessingContextProps }) => {
   const { cycleId, cycleName } = context;
+  const { docTypes, selectedCandidates, submissions, loadingCandidates, loadingSubmissions, fetchSelectedCandidates, fetchSubmissions, refreshAll } = useDocumentProcessing();
 
   const getDefaultSubmissionDeadline = () => {
     const value = new Date();
@@ -29,21 +32,19 @@ const SendDocumentsTab = ({ context }: { context: DocProcessingContextProps }) =
     return new Date(value.getTime() - offsetMs).toISOString().slice(0, 16);
   };
 
-  const [docTypes, setDocTypes] = useState<DocumentTypeResponse[]>([]);
-  const [candidates, setCandidates] = useState<CandidateResponse[]>([]);
-  const [submissions, setSubmissions] = useState<Record<number, number>>({}); // Count of SUBMITTED documents
-  const [submissionDetails, setSubmissionDetails] = useState<Record<number, { name: string; submitted: boolean }[]>>({}); // Per-doc details
+  const [submissionDetails, setSubmissionDetails] = useState<Record<number, { name: string; submitted: boolean }[]>>({});
   const [mailSent, setMailSent] = useState<Record<number, boolean>>({});
   const [allSubmitted, setAllSubmitted] = useState<Record<number, boolean>>({});
-  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const debouncedSearch = useDebounce(search, 300);
   const [filterSubmission, setFilterSubmission] = useState('all');
-  const [filterStage, setFilterStage] = useState('all');
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [loadingCycleData, setLoadingCycleData] = useState(false);
   const [selectedCandidateIds, setSelectedCandidateIds] = useState<Set<number>>(new Set());
   const [sending, setSending] = useState(false);
   const [resendingId, setResendingId] = useState<number | null>(null);
+
+  // Progress state
+  const [progressState, setProgressState] = useState({ open: false, current: 0, total: 0, currentItem: '' });
 
   // Send dialog
   const [sendDialog, setSendDialog] = useState(false);
@@ -51,119 +52,86 @@ const SendDocumentsTab = ({ context }: { context: DocProcessingContextProps }) =
   const [submissionDeadline, setSubmissionDeadline] = useState(getDefaultSubmissionDeadline());
 
   useEffect(() => {
-    if (cycleId) fetchData();
+    if (cycleId) {
+      setLoadingCycleData(true);
+      Promise.all([
+        fetchSelectedCandidates(cycleId),
+        fetchSubmissions(cycleId)
+      ]).finally(() => setLoadingCycleData(false));
+    }
     setSelectedCandidateIds(new Set());
     setSearch('');
     setFilterSubmission('all');
-    setFilterStage('all');
-    setPage(0);
     setSubmissionDeadline(getDefaultSubmissionDeadline());
   }, [cycleId]);
 
-  const fetchData = async () => {
-    try {
-      setLoading(true);
-      const [typeRes, subRes, candRes] = await Promise.all([
-        documentTypeApi.getAllTypes(),
-        documentSubmissionApi.getAllSubmissions({ cycleId, size: 2000 }),
-        Promise.all([
-          candidateApi.getCandidatesByCycleIdAndStage(cycleId, 'SELECTED'),
-          candidateApi.getCandidatesByCycleIdAndStage(cycleId, 'OFFERED'),
-          candidateApi.getCandidatesByCycleIdAndStage(cycleId, 'ACCEPTED'),
-        ]).then(results => ({
-          success: true,
-          data: results.flatMap(r => (r.success && r.data) ? r.data : []),
-        })),
-      ]);
-      if (typeRes.success && typeRes.data) {
-        setDocTypes(typeRes.data);
-        setSelectedDocTypeIds(new Set(typeRes.data.map(d => d.documentTypeId)));
+  useEffect(() => {
+    const submittedCounts: Record<number, Set<string>> = {};
+    const pendingCounts: Record<number, number> = {};
+    const detailsMap: Record<number, Record<string, boolean>> = {};
+
+    submissions.forEach(s => {
+      if (s.verificationStatus === 'PENDING') {
+        pendingCounts[s.candidateId] = (pendingCounts[s.candidateId] || 0) + 1;
+        if (!detailsMap[s.candidateId]) detailsMap[s.candidateId] = {};
+        if (detailsMap[s.candidateId][s.documentType] === undefined)
+          detailsMap[s.candidateId][s.documentType] = false;
+      } else {
+        if (!submittedCounts[s.candidateId]) submittedCounts[s.candidateId] = new Set();
+        if (s.documentType) submittedCounts[s.candidateId].add(s.documentType);
+        if (!detailsMap[s.candidateId]) detailsMap[s.candidateId] = {};
+        detailsMap[s.candidateId][s.documentType] = true;
       }
-      if (candRes.success && candRes.data) {
-        // Show SELECTED, OFFERED and ACCEPTED candidates — all need documents
-        setCandidates(candRes.data.filter(c =>
-          ['SELECTED', 'OFFERED', 'ACCEPTED'].includes(c.applicationStage)
-        ));
-      }
-      if (subRes.success && subRes.data) {
-        const submittedCounts: Record<number, Set<string>> = {};
-        const pendingCounts: Record<number, number> = {};
-        // Track per-doc submission details: docType -> submitted or not
-        const detailsMap: Record<number, Record<string, boolean>> = {};
+    });
 
-        subRes.data.forEach(s => {
-          if (s.verificationStatus === 'PENDING') {
-            pendingCounts[s.candidateId] = (pendingCounts[s.candidateId] || 0) + 1;
-            if (!detailsMap[s.candidateId]) detailsMap[s.candidateId] = {};
-            // Only set false if not already marked true by a submitted record
-            if (detailsMap[s.candidateId][s.documentType] === undefined)
-              detailsMap[s.candidateId][s.documentType] = false;
-          } else {
-            if (!submittedCounts[s.candidateId]) submittedCounts[s.candidateId] = new Set();
-            if (s.documentType) submittedCounts[s.candidateId].add(s.documentType);
-            if (!detailsMap[s.candidateId]) detailsMap[s.candidateId] = {};
-            detailsMap[s.candidateId][s.documentType] = true;
-          }
-        });
+    const mailSentMap: Record<number, boolean> = {};
+    const allSubmittedMap: Record<number, boolean> = {};
+    const detailsResult: Record<number, { name: string; submitted: boolean }[]> = {};
 
-        const uniqueCounts: Record<number, number> = {};
-        const mailSentMap: Record<number, boolean> = {};
-        const allSubmittedMap: Record<number, boolean> = {};
-        const detailsResult: Record<number, { name: string; submitted: boolean }[]> = {};
+    submissions.forEach(s => { mailSentMap[s.candidateId] = true; });
 
-        Object.entries(submittedCounts).forEach(([cid, set]) => {
-          uniqueCounts[Number(cid)] = set.size;
-        });
+    Object.keys(mailSentMap).forEach(cid => {
+      const id = Number(cid);
+      allSubmittedMap[id] = mailSentMap[id] && !(pendingCounts[id] > 0);
+    });
 
-        subRes.data.forEach(s => { mailSentMap[s.candidateId] = true; });
+    Object.entries(detailsMap).forEach(([cid, docMap]) => {
+      detailsResult[Number(cid)] = Object.entries(docMap).map(([name, submitted]) => ({
+        name: name.replace(/_/g, ' '),
+        submitted,
+      }));
+    });
 
-        Object.keys(mailSentMap).forEach(cid => {
-          const id = Number(cid);
-          allSubmittedMap[id] = mailSentMap[id] && !(pendingCounts[id] > 0);
-        });
-
-        // Build per-candidate doc details list
-        Object.entries(detailsMap).forEach(([cid, docMap]) => {
-          detailsResult[Number(cid)] = Object.entries(docMap).map(([name, submitted]) => ({
-            name: name.replace(/_/g, ' '),
-            submitted,
-          }));
-        });
-
-        setSubmissions(uniqueCounts);
-        setSubmissionDetails(detailsResult);
-        setMailSent(mailSentMap);
-        setAllSubmitted(allSubmittedMap);
-      }
-    } catch (err: any) {
-      showToast(err.message || 'Failed to load data', 'error');
-    } finally {
-      setLoading(false);
-    }
-  };
+    setSubmissionDetails(detailsResult);
+    setMailSent(mailSentMap);
+    setAllSubmitted(allSubmittedMap);
+  }, [submissions]);
 
   const getSubmissionStatus = (candidateId: number): 'none' | 'partial' | 'full' => {
-    const submitted = submissions[candidateId] || 0;
+    const submitted = Object.keys(submissionDetails[candidateId] || {}).filter(
+      k => submissionDetails[candidateId]?.find(d => d.name === k)?.submitted
+    ).length;
     const total = docTypes.length;
     if (submitted === 0) return 'none';
     if (total > 0 && submitted >= total) return 'full';
     return 'partial';
   };
 
-  const filtered = candidates.filter(c => {
-    const name = `${c.firstName} ${c.lastName}`.toLowerCase();
-    const matchSearch = search.trim() === '' || name.includes(search.toLowerCase()) || c.email.toLowerCase().includes(search.toLowerCase());
-    const status = getSubmissionStatus(c.candidateId);
-    const matchSubmission =
-      filterSubmission === 'all'     ? true :
-      filterSubmission === 'none'    ? status === 'none' :
-      filterSubmission === 'partial' ? status === 'partial' :
-      filterSubmission === 'full'    ? status === 'full' : true;
-    const matchStage = filterStage === 'all' || c.applicationStage === filterStage;
-    return matchSearch && matchSubmission && matchStage;
-  });
+  const filtered = useMemo(() => {
+    return selectedCandidates.filter(c => {
+      const name = `${c.firstName} ${c.lastName}`.toLowerCase();
+      const matchSearch = debouncedSearch.trim() === '' || name.includes(debouncedSearch.toLowerCase()) || c.email.toLowerCase().includes(debouncedSearch.toLowerCase());
+      const status = getSubmissionStatus(c.candidateId);
+      const matchSubmission =
+        filterSubmission === 'all'     ? true :
+        filterSubmission === 'none'    ? status === 'none' :
+        filterSubmission === 'partial' ? status === 'partial' :
+        filterSubmission === 'full'    ? status === 'full' : true;
+      return matchSearch && matchSubmission;
+    });
+  }, [selectedCandidates, debouncedSearch, filterSubmission, submissionDetails, docTypes.length]);
 
-  const paginated = filtered.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
+
 
   const toggleCandidate = (id: number) => {
     setSelectedCandidateIds(prev => {
@@ -189,36 +157,58 @@ const SendDocumentsTab = ({ context }: { context: DocProcessingContextProps }) =
   const handleSend = async () => {
     if (selectedDocTypeIds.size === 0) { showToast('Select at least one document type', 'error'); return; }
     if (!submissionDeadline) { showToast('Select a submission deadline', 'error'); return; }
+    
+    const candidateList = Array.from(selectedCandidateIds);
+    const totalCandidates = candidateList.length;
+    
     try {
       setSending(true);
+      setProgressState({ open: true, current: 0, total: totalCandidates, currentItem: 'Sending to all candidates...' });
+      
+      // Single bulk API call instead of N individual calls
       const res = await documentLinkApi.sendBulkSubmissionLinks({
-        candidateIds: Array.from(selectedCandidateIds),
+        candidateIds: candidateList,
         cycleId,
         documentTypeIds: Array.from(selectedDocTypeIds),
         submissionDeadline,
       });
+      
+      let successCount = 0;
+      const failedEntries: Array<{ candidateId: number; reason: string }> = [];
+      
       if (res.success) {
         const results = res.data as Record<string, string>;
-        const successCount = Object.values(results).filter(v => v === 'SUCCESS').length;
-        const failedEntries = Object.entries(results).filter(([, v]) => v !== 'SUCCESS');
-        if (successCount > 0) {
-          showToast(`Links sent to ${successCount}/${selectedCandidateIds.size} candidate(s)`, 'success');
+        for (const [idStr, status] of Object.entries(results)) {
+          if (status === 'SUCCESS') {
+            successCount++;
+          } else {
+            failedEntries.push({ candidateId: Number(idStr), reason: status });
+          }
         }
-        if (failedEntries.length > 0) {
-          failedEntries.forEach(([candidateId, reason]) => {
-            const candidate = candidates.find(c => String(c.candidateId) === String(candidateId));
-            const name = candidate ? `${candidate.firstName} ${candidate.lastName}` : `Candidate #${candidateId}`;
-            showToast(`${name}: ${reason.replace('FAILED: ', '')}`, 'error');
-          });
-        }
-        setSelectedCandidateIds(new Set());
-        setSendDialog(false);
-        fetchData();
       }
+      
+      setProgressState({ open: true, current: totalCandidates, total: totalCandidates, currentItem: 'Done' });
+      
+      // Show results
+      if (successCount > 0) {
+        showToast(`Links sent to ${successCount}/${totalCandidates} candidate(s)`, 'success');
+      }
+      if (failedEntries.length > 0) {
+        failedEntries.forEach(({ candidateId, reason }) => {
+          const candidate = selectedCandidates.find(c => c.candidateId === candidateId);
+          const name = candidate ? `${candidate.firstName} ${candidate.lastName}` : `Candidate #${candidateId}`;
+          showToast(`${name}: ${reason.replace('FAILED: ', '')}`, 'error');
+        });
+      }
+      
+      setSelectedCandidateIds(new Set());
+      setSendDialog(false);
+      await refreshAll(cycleId);
     } catch (err: any) {
       showToast(err.message || 'Failed to send mails', 'error');
     } finally {
       setSending(false);
+      setProgressState({ open: false, current: 0, total: 0, currentItem: '' });
     }
   };
 
@@ -226,13 +216,12 @@ const SendDocumentsTab = ({ context }: { context: DocProcessingContextProps }) =
     e.stopPropagation();
     try {
       setResendingId(candidateId);
-      // Pass empty array — backend will use only PENDING/REJECTED docs for this candidate
-      // This is correct real-time behaviour: resend only what the candidate hasn't submitted or got rejected
       const result = await documentLinkApi.resendSubmissionLink(candidateId, cycleId, [], undefined);
       if (result.success) {
         showToast('Link resent successfully', 'success');
+        await refreshAll(cycleId);
       } else {
-        showToast('Nothing to resend — all documents are submitted or approved', 'error');
+        showToast('Nothing to resend â€” all documents are submitted or approved', 'error');
       }
     } catch (err: any) {
       showToast(err.message || 'Failed to resend', 'error');
@@ -241,7 +230,8 @@ const SendDocumentsTab = ({ context }: { context: DocProcessingContextProps }) =
     }
   };
 
-  const submittedCount = candidates.filter(c => (submissions[c.candidateId] || 0) > 0).length;
+  const submittedCount = selectedCandidates.filter(c => (submissionDetails[c.candidateId]?.length || 0) > 0).length;
+  const loading = loadingCandidates || loadingSubmissions || loadingCycleData;
 
   return (
     <Box className="sdt-page">
@@ -255,35 +245,29 @@ const SendDocumentsTab = ({ context }: { context: DocProcessingContextProps }) =
                 placeholder="Search by name or email..."
                 size="small"
                 value={search}
-                onChange={e => { setSearch(e.target.value); setPage(0); }}
+                onChange={e => { setSearch(e.target.value); }}
                 className="sdt-search-field"
                 InputProps={{
                   startAdornment: <InputAdornment position="start"><SearchIcon fontSize="small" className="sdt-search-icon" /></InputAdornment>
                 }}
               />
-              <FilterSelect label="Submission" value={filterSubmission} onChange={v => { setFilterSubmission(v); setPage(0); }} className="sdt-submission-select">
+              <FilterSelect label="Submission" value={filterSubmission} onChange={v => { setFilterSubmission(v); }} className="sdt-submission-select">
                 <MenuItem value="all">All Candidates</MenuItem>
                 <MenuItem value="none">Not Yet Submitted</MenuItem>
                 <MenuItem value="partial">Partially Submitted</MenuItem>
                 <MenuItem value="full">Fully Submitted</MenuItem>
               </FilterSelect>
-              <FilterSelect label="Stage" value={filterStage} onChange={v => { setFilterStage(v); setPage(0); }} className="sdt-submission-select">
-                <MenuItem value="all">All Stages</MenuItem>
-                <MenuItem value="SELECTED">Selected</MenuItem>
-                <MenuItem value="OFFERED">Offered</MenuItem>
-                <MenuItem value="ACCEPTED">Accepted</MenuItem>
-              </FilterSelect>
             </Box>
             <Box className="sdt-filter-right">
               <Typography className="sdt-filter-count">
-                {submittedCount}/{candidates.length} submitted
+                {submittedCount}/{selectedCandidates.length} submitted
               </Typography>
-              <IconButton size="small" onClick={fetchData} title="Refresh" className="sdt-refresh-btn">
+              <IconButton size="small" onClick={() => refreshAll(cycleId)} title="Refresh" className="sdt-refresh-btn">
                 <RefreshIcon fontSize="small" />
               </IconButton>
               <Button
                 variant="contained"
-                startIcon={sending ? <CircularProgress size={14} sx={{ color: 'white' }} /> : <SendIcon />}
+                startIcon={sending ? <CircularProgress size={14} sx={{ color: 'white' }} /> : <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="4" width="20" height="16" rx="2" /><path d="M22 7l-10 7L2 7" /></svg>}
                 onClick={() => {
                   if (selectedCandidateIds.size === 0) { showToast('Select at least one candidate', 'error'); return; }
                   setSendDialog(true);
@@ -302,10 +286,7 @@ const SendDocumentsTab = ({ context }: { context: DocProcessingContextProps }) =
         {/* Table */}
         <Box className="sdt-table-section">
           {loading ? (
-            <Box className="sdt-loading-state">
-              <CircularProgress size={32} sx={{ color: 'var(--color-primary)' }} />
-              <Typography className="sdt-empty-text">Loading candidates...</Typography>
-            </Box>
+            <TableSkeleton rows={5} columns={5} />
           ) : (
             <>
               <TableContainer className="sdt-table-container">
@@ -323,26 +304,24 @@ const SendDocumentsTab = ({ context }: { context: DocProcessingContextProps }) =
                       </TableCell>
                       <TableCell className="sdt-table-head-cell">Candidate</TableCell>
                       <TableCell className="sdt-table-head-cell">Department</TableCell>
-                      <TableCell className="sdt-table-head-cell">Stage</TableCell>
                       <TableCell className="sdt-table-head-cell">Docs Submitted</TableCell>
                       <TableCell className="sdt-table-head-cell sdt-table-head-cell--actions">Action</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {paginated.length === 0 ? (
+                    {filtered.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={6} className="sdt-empty-cell">
+                        <TableCell colSpan={5} className="sdt-empty-cell">
                           <PersonIcon className="sdt-empty-icon" />
                           <Typography className="sdt-empty-text">
-                            {candidates.length === 0
+                            {selectedCandidates.length === 0
                               ? `No SELECTED candidates for ${cycleName}`
                               : 'No candidates match the filter'}
                           </Typography>
                         </TableCell>
                       </TableRow>
                     ) : (
-                      paginated.map((c, idx) => {
-                        const submitted = submissions[c.candidateId] || 0;
+                      filtered.map((c, idx) => {
                         return (
                           <TableRow
                             key={c.candidateId}
@@ -362,8 +341,8 @@ const SendDocumentsTab = ({ context }: { context: DocProcessingContextProps }) =
                             </TableCell>
                             <TableCell className="sdt-table-cell">
                               <Box className="sdt-name-cell">
-                                <Box className="sdt-name-icon-box">
-                                  <PersonIcon className="sdt-name-icon" />
+                                <Box className="sdt-name-avatar">
+                                  {(c.firstName?.[0] || '').toUpperCase()}{(c.lastName?.[0] || '').toUpperCase()}
                                 </Box>
                                 <Box>
                                   <Typography className="sdt-row-primary">{c.firstName} {c.lastName}</Typography>
@@ -372,19 +351,10 @@ const SendDocumentsTab = ({ context }: { context: DocProcessingContextProps }) =
                               </Box>
                             </TableCell>
                             <TableCell className="sdt-table-cell">
-                              <Typography className="sdt-row-secondary">{c.department || '—'}</Typography>
-                            </TableCell>
-                            <TableCell className="sdt-table-cell">
-                              <Chip
-                                label={c.applicationStage || '—'}
-                                size="small"
-                                variant="outlined"
-                                className={`sdt-stage-chip sdt-stage-chip--${(c.applicationStage || '').toLowerCase()}`}
-                              />
+                              <Typography className="sdt-row-secondary">{c.department || 'â€”'}</Typography>
                             </TableCell>
                             <TableCell className="sdt-table-cell">
                               {(() => {
-                                const st = getSubmissionStatus(c.candidateId);
                                 const details = submissionDetails[c.candidateId];
                                 if (!details || details.length === 0) {
                                   return <Typography className="sdt-row-secondary">Not submitted</Typography>;
@@ -393,7 +363,7 @@ const SendDocumentsTab = ({ context }: { context: DocProcessingContextProps }) =
                                   <Box className="sdt-doc-tags">
                                     {details.map(d => (
                                       <span key={d.name} className={`sdt-doc-tag ${d.submitted ? 'sdt-doc-tag--done' : 'sdt-doc-tag--pending'}`}>
-                                        {d.submitted ? '✓' : '○'} {d.name}
+                                        {d.submitted ? 'âœ“' : 'â—‹'} {d.name}
                                       </span>
                                     ))}
                                   </Box>
@@ -427,24 +397,17 @@ const SendDocumentsTab = ({ context }: { context: DocProcessingContextProps }) =
                   </TableBody>
                 </Table>
               </TableContainer>
-              <TablePagination
-                component="div"
-                count={filtered.length}
-                page={page}
-                onPageChange={(_, p) => setPage(p)}
-                rowsPerPage={rowsPerPage}
-                onRowsPerPageChange={e => { setRowsPerPage(parseInt(e.target.value, 10)); setPage(0); }}
-                rowsPerPageOptions={[10, 25, 50]}
-                className="sdt-pagination"
-              />
             </>
           )}
         </Box>
       </Card>
 
-      {/* Send Dialog — choose doc types */}
+      {/* Send Dialog â€” choose doc types */}
       <Dialog open={sendDialog} onClose={() => setSendDialog(false)} maxWidth="xs" fullWidth>
-        <DialogTitle className="sdt-dialog-title">Select Document Types to Request</DialogTitle>
+        <DialogTitle className="sdt-dialog-title" sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          Select Document Types to Request
+          <IconButton size="small" onClick={() => setSendDialog(false)}><CloseIcon style={{ fontSize: '1.25rem' }} /></IconButton>
+        </DialogTitle>
         <DialogContent>
           <Stack spacing={1} sx={{ mt: 1 }}>
             <Typography sx={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-secondary)', mb: 0.5 }}>
@@ -500,6 +463,15 @@ const SendDocumentsTab = ({ context }: { context: DocProcessingContextProps }) =
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* Progress Dialog */}
+      <ProgressDialog
+        open={progressState.open}
+        title="Sending Document Request Emails"
+        current={progressState.current}
+        total={progressState.total}
+        currentItem={progressState.currentItem}
+      />
     </Box>
   );
 };

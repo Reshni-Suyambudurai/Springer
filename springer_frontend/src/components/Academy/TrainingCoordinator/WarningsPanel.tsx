@@ -52,27 +52,16 @@ const WarningsPanel = ({ context }: { context: AcademyContextProps }) => {
   const [formMessage, setFormMessage]   = useState('');
   const [submitting, setSubmitting]     = useState(false);
 
-  // Fetch stats once on mount
-  useEffect(() => {
-    warningApi.getAllWarnings().then(res => {
-      if (res.success && res.data) {
-        setStats({
-          total: res.data.length,
-          active: res.data.filter(w => w.status === 'ACTIVE').length,
-          acknowledged: res.data.filter(w => w.status === 'ACKNOWLEDGED').length,
-        });
-      }
-    }).catch(() => {});
-  }, []);
-
   // Fetch paginated warnings when filters change
-  useEffect(() => { fetchWarnings(); }, [filterStatus, filterType, filterProgram, filterBatch, search, page, rowsPerPage]);
+  useEffect(() => { fetchWarnings(); }, [filterStatus, filterType, filterProgram, filterBatch, search, page, rowsPerPage, yearPrograms]);
 
   const fetchWarnings = async () => {
     try {
       setLoading(true);
+      const yearProgramIdsList = yearPrograms.map(p => p.programId);
       const res = await warningApi.getWarningsFiltered({
         programId: filterProgram !== 'all' ? Number(filterProgram) : undefined,
+        programIds: filterProgram === 'all' && yearProgramIdsList.length > 0 ? yearProgramIdsList : undefined,
         batchNumber: filterBatch !== 'all' ? Number(filterBatch) : undefined,
         status: filterStatus !== 'ALL' ? filterStatus : undefined,
         warningType: filterType !== 'ALL' ? filterType : undefined,
@@ -83,6 +72,9 @@ const WarningsPanel = ({ context }: { context: AcademyContextProps }) => {
       if (res.success && res.data) {
         setWarnings(res.data.content);
         setTotalElements(res.data.totalElements);
+        if (!filterStatus || filterStatus === 'ALL') {
+          setStats(prev => ({ ...prev, total: res.data!.totalElements }));
+        }
       }
     } catch (error) {
       const err = handleAxiosError(error);
@@ -97,15 +89,12 @@ const WarningsPanel = ({ context }: { context: AcademyContextProps }) => {
     if (opening && allocations.length === 0) {
       setLoadingAllocs(true);
       try {
-        const results = await Promise.allSettled(
-          yearPrograms.map(p => batchAllocationApi.getAllocationsByProgram(p.programId, true))
-        );
-        const allocs: BatchAllocationResponse[] = [];
-        results.forEach(r => {
-          if (r.status === 'fulfilled' && r.value.success && r.value.data)
-            allocs.push(...r.value.data);
-        });
-        setAllocations(allocs);
+        // OPTIMIZED: Fetch all allocations in one call, then filter by year-scoped programs
+        const allocRes = await batchAllocationApi.getAllAllocations();
+        const allAllocs = (allocRes.success && allocRes.data) ? allocRes.data : [];
+        const yearProgramIds = new Set(yearPrograms.map(p => p.programId));
+        const filteredAllocs = allAllocs.filter(a => a.isActive && yearProgramIds.has(a.programId));
+        setAllocations(filteredAllocs);
       } catch { /* silent */ }
       finally { setLoadingAllocs(false); }
     }
@@ -130,7 +119,7 @@ const WarningsPanel = ({ context }: { context: AcademyContextProps }) => {
         setFormStudent(''); setFormMessage(''); setFormType('BEHAVIOUR'); setFormSeverity('MINOR');
         showToast('Warning issued successfully', 'success');
         fetchWarnings();
-        // Refresh stats
+        // Update stats optimistically
         setStats(prev => ({ ...prev, total: prev.total + 1, active: prev.active + 1 }));
       }
     } catch (error) {

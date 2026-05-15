@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+﻿import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { instituteApi } from "../../../services/hiring.api";
 import type { InstituteResponse } from "../../../types/TA_Recruiter/Hiring/institute.types";
@@ -33,13 +33,12 @@ import {
   FormGroup,
  
 } from "@mui/material";
-import AddIcon from "@mui/icons-material/Add";
 import MenuIcon from "@mui/icons-material/Menu";
-import CloseIcon from "@mui/icons-material/Close";
+import { FigmaCloseIcon as CloseIcon } from '../../Common/FigmaIcons';
 import SchoolIcon from "@mui/icons-material/School";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
 import EmailIcon from "@mui/icons-material/Email";
-import EditIcon from "@mui/icons-material/Edit";
+import { FigmaAddIcon as AddIcon, FigmaEditIcon as EditIcon } from '../../Common/FigmaIcons';
 import "../../../css/TA_Recruiter/Institutes/InstitutesList.css";
 
 interface Filters {
@@ -509,7 +508,7 @@ const InstitutesList: React.FC = () => {
                 Institutes Management
               </Typography>
               <Typography variant="body2" className="t-page-subtitle" sx={{ mb: 0 }}>
-                — Manage and view all registered institutes
+                â€” Manage and view all registered institutes
               </Typography>
             </Box>
 

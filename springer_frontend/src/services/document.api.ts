@@ -42,6 +42,15 @@ export const documentTypeApi = {
     }
   },
 
+  async updateType(documentTypeId: number, data: DocumentTypeRequest): Promise<ApiResponse<DocumentTypeResponse>> {
+    try {
+      const response = await http.put(`/documents/types/${documentTypeId}`, data);
+      return response.data;
+    } catch (error) {
+      throw handleAxiosError(error);
+    }
+  },
+
   async deleteType(documentTypeId: number): Promise<ApiResponse<void>> {
     try {
       const response = await http.delete(`/documents/types/${documentTypeId}`);
@@ -94,6 +103,7 @@ export const documentSubmissionApi = {
   async getAllSubmissions(params?: {
     status?: string;
     cycleId?: number;
+    applicationStage?: string;
     page?: number;
     size?: number;
   }): Promise<ApiResponse<DocumentSubmissionResponse[]>> {

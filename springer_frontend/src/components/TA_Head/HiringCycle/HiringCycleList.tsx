@@ -1,18 +1,17 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import {
   Box, Card, Typography, Stack, Chip, Button, IconButton,
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
-  TablePagination, CircularProgress, Alert, Dialog, DialogTitle,
+  CircularProgress, Alert, Dialog, DialogTitle,
   DialogContent, DialogContentText, DialogActions, TextField,
 } from '@mui/material';
 import {
   Loop as CycleIcon,
-  Add as AddIcon,
   OpenInNew as OpenInNewIcon,
   ToggleOn as ActivateIcon,
   ToggleOff as DeactivateIcon,
-  Edit as EditIcon,
 } from '@mui/icons-material';
+import { FigmaEditIcon as EditIcon, FigmaAddIcon as AddIcon } from '../../Common/FigmaIcons';
 import { useNavigate } from 'react-router-dom';
 import { hiringCycleApi } from '../../../services/hiring.api';
 import type { HiringCycleResponse } from '../../../types/TA_Recruiter/Hiring/hiringCycle.types';
@@ -25,8 +24,6 @@ const TAHiringCycleList = () => {
   const [cycles, setCycles] = useState<HiringCycleResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
 
   // Toggle state
   const [toggleTarget, setToggleTarget] = useState<HiringCycleResponse | null>(null);
@@ -144,7 +141,7 @@ const TAHiringCycleList = () => {
     }
   };
 
-  const paginated = cycles.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
+
 
   return (
     <Box className="tah-hcl-page">
@@ -201,7 +198,7 @@ const TAHiringCycleList = () => {
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {paginated.length === 0 ? (
+                    {cycles.length === 0 ? (
                       <TableRow>
                         <TableCell colSpan={7} align="center" className="tah-hcl-empty-cell">
                           <CycleIcon className="tah-hcl-empty-icon" />
@@ -209,7 +206,7 @@ const TAHiringCycleList = () => {
                         </TableCell>
                       </TableRow>
                     ) : (
-                      paginated.map((cycle, idx) => (
+                      cycles.map((cycle, idx) => (
                         <TableRow
                           key={cycle.cycleId}
                           hover
@@ -229,12 +226,12 @@ const TAHiringCycleList = () => {
                           </TableCell>
                           <TableCell className="tah-hcl-cell">
                             <Typography className="tah-hcl-cell-secondary">
-                              {cycle.budget ? `₹ ${cycle.budget.toLocaleString('en-IN')}` : '—'}
+                              {cycle.budget ? `â‚¹ ${cycle.budget.toLocaleString('en-IN')}` : 'â€”'}
                             </Typography>
                           </TableCell>
                           <TableCell className="tah-hcl-cell">
                             <Typography className="tah-hcl-cell-secondary">
-                              {cycle.compensationBand ? `Band ${cycle.compensationBand}` : '—'}
+                              {cycle.compensationBand ? `Band ${cycle.compensationBand}` : 'â€”'}
                             </Typography>
                           </TableCell>
                           <TableCell className="tah-hcl-cell">
@@ -287,16 +284,6 @@ const TAHiringCycleList = () => {
                   </TableBody>
                 </Table>
               </TableContainer>
-              <TablePagination
-                component="div"
-                count={cycles.length}
-                page={page}
-                onPageChange={(_, newPage) => setPage(newPage)}
-                rowsPerPage={rowsPerPage}
-                onRowsPerPageChange={(e) => { setRowsPerPage(parseInt(e.target.value, 10)); setPage(0); }}
-                rowsPerPageOptions={[10, 25, 50]}
-                className="tah-hcl-pagination"
-              />
             </>
           )}
         </Box>
@@ -315,7 +302,7 @@ const TAHiringCycleList = () => {
               value={editForm.cycleName} onChange={(e) => setEditForm(p => ({ ...p, cycleName: e.target.value }))} />
             <TextField label="Compensation Band" size="small" fullWidth type="number"
               value={editForm.compensationBand} onChange={(e) => setEditForm(p => ({ ...p, compensationBand: e.target.value }))} />
-            <TextField label="Budget (₹)" size="small" fullWidth type="number"
+            <TextField label="Budget (â‚¹)" size="small" fullWidth type="number"
               value={editForm.budget} onChange={(e) => setEditForm(p => ({ ...p, budget: e.target.value }))} />
           </Stack>
         </DialogContent>
@@ -388,7 +375,7 @@ const TAHiringCycleList = () => {
               onChange={(e) => setForm(p => ({ ...p, compensationBand: e.target.value }))}
             />
             <TextField
-              label="Budget (₹)"
+              label="Budget (â‚¹)"
               size="small"
               fullWidth
               type="number"

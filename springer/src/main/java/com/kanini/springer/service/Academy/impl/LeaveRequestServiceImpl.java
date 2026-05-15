@@ -74,9 +74,10 @@ public class LeaveRequestServiceImpl implements ILeaveRequestService {
 
         LeaveType leaveType;
         try {
-            leaveType = LeaveType.valueOf(request.getLeaveType().toUpperCase());
-        } catch (Exception e) {
-            throw new ValidationException("Invalid leave type: " + request.getLeaveType(), e);
+            leaveType = LeaveType.valueOf(request.getLeaveType().toUpperCase(java.util.Locale.ROOT));
+        } catch (IllegalArgumentException e) {
+            throw new ValidationException("Invalid leave type: '" + request.getLeaveType()
+                    + "'. Valid values: SICK, PERSONAL, EMERGENCY, OTHER");
         }
 
         LeaveRequest leave = new LeaveRequest();
@@ -153,14 +154,15 @@ public class LeaveRequestServiceImpl implements ILeaveRequestService {
     @Override
     @Transactional(readOnly = true)
     public Page<LeaveRequestResponse> getLeavesFiltered(
-            Integer programId, Integer batchNumber, String status, String search, int page, int size) {
+            Integer programId, List<Integer> programIds, Integer batchNumber, String status, String search, int page, int size) {
         LeaveStatus leaveStatus = null;
         if (status != null && !status.isBlank()) {
             try { leaveStatus = LeaveStatus.valueOf(status.toUpperCase(java.util.Locale.ROOT)); }
             catch (IllegalArgumentException ignored) { /* invalid status — treat as no filter */ }
         }
         String searchParam = (search != null && !search.isBlank()) ? search.trim() : null;
-        return leaveRepository.findFiltered(programId, batchNumber, leaveStatus, searchParam,
+        List<Integer> ids = (programIds != null && !programIds.isEmpty()) ? programIds : null;
+        return leaveRepository.findFiltered(programId, ids, batchNumber, leaveStatus, searchParam,
                 PageRequest.of(page, size)).map(this::toResponse);
     }
 

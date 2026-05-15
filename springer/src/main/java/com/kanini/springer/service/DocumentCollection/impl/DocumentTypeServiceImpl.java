@@ -21,32 +21,40 @@ import java.util.List;
 public class DocumentTypeServiceImpl implements IDocumentTypeService {
 
     private static final String DOC_TYPE_NOT_FOUND = "Document type not found with ID: ";
+    private static final int MAX_DOC_TYPE_LENGTH = 50;
 
     private final DocumentTypeRepository typeRepository;
     private final DocumentSubmissionRepository submissionRepository;
     private final DocumentTypeMapper mapper;
     
+    private void validateDocumentType(String docType) {
+        if (docType == null || docType.trim().isEmpty()) {
+            throw new ValidationException("Document type name cannot be empty");
+        }
+        if (docType.length() > MAX_DOC_TYPE_LENGTH) {
+            throw new ValidationException("Document type name must be 50 characters or less");
+        }
+        if (!docType.matches("^[a-zA-Z0-9\\s\\-_]+$")) {
+            throw new ValidationException("Document type name can only contain letters, numbers, spaces, hyphens, and underscores");
+        }
+    }
+    
     @Override
     @Transactional
     public DocumentTypeResponse createType(DocumentTypeRequest request) {
-        // Validate
-        if (request.getDocumentType() == null || request.getDocumentType().trim().isEmpty()) {
-            throw new ValidationException("Document type cannot be empty");
+        String docType = request.getDocumentType();
+        validateDocumentType(docType);
+        
+        // Normalize: convert to uppercase and replace spaces with underscores
+        String normalized = docType.trim().toUpperCase(java.util.Locale.ROOT).replaceAll("\\s+", "_");
+        
+        // Check duplicate
+        if (typeRepository.existsByDocumentType(normalized)) {
+            throw new ValidationException("Document type already exists: " + normalized);
         }
         
-        // Convert to enum and check duplicate
-        Enums.DocumentType docTypeEnum;
-        try {
-            docTypeEnum = Enums.DocumentType.valueOf(request.getDocumentType().toUpperCase(java.util.Locale.ROOT));
-        } catch (IllegalArgumentException e) {
-            throw new ValidationException("Invalid document type: " + request.getDocumentType());
-        }
-        
-        if (typeRepository.existsByDocumentType(docTypeEnum)) {
-            throw new ValidationException("Document type already exists: " + request.getDocumentType());
-        }
-        
-        DocumentType entity = mapper.toEntity(request);
+        DocumentType entity = new DocumentType();
+        entity.setDocumentType(normalized);
         DocumentType saved = typeRepository.save(entity);
         return mapper.toResponse(saved);
     }
@@ -73,19 +81,16 @@ public class DocumentTypeServiceImpl implements IDocumentTypeService {
         DocumentType type = typeRepository.findById(documentTypeId)
                 .orElseThrow(() -> new ResourceNotFoundException(DOC_TYPE_NOT_FOUND + documentTypeId));
         
-        if (request.getDocumentType() != null && !request.getDocumentType().trim().isEmpty()) {
-            Enums.DocumentType newDocTypeEnum;
-            try {
-                newDocTypeEnum = Enums.DocumentType.valueOf(request.getDocumentType().toUpperCase(java.util.Locale.ROOT));
-            } catch (IllegalArgumentException e) {
-                throw new ValidationException("Invalid document type: " + request.getDocumentType());
-            }
+        String docType = request.getDocumentType();
+        if (docType != null && !docType.trim().isEmpty()) {
+            validateDocumentType(docType);
+            String normalized = docType.trim().toUpperCase(java.util.Locale.ROOT).replaceAll("\\s+", "_");
             
-            if (!type.getDocumentType().equals(newDocTypeEnum) 
-                    && typeRepository.existsByDocumentType(newDocTypeEnum)) {
-                throw new ValidationException("Document type already exists: " + request.getDocumentType());
+            if (!type.getDocumentType().equals(normalized) 
+                    && typeRepository.existsByDocumentType(normalized)) {
+                throw new ValidationException("Document type already exists: " + normalized);
             }
-            type.setDocumentType(newDocTypeEnum);
+            type.setDocumentType(normalized);
         }
         
         DocumentType updated = typeRepository.save(type);

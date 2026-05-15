@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import {
   Box, Card, Typography, Stack, Chip, Button, IconButton,
   CircularProgress, Alert, TextField, MenuItem, Select,
@@ -8,11 +8,10 @@ import {
 import {
   ArrowBack as ArrowBackIcon,
   Assignment as DemandIcon,
-  Edit as EditIcon,
-  Delete as DeleteIcon,
   Save as SaveIcon,
-  Close as CloseIcon,
+
 } from '@mui/icons-material';
+import { FigmaEditIcon as EditIcon, FigmaDeleteIcon as DeleteIcon, FigmaCloseIcon as CloseIcon } from '../../Common/FigmaIcons';
 import { useNavigate, useParams } from 'react-router-dom';
 import { hiringDemandApi, skillsApi } from '../../../services/hiring.api';
 import type { HiringDemandResponse } from '../../../types/TA_Recruiter/Hiring/hiringDemand.types';
@@ -186,7 +185,7 @@ const HiringDemandDetails = () => {
               </Box>
               <Stack>
                 <Typography className="hdd-title">
-                  {loading ? 'Demand Details' : `Demand — ${buLabelMap[demand?.businessUnit ?? ''] ?? demand?.businessUnit}`}
+                  {loading ? 'Demand Details' : `Demand â€” ${buLabelMap[demand?.businessUnit ?? ''] ?? demand?.businessUnit}`}
                 </Typography>
                 <Typography className="hdd-subtitle">{demand?.cycleName ?? 'Hiring demand details'}</Typography>
               </Stack>
@@ -199,7 +198,7 @@ const HiringDemandDetails = () => {
                     <Button
                       variant="outlined"
                       size="small"
-                      startIcon={<DeleteIcon sx={{ fontSize: '16px !important' }} />}
+                      startIcon={<DeleteIcon style={{ fontSize: '16px' }} />}
                       className="hdd-delete-btn"
                       onClick={() => setDeleteOpen(true)}
                     >
@@ -208,7 +207,7 @@ const HiringDemandDetails = () => {
                     <Button
                       variant="outlined"
                       size="small"
-                      startIcon={<EditIcon sx={{ fontSize: '16px !important' }} />}
+                      startIcon={<EditIcon style={{ fontSize: '16px' }} />}
                       className="hdd-edit-btn"
                       onClick={() => setEditMode(true)}
                     >
@@ -221,7 +220,7 @@ const HiringDemandDetails = () => {
                     <Button
                       variant="outlined"
                       size="small"
-                      startIcon={<CloseIcon sx={{ fontSize: '16px !important' }} />}
+                      startIcon={<CloseIcon style={{ fontSize: '16px' }} />}
                       className="hdd-cancel-btn"
                       onClick={() => { setEditMode(false); setErrors({}); }}
                       disabled={saving}

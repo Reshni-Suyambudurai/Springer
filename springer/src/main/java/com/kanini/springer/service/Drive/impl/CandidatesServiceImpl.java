@@ -765,6 +765,22 @@ public class CandidatesServiceImpl implements ICandidatesService {
         // Parse the new status
         ApplicationStage newStatus = ApplicationStage.valueOf(request.getStatus());
 
+        // Guard: OFFER_ACCEPTED and OFFER_REJECTED are system-only stages
+        if (newStatus == ApplicationStage.OFFER_ACCEPTED || newStatus == ApplicationStage.OFFER_REJECTED) {
+            throw new ValidationException(
+                "Cannot manually set " + newStatus + ". This stage is set automatically when candidate responds to the offer letter."
+            );
+        }
+
+        // Guard: Once OFFER_ACCEPTED, only JOINED or NOT_JOINED allowed
+        if (candidate.getApplicationStage() == ApplicationStage.OFFER_ACCEPTED &&
+            newStatus != ApplicationStage.JOINED && 
+            newStatus != ApplicationStage.NOT_JOINED) {
+            throw new ValidationException(
+                "Candidate has already accepted the offer. Only JOINED or NOT_JOINED is allowed from here."
+            );
+        }
+
         String statusReason = request.getReason() != null ? request.getReason().trim() : null;
         if ((newStatus == ApplicationStage.DROPPED
                 || newStatus == ApplicationStage.NOT_JOINED
@@ -883,6 +899,13 @@ public class CandidatesServiceImpl implements ICandidatesService {
             newStatus = ApplicationStage.valueOf(request.getStatus());
         } catch (IllegalArgumentException e) {
             throw new ValidationException("Invalid status: " + request.getStatus());
+        }
+        
+        // Guard: OFFER_ACCEPTED and OFFER_REJECTED are system-only stages
+        if (newStatus == ApplicationStage.OFFER_ACCEPTED || newStatus == ApplicationStage.OFFER_REJECTED) {
+            throw new ValidationException(
+                "Cannot manually set " + newStatus + ". This stage is set automatically when candidate responds to the offer letter."
+            );
         }
         
         // Fetch username if updatedBy is provided

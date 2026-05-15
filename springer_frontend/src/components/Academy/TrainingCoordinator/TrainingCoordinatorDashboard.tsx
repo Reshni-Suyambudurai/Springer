@@ -60,14 +60,11 @@ const TrainingCoordinatorDashboard = () => {
         return;
       }
 
-      const allocResults = await Promise.allSettled(
-        currentYearPrograms.map(p => batchAllocationApi.getAllocationsByProgram(p.programId, true))
-      );
-      const allocations: BatchAllocationResponse[] = [];
-      allocResults.forEach(r => {
-        if (r.status === 'fulfilled' && r.value.success && r.value.data)
-          allocations.push(...r.value.data);
-      });
+      // OPTIMIZED: Fetch all allocations in one call, then filter by current year programs
+      const allocRes = await batchAllocationApi.getAllAllocations();
+      const allAllocations = (allocRes.success && allocRes.data) ? allocRes.data : [];
+      const currentYearProgramIds = new Set(currentYearPrograms.map(p => p.programId));
+      const allocations = allAllocations.filter(a => currentYearProgramIds.has(a.programId));
 
       const active = allocations.filter(a => a.isActive);
       const avgAtt = active.length > 0

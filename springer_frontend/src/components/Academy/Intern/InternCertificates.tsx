@@ -7,9 +7,9 @@ import {
 import {
   Upload as UploadIcon,
   Visibility as ViewIcon,
-  Delete as DeleteIcon,
   WorkspacePremium as CertIcon,
 } from '@mui/icons-material';
+import { FigmaDeleteIcon as DeleteIcon, FigmaCloseIcon as CloseIcon } from '../../Common/FigmaIcons';
 import { internApi } from '../../../services/intern.api';
 import { handleAxiosError } from '../../../services/api.error';
 import { showToast } from '../../../utils/toast';
@@ -176,7 +176,10 @@ const InternCertificates = ({ data }: { data: InternDashboardData }) => {
 
       {/* Upload Dialog */}
       <Dialog open={uploadDialog} onClose={() => setUploadDialog(false)} maxWidth="sm" fullWidth>
-        <DialogTitle className="inc-dialog-title">Upload Certificate</DialogTitle>
+        <DialogTitle className="inc-dialog-title" sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          Upload Certificate
+          <IconButton size="small" onClick={() => setUploadDialog(false)}><CloseIcon style={{ fontSize: '1.25rem' }} /></IconButton>
+        </DialogTitle>
         <DialogContent>
           <Stack spacing={2} sx={{ mt: 1 }}>
             <TextField label="Certificate Name *" size="small" fullWidth
@@ -214,7 +217,10 @@ const InternCertificates = ({ data }: { data: InternDashboardData }) => {
       <Dialog open={deleteDialog.open}
         onClose={() => setDeleteDialog({ open: false, certId: null, certName: '' })}
         maxWidth="xs" fullWidth>
-        <DialogTitle className="inc-dialog-title">Delete Certificate</DialogTitle>
+        <DialogTitle className="inc-dialog-title" sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          Delete Certificate
+          <IconButton size="small" onClick={() => setDeleteDialog({ open: false, certId: null, certName: '' })}><CloseIcon style={{ fontSize: '1.25rem' }} /></IconButton>
+        </DialogTitle>
         <DialogContent>
           <Typography sx={{ mt: 1, fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>
             Are you sure you want to delete <strong>{deleteDialog.certName}</strong>?

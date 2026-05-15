@@ -40,12 +40,12 @@ public class OfferResponseServiceImpl implements IOfferResponseService {
         try {
             responseEnum = Enums.OfferResponse.valueOf(request.getResponse().toUpperCase(java.util.Locale.ROOT));
         } catch (IllegalArgumentException e) {
-            throw new ValidationException("Invalid response value: " + request.getResponse() + ". Must be ACCEPTED or DECLINED");
+            throw new ValidationException("Invalid response value: " + request.getResponse() + ". Must be OFFER_ACCEPTED or OFFER_DECLINED");
         }
 
-        if (responseEnum == Enums.OfferResponse.DECLINED &&
+        if (responseEnum == Enums.OfferResponse.OFFER_DECLINED &&
                 (request.getDeclineReason() == null || request.getDeclineReason().trim().isEmpty())) {
-            throw new ValidationException("Decline reason is required when response is DECLINED");
+            throw new ValidationException("Decline reason is required when response is OFFER_DECLINED");
         }
 
         offer.setResponse(responseEnum);
@@ -77,7 +77,7 @@ public class OfferResponseServiceImpl implements IOfferResponseService {
                 throw new ValidationException("Invalid response value: " + req.getResponse() + " for offer ID: " + req.getOfferId());
             }
 
-            if (responseEnum == Enums.OfferResponse.DECLINED &&
+            if (responseEnum == Enums.OfferResponse.OFFER_DECLINED &&
                     (req.getDeclineReason() == null || req.getDeclineReason().trim().isEmpty())) {
                 throw new ValidationException("Decline reason is required for offer ID: " + req.getOfferId());
             }
@@ -112,7 +112,7 @@ public class OfferResponseServiceImpl implements IOfferResponseService {
             throw new ValidationException("No response recorded yet. Use Record Response instead.");
         }
 
-        if (offer.getResponse() == Enums.OfferResponse.DECLINED) {
+        if (offer.getResponse() == Enums.OfferResponse.OFFER_DECLINED) {
             throw new ValidationException("Cannot edit offer response after it is declined.");
         }
 
@@ -128,12 +128,12 @@ public class OfferResponseServiceImpl implements IOfferResponseService {
         try {
             responseEnum = Enums.OfferResponse.valueOf(request.getResponse().toUpperCase(java.util.Locale.ROOT));
         } catch (IllegalArgumentException e) {
-            throw new ValidationException("Invalid response value: " + request.getResponse() + ". Must be ACCEPTED or DECLINED");
+            throw new ValidationException("Invalid response value: " + request.getResponse() + ". Must be OFFER_ACCEPTED or OFFER_DECLINED");
         }
 
-        if (responseEnum == Enums.OfferResponse.DECLINED &&
+        if (responseEnum == Enums.OfferResponse.OFFER_DECLINED &&
                 (request.getDeclineReason() == null || request.getDeclineReason().trim().isEmpty())) {
-            throw new ValidationException("Decline reason is required when response is DECLINED");
+            throw new ValidationException("Decline reason is required when response is OFFER_DECLINED");
         }
 
         offer.setResponse(responseEnum);
@@ -147,8 +147,8 @@ public class OfferResponseServiceImpl implements IOfferResponseService {
     }
 
     private void updateCandidateStageForResponse(Candidate candidate, Enums.OfferResponse responseEnum) {
-        Enums.ApplicationStage targetStage = responseEnum == Enums.OfferResponse.ACCEPTED
-                ? Enums.ApplicationStage.ACCEPTED
+        Enums.ApplicationStage targetStage = responseEnum == Enums.OfferResponse.OFFER_ACCEPTED
+                ? Enums.ApplicationStage.OFFER_ACCEPTED
                 : Enums.ApplicationStage.OFFER_REJECTED;
 
         candidate.setApplicationStage(targetStage);

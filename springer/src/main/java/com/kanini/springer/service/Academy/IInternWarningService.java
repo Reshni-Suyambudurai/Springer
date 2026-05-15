@@ -12,5 +12,5 @@ public interface IInternWarningService {
     List<InternWarningResponse> getWarningsByStudent(Long studentId);
     List<InternWarningResponse> getWarningsByBatch(Integer programId, Integer batchNumber);
     InternWarningResponse acknowledgeWarning(Long warningId, String acknowledgementComment);
-    Page<InternWarningResponse> getWarningsFiltered(Integer programId, Integer batchNumber, String status, String warningType, String search, int page, int size);
+    Page<InternWarningResponse> getWarningsFiltered(Integer programId, List<Integer> programIds, Integer batchNumber, String status, String warningType, String search, int page, int size);
 }

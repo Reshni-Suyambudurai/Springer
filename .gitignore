@@ -1,3 +1,4 @@
+.vite/
 backend.log
 springer/compile_output.txt
 springer/run_output.txt

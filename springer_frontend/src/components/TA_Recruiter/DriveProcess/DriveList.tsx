@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+﻿import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { driveScheduleApi } from "../../../services/driveschedule.api";
 import type { DriveResponse } from "../../../types/TA_Recruiter/DriveSchedule/driveSchedule.types";
@@ -82,7 +82,7 @@ const DriveList: React.FC = () => {
 
         <Box className="drive-list-header-center">
           <Typography variant="h4" className="drive-list-title">
-            {cycleName ? `${cycleName} — Drives` : "Drive Schedules"}
+            {cycleName ? `${cycleName} â€” Drives` : "Drive Schedules"}
           </Typography>
         
         </Box>
@@ -126,7 +126,7 @@ const DriveList: React.FC = () => {
                 </Box>
               </Box>
 
-              {/* Card Footer — created left, updated right */}
+              {/* Card Footer â€” created left, updated right */}
               <Box className="drive-list-card-footer">
                 <Box className="drive-list-card-footer-item">
                   <Typography className="drive-list-footer-label">Created by</Typography>

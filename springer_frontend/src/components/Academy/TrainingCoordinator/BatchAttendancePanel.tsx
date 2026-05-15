@@ -1,13 +1,14 @@
 import { useState, useEffect, useRef } from 'react';
 import * as XLSX from 'xlsx';
 import {
-  Box, Card, TextField, Button, Typography,
+  Box, Card, TextField, Button, Typography, IconButton,
   Table, TableBody, TableCell, TableContainer, TableHead,
-  TableRow, TablePagination, CircularProgress, Chip, LinearProgress,
+  TableRow, CircularProgress, Chip, LinearProgress,
   Dialog, DialogTitle, DialogContent, DialogActions, MenuItem,
 } from '@mui/material';
-import { Add as AddIcon, Person as PersonIcon, Upload as UploadIcon, Download as DownloadIcon } from '@mui/icons-material';
-import { attendanceApi, batchAllocationApi, trainingProgramApi, excelUploadApi } from '../../../services/academy.api';
+import { Person as PersonIcon, Upload as UploadIcon, Download as DownloadIcon } from '@mui/icons-material';
+import { FigmaAddIcon as AddIcon, FigmaCloseIcon as CloseIcon } from '../../Common/FigmaIcons';
+import { attendanceApi, batchAllocationApi, excelUploadApi } from '../../../services/academy.api';
 import { handleAxiosError } from '../../../services/api.error';
 import { showToast } from '../../../utils/toast';
 import FilterSelect from '../../Common/FilterSelect';
@@ -30,8 +31,6 @@ const BatchAttendancePanel = ({ context, readOnly = false }: { context: AcademyC
   const [filterProgramId, setFilterProgramId] = useState(0);
   const [filterBatchNo, setFilterBatchNo]     = useState(0);
   const [sortOrder, setSortOrder]             = useState<'high' | 'low'>('high');
-  const [page, setPage]                       = useState(0);
-  const [rowsPerPage, setRowsPerPage]         = useState(10);
 
   // ── Mark Attendance dialog ──
   const [dlgOpen, setDlgOpen]         = useState(false);
@@ -62,13 +61,10 @@ const BatchAttendancePanel = ({ context, readOnly = false }: { context: AcademyC
   const fetchBase = async () => {
     try {
       setLoading(true);
-      const progRes = await trainingProgramApi.getAllPrograms();
-      if (progRes.success && progRes.data) setAllPrograms(progRes.data);
+      setAllPrograms(yearPrograms);
 
-      // Fetch allocations only for year-scoped programs — not all allocations
-      const scopedPrograms = (progRes.success && progRes.data)
-        ? (programYear === 0 ? progRes.data : progRes.data.filter(p => p.programYear === programYear))
-        : [];
+      // Fetch only active allocations for year-scoped programs
+      const scopedPrograms = programYear === 0 ? yearPrograms : yearPrograms.filter(p => p.programYear === programYear);
       if (scopedPrograms.length > 0) {
         const allocResults = await Promise.allSettled(
           scopedPrograms.map(p => batchAllocationApi.getAllocationsByProgram(p.programId, true))
@@ -90,26 +86,43 @@ const BatchAttendancePanel = ({ context, readOnly = false }: { context: AcademyC
     }
   };
 
-  // After allocations load, fetch stats for all unique program+batch combos
+  // After allocations load, fetch stats for all unique program+batch combos in parallel
   useEffect(() => {
     if (allocations.length === 0) return;
     const combos = Array.from(
       new Map(allocations.map(a => [`${a.programId}-${a.batchNumber}`, { programId: a.programId, batchNumber: a.batchNumber }])).values()
     );
-    combos.forEach(({ programId, batchNumber }) => fetchBatchStats(programId, batchNumber));
+    fetchAllBatchStats(combos);
   }, [allocations]);
 
-  // Single call returns stats for ALL students in a batch — replaces N+1 calls
+  const fetchAllBatchStats = async (combos: { programId: number; batchNumber: number }[]) => {
+    const results = await Promise.allSettled(
+      combos.map(({ programId, batchNumber }) => attendanceApi.getAttendanceSummaryByBatch(programId, batchNumber))
+    );
+    const merged: Record<number, { presentDays: number; absentDays: number }> = {};
+    results.forEach(r => {
+      if (r.status === 'fulfilled' && r.value.success && r.value.data) {
+        r.value.data.forEach(s => {
+          merged[s.studentId] = { presentDays: Number(s.presentDays), absentDays: Number(s.absentDays) };
+        });
+      }
+    });
+    setStatsMap(merged);
+  };
+
+  // Single call returns stats for ALL students in a batch
   const fetchBatchStats = async (programId: number, batchNumber: number) => {
     if (!programId || !batchNumber) return;
     try {
       const res = await attendanceApi.getAttendanceSummaryByBatch(programId, batchNumber);
       if (res.success && res.data) {
-        const map: Record<number, { presentDays: number; absentDays: number }> = {};
-        res.data.forEach(s => {
-          map[s.studentId] = { presentDays: Number(s.presentDays), absentDays: Number(s.absentDays) };
+        setStatsMap(prev => {
+          const next = { ...prev };
+          res.data.forEach(s => {
+            next[s.studentId] = { presentDays: Number(s.presentDays), absentDays: Number(s.absentDays) };
+          });
+          return next;
         });
-        setStatsMap(map);
       }
     } catch { /* silent — stats are supplementary */ }
   };
@@ -133,8 +146,6 @@ const BatchAttendancePanel = ({ context, readOnly = false }: { context: AcademyC
     const pctB = Number(b.attendancePercentage ?? 0);
     return sortOrder === 'high' ? pctB - pctA : pctA - pctB;
   });
-
-  const paginated = sortedAllocations.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 
   const getProgramName = (id: number) =>
     allPrograms.find(p => p.programId === id)?.programName ?? `Program ${id}`;
@@ -314,7 +325,6 @@ const BatchAttendancePanel = ({ context, readOnly = false }: { context: AcademyC
                 setFilterProgramId(progId);
                 setFilterBatchNo(0);
                 setStatsMap({});
-                setPage(0);
                 if (progId) {
                   const prog = allPrograms.find(p => p.programId === progId)
                     ?? yearPrograms.find(p => p.programId === progId);
@@ -328,7 +338,7 @@ const BatchAttendancePanel = ({ context, readOnly = false }: { context: AcademyC
             </FilterSelect>
 
             <FilterSelect label="Batch" value={String(filterBatchNo)}
-              onChange={v => { setFilterBatchNo(Number(v)); setPage(0); }}>
+              onChange={v => setFilterBatchNo(Number(v))}>
               <MenuItem value="0">All Batches</MenuItem>
               {batchesForProgram.map(b => (
                 <MenuItem key={b} value={String(b)}>Batch {b}</MenuItem>
@@ -336,7 +346,7 @@ const BatchAttendancePanel = ({ context, readOnly = false }: { context: AcademyC
             </FilterSelect>
 
             <FilterSelect label="Sort" value={sortOrder}
-              onChange={v => { setSortOrder(v as 'high' | 'low'); setPage(0); }}>
+              onChange={v => setSortOrder(v as 'high' | 'low')}>
               <MenuItem value="high">Attendance: High → Low</MenuItem>
               <MenuItem value="low">Attendance: Low → High</MenuItem>
             </FilterSelect>
@@ -403,7 +413,7 @@ const BatchAttendancePanel = ({ context, readOnly = false }: { context: AcademyC
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {paginated.map((alloc, idx) => {
+                    {sortedAllocations.map((alloc, idx) => {
                       const pct = Number(alloc.attendancePercentage ?? 0);
                       const cls = getPctClass(pct);
                       return (
@@ -458,12 +468,6 @@ const BatchAttendancePanel = ({ context, readOnly = false }: { context: AcademyC
                   </TableBody>
                 </Table>
               </TableContainer>
-              <TablePagination
-                component="div" count={sortedAllocations.length} page={page}
-                onPageChange={(_, p) => setPage(p)} rowsPerPage={rowsPerPage}
-                onRowsPerPageChange={e => { setRowsPerPage(parseInt(e.target.value, 10)); setPage(0); }}
-                rowsPerPageOptions={[10, 25, 50]} className="atp-pagination"
-              />
             </>
           )}
         </Box>
@@ -471,8 +475,9 @@ const BatchAttendancePanel = ({ context, readOnly = false }: { context: AcademyC
 
       {/* Mark Attendance Dialog */}
       <Dialog open={dlgOpen} onClose={() => setDlgOpen(false)} maxWidth="md" fullWidth>
-        <DialogTitle className="atp-dialog-title">
+        <DialogTitle className="atp-dialog-title" sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           Mark Attendance — {selectedProgramObj?.programName} · Batch {filterBatchNo}
+          <IconButton size="small" onClick={() => setDlgOpen(false)}><CloseIcon style={{ fontSize: '1.25rem' }} /></IconButton>
         </DialogTitle>
         <DialogContent sx={{ p: 0 }}>
           <Box className="atp-dlg-selectors">

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+﻿import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Box, Card, Typography, CircularProgress } from "@mui/material";
 import BackButton from "../../Common/BackButton";
@@ -42,14 +42,14 @@ const DriveDetails: React.FC = () => {
   };
 
   const formatDate = (dateStr?: string) => {
-    if (!dateStr) return "—";
+    if (!dateStr) return "â€”";
     return new Date(dateStr).toLocaleDateString("en-IN", {
       day: "2-digit", month: "short", year: "numeric",
     });
   };
 
   const formatDateTime = (dateStr?: string) => {
-    if (!dateStr) return "—";
+    if (!dateStr) return "â€”";
     return new Date(dateStr).toLocaleString("en-IN", {
       day: "2-digit", month: "short", year: "numeric",
       hour: "2-digit", minute: "2-digit", hour12: true,
@@ -88,7 +88,7 @@ const DriveDetails: React.FC = () => {
   return (
     <Box className="dd-container">
 
-      {/* ═══ Header — fixed, flex-shrink: 0 ═══ */}
+      {/* â•â•â• Header â€” fixed, flex-shrink: 0 â•â•â• */}
       <Card className="dd-header">
         <BackButton onClick={handleBackClick} variant="header" />
         <Box className="dd-header-center">
@@ -98,13 +98,13 @@ const DriveDetails: React.FC = () => {
         <Box className="dd-header-spacer" />
       </Card>
 
-      {/* ═══ Scrollable content area ═══ */}
+      {/* â•â•â• Scrollable content area â•â•â• */}
       <Box className="dd-content">
 
         {/* Row 1: Left card (location, institute, description) + Right card (dates) */}
         <Box className="dd-cards-row">
 
-          {/* Left — Drive Info */}
+          {/* Left â€” Drive Info */}
           <Card className="dd-card dd-card-left">
             <Box className="dd-card-top">
               <Typography className="dd-card-heading">Drive Info</Typography>
@@ -136,7 +136,7 @@ const DriveDetails: React.FC = () => {
             )}
           </Card>
 
-          {/* Right — Date Card */}
+          {/* Right â€” Date Card */}
           <Card className="dd-card dd-card-right">
             <Typography className="dd-card-heading">Schedule Dates</Typography>
 

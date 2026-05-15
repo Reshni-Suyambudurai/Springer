@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback } from "react";
+﻿import React, { useState, useRef, useCallback } from "react";
 import * as XLSX from "xlsx";
 import {
   Box,
@@ -17,12 +17,10 @@ import {
   Tooltip,
 } from "@mui/material";
 import DownloadIcon from "@mui/icons-material/Download";
-import DeleteIcon from "@mui/icons-material/Delete";
-import EditIcon from "@mui/icons-material/Edit";
 import CheckIcon from "@mui/icons-material/Check";
 import CloseIcon from "@mui/icons-material/Close";
-import SearchIcon from "@mui/icons-material/Search";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
+import { FigmaDeleteIcon as DeleteIcon, FigmaEditIcon as EditIcon, FigmaSearchIcon as SearchIcon } from '../../../Common/FigmaIcons';
 import BackButton from "../../../Common/BackButton";
 import { showToast } from "../../../../utils/toast";
 import { candidateEvaluationApi } from "../../../../services/driveschedule.api";
@@ -246,7 +244,7 @@ const AddRound1: React.FC = () => {
         setErrorMap(mapped);
       }
       showToast(
-        `Upload complete — ${result.successCount} succeeded, ${result.failureCount} failed`,
+        `Upload complete â€” ${result.successCount} succeeded, ${result.failureCount} failed`,
         result.failureCount > 0 ? "error" : "success"
       );
     } catch (error) {
@@ -278,7 +276,7 @@ const AddRound1: React.FC = () => {
         </Box>
       </Card>
 
-      {/* Drag and Drop zone — shown when no data */}
+      {/* Drag and Drop zone â€” shown when no data */}
       {rows.length === 0 && (
         <Box
           className={`ar1-dropzone ${dragging ? "ar1-dropzone-active" : ""}`}
@@ -299,7 +297,7 @@ const AddRound1: React.FC = () => {
             Drag & drop your Excel file here
           </Typography>
           <Typography variant="body2" className="ar1-dropzone-subtitle">
-            or click to browse — supports .xlsx, .xls
+            or click to browse â€” supports .xlsx, .xls
           </Typography>
         </Box>
       )}
@@ -308,7 +306,7 @@ const AddRound1: React.FC = () => {
       {fileName && (
         <Box className="ar1-file-info">
           <Typography className="ar1-file-name">
-            File: {fileName} — {rows.length} row(s)
+            File: {fileName} â€” {rows.length} row(s)
           </Typography>
           <Box className="ar1-file-info-right">
             <Box className="ar1-search-wrap">

@@ -71,7 +71,7 @@ const InternScores = ({ data }: { data: InternDashboardData }) => {
   const normalizeLbScore = (score: number | null | undefined, courseId: number): number | null => {
     if (score == null) return null;
     const courseInfo = courseOptions.find(c => c.courseId === courseId);
-    // courseOptions come from detailedLeaderboard[0].courseScores — no maxScore there
+    void courseInfo; // used for context only — actual normalization uses myCs below
     // Use courseScores from the intern's own data to get maxScore
     const myCs = data.courseScores.find(c => c.courseId === courseId);
     if (myCs?.isCommunication && myCs.maxScore) {

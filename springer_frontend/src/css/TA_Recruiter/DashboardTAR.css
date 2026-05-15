@@ -6,7 +6,7 @@
   gap: 20px;
   padding: 20px 24px;
   max-width: 100%;
-  height: calc(100vh - 94px);
+  height: calc(100vh - 118px);
   overflow: hidden;
   background-color: var(--color-bg-primary);
 }

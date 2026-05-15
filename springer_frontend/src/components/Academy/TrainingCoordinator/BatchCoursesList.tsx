@@ -2,23 +2,22 @@ import React, { useState, useEffect } from 'react';
 import {
   Box, Card, TextField, Button, Typography, Stack,
   IconButton, Table, TableBody, TableCell, TableContainer, TableHead,
-  TableRow, TablePagination, CircularProgress, Chip,
+  TableRow, CircularProgress, Chip,
   Dialog, DialogTitle, DialogContent, DialogActions, MenuItem,
 } from '@mui/material';
 import {
-  Add as AddIcon, Link as LinkIcon,
+  Link as LinkIcon,
   LinkOff as LinkOffIcon, MenuBook as MenuBookIcon,
   CheckCircle as CheckCircleIcon, PlayArrow as PlayArrowIcon,
   EditCalendar as EditCalendarIcon,
 } from '@mui/icons-material';
+import { FigmaAddIcon as AddIcon, FigmaCloseIcon as CloseIcon } from '../../Common/FigmaIcons';
 import { batchCourseApi, trainingCourseApi, userApi } from '../../../services/academy.api';
-import { hiringCycleApi } from '../../../services/hiring.api';
 import { showToast } from '../../../utils/toast';
 import type {
   BatchCourseResponse, BatchCourseRequest, TrainingCourseResponse,
   AcademyContextProps, UserSummary,
 } from '../../../types/Academy/academy.types';
-import type { HiringCycleResponse } from '../../../types/TA_Recruiter/Hiring/hiringCycle.types';
 import FilterSelect from '../../Common/FilterSelect';
 import '../../../css/Academy/TrainingCoordinator/BatchCoursesList.css';
 
@@ -39,20 +38,17 @@ const EMPTY_LINK_FORM = {
 };
 
 const BatchCoursesList = ({ context }: { context: AcademyContextProps }) => {
-  const { programYear, programs: yearPrograms } = context;
+  const { programYear, programs: yearPrograms, cycles = [] } = context;
 
   const [batchCourses, setBatchCourses] = useState<BatchCourseResponse[]>([]);
   const [allCourses, setAllCourses] = useState<TrainingCourseResponse[]>([]);
   const [trainers, setTrainers] = useState<UserSummary[]>([]);
-  const [cycles, setCycles] = useState<HiringCycleResponse[]>([]);
   const [loading, setLoading] = useState(true);
 
   // Table filters
   const [filterProgram, setFilterProgram] = useState('all');
   const [filterBatch, setFilterBatch] = useState('all');
   const [filterStatus, setFilterStatus] = useState('all');
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
 
   // Main link dialog state
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -78,30 +74,27 @@ const BatchCoursesList = ({ context }: { context: AcademyContextProps }) => {
   const [rescheduleForm, setRescheduleForm] = useState({ startDate: '', endDate: '' });
   const [rescheduling, setRescheduling] = useState(false);
 
+  // Fetch trainers once on mount — cycles come from parent context
+  useEffect(() => {
+    userApi.getUsersByRoleIds([6, 4, 2]) // TRAINING_COORDINATOR=6, MEMBERS=4, TA_MANAGER=2
+      .then(res => { if (res.success && res.data) setTrainers(res.data); })
+      .catch(() => {});
+  }, []);
+
   useEffect(() => {
     fetchData();
-    setFilterProgram('all'); setFilterBatch('all'); setFilterStatus('all'); setPage(0);
+    setFilterProgram('all'); setFilterBatch('all'); setFilterStatus('all');
   }, [programYear]);
 
   const fetchData = async () => {
     try {
       setLoading(true);
-      const [bcRes, crsRes, cycleRes, tcRes, memRes, tarRes] = await Promise.all([
+      const [bcRes, crsRes] = await Promise.all([
         batchCourseApi.getAllBatchCourses(),
         trainingCourseApi.getAllCourses(),
-        hiringCycleApi.getAllCycles(),
-        userApi.getUsersByRole('TRAINING_COORDINATOR'),
-        userApi.getUsersByRole('MEMBERS'),
-        userApi.getUsersByRole('TA_MANAGER'),
       ]);
       if (bcRes.success && bcRes.data) setBatchCourses(bcRes.data);
       if (crsRes.success && crsRes.data) setAllCourses(crsRes.data);
-      if (cycleRes.success && cycleRes.data) setCycles(cycleRes.data);
-      const combined: UserSummary[] = [];
-      if (tcRes.success && tcRes.data) combined.push(...tcRes.data);
-      if (memRes.success && memRes.data) combined.push(...memRes.data);
-      if (tarRes.success && tarRes.data) combined.push(...tarRes.data);
-      setTrainers(combined);
     } catch (err: any) {
       showToast(err.message || 'Failed to load data', 'error');
     } finally {
@@ -244,9 +237,10 @@ const BatchCoursesList = ({ context }: { context: AcademyContextProps }) => {
     return matchYear && matchProgram && matchBatch && matchStatus;
   });
 
-  const paginated = filtered.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
+
 
   const programsInData = yearPrograms.filter(p =>
+    p.status === true && // ✅ Only show active programs
     batchCourses.some(bc => bc.programId === p.programId) &&
     (programYear === 0 || p.programYear === programYear)
   );
@@ -257,7 +251,7 @@ const BatchCoursesList = ({ context }: { context: AcademyContextProps }) => {
       .map(bc => bc.batchNo)
   )).sort((a, b) => a - b);
 
-  const dlgCourses = allCourses;
+  const dlgCourses = allCourses.filter(c => !c.courseName.startsWith('[ARCHIVED]'));
   const dlgFilteredPrograms = yearPrograms.filter(p =>
     p.status === true && (programYear === 0 || p.programYear === programYear)
   );
@@ -270,21 +264,21 @@ const BatchCoursesList = ({ context }: { context: AcademyContextProps }) => {
         <Box className="bc-filter-section">
           <Box className="bc-filter-row">
             <FilterSelect label="Program" value={filterProgram}
-              onChange={v => { setFilterProgram(v); setFilterBatch('all'); setPage(0); }}>
+              onChange={v => { setFilterProgram(v); setFilterBatch('all'); }}>
               <MenuItem value="all">All Programs</MenuItem>
               {programsInData.map(p => (
                 <MenuItem key={p.programId} value={String(p.programId)}>{p.programName}</MenuItem>
               ))}
             </FilterSelect>
             <FilterSelect label="Batch" value={filterBatch}
-              onChange={v => { setFilterBatch(v); setPage(0); }}>
+              onChange={v => { setFilterBatch(v); }}>
               <MenuItem value="all">All Batches</MenuItem>
               {batchesInData.map(b => (
                 <MenuItem key={b} value={String(b)}>Batch {b}</MenuItem>
               ))}
             </FilterSelect>
             <FilterSelect label="Status" value={filterStatus}
-              onChange={v => { setFilterStatus(v); setPage(0); }}>
+              onChange={v => { setFilterStatus(v); }}>
               <MenuItem value="all">All Status</MenuItem>
               <MenuItem value="PLANNED">Planned</MenuItem>
               <MenuItem value="ACTIVE">Active</MenuItem>
@@ -326,7 +320,7 @@ const BatchCoursesList = ({ context }: { context: AcademyContextProps }) => {
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {paginated.length === 0 ? (
+                    {filtered.length === 0 ? (
                       <TableRow>
                         <TableCell colSpan={8} className="bc-empty-cell">
                           <LinkIcon className="bc-empty-icon" />
@@ -336,7 +330,7 @@ const BatchCoursesList = ({ context }: { context: AcademyContextProps }) => {
                         </TableCell>
                       </TableRow>
                     ) : (
-                      paginated.map((bc, idx) => (
+                      filtered.map((bc, idx) => (
                         <TableRow key={bc.batchCourseId} hover
                           className={`bc-table-row ${idx % 2 === 0 ? 'bc-table-row--even' : 'bc-table-row--odd'}`}>
                           <TableCell className="bc-table-cell">
@@ -412,12 +406,6 @@ const BatchCoursesList = ({ context }: { context: AcademyContextProps }) => {
                   </TableBody>
                 </Table>
               </TableContainer>
-              <TablePagination
-                component="div" count={filtered.length} page={page}
-                onPageChange={(_, p) => setPage(p)} rowsPerPage={rowsPerPage}
-                onRowsPerPageChange={e => { setRowsPerPage(parseInt(e.target.value, 10)); setPage(0); }}
-                rowsPerPageOptions={[10, 25, 50]} className="bc-pagination"
-              />
             </>
           )}
         </Box>
@@ -425,7 +413,10 @@ const BatchCoursesList = ({ context }: { context: AcademyContextProps }) => {
 
       {/* ── Main Link Dialog ── */}
       <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} maxWidth="md" fullWidth>
-        <DialogTitle className="bc-dialog-title">Link Course to Batch</DialogTitle>
+        <DialogTitle className="bc-dialog-title" sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          Link Course to Batch
+          <IconButton size="small" onClick={() => setDialogOpen(false)}><CloseIcon style={{ fontSize: '1.25rem' }} /></IconButton>
+        </DialogTitle>
         <DialogContent sx={{ p: 0 }}>
           <Box className="bc-dlg-filters">
             <TextField select label="Filter by Program" size="small"
@@ -543,8 +534,9 @@ const BatchCoursesList = ({ context }: { context: AcademyContextProps }) => {
       <Dialog open={tilePopup.open}
         onClose={() => setTilePopup({ open: false, programId: 0, batchNo: 0, programName: '' })}
         maxWidth="xs" fullWidth>
-        <DialogTitle className="bc-dialog-title">
+        <DialogTitle className="bc-dialog-title" sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           Link "{selectedCourse?.courseName}" → Batch {tilePopup.batchNo}
+          <IconButton size="small" onClick={() => setTilePopup({ open: false, programId: 0, batchNo: 0, programName: '' })}><CloseIcon style={{ fontSize: '1.25rem' }} /></IconButton>
         </DialogTitle>
         <DialogContent>
           <Stack spacing={2} sx={{ mt: 1 }}>
@@ -591,7 +583,10 @@ const BatchCoursesList = ({ context }: { context: AcademyContextProps }) => {
 
       {/* ── Status Update Dialog ── */}
       <Dialog open={statusDialog.open} onClose={() => setStatusDialog({ open: false, bc: null })} maxWidth="xs" fullWidth>
-        <DialogTitle className="bc-dialog-title">Update Course Status</DialogTitle>
+        <DialogTitle className="bc-dialog-title" sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          Update Course Status
+          <IconButton size="small" onClick={() => setStatusDialog({ open: false, bc: null })}><CloseIcon style={{ fontSize: '1.25rem' }} /></IconButton>
+        </DialogTitle>
         <DialogContent>
           <Typography sx={{ mt: 1, fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>
             Move <strong>{statusDialog.bc?.courseName}</strong> in Batch {statusDialog.bc?.batchNo} from{' '}
@@ -610,7 +605,10 @@ const BatchCoursesList = ({ context }: { context: AcademyContextProps }) => {
 
       {/* ── Unlink Confirmation Dialog ── */}
       <Dialog open={unlinkDialog.open} onClose={() => setUnlinkDialog({ open: false, batchCourseId: null, courseName: '' })} maxWidth="xs" fullWidth>
-        <DialogTitle className="bc-dialog-title">Confirm Unlink</DialogTitle>
+        <DialogTitle className="bc-dialog-title" sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          Confirm Unlink
+          <IconButton size="small" onClick={() => setUnlinkDialog({ open: false, batchCourseId: null, courseName: '' })}><CloseIcon style={{ fontSize: '1.25rem' }} /></IconButton>
+        </DialogTitle>
         <DialogContent>
           <Typography sx={{ mt: 1, fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>
             Are you sure you want to unlink <strong>{unlinkDialog.courseName}</strong> from this batch?
@@ -631,7 +629,10 @@ const BatchCoursesList = ({ context }: { context: AcademyContextProps }) => {
 
       {/* ── Reschedule Dialog ── */}
       <Dialog open={rescheduleDialog.open} onClose={() => setRescheduleDialog({ open: false, bc: null })} maxWidth="xs" fullWidth>
-        <DialogTitle className="bc-dialog-title">Reschedule Course</DialogTitle>
+        <DialogTitle className="bc-dialog-title" sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          Reschedule Course
+          <IconButton size="small" onClick={() => setRescheduleDialog({ open: false, bc: null })}><CloseIcon style={{ fontSize: '1.25rem' }} /></IconButton>
+        </DialogTitle>
         <DialogContent>
           <Typography sx={{ mt: 1, mb: 2, fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>
             Change dates for <strong>{rescheduleDialog.bc?.courseName}</strong>

@@ -4,11 +4,10 @@ import {
   TextField, Stack, IconButton, MenuItem,
 } from '@mui/material';
 import {
-  Add as AddIcon,
-  Delete as DeleteIcon,
   Save as SaveIcon,
   Link as LinkIcon,
 } from '@mui/icons-material';
+import { FigmaDeleteIcon as DeleteIcon, FigmaAddIcon as AddIcon } from '../../Common/FigmaIcons';
 import { internApi } from '../../../services/intern.api';
 import { tokenstore } from '../../../auth/tokenstore';
 import { handleAxiosError } from '../../../services/api.error';

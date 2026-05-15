@@ -118,25 +118,25 @@ export interface OfferLetterResponse {
   candidateName: string;
   cycleId: number;
   issueDate: string | null;
-  response: string;               // PENDING | ACCEPTED | DECLINED
+  response: string;               // PENDING | OFFER_ACCEPTED | OFFER_DECLINED
   respondedDate: string | null;
   declineReason: string | null;
-  applicationStage: string | null; // candidate's academy stage — editable only when ACCEPTED
+  applicationStage: string | null; // candidate's academy stage — editable only when OFFER_ACCEPTED
 }
 
 // ==================== OFFER RESPONSE ====================
 
 export interface OfferResponseRequest {
-  response: string; // ACCEPTED | DECLINED
+  response: string; // OFFER_ACCEPTED | OFFER_DECLINED
   respondedDate: string; // required
-  declineReason?: string;
+  declineReason?: string; // required when OFFER_DECLINED
 }
 
 export interface BulkOfferResponseRequest {
   offerId: number;
-  response: string; // ACCEPTED | DECLINED
+  response: string; // OFFER_ACCEPTED | OFFER_DECLINED
   respondedDate: string;
-  declineReason?: string;
+  declineReason?: string; // required when OFFER_DECLINED
 }
 
 export interface OfferResponseResponse {

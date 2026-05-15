@@ -228,7 +228,7 @@
   background: var(--color-surface) !important;
   box-shadow: none !important;
   overflow: auto;
-  max-height: calc(100vh - 210px);
+  max-height: calc(100vh - 234px);
 }
 
 .dc-table-head-row {

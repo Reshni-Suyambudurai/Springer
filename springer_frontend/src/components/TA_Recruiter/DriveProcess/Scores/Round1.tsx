@@ -1,4 +1,4 @@
-import React from "react";
+﻿import React from "react";
 import type { RoundEvaluationResponse } from "../../../../types/TA_Recruiter/DriveSchedule/candidateEvaluation.types";
 import {
   Box,
@@ -88,7 +88,7 @@ const Round1: React.FC<Round1Props> = ({ data }) => {
                     <TableCell className={`r1-td r1-td-score ${colorClass}`}>{evalItem.score}</TableCell>
                     {sectionNames.map((name) => (
                       <TableCell key={name} className="r1-td">
-                        {sectionScore?.[name] ?? "—"}
+                        {sectionScore?.[name] ?? "â€”"}
                       </TableCell>
                     ))}
                   </TableRow>

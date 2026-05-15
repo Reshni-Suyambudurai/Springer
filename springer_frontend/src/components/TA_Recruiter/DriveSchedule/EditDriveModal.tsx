@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+﻿import React, { useState, useEffect } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -207,7 +207,7 @@ const EditDriveModal: React.FC<EditDriveModalProps> = ({
         {isPastDrive && (
           <Box className="edit-drive-warning">
             <Typography variant="body2" color="error">
-              ⚠ This drive has ended. Editing past drives may affect historical records.
+              âš  This drive has ended. Editing past drives may affect historical records.
             </Typography>
           </Box>
         )}

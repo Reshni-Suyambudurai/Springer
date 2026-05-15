@@ -1,18 +1,18 @@
-/* ===== BATCH ATTENDANCE PANEL — prefix: atp- ===== */
+/* ===== BATCH ATTENDANCE PANEL Ã¢â‚¬â€ prefix: atp- ===== */
 
 .atp-page {
   display: flex;
   flex-direction: column;
   height: 100%;
-  gap: 4px;
-  background-color: var(--color-bg-secondary);
-  padding: 4px;
+  gap: 0;
+  background-color: var(--color-surface);
+  padding: 0;
 }
 
 .atp-card {
-  border-radius: 12px !important;
-  border: 1px solid var(--color-card-border) !important;
-  box-shadow: 0 1px 3px 0 var(--opacity-shadow-light), 0 6px 16px -2px var(--opacity-shadow-dark) !important;
+  border-radius: 0 !important;
+  border: none !important;
+  box-shadow: none !important;
   background-color: var(--color-surface) !important;
   flex: 1;
   display: flex;
@@ -21,7 +21,7 @@
   min-height: 0;
 }
 
-/* ── Loading ── */
+/* Ã¢â€â‚¬Ã¢â€â‚¬ Loading Ã¢â€â‚¬Ã¢â€â‚¬ */
 .atp-loading-wrap {
   display: flex;
   justify-content: center;
@@ -30,10 +30,10 @@
   padding: 80px 0;
 }
 
-/* ── Header ── */
+/* Ã¢â€â‚¬Ã¢â€â‚¬ Header Ã¢â€â‚¬Ã¢â€â‚¬ */
 .atp-header {
   flex-shrink: 0;
-  padding: 20px 24px 12px 24px;
+  padding: 16px 32px 12px 32px;
   background-color: var(--color-surface);
 }
 
@@ -79,10 +79,10 @@
   box-shadow: 0 4px 12px var(--color-primary-shadow-28) !important;
 }
 
-/* ── Separator ── */
+/* Ã¢â€â‚¬Ã¢â€â‚¬ Separator Ã¢â€â‚¬Ã¢â€â‚¬ */
 .atp-separator { border-top: 1px solid var(--color-grey-200); }
 
-/* ── Filter Section ── */
+/* Ã¢â€â‚¬Ã¢â€â‚¬ Filter Section Ã¢â€â‚¬Ã¢â€â‚¬ */
 .atp-filter-section {
   flex-shrink: 0;
   padding: 10px 24px;
@@ -106,7 +106,7 @@
   white-space: nowrap;
 }
 
-/* ── Table Section ── */
+/* Ã¢â€â‚¬Ã¢â€â‚¬ Table Section Ã¢â€â‚¬Ã¢â€â‚¬ */
 .atp-table-section {
   flex: 1;
   display: flex;
@@ -149,7 +149,7 @@
 
 .atp-table-cell { padding: 12px 16px !important; vertical-align: middle !important; }
 
-/* ── Name Cell ── */
+/* Ã¢â€â‚¬Ã¢â€â‚¬ Name Cell Ã¢â€â‚¬Ã¢â€â‚¬ */
 .atp-name-cell { display: flex; align-items: center; gap: 12px; }
 
 .atp-name-icon-box {
@@ -176,11 +176,11 @@
   margin: 0 !important;
 }
 
-/* ── Batch Chip ── */
+/* Ã¢â€â‚¬Ã¢â€â‚¬ Batch Chip Ã¢â€â‚¬Ã¢â€â‚¬ */
 .atp-batch-chip {
-  background-color: var(--color-primary-light) !important;
-  color: var(--color-primary) !important;
-  border-color: var(--color-blue-100) !important;
+  background-color: var(--color-success-light) !important;
+  color: var(--color-success-dark) !important;
+  border-color: var(--color-success-border) !important;
   font-weight: 600 !important;
   font-size: var(--text-xs) !important;
 }
@@ -197,7 +197,7 @@
   color: var(--color-error) !important;
 }
 
-/* ── Attendance % Cell ── */
+/* Ã¢â€â‚¬Ã¢â€â‚¬ Attendance % Cell Ã¢â€â‚¬Ã¢â€â‚¬ */
 .atp-pct-cell {
   display: flex;
   align-items: center;
@@ -227,7 +227,7 @@
 .atp-pct-text--acceptable { color: var(--color-warning-text) !important; }
 .atp-pct-text--low        { color: var(--color-error) !important; }
 
-/* ── Empty State ── */
+/* Ã¢â€â‚¬Ã¢â€â‚¬ Empty State Ã¢â€â‚¬Ã¢â€â‚¬ */
 .atp-empty-state {
   display: flex;
   flex-direction: column;
@@ -241,7 +241,7 @@
 .atp-empty-title { font-size: var(--text-sm) !important; font-weight: 600 !important; color: var(--color-empty-text) !important; }
 .atp-empty-subtitle { font-size: var(--text-xs) !important; color: var(--color-text-muted) !important; }
 
-/* ── Pagination ── */
+/* Ã¢â€â‚¬Ã¢â€â‚¬ Pagination Ã¢â€â‚¬Ã¢â€â‚¬ */
 .atp-pagination {
   border-top: 1px solid var(--color-border-dark) !important;
   background-color: var(--color-surface) !important;
@@ -258,7 +258,7 @@
   margin: 0 !important;
 }
 
-/* ── Dialog ── */
+/* Ã¢â€â‚¬Ã¢â€â‚¬ Dialog Ã¢â€â‚¬Ã¢â€â‚¬ */
 .atp-dialog-title {
   font-size: var(--text-lg) !important;
   font-weight: 700 !important;
@@ -276,13 +276,13 @@
 .atp-dlg-field .MuiOutlinedInput-root.Mui-focused fieldset { border-color: var(--color-primary) !important; }
 .atp-dlg-field .MuiInputLabel-root.Mui-focused { color: var(--color-primary) !important; }
 
-/* ── Dialog Stats Row ── */
+/* Ã¢â€â‚¬Ã¢â€â‚¬ Dialog Stats Row Ã¢â€â‚¬Ã¢â€â‚¬ */
 .atp-dlg-stats-row {
   display: flex;
   align-items: center;
   gap: 24px;
-  padding: 12px 24px;
-  background-color: var(--color-bg-primary);
+  padding: 12px 32px;
+  background-color: var(--color-surface);
   flex-wrap: wrap;
 }
 
@@ -336,7 +336,7 @@
   border-radius: 8px !important;
 }
 
-/* ── Dialog Student List ── */
+/* Ã¢â€â‚¬Ã¢â€â‚¬ Dialog Student List Ã¢â€â‚¬Ã¢â€â‚¬ */
 .atp-dlg-student-list {
   max-height: 360px;
   overflow-y: auto;
@@ -374,12 +374,12 @@
   flex-shrink: 0;
 }
 
-/* ── Attendance chips ── */
+/* Ã¢â€â‚¬Ã¢â€â‚¬ Attendance chips Ã¢â€â‚¬Ã¢â€â‚¬ */
 .atp-attendance-chip { font-size: var(--text-xs) !important; font-weight: 600 !important; border-radius: 6px !important; }
 .atp-attendance-chip--present { color: var(--color-success-dark) !important; border-color: var(--color-success-border) !important; background-color: var(--color-success-light) !important; }
 .atp-attendance-chip--absent  { color: var(--color-error-dark) !important; border-color: var(--color-error-border) !important; background-color: var(--color-error-light) !important; }
 
-/* ── Dialog buttons ── */
+/* Ã¢â€â‚¬Ã¢â€â‚¬ Dialog buttons Ã¢â€â‚¬Ã¢â€â‚¬ */
 .atp-dialog-cancel-btn { text-transform: none !important; color: var(--color-text-secondary) !important; font-weight: 600 !important; }
 
 .atp-dialog-submit-btn {

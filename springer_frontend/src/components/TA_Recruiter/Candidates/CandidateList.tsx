@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+﻿import React, { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { candidateApi } from "../../../services/drive.api";
 import { hiringCycleApi } from "../../../services/hiring.api";
@@ -35,12 +35,12 @@ import {
   DialogContent,
   DialogActions,
 } from "@mui/material";
-import AddIcon from "@mui/icons-material/Add";
 import SchoolIcon from "@mui/icons-material/School";
 import UpdateIcon from "@mui/icons-material/Update";
 import HistoryIcon from "@mui/icons-material/History";
 import MenuIcon from "@mui/icons-material/Menu";
-import CloseIcon from "@mui/icons-material/Close";
+import { FigmaCloseIcon as CloseIcon } from '../../Common/FigmaIcons';
+import { FigmaAddIcon as AddIcon } from '../../Common/FigmaIcons';
 import "../../../css/TA_Recruiter/Candidates/CandidateList.css";
 
 const STATUS_CLASS_MAP: Record<string, string> = {
@@ -88,7 +88,7 @@ const CandidateList: React.FC = () => {
 
   // Use custom hook for filter state management
   // NOTE: Filtering is done by backend, not client-side!
-  // The 'filters' object is passed to fetchCandidates() → backend /filter endpoint
+  // The 'filters' object is passed to fetchCandidates() â†’ backend /filter endpoint
   const {
     filters,
     handleFilterChange,
@@ -281,7 +281,7 @@ const CandidateList: React.FC = () => {
 
     setUpdatingBulkStatus(true);
     try {
-      // If CLOSED → use lifecycle status endpoint
+      // If CLOSED â†’ use lifecycle status endpoint
       if (bulkStatusUpdate === "CLOSED") {
         let lifecycleRequest: Parameters<typeof candidateApi.bulkUpdateCandidateLifecycleStatus>[0];
 

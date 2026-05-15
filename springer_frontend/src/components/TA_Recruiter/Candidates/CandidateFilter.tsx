@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+﻿import React, { useState } from "react";
 import {
   Box,
   Button,
@@ -131,22 +131,22 @@ const CandidateFilter: React.FC<CandidateFilterProps> = ({
           >
             <MenuItem onClick={() => handleSortSelect('cgpa', 'DESC')}>
               <Typography sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                CGPA <span style={{ color: 'var(--color-primary)' }}>↓ High to Low</span>
+                CGPA <span style={{ color: 'var(--color-primary)' }}>â†“ High to Low</span>
               </Typography>
             </MenuItem>
             <MenuItem onClick={() => handleSortSelect('cgpa', 'ASC')}>
               <Typography sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                CGPA <span style={{ color: 'var(--color-primary)' }}>↑ Low to High</span>
+                CGPA <span style={{ color: 'var(--color-primary)' }}>â†‘ Low to High</span>
               </Typography>
             </MenuItem>
             <MenuItem onClick={() => handleSortSelect('passoutYear', 'DESC')}>
               <Typography sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                Passout Year <span style={{ color: 'var(--color-primary)' }}>↓ Recent</span>
+                Passout Year <span style={{ color: 'var(--color-primary)' }}>â†“ Recent</span>
               </Typography>
             </MenuItem>
             <MenuItem onClick={() => handleSortSelect('passoutYear', 'ASC')}>
               <Typography sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                Passout Year <span style={{ color: 'var(--color-primary)' }}>↑ Oldest</span>
+                Passout Year <span style={{ color: 'var(--color-primary)' }}>â†‘ Oldest</span>
               </Typography>
             </MenuItem>
            

@@ -1,14 +1,12 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import {
   Box, Card, TextField, Typography, Stack, Button, IconButton,
   CircularProgress, Alert, Divider, Dialog, DialogTitle,
   DialogContent, DialogActions, FormControl, InputLabel, Select, MenuItem,
 } from '@mui/material';
 import SchoolIcon from '@mui/icons-material/School';
-import AddIcon from '@mui/icons-material/Add';
-import EditIcon from '@mui/icons-material/Edit';
-import CloseIcon from '@mui/icons-material/Close';
-import SearchIcon from '@mui/icons-material/Search';
+import { FigmaCloseIcon as CloseIcon } from '../../Common/FigmaIcons';
+import { FigmaAddIcon as AddIcon, FigmaEditIcon as EditIcon, FigmaSearchIcon as SearchIcon } from '../../Common/FigmaIcons';
 import BackButton from '../../Common/BackButton';
 import { useNavigate } from 'react-router-dom';
 import { skillsApi } from '../../../services/hiring.api';
@@ -136,7 +134,7 @@ const SkillsManagement = () => {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="t-search-field"
-            InputProps={{ startAdornment: <SearchIcon className="t-search-icon" sx={{ mr: 1 }} /> }}
+            InputProps={{ startAdornment: <SearchIcon className="t-search-icon" style={{ marginRight: 8 }} /> }}
           />
 
           {loading ? (
@@ -176,7 +174,7 @@ const SkillsManagement = () => {
                             <Box className="skill-card-inner">
                               <Typography className="skill-name">{skill.skillName}</Typography>
                               <IconButton size="small" className="skill-edit-btn" onClick={() => openEdit(skill)}>
-                                <EditIcon sx={{ fontSize: 15 }} />
+                                <EditIcon style={{ fontSize: 15 }} />
                               </IconButton>
                             </Box>
                           </Box>
@@ -200,7 +198,7 @@ const SkillsManagement = () => {
             <Typography fontWeight={700} fontSize="1rem">
               {editMode ? 'Edit Skill' : 'Add Skill'}
             </Typography>
-            <IconButton size="small" onClick={closeDialog}><CloseIcon fontSize="small" /></IconButton>
+            <IconButton size="small" onClick={closeDialog}><CloseIcon style={{ fontSize: '1.25rem' }} /></IconButton>
           </Stack>
         </DialogTitle>
         <DialogContent>

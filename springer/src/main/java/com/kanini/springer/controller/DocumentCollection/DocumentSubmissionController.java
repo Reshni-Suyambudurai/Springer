@@ -85,9 +85,10 @@ public class DocumentSubmissionController {
     public ResponseEntity<ApiResponse<List<DocumentSubmissionResponse>>> getAllSubmissions(
             @RequestParam(required = false) String status,
             @RequestParam(required = false) Long cycleId,
+            @RequestParam(required = false) String applicationStage,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-        List<DocumentSubmissionResponse> response = submissionService.getAllSubmissions(status, cycleId, page, size);
+        List<DocumentSubmissionResponse> response = submissionService.getAllSubmissions(status, cycleId, applicationStage, page, size);
         return ResponseEntity.status(HttpStatus.OK)
                 .body(ApiResponse.success("All submissions retrieved successfully", response));
     }

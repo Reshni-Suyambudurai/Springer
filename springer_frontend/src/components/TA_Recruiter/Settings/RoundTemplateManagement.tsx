@@ -1,15 +1,14 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import {
   Box, Card, Typography, Stack, Button, IconButton, CircularProgress,
   Alert, Chip, TextField, Divider, Select, MenuItem, FormControl, InputLabel,
   Dialog, DialogTitle, DialogContent, DialogActions,
 } from '@mui/material';
 import ViewListIcon from '@mui/icons-material/ViewList';
-import AddIcon from '@mui/icons-material/Add';
-import EditIcon from '@mui/icons-material/Edit';
 import ToggleOnIcon from '@mui/icons-material/ToggleOn';
 import ToggleOffIcon from '@mui/icons-material/ToggleOff';
-import CloseIcon from '@mui/icons-material/Close';
+import { FigmaCloseIcon as CloseIcon } from '../../Common/FigmaIcons';
+import { FigmaAddIcon as AddIcon, FigmaEditIcon as EditIcon } from '../../Common/FigmaIcons';
 import BackButton from '../../Common/BackButton';
 import { useNavigate } from 'react-router-dom';
 import { roundTemplateApi } from '../../../services/drive.api';
@@ -227,7 +226,7 @@ const RoundTemplateManagement = () => {
         <DialogTitle>
           <Stack direction="row" justifyContent="space-between" alignItems="center">
             <Typography fontWeight={700} fontSize="var(--text-md)">{editMode ? 'Edit Template' : 'Create Template'}</Typography>
-            <IconButton size="small" onClick={() => setDialogOpen(false)}><CloseIcon fontSize="small" /></IconButton>
+            <IconButton size="small" onClick={() => setDialogOpen(false)}><CloseIcon style={{ fontSize: '1.25rem' }} /></IconButton>
           </Stack>
         </DialogTitle>
         <DialogContent>
