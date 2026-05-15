@@ -176,6 +176,60 @@ function Navbar() {
                             </div>
                         )}
                     </div>
+
+                    <div className="navbar-profile" ref={profileRef}>
+                        <button
+                            className="navbar-profile-avatar-btn"
+                            onClick={() => setShowProfile(!showProfile)}
+                            aria-label="Profile menu"
+                            title="Profile"
+                        >
+                            {user?.username.charAt(0).toUpperCase()}
+                        </button>
+
+                        {showProfile && user && (
+                            <div className="profile-overlay">
+                                <div className="profile-header">
+                                    <div className="profile-avatar">
+                                        {user.username.charAt(0).toUpperCase()}
+                                    </div>
+                                    <div className="profile-info">
+                                        <h3 className="profile-name">{user.username}</h3>
+                                        <p className="profile-role">{user.roleName}</p>
+                                    </div>
+                                </div>
+                                <div className="profile-details">
+                                    <div className="profile-detail-item">
+                                        <svg
+                                            width="16"
+                                            height="16"
+                                            viewBox="0 0 24 24"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            strokeWidth="2"
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                        >
+                                            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+                                            <polyline points="22,6 12,13 2,6" />
+                                        </svg>
+                                        <span>{user.email}</span>
+                                    </div>
+                                </div>
+                                <button className="profile-change-pwd-btn" onClick={() => { setShowProfile(false); setShowChangePwd(true); }}>
+                                    🔐 Change Password
+                                </button>
+                                <button className="profile-logout-btn" onClick={handleLogout}>
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                                        <polyline points="16 17 21 12 16 7" />
+                                        <line x1="21" y1="12" x2="9" y2="12" />
+                                    </svg>
+                                    Logout
+                                </button>
+                            </div>
+                        )}
+                    </div>
                 </div>
             </div>
         </nav>

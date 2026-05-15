@@ -1,6 +1,7 @@
 package com.kanini.springer.controller.Hiring;
 
 import com.kanini.springer.dto.Authentication.ApiResponse;
+import com.kanini.springer.dto.Hiring.CycleWithDrivesResponse;
 import com.kanini.springer.dto.Hiring.HiringCycleRequest;
 import com.kanini.springer.dto.Hiring.HiringCycleResponse;
 import com.kanini.springer.dto.Hiring.HiringCycleSummaryResponse;
@@ -66,6 +67,12 @@ public class HiringCycleController {
         return ResponseEntity.ok(ApiResponse.success("Hiring cycle summaries retrieved successfully", responses));
     }
     
+    @GetMapping("/with-drives")
+    public ResponseEntity<ApiResponse<List<CycleWithDrivesResponse>>> getAllCyclesWithDrives() {
+        List<CycleWithDrivesResponse> responses = cycleService.getAllCyclesWithDrives();
+        return ResponseEntity.ok(ApiResponse.success("All cycles with drives retrieved successfully", responses));
+    }
+    
     @PatchMapping(value = "/{cycleId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApiResponse<HiringCycleResponse>> updateCycle(
             @PathVariable Long cycleId,
@@ -73,6 +80,7 @@ public class HiringCycleController {
             @RequestParam(value = "cycleName", required = false) String cycleName,
             @RequestParam(value = "compensationBand", required = false) Integer compensationBand,
             @RequestParam(value = "budget", required = false) Integer budget,
+            @RequestParam(value = "totalIntake", required = false) Integer totalIntake,
             @RequestPart(value = "jd", required = false) MultipartFile jd) {
         
         // Build request object with only provided fields
@@ -81,6 +89,7 @@ public class HiringCycleController {
         request.setCycleName(cycleName);
         request.setCompensationBand(compensationBand);
         request.setBudget(budget);
+        request.setTotalIntake(totalIntake);
         request.setJd(jd);
         
         HiringCycleResponse response = cycleService.updateCycle(cycleId, request);

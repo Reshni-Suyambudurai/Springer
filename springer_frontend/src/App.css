@@ -62,6 +62,8 @@
   --color-grey-600: #3C4555;
   --color-grey-700: #1F2937;
   --color-grey-800: #0F172A;
+  --color-silver: #A8B0B9;
+  --color-teal: #14B8A6;
 
   /* White Palette */
   --color-white: #FFFFFF;
@@ -79,6 +81,7 @@
   --color-link: #155DFC;
   --color-program-chip-bg: #1E429F;
   --color-program-chip-text: var(--color-white);
+  --color-primary-hover: var(--color-blue-700);
   --color-primary-hover-4: rgba(15, 76, 129, 0.04);
   --color-primary-hover-6: rgba(15, 76, 129, 0.06);
   --color-primary-hover-14: rgba(15, 76, 129, 0.14);
@@ -86,6 +89,13 @@
   --color-primary-shadow-18: rgba(15, 76, 129, 0.18);
   --color-primary-shadow-28: rgba(15, 76, 129, 0.28);
   --color-primary-shadow-22: rgba(15, 76, 129, 0.22);
+  
+  /* Primary Gradient Colors */
+  --color-primary-gradient-start: #c1d6e9;
+  --color-primary-gradient-mid: #0c78d0;
+  --color-primary-gradient-end: #8cc3f1;
+  --gradient-primary-horizontal: linear-gradient(to right, var(--color-primary-gradient-start), var(--color-primary-gradient-mid), var(--color-primary-gradient-end));
+  --gradient-primary-border: linear-gradient(to right, var(--color-primary), var(--color-primary-dark), var(--color-primary-gradient-end));
   
   /* Secondary */
   --color-secondary: var(--color-green-500);
@@ -338,7 +348,7 @@
   --color-primary: #5ba3d6;
   --color-primary-dark: #4a8dc4;
   --color-primary-light: #1a2f4d;
-  --color-primary-hover: rgba(91, 163, 214, 0.16);
+  --color-primary-hover: rgba(9, 67, 108, 0.853);
   --color-primary-hover-4: rgba(91, 163, 214, 0.04);
   --color-primary-hover-6: rgba(91, 163, 214, 0.06);
   --color-primary-hover-14: rgba(91, 163, 214, 0.14);

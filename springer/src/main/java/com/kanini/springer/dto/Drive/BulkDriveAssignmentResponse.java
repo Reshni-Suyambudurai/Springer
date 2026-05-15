@@ -15,9 +15,17 @@ import java.util.List;
 @AllArgsConstructor
 public class BulkDriveAssignmentResponse {
     
-    private List<DriveAssignmentResponse> successfulAssignments = new ArrayList<>();
+    private List<AssignmentSummary> successfulAssignments = new ArrayList<>();
     private List<String> errorMessages = new ArrayList<>();
     private int totalProcessed;
     private int successCount;
     private int failureCount;
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class AssignmentSummary {
+        private Long applicationId;
+        private String candidateName;
+    }
 }

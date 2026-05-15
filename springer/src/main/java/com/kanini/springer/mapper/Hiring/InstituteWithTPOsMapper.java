@@ -9,7 +9,6 @@ import com.kanini.springer.entity.HiringReq.InstituteProgram;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Component
 public class InstituteWithTPOsMapper {
@@ -29,14 +28,14 @@ public class InstituteWithTPOsMapper {
         // Map TPO contacts to TPODetails
         List<TPODetails> tpoDetailsList = contacts.stream()
                 .map(this::mapToTPODetails)
-                .collect(Collectors.toList());
+                .toList();
         
         response.setTpoDetails(tpoDetailsList);
         
         // Map programs to ProgramDetails
         List<ProgramDetails> programDetailsList = institutePrograms.stream()
                 .map(this::mapToProgramDetails)
-                .collect(Collectors.toList());
+                .toList();
         
         response.setPrograms(programDetailsList);
         

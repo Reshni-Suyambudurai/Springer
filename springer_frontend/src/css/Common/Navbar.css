@@ -180,6 +180,29 @@
   box-shadow: 0 2px 8px var(--opacity-black-medium);
 }
 
+/* Navbar profile avatar button (circular with first letter) */
+.navbar-profile-avatar-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
+  color: white;
+  border: 2px solid var(--opacity-white-strong);
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.navbar-profile-avatar-btn:hover {
+  transform: scale(1.08);
+  box-shadow: 0 2px 8px var(--opacity-black-medium);
+}
+
+/* Profile dropdown */
 .profile-overlay {
   position: absolute;
   top: calc(100% + 0.5rem);

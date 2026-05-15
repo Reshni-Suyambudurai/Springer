@@ -15,6 +15,7 @@ import java.util.List;
 public class CandidateFilterRequest {
     
     private Long cycleId;
+    private Long driveId;
     private String lifecycleStatus;
     
     // Search filters

@@ -33,6 +33,14 @@ export function handleAxiosError<T = unknown>(error: unknown): AppError<T> {
 
   // CASE 1: Axios error (HTTP request failed)
   if (axios.isAxiosError(error)) {
+    // Check if backend is unreachable (network error, connection refused, etc.)
+    if (!error.response) {
+      return {
+        message: "Backend not connected",
+        success: false
+      };
+    }
+
     // Try to extract ApiResponse from response body
     const apiError = error.response?.data as ApiErrorResponse<T> | undefined;
 

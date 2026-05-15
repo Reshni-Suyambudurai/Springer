@@ -3,9 +3,10 @@ import { handleAxiosError } from "./api.error";
 
 // Common type imports
 import type { ApiResponse } from "../types/api.response";
+import type { UserResponse } from "../types/auth.types";
 
 // Hiring-specific type imports
-import type { HiringCycleResponse, HiringCycleSummaryResponse } from "../types/TA_Recruiter/Hiring/hiringCycle.types";
+import type { HiringCycleResponse, HiringCycleSummaryResponse, CycleWithDrivesResponse } from "../types/TA_Recruiter/Hiring/hiringCycle.types";
 import type { HiringDemandRequest, HiringDemandResponse } from "../types/TA_Recruiter/Hiring/hiringDemand.types";
 import type { SkillRequest, SkillResponse } from "../types/TA_Recruiter/Hiring/skill.types";
 import type { 
@@ -103,6 +104,7 @@ export const hiringCycleApi = {
     cycleName?: string;
     compensationBand?: number;
     budget?: number;
+    totalIntake?: number;
     jd?: File;
   }): Promise<ApiResponse<HiringCycleResponse>> {
     try {
@@ -111,6 +113,7 @@ export const hiringCycleApi = {
       if (data.cycleName) formData.append('cycleName', data.cycleName);
       if (data.compensationBand) formData.append('compensationBand', data.compensationBand.toString());
       if (data.budget) formData.append('budget', data.budget.toString());
+      if (data.totalIntake) formData.append('totalIntake', data.totalIntake.toString());
       if (data.jd) formData.append('jd', data.jd);
 
       const response = await http.patch(`/hiring/cycles/${cycleId}`, formData);
@@ -155,6 +158,19 @@ export const hiringCycleApi = {
       const response = await http.get(`/hiring/cycles/${cycleId}/jd`, {
         responseType: 'blob'
       });
+      return response.data;
+    } catch (error) {
+      throw handleAxiosError(error);
+    }
+  },
+
+  /**
+   * Get all cycles with their drives
+   * GET /api/hiring/cycles/with-drives
+   */
+  async getAllCyclesWithDrives(): Promise<ApiResponse<CycleWithDrivesResponse[]>> {
+    try {
+      const response = await http.get(`/hiring/cycles/with-drives`);
       return response.data;
     } catch (error) {
       throw handleAxiosError(error);
@@ -566,6 +582,22 @@ export const programApi = {
   async removeInstituteProgramMapping(instituteProgramId: number): Promise<ApiResponse<string>> {
     try {
       const response = await http.delete(`/programs/institute-mappings/${instituteProgramId}`);
+      return response.data;
+    } catch (error) {
+      throw handleAxiosError(error);
+    }
+  }
+};
+
+// ==================== USER APIs ====================
+export const userApi = {
+  /**
+   * Get users by role IDs
+   * GET /api/auth/users/by-roles?roleIds=1,2,3
+   */
+  async getUsersByRoles(roleIds: number[]): Promise<ApiResponse<UserResponse[]>> {
+    try {
+      const response = await http.get('/auth/users/by-roles', { params: { roleIds: roleIds.join(',') } });
       return response.data;
     } catch (error) {
       throw handleAxiosError(error);

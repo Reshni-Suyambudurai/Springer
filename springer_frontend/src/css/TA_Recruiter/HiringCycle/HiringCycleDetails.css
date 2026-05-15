@@ -17,3 +17,53 @@
 .tar-hcd-empty { padding: 32px 0; text-align: center; }
 .tar-hcd-empty-text { font-size: var(--text-sm) !important; font-weight: 500 !important; color: var(--color-empty-text) !important; }
 .tar-hcd-empty-hint { font-size: var(--text-xs) !important; color: var(--color-text-disabled) !important; margin-top: 4px !important; }
+
+/* Edit Cycle Dialog */
+.tar-hcd-dialog { border-radius: 12px !important; }
+
+.tar-hcd-dialog-title {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  padding: 14px 20px 12px !important;
+  font-size: var(--text-md) !important;
+  font-weight: 600 !important;
+  color: var(--color-text-primary) !important;
+  border-bottom: 1px solid var(--color-border) !important;
+}
+
+.tar-hcd-dialog-close { padding: 4px !important; color: var(--color-text-secondary) !important; }
+.tar-hcd-dialog-close:hover { color: var(--color-text-primary) !important; }
+
+.tar-hcd-dialog-content {
+  padding: 16px 20px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 14px !important;
+}
+
+.tar-hcd-dialog-actions {
+  padding: 12px 20px !important;
+  border-top: 1px solid var(--color-border) !important;
+  gap: 8px !important;
+}
+
+.tar-hcd-jd-upload { display: flex; flex-direction: column; gap: 4px; }
+
+.tar-hcd-jd-label {
+  font-size: var(--text-xs) !important;
+  font-weight: 500 !important;
+  color: var(--color-text-secondary) !important;
+}
+
+.tar-hcd-jd-input {
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+}
+
+.tar-hcd-jd-name {
+  font-size: var(--text-xs) !important;
+  color: var(--color-primary) !important;
+  margin-top: 2px !important;
+}

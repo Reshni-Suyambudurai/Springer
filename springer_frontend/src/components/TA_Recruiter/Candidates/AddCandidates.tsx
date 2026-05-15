@@ -1,35 +1,35 @@
-﻿
+
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { candidateApi } from "../../../services/drive.api";
 import { instituteApi, skillsApi } from "../../../services/hiring.api";
-import type { CandidateRequest, CandidateValidationRequest, CandidateValidationResponse } from "../../../types/TA_Recruiter/Drive/candidate.types";
-import { ValidationStatus, Degree, Department } from "../../../types/TA_Recruiter/Drive/candidate.types";
+import type { CandidateRequest } from "../../../types/TA_Recruiter/Drive/candidate.types";
+import { Degree, Department } from "../../../types/TA_Recruiter/Drive/candidate.types";
 import type { InstituteResponse } from "../../../types/TA_Recruiter/Hiring/institute.types";
 import type { SkillResponse } from "../../../types/TA_Recruiter/Hiring/skill.types";
 import { showToast } from "../../../utils/toast";
-import * as XLSX from "xlsx";
+// Commented out - used by original off-campus upload
+// import { parseExcelRow, validateFileData } from "../../../utils/candidateValidation";
+// import { useBulkCandidateUpload } from "../../../hooks/useBulkCandidateUpload";
+// import * as XLSX from "xlsx";
 import dayjs from "dayjs";
 import customParseFormat from "dayjs/plugin/customParseFormat";
 
 dayjs.extend(customParseFormat);
 
-// Validation constants
-const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const MOBILE_REGEX = /^[0-9]{10}$/;
-const AADHAAR_REGEX = /^[0-9]{12}$/;
-const CURRENT_YEAR = new Date().getFullYear();
-const MIN_PASSOUT_YEAR = 1950;
-const MAX_PASSOUT_YEAR = CURRENT_YEAR + 5;
+// Type extension for window object
+declare global {
+  interface Window {
+    __openFormAddDialog?: () => void;
+  }
+}
 
 import {
   Box,
   Button,
   Card,
-  CardContent,
   TextField,
   Typography,
-  IconButton,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -38,41 +38,53 @@ import {
   InputLabel,
   Select,
   MenuItem,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
   Chip,
   Autocomplete,
-  Tooltip,
 } from "@mui/material";
 import BackButton from "../../Common/BackButton";
-import UploadIcon from "@mui/icons-material/Upload";
-import DownloadIcon from "@mui/icons-material/Download";
-import CloseIcon from "@mui/icons-material/Close";
-import { FigmaAddIcon as AddIcon, FigmaDeleteIcon as DeleteIcon } from '../../Common/FigmaIcons';
+// Commented out - used by original off-campus upload
+// import ErrorOverlay from "../../Common/ErrorOverlay";
+import AddIcon from "@mui/icons-material/Add";
+import UploadONCampus from "./UploadONCampus";
+import Form from "./Form";
 import "../../../css/TA_Recruiter/Candidates/AddCandidates.css";
 
 const AddCandidates: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const cycleId = (location.state as { cycleId?: number; cycleYear?: number; cycleName?: string })?.cycleId || null;
-  const cycleYear = (location.state as { cycleId?: number; cycleYear?: number; cycleName?: string })?.cycleYear;
-  const cycleName = (location.state as { cycleId?: number; cycleYear?: number; cycleName?: string })?.cycleName;
+  const navState = location.state as { cycleId?: number; cycleYear?: number; cycleName?: string; driveId?: number; driveName?: string; instituteName?: string } | null;
+  const cycleId = navState?.cycleId || null;
+  const cycleYear = navState?.cycleYear;
+  const cycleName = navState?.cycleName;
+  const driveId = navState?.driveId || null;
+  const driveName = navState?.driveName;
+  const instituteName = navState?.instituteName;
+  const [uploadMode, setUploadMode] = useState<"offcampus" | "oncampus">("offcampus");
   const [addDialog, setAddDialog] = useState(false);
-  const [bulkData, setBulkData] = useState<CandidateRequest[]>([]);
-  const [validationResults, setValidationResults] = useState<Map<string, CandidateValidationResponse>>(new Map());
-  const [isValidating, setIsValidating] = useState(false);
-  const [showErrorOverlay, setShowErrorOverlay] = useState(false);
-  const [errorMessages, setErrorMessages] = useState<string[]>([]);
   const [institutes, setInstitutes] = useState<InstituteResponse[]>([]);
   const [skills, setSkills] = useState<SkillResponse[]>([]);
+
+  // Commented out - used by original off-campus upload
+  // const bulk = useBulkCandidateUpload({ cycleId });
+  const [fieldErrors, setFieldErrors] = useState<Record<string, boolean>>({});
+
+  // Handler for Add Form button
+  const handleAddFormClick = () => {
+    if (window.__openFormAddDialog) {
+      window.__openFormAddDialog();
+    }
+  };
+
+  const clearFieldError = (field: string) => {
+    if (fieldErrors[field]) {
+      setFieldErrors((prev) => ({ ...prev, [field]: false }));
+    }
+  };
+
   const [singleForm, setSingleForm] = useState<CandidateRequest>({
     instituteId: 0,
     cycleId: cycleId || 0,
+    driveId: driveId || undefined,
     firstName: "",
     lastName: "",
     email: "",
@@ -131,49 +143,55 @@ console.log("Skills data:", response.data);
     const nameRegex = /^[a-zA-Z\s]+$/;
 
     // Validate required fields
-    if (
-      !singleForm.firstName ||
-      !singleForm.email ||
-      !singleForm.mobile ||
-      !singleForm.instituteId ||
-      singleForm.cgpa === 0 ||
-      !singleForm.passoutYear ||
-      !singleForm.degree ||
-      !singleForm.department ||
-      singleForm.historyOfArrears === undefined ||
-      singleForm.historyOfArrears === null ||
-      !singleForm.dateOfBirth
-    ) {
+    const errors: Record<string, boolean> = {};
+    if (!singleForm.firstName) errors.firstName = true;
+    if (!singleForm.email) errors.email = true;
+    if (!singleForm.mobile) errors.mobile = true;
+    if (!singleForm.instituteId) errors.instituteId = true;
+    if (singleForm.cgpa === 0) errors.cgpa = true;
+    if (!singleForm.passoutYear) errors.passoutYear = true;
+    if (!singleForm.degree) errors.degree = true;
+    if (!singleForm.department) errors.department = true;
+    if (singleForm.historyOfArrears === undefined || singleForm.historyOfArrears === null) errors.historyOfArrears = true;
+    if (!singleForm.dateOfBirth) errors.dateOfBirth = true;
+
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
       showToast("Please fill all required fields", "error");
       return;
     }
 
     // Validate first name (only letters and spaces)
     if (!nameRegex.test(singleForm.firstName)) {
+      setFieldErrors({ firstName: true });
       showToast("First name should contain only letters", "error");
       return;
     }
 
     // Validate last name if provided (only letters and spaces)
     if (singleForm.lastName && !nameRegex.test(singleForm.lastName)) {
+      setFieldErrors({ lastName: true });
       showToast("Last name should contain only letters", "error");
       return;
     }
 
     // Validate email format
     if (!emailRegex.test(singleForm.email)) {
+      setFieldErrors({ email: true });
       showToast("Please enter a valid email address", "error");
       return;
     }
 
     // Validate mobile number (10 digits)
     if (!mobileRegex.test(singleForm.mobile)) {
+      setFieldErrors({ mobile: true });
       showToast("Mobile number must be exactly 10 digits", "error");
       return;
     }
 
     // Validate aadhaar number if provided (12 digits)
     if (singleForm.aadhaarNumber && !aadhaarRegex.test(singleForm.aadhaarNumber)) {
+      setFieldErrors({ aadhaarNumber: true });
       showToast("Aadhaar number must be exactly 12 digits", "error");
       return;
     }
@@ -182,12 +200,14 @@ console.log("Skills data:", response.data);
     if (singleForm.dateOfBirth) {
       const isValidDate = dayjs(singleForm.dateOfBirth, "YYYY-MM-DD", true).isValid();
       if (!isValidDate) {
+        setFieldErrors({ dateOfBirth: true });
         showToast("Invalid date of birth. Please check the date .", "error");
         return;
       }
       
       // Check if date is not in the future
       if (dayjs(singleForm.dateOfBirth).isAfter(dayjs())) {
+        setFieldErrors({ dateOfBirth: true });
         showToast("Date of birth cannot be in the future.", "error");
         return;
       }
@@ -195,6 +215,7 @@ console.log("Skills data:", response.data);
       // Check if candidate is at least 18 years old
       const age = dayjs().diff(dayjs(singleForm.dateOfBirth), 'year');
       if (age < 18) {
+        setFieldErrors({ dateOfBirth: true });
         showToast("Candidate must be at least 18 years old.", "error");
         return;
       }
@@ -204,9 +225,11 @@ console.log("Skills data:", response.data);
       await candidateApi.createCandidate(singleForm);
       showToast("Candidate added successfully", "success");
       setAddDialog(false);
+      setFieldErrors({});
       setSingleForm({
         instituteId: 0,
         cycleId: cycleId || 0,
+        driveId: driveId || undefined,
         firstName: "",
         lastName: "",
         email: "",
@@ -230,6 +253,7 @@ console.log("Skills data:", response.data);
     }
   };
 
+  /* COMMENTED OUT - Functions for original Off-Campus Upload
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -242,94 +266,18 @@ console.log("Skills data:", response.data);
         const sheet = workbook.Sheets[workbook.SheetNames[0]];
         const jsonData = XLSX.utils.sheet_to_json(sheet) as Record<string, unknown>[];
 
-        // Debug: Show column names from first row
-        if (jsonData.length > 0) {
-          console.log("DEBUG: Excel column names found:", Object.keys(jsonData[0]));
-          console.log("DEBUG: First row data sample:", jsonData[0]);
-        }
+        const candidates: CandidateRequest[] = jsonData.map((row) =>
+          parseExcelRow(row, { cycleId: cycleId || 0, driveId: driveId || undefined })
+        );
 
-        const candidates: CandidateRequest[] = jsonData.map((row) => {
-          // Parse application type (default to STANDARD if not provided)
-          let applicationType: "STANDARD" | "PREMIUM" = "STANDARD";
-          const appTypeValue = row["Application Type"] || row["applicationType"] || "";
-          if (typeof appTypeValue === "string") {
-            const normalizedValue = appTypeValue.toUpperCase().trim();
-            if (normalizedValue === "PREMIUM") {
-              applicationType = "PREMIUM";
-            }
-          }
-          
-          return {
-            instituteId: Number(row["Institute ID"] || row["instituteId"] || 0),
-            cycleId: cycleId || 0,
-            firstName: (row["First Name"] || row["firstName"] || "") as string,
-            lastName: (row["Last Name"] || row["lastName"] || "") as string,
-            email: (row["Email"] || row["email"] || "") as string,
-            mobile: (row["Mobile"] || row["mobile"] || "") as string,
-          cgpa: Number(row["CGPA"] || row["cgpa"] || 0),
-          historyOfArrears: Number(row["History of Arrears"] || row["historyOfArrears"] || 0),
-          degree: (row["Degree"] || row["degree"] || "") as string,
-          department: (row["Department"] || row["department"] || "") as string,
-            passoutYear: Number(row["Passout Year"] || row["passoutYear"] || new Date().getFullYear()),
-            dateOfBirth: (row["Date of Birth"] || row["dateOfBirth"] || "") as string,
-            aadhaarNumber: (row["Aadhaar Number"] || row["aadhaarNumber"] || "") as string,
-            applicationType: applicationType,
-            skillIds: (() => {
-              const skillIdsValue =  row["SkillIds"] ||   row["skillIds"] ||   "";
-              if (!skillIdsValue) return [];
-              
-              const skillIdsStr = String(skillIdsValue).trim();
-              if (!skillIdsStr) return [];
-              
-              // Split by comma and convert to numbers, filtering out invalid values
-              return skillIdsStr.split(",")
-                .map((id) => Number(id.trim()))
-                .filter((id) => !isNaN(id) && id > 0);
-            })(),
-          };
-        });
-
-      
-
-        // Basic validation
-        const errors: string[] = [];
-        candidates.forEach((cand, idx) => {
-          if (!cand.firstName) errors.push(`Row ${idx + 2}: Missing First Name`);
-          if (!cand.email) errors.push(`Row ${idx + 2}: Missing Email`);
-          if (!cand.mobile) errors.push(`Row ${idx + 2}: Missing Mobile`);
-          if (!cand.instituteId || cand.instituteId === 0) errors.push(`Row ${idx + 2}: Missing Institute ID`);
-          if (!cand.cgpa || cand.cgpa === 0) errors.push(`Row ${idx + 2}: Missing CGPA`);
-          if (!cand.passoutYear) errors.push(`Row ${idx + 2}: Missing Passout Year`);
-          
-          // Validate date of birth format and validity
-          if (cand.dateOfBirth) {
-            const isValidDate = dayjs(cand.dateOfBirth, "YYYY-MM-DD", true).isValid();
-            if (!isValidDate) {
-              errors.push(`Row ${idx + 2}: Invalid date of birth '${cand.dateOfBirth}' `);
-            } else {
-              // Check if date is not in the future
-              if (dayjs(cand.dateOfBirth).isAfter(dayjs())) {
-                errors.push(`Row ${idx + 2}: Date of birth cannot be in the future`);
-              }
-              
-              // Check if candidate is at least 18 years old
-              const age = dayjs().diff(dayjs(cand.dateOfBirth), 'year');
-              if (age < 18) {
-                errors.push(`Row ${idx + 2}: Candidate must be at least 18 years old`);
-              }
-            }
-          }
-        });
+        const errors = validateFileData(candidates, { requireInstituteId: true });
 
         if (errors.length > 0) {
-          showToast(`Validation errors found. Check data carefully.`, "error");
-          setErrorMessages(errors);
-          setShowErrorOverlay(true);
+          showToast("Validation errors found. Check data carefully.", "error");
+          bulk.setErrorMessages(errors);
+          bulk.setShowErrorOverlay(true);
         } else {
-          setBulkData(candidates);
-          showToast(`${candidates.length} candidates loaded from file`, "success");
-          // Automatically validate candidates after loading
-          validateCandidates(candidates);
+          bulk.loadCandidates(candidates);
         }
       } catch (error) {
         console.error(error);
@@ -340,169 +288,6 @@ console.log("Skills data:", response.data);
     e.target.value = "";
   };
 
-  const validateCandidates = async (candidates: CandidateRequest[]) => {
-    if (candidates.length === 0) return;
-    
-    setIsValidating(true);
-    try {
-      // Create validation requests with tempId
-      const validationRequests: CandidateValidationRequest[] = candidates.map((cand, index) => ({
-        tempId: `row-${index + 1}`,
-        instituteId: cand.instituteId,
-        cycleId: cand.cycleId || cycleId || 0,
-        firstName: cand.firstName,
-        lastName: cand.lastName,
-        email: cand.email,
-        mobile: cand.mobile,
-        cgpa: cand.cgpa,
-        historyOfArrears: cand.historyOfArrears,
-        degree: cand.degree,
-        department: cand.department,
-        passoutYear: cand.passoutYear,
-        dateOfBirth: cand.dateOfBirth,
-        aadhaarNumber: cand.aadhaarNumber,
-        applicationType: "STANDARD", // Default application type
-      }));
-
-      const response = await candidateApi.bulkValidateCandidates(validationRequests);
-      
-      if (response.success && response.data) {
-        // Create a map of email to validation response for stable lookups
-        const resultsMap = new Map<string, CandidateValidationResponse>();
-        response.data.forEach((result, idx) => {
-          const email = candidates[idx]?.email?.toLowerCase();
-          if (email) resultsMap.set(email, result);
-        });
-        setValidationResults(resultsMap);
-
-        // Count statuses
-        const duplicateCount = response.data.filter(r => r.status === ValidationStatus.DUPLICATE).length;
-        const oldCount = response.data.filter(r => r.status === ValidationStatus.OLD).length;
-        const newCount = response.data.filter(r => r.status === ValidationStatus.NEW).length;
-
-        if (duplicateCount > 0) {
-          showToast(
-            `Validation complete: ${newCount} new, ${oldCount} old entries, ${duplicateCount} duplicates (upload disabled)`,
-            "error"
-          );
-        } else if (oldCount > 0) {
-          showToast(
-            `Validation complete: ${newCount} new, ${oldCount} old entries (can re-apply)`,
-            "success"
-          );
-        } else {
-          showToast(`All ${newCount} candidates validated successfully`, "success");
-        }
-      }
-    } catch (error: unknown) {
-      const err = error as { message?: string };
-      showToast(err.message || "Validation failed", "error");
-    } finally {
-      setIsValidating(false);
-    }
-  };
-
-  const handleBulkUpload = async () => {
-    if (bulkData.length === 0) {
-      showToast("No data to upload", "error");
-      return;
-    }
-
-    // Validate data before upload
-    const errors: string[] = [];
-    const rowNum = (idx: number) => idx + 1; // Row number starts from 1
-    
-    bulkData.forEach((cand, idx) => {
-      // Validate email format
-      if (!cand.email) {
-        errors.push(`Row ${rowNum(idx)}: Missing Email`);
-      } else if (!EMAIL_REGEX.test(cand.email)) {
-        errors.push(`Row ${rowNum(idx)}: Invalid email format '${cand.email}'`);
-      }
-      
-      // Validate mobile number (10 digits)
-      if (!cand.mobile) {
-        errors.push(`Row ${rowNum(idx)}: Missing Mobile Number`);
-      } else if (!MOBILE_REGEX.test(cand.mobile)) {
-        errors.push(`Row ${rowNum(idx)}: Mobile number must be exactly 10 digits (found: '${cand.mobile}')`);
-      }
-      
-      // Validate aadhaar number (12 digits, optional)
-      if (cand.aadhaarNumber && !AADHAAR_REGEX.test(cand.aadhaarNumber)) {
-        errors.push(`Row ${rowNum(idx)}: Aadhaar number must be exactly 12 digits (found: '${cand.aadhaarNumber}')`);
-      }
-      
-      // Validate passout year
-      if (!cand.passoutYear) {
-        errors.push(`Row ${rowNum(idx)}: Missing Passout Year`);
-      } else if (cand.passoutYear < MIN_PASSOUT_YEAR || cand.passoutYear > MAX_PASSOUT_YEAR) {
-        errors.push(`Row ${rowNum(idx)}: Passout year must be between ${MIN_PASSOUT_YEAR} and ${MAX_PASSOUT_YEAR} (found: ${cand.passoutYear})`);
-      }
-    });
-
-    // If validation errors exist, show overlay and stop
-    if (errors.length > 0) {
-      setErrorMessages(errors);
-      setShowErrorOverlay(true);
-      showToast(`Found ${errors.length} validation error(s). Please fix them before uploading.`, "error");
-      return;
-    }
-
-    // Check if validation has been performed
-    if (validationResults.size === 0) {
-      showToast("Please wait for validation to complete", "error");
-      return;
-    }
-
-    // Check if any duplicates exist
-    const duplicatesExist = Array.from(validationResults.values()).some(
-      (result) => result.status === ValidationStatus.DUPLICATE
-    );
-    if (duplicatesExist) {
-      showToast("Cannot upload: duplicate candidates detected. Please remove them.", "error");
-      return;
-    }
-
-    try {
-      const response = await candidateApi.bulkCreateCandidates(bulkData);
-
-      // Check if there are any errors in the response
-      if (response.data.errorMessages && response.data.errorMessages.length > 0) {
-        // Show error overlay
-        setErrorMessages(response.data.errorMessages);
-        setShowErrorOverlay(true);
-
-        // Show notification based on success/failure
-        if (response.data.successfulInserts && response.data.successfulInserts.length > 0) {
-          showToast(
-            `${response.data.successfulInserts.length} candidates uploaded, ${response.data.errorMessages.length} failed`,
-            "error"
-          );
-        } else {
-          showToast("All candidates failed validation. See errors.", "error");
-        }
-      } else {
-        showToast(`${response.data.successfulInserts.length} candidates uploaded successfully`, "success");
-        setBulkData([]);
-        setValidationResults(new Map());
-      }
-    } catch (error: unknown) {
-      const err = error as {
-        message: string;
-        success: boolean;
-        data?: { errorMessages?: string[]; message?: string };
-      };
-
-      if (err.data?.errorMessages?.length) {
-        setErrorMessages(err.data.errorMessages);
-        setShowErrorOverlay(true);
-        showToast("Bulk upload failed. See error details.", "error");
-      } else {
-        showToast(err.data?.message || err.message || "Upload failed", "error");
-      }
-    }
-  };
-
   const handleDownloadFormat = () => {
     const link = document.createElement("a");
     link.href = "/files/candidate_data.xlsx";
@@ -510,20 +295,11 @@ console.log("Skills data:", response.data);
     link.click();
   };
 
-  const handleRemoveRow = (index: number) => {
-    const removedEmail = bulkData[index]?.email?.toLowerCase();
-    const updated = bulkData.filter((_, idx) => idx !== index);
-    setBulkData(updated);
-    
-    // Remove validation entry for the deleted candidate's email
-    if (removedEmail) {
-      const newValidationResults = new Map(validationResults);
-      newValidationResults.delete(removedEmail);
-      setValidationResults(newValidationResults);
-    }
-    
-    showToast("Row removed", "success");
+  const getInstituteName = (id: number) => {
+    const institute = institutes.find((inst) => inst.instituteId === id);
+    return institute ? institute.instituteName : `ID: ${id}`;
   };
+  */
 
   const handleSkillChange = (_: unknown, newValue: SkillResponse[]) => {
     setSingleForm({
@@ -539,53 +315,12 @@ console.log("Skills data:", response.data);
     });
   };
 
+  /* COMMENTED OUT - Function for original Off-Campus Upload
   const getInstituteName = (id: number) => {
     const institute = institutes.find((inst) => inst.instituteId === id);
     return institute ? institute.instituteName : `ID: ${id}`;
   };
-
-  const calculateAge = (dob: string): number => {
-    if (!dob) return 0;
-    const birthDate = new Date(dob);
-    const today = new Date();
-    let age = today.getFullYear() - birthDate.getFullYear();
-    const monthDiff = today.getMonth() - birthDate.getMonth();
-    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-      age--;
-    }
-    return age;
-  };
-  
-  const getValidationForCandidate = (email: string): CandidateValidationResponse | undefined => {
-    return validationResults.get(email.toLowerCase());
-  };
-
-  const hasDuplicates = (): boolean => {
-    return Array.from(validationResults.values()).some(
-      (result) => result.status === ValidationStatus.DUPLICATE
-    );
-  };
-
-  const handleRemoveDuplicates = () => {
-    // Find emails marked as duplicate
-    const duplicateEmails = new Set<string>();
-    validationResults.forEach((result, email) => {
-      if (result.status === ValidationStatus.DUPLICATE) {
-        duplicateEmails.add(email);
-      }
-    });
-
-    if (duplicateEmails.size === 0) return;
-
-    // Filter out duplicate rows and remove their validation entries
-    const filtered = bulkData.filter((c) => !duplicateEmails.has(c.email.toLowerCase()));
-    const newValidationResults = new Map(validationResults);
-    duplicateEmails.forEach((email) => newValidationResults.delete(email));
-
-    setBulkData(filtered);
-    setValidationResults(newValidationResults);
-    showToast(`Removed ${duplicateEmails.size} duplicate row(s)`, "success");
-  };
+  */
 
   return (
     <Box className="add-candidates-container">
@@ -598,140 +333,128 @@ console.log("Skills data:", response.data);
             {cycleName} - {cycleYear}
           </Typography>
 
+          {driveName && (
+            <Typography variant="body1" className="add-candidates-drive-name">
+              {driveName}
+            </Typography>
+          )}
+          {instituteName && (
+            <Typography variant="body2" className="add-candidates-institute-name">
+              {instituteName}
+            </Typography>
+          )}
+        </Box>
+
+        <Box className="add-candidates-header-right">
+          {uploadMode === "offcampus" && (
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={handleAddFormClick}
+              className="add-candidates-header-btn t-btn-primary"
+            >
+              Add Form
+            </Button>
+          )}
+
           <Button
             variant="contained"
             startIcon={<AddIcon />}
-            onClick={() => setAddDialog(true)}
+            onClick={() => { setFieldErrors({}); setAddDialog(true); }}
             className="add-candidates-header-btn t-btn-primary"
           >
             Add Candidate
           </Button>
 
-          <Button
-            variant="contained"
-            component="label"
-            startIcon={<UploadIcon />}
-            className="add-candidates-header-btn t-btn-success"
-          >
-            Upload Candidates
-            <input type="file" hidden accept=".xlsx,.xls" onChange={handleFileUpload} />
-          </Button>
-
-          <Button
-            variant="outlined"
-            startIcon={<DownloadIcon />}
-            onClick={handleDownloadFormat}
-            className="add-candidates-header-btn t-btn-small"
-          >
-            Download Format
-          </Button>
+          <Box className="add-candidates-mode-toggle">
+            <Button
+              variant={uploadMode === "offcampus" ? "contained" : "outlined"}
+              onClick={() => setUploadMode("offcampus")}
+              className={uploadMode === "offcampus" ? "mode-btn active t-btn-primary" : "mode-btn t-btn-small"}
+            >
+              Off Campus
+            </Button>
+            <Button
+              variant={uploadMode === "oncampus" ? "contained" : "outlined"}
+              onClick={() => setUploadMode("oncampus")}
+              className={uploadMode === "oncampus" ? "mode-btn active t-btn-primary" : "mode-btn t-btn-small"}
+            >
+              On Campus
+            </Button>
+          </Box>
         </Box>
       </Card>
 
-      {/* Bulk Data Table */}
-      {bulkData.length > 0 && (
-        <Card className="add-candidates-bulk-card">
-          <CardContent>
-            <Box className="add-candidates-bulk-header">
-              <Typography variant="h6">
-                Uploaded Data ({bulkData.length} candidates)
-                {isValidating && <span className="validation-loading"> - Validating...</span>}
-              </Typography>
-              <Box className="add-candidates-bulk-header-actions">
-                {hasDuplicates() && (
+      {/* Upload Area */}
+      {uploadMode === "offcampus" ? (
+        <Form onAddFormClick={handleAddFormClick} />
+        /* COMMENTED OUT - Original Off-Campus Upload Section
+        <>
+          {/* File Upload Zone *\/}
+          {bulk.bulkData.length === 0 && (
+            <Card className="add-candidates-upload-zone">
+              <CardContent className="upload-zone-content">
+                <Box className="upload-zone-top-row">
                   <Button
                     variant="outlined"
-                    startIcon={<DeleteIcon />}
-                    onClick={handleRemoveDuplicates}
-                    className="t-btn-secondary"
-                    disabled={isValidating}
+                    startIcon={<DownloadIcon />}
+                    onClick={handleDownloadFormat}
+                    className="upload-zone-download-btn t-btn-small"
                   >
-                    Remove Duplicates
+                    Download Off-Campus Template
                   </Button>
-                )}
+                </Box>
+                <UploadIcon className="upload-zone-icon" />
+                <Typography variant="h6" className="upload-zone-title">
+                  Upload Off-Campus Candidates
+                </Typography>
+                <Typography variant="body2" className="upload-zone-subtitle">
+                  Upload an Excel file (.xlsx, .xls) with candidate data
+                </Typography>
                 <Button
                   variant="contained"
-                  onClick={handleBulkUpload}
-                  className="t-btn-primary"
-                  disabled={hasDuplicates() || isValidating || validationResults.size === 0}
+                  component="label"
+                  startIcon={<UploadIcon />}
+                  className="upload-zone-btn t-btn-primary"
                 >
-                  Upload to Database
+                  Choose File
+                  <input type="file" hidden accept=".xlsx,.xls" onChange={handleFileUpload} />
                 </Button>
-              </Box>
-            </Box>
+              </CardContent>
+            </Card>
+          )}
 
-            <TableContainer component={Paper} className="add-candidates-bulk-table">
-              <Table>
-                <TableHead>
-                  <TableRow>
-                    <TableCell className="t-head-cell">Index</TableCell>
-                    <TableCell className="t-head-cell">First Name</TableCell>
-                    <TableCell className="t-head-cell">Last Name</TableCell>
-                    <TableCell className="t-head-cell">Email</TableCell>
-                    <TableCell className="t-head-cell">Mobile</TableCell>
-                    <TableCell className="t-head-cell">Institute</TableCell>
-                    <TableCell className="t-head-cell">CGPA</TableCell>
-                    <TableCell className="t-head-cell">Age</TableCell>
-                    <TableCell className="t-head-cell">Passout Year</TableCell>
-                    <TableCell className="t-head-cell">Actions</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {bulkData.map((cand, index) => {
-                    const validation = getValidationForCandidate(cand.email);
-                    const isDuplicate = validation?.status === ValidationStatus.DUPLICATE;
-                    const isOld = validation?.status === ValidationStatus.OLD;
-                    const hasWarning = isDuplicate || isOld;
-                    const rowClassName = isDuplicate ? "table-row-duplicate" : isOld ? "table-row-old" : "";
-                    
-                    return (
-                    <TableRow key={index} className={rowClassName}>
-                      <TableCell>
-                        <Box className="index-cell-container">
-                          {hasWarning && (
-                            <span className={isDuplicate ? "danger-dot" : "warning-dot"}></span>
-                          )}
-                          <span>{index + 1}</span>
-                        </Box>
-                      </TableCell>
-                      <TableCell>
-                        <Tooltip
-                          title={validation?.comment || ""}
-                          arrow
-                          placement="top"
-                          slotProps={{
-                            tooltip: { className: 'g-tooltip' },
-                            arrow: { className: 'g-tooltip-arrow' },
-                          }}
-                        >
-                          <span>{cand.firstName}</span>
-                        </Tooltip>
-                      </TableCell>
-                      <TableCell>{cand.lastName}</TableCell>
-                      <TableCell>{cand.email}</TableCell>
-                      <TableCell>{cand.mobile}</TableCell>
-                      <TableCell>{getInstituteName(cand.instituteId)}</TableCell>
-                      <TableCell>{cand.cgpa}</TableCell>
-                      <TableCell>{calculateAge(cand.dateOfBirth)} yrs</TableCell>
-                      <TableCell>{cand.passoutYear}</TableCell>
-                      <TableCell>
-                        <IconButton
-                          size="small"
-                          onClick={() => handleRemoveRow(index)}
-                          className="t-action-btn"
-                          title="Remove row"
-                        >
-                          <DeleteIcon fontSize="small" />
-                        </IconButton>
-                      </TableCell>
-                    </TableRow>
-                  );
-                  })}
-                </TableBody>
-              </Table>
-            </TableContainer>
-          </CardContent>
-        </Card>
+          {/* Bulk Data Table *\/}
+          {bulk.bulkData.length > 0 && (
+            <BulkCandidateTable
+              bulkData={bulk.bulkData}
+              isValidating={bulk.isValidating}
+              batchDuplicateIndices={bulk.batchDuplicateIndices}
+              getValidationForCandidate={bulk.getValidationForCandidate}
+              hasDuplicates={bulk.hasDuplicates}
+              onRemoveRow={bulk.handleRemoveRow}
+              onRemoveDuplicates={bulk.handleRemoveDuplicates}
+              onBulkUpload={bulk.handleBulkUpload}
+              validationResultsSize={bulk.validationResults.size}
+              extraColumns={[
+                {
+                  header: "Institute",
+                  render: (cand) => getInstituteName(cand.instituteId),
+                },
+              ]}
+            />
+      )}
+        </>
+        */
+      ) : (
+        <UploadONCampus
+          cycleId={cycleId}
+          cycleYear={cycleYear}
+          cycleName={cycleName}
+          driveId={driveId}
+          driveName={driveName}
+          instituteName={instituteName}
+        />
       )}
 
       {/* Add Single Candidate Dialog */}
@@ -744,9 +467,12 @@ console.log("Skills data:", response.data);
                 label="First Name (Enter name as per aadhaar)"
                 fullWidth
                 required
+                className={fieldErrors.firstName ? "ac-field-error" : ""}
+                error={!!fieldErrors.firstName}
                 value={singleForm.firstName}
                 onChange={(e) => {
                   const value = e.target.value;
+                  clearFieldError("firstName");
                   // Allow only letters and spaces
                   if (value === "" || /^[a-zA-Z\s]*$/.test(value)) {
                     setSingleForm({ ...singleForm, firstName: value });
@@ -756,9 +482,12 @@ console.log("Skills data:", response.data);
               <TextField
                 label="Last Name"
                 fullWidth
+                className={fieldErrors.lastName ? "ac-field-error" : ""}
+                error={!!fieldErrors.lastName}
                 value={singleForm.lastName}
                 onChange={(e) => {
                   const value = e.target.value;
+                  clearFieldError("lastName");
                   // Allow only letters and spaces
                   if (value === "" || /^[a-zA-Z\s]*$/.test(value)) {
                     setSingleForm({ ...singleForm, lastName: value });
@@ -773,16 +502,21 @@ console.log("Skills data:", response.data);
                 type="email"
                 fullWidth
                 required
+                className={fieldErrors.email ? "ac-field-error" : ""}
+                error={!!fieldErrors.email}
                 value={singleForm.email}
-                onChange={(e) => setSingleForm({ ...singleForm, email: e.target.value })}
+                onChange={(e) => { clearFieldError("email"); setSingleForm({ ...singleForm, email: e.target.value }); }}
               />
               <TextField
                 label="Mobile"
                 fullWidth
                 required
+                className={fieldErrors.mobile ? "ac-field-error" : ""}
+                error={!!fieldErrors.mobile}
                 value={singleForm.mobile}
                 onChange={(e) => {
                   const value = e.target.value;
+                  clearFieldError("mobile");
                   // Allow only numbers and max 10 digits
                   if (value === "" || (/^[0-9]*$/.test(value) && value.length <= 10)) {
                     setSingleForm({ ...singleForm, mobile: value });
@@ -798,11 +532,13 @@ console.log("Skills data:", response.data);
                 options={institutes}
                 getOptionLabel={(option) => option.instituteName}
                 value={institutes.find((inst) => inst.instituteId === singleForm.instituteId) || null}
-                onChange={(_, newValue) =>
-                  setSingleForm({ ...singleForm, instituteId: newValue?.instituteId || 0 })
-                }
+                onChange={(_, newValue) => {
+                  clearFieldError("instituteId");
+                  setSingleForm({ ...singleForm, instituteId: newValue?.instituteId || 0 });
+                }}
+                className={fieldErrors.instituteId ? "ac-field-error" : ""}
                 renderInput={(params) => (
-                  <TextField {...params} label="Institute" placeholder="Search institute..." required />
+                  <TextField {...params} label="Institute" placeholder="Search institute..." required error={!!fieldErrors.instituteId} />
                 )}
               />
             </Box>
@@ -813,32 +549,42 @@ console.log("Skills data:", response.data);
                 type="number"
                 fullWidth
                 required
+                className={fieldErrors.cgpa ? "ac-field-error" : ""}
+                error={!!fieldErrors.cgpa}
                 inputProps={{ step: 0.01, min: 0, max: 10 }}
-                value={singleForm.cgpa || ""}
-                onChange={(e) =>
-                  setSingleForm({ ...singleForm, cgpa: parseFloat(e.target.value) || 0 })
-                }
+                value={singleForm.cgpa === 0 ? "" : singleForm.cgpa}
+                onChange={(e) => {
+                  clearFieldError("cgpa");
+                  const value = e.target.value;
+                  const newValue = value === "" ? 0 : parseFloat(value);
+                  setSingleForm({ ...singleForm, cgpa: isNaN(newValue) ? 0 : newValue });
+                }}
               />
               <TextField
                 label="History of Arrears"
                 type="number"
                 fullWidth
                 required
+                className={fieldErrors.historyOfArrears ? "ac-field-error" : ""}
+                error={!!fieldErrors.historyOfArrears}
                 inputProps={{ min: 0 }}
-                value={singleForm.historyOfArrears || ""}
-                onChange={(e) =>
-                  setSingleForm({ ...singleForm, historyOfArrears: parseInt(e.target.value) || 0 })
-                }
+                value={singleForm.historyOfArrears === 0 ? "" : singleForm.historyOfArrears}
+                onChange={(e) => {
+                  clearFieldError("historyOfArrears");
+                  const value = e.target.value;
+                  const newValue = value === "" ? 0 : parseInt(value);
+                  setSingleForm({ ...singleForm, historyOfArrears: isNaN(newValue) ? 0 : newValue });
+                }}
               />
             </Box>
 
             <Box className="add-candidates-form-row">
-              <FormControl fullWidth required>
+              <FormControl fullWidth required error={!!fieldErrors.degree} className={fieldErrors.degree ? "ac-field-error" : ""}>
                 <InputLabel>Degree</InputLabel>
                 <Select
                   value={singleForm.degree || ""}
                   label="Degree"
-                  onChange={(e) => setSingleForm({ ...singleForm, degree: e.target.value })}
+                  onChange={(e) => { clearFieldError("degree"); setSingleForm({ ...singleForm, degree: e.target.value }); }}
                 >
                   {Object.values(Degree).map((degree) => (
                     <MenuItem key={degree} value={degree}>
@@ -847,12 +593,12 @@ console.log("Skills data:", response.data);
                   ))}
                 </Select>
               </FormControl>
-              <FormControl fullWidth required>
+              <FormControl fullWidth required error={!!fieldErrors.department} className={fieldErrors.department ? "ac-field-error" : ""}>
                 <InputLabel>Department</InputLabel>
                 <Select
                   value={singleForm.department || ""}
                   label="Department"
-                  onChange={(e) => setSingleForm({ ...singleForm, department: e.target.value })}
+                  onChange={(e) => { clearFieldError("department"); setSingleForm({ ...singleForm, department: e.target.value }); }}
                 >
                   {Object.values(Department).map((dept) => (
                     <MenuItem key={dept} value={dept}>
@@ -869,20 +615,25 @@ console.log("Skills data:", response.data);
                 type="number"
                 fullWidth
                 required
+                className={fieldErrors.passoutYear ? "ac-field-error" : ""}
+                error={!!fieldErrors.passoutYear}
                 inputProps={{ min: 2020, max: 2050 }}
                 value={singleForm.passoutYear || ""}
-                onChange={(e) =>
-                  setSingleForm({ ...singleForm, passoutYear: parseInt(e.target.value) || 0 })
-                }
+                onChange={(e) => {
+                  clearFieldError("passoutYear");
+                  setSingleForm({ ...singleForm, passoutYear: parseInt(e.target.value) || 0 });
+                }}
               />
               <TextField
                 label="Date of Birth"
                 type="date"
                 fullWidth
                 required
+                className={fieldErrors.dateOfBirth ? "ac-field-error" : ""}
+                error={!!fieldErrors.dateOfBirth}
                 InputLabelProps={{ shrink: true }}
                 value={singleForm.dateOfBirth}
-                onChange={(e) => setSingleForm({ ...singleForm, dateOfBirth: e.target.value })}
+                onChange={(e) => { clearFieldError("dateOfBirth"); setSingleForm({ ...singleForm, dateOfBirth: e.target.value }); }}
               />
             </Box>
 
@@ -890,9 +641,12 @@ console.log("Skills data:", response.data);
               <TextField
                 label="Aadhaar Number"
                 fullWidth
+                className={fieldErrors.aadhaarNumber ? "ac-field-error" : ""}
+                error={!!fieldErrors.aadhaarNumber}
                 value={singleForm.aadhaarNumber}
                 onChange={(e) => {
                   const value = e.target.value;
+                  clearFieldError("aadhaarNumber");
                   // Allow only numbers and max 12 digits
                   if (value === "" || (/^[0-9]*$/.test(value) && value.length <= 12)) {
                     setSingleForm({ ...singleForm, aadhaarNumber: value });
@@ -954,64 +708,17 @@ console.log("Skills data:", response.data);
         </DialogActions>
       </Dialog>
 
-      {/* Error Overlay */}
-      {showErrorOverlay && (
-        <Box className="error-overlay" onClick={() => setShowErrorOverlay(false)}>
-          <Box className="error-overlay-content" onClick={(e) => e.stopPropagation()}>
-            <Box className="error-overlay-header">
-              <Typography variant="h6" className="error-overlay-title">
-                Validation Errors ({errorMessages.length})
-              </Typography>
-              <IconButton onClick={() => setShowErrorOverlay(false)} size="small">
-                <CloseIcon />
-              </IconButton>
-            </Box>
-            <Box className="error-overlay-messages">
-              {errorMessages.map((error, index) => {
-                const candidateMatch = error.match(/^Candidate #(\d+):/);
-                const candidateIndex = candidateMatch ? parseInt(candidateMatch[1], 10) - 1 : null;
-
-                return (
-                  <Box key={index} className="error-message-item">
-                    <Typography className="error-message-number">{index + 1}.</Typography>
-                    <Typography className="error-message-text">{error}</Typography>
-                    {candidateIndex !== null && (
-                      <Tooltip title="Remove this candidate from table">
-                        <IconButton
-                          size="small"
-                          className="error-message-delete-btn"
-                          onClick={() => {
-                            setBulkData((prev) => prev.filter((_, i) => i !== candidateIndex));
-                            setErrorMessages((prev) => {
-                              const updated = prev.filter((_, i) => i !== index);
-                              if (updated.length === 0) {
-                                setShowErrorOverlay(false);
-                              }
-                              return updated;
-                            });
-                            setValidationResults((prev) => {
-                              const updated = new Map(prev);
-                              // Remove validation for the deleted candidate's tempId
-                              const deletedRow = bulkData[candidateIndex];
-                              if (deletedRow) {
-                                const tempId = `temp-${candidateIndex}`;
-                                updated.delete(tempId);
-                              }
-                              return updated;
-                            });
-                          }}
-                        >
-                          <DeleteIcon fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                    )}
-                  </Box>
-                );
-              })}
-            </Box>
-          </Box>
-        </Box>
+      {/* Error Overlay - Commented out, used by original off-campus upload
+      {bulk.showErrorOverlay && (
+        <ErrorOverlay
+          errorMessages={bulk.errorMessages}
+          errorEmailMap={bulk.errorEmailMap}
+          bulkData={bulk.bulkData}
+          onClose={() => bulk.setShowErrorOverlay(false)}
+          onRemoveByEmail={bulk.handleRemoveByEmail}
+        />
       )}
+      */}
     </Box>
   );
 };

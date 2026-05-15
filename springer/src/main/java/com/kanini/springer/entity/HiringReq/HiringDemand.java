@@ -57,7 +57,7 @@ public class HiringDemand {
     
     private LocalDateTime updatedAt;
     
-    @OneToMany(mappedBy = "demand", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "demand", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<RequisitionSkill> requisitionSkills;
     
     

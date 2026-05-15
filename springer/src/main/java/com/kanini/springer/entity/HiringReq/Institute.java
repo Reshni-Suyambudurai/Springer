@@ -13,9 +13,6 @@ import com.kanini.springer.entity.Drive.Candidate;
 import com.kanini.springer.entity.Drive.Drive;
 import com.kanini.springer.entity.enums.Enums.InstituteTier;
 
-/**
- * All colleges data will stored here
- */
 @Entity
 @Table(name = "institutes",
     indexes = {

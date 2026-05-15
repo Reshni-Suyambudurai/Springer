@@ -2,7 +2,9 @@
 .ar1-container {
   padding: 16px;
   background-color: var(--color-bg);
-  min-height: 100vh;
+  height: 100vh;
+  overflow: hidden;
+  box-sizing: border-box;
 }
 
 /* ========== Header ========== */
@@ -298,6 +300,89 @@
 .ar1-error-name {
   cursor: pointer;
   border-bottom: 1px dashed var(--color-danger);
+}
+
+.ar1-dup-name {
+  cursor: pointer;
+  border-bottom: 1px dashed #1976D2; /* Blue */
+  color: #1976D2;
+  font-weight: 600;
+}
+
+/* ========== Duplicate Row Highlights ========== */
+/* Red tint for DB duplicates (already exists in database - highest priority) */
+.ar1-row-db-dup td {
+  background-color: var(--color-error-light) !important; /* #FEF3F2 */
+}
+
+.ar1-row-db-dup:hover td {
+  background-color: #fde8e6 !important;
+}
+
+/* Blue tint for duplicate Registration_code (2nd+ occurrence in upload) */
+.ar1-row-dup-regcode td {
+  background-color: #E3F2FD !important; /* Light blue */
+}
+
+/* Blue tint for duplicate Candidate_email (2nd+ occurrence) */
+.ar1-row-dup-email td {
+  background-color: #E3F2FD !important; /* Light blue */
+}
+
+/* Hover keeps the tint visible */
+.ar1-row-dup-regcode:hover td {
+  background-color: #BBDEFB !important;
+}
+.ar1-row-dup-email:hover td {
+  background-color: #BBDEFB !important;
+}
+
+/* DB Duplicate Registration_code cell (red - priority) */
+.ar1-cell-db-dup {
+  color: var(--color-danger) !important;
+  font-weight: 700 !important;
+  background-color: rgba(192, 57, 43, 0.15) !important;
+}
+
+/* Duplicate Registration_code cell */
+.ar1-cell-dup-regcode {
+  color: #1976D2 !important; /* Blue */
+  font-weight: 700 !important;
+  background-color: rgba(25, 118, 210, 0.15) !important;
+}
+
+/* Duplicate Candidate_email cell */
+.ar1-cell-dup-email {
+  color: #1976D2 !important; /* Blue */
+  font-weight: 700 !important;
+  background-color: rgba(25, 118, 210, 0.15) !important;
+}
+
+/* DB duplicate name styling */
+.ar1-db-dup-name {
+  cursor: pointer;
+  border-bottom: 2px solid var(--color-danger);
+  color: var(--color-danger);
+  font-weight: 700;
+}
+
+/* Remove Duplicates button */
+.ar1-btn-remove-dup {
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  color: var(--color-warning) !important;
+  border: 1.5px solid var(--color-warning-border) !important;
+  background-color: var(--color-warning-bg) !important;
+  text-transform: none !important;
+  border-radius: 6px !important;
+  padding: 4px 14px !important;
+  white-space: nowrap;
+  transition: background-color 0.2s ease !important;
+}
+
+.ar1-btn-remove-dup:hover {
+  background-color: #fff0c0 !important;
+  border-color: var(--color-warning) !important;
 }
 
 /* ========== Responsive ========== */

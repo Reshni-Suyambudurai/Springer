@@ -38,6 +38,16 @@
   animation: toastSlide 0.3s ease;
 }
 
+/* Hide the non-functional default close icon inside notistack content */
+.notistack-MuiContent-success #notistack-snackbar ~ div:not(:last-child),
+.notistack-MuiContent-error #notistack-snackbar ~ div:not(:last-child),
+.notistack-MuiContent-success > svg,
+.notistack-MuiContent-error > svg,
+.notistack-MuiContent-success #notistack-snackbar svg,
+.notistack-MuiContent-error #notistack-snackbar svg {
+  display: none !important;
+}
+
 /* Animation */
 @keyframes toastSlide {
   from {

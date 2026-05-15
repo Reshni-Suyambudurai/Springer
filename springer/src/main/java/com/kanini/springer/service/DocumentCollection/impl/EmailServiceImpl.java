@@ -2,7 +2,7 @@ package com.kanini.springer.service.DocumentCollection.impl;
 
 import com.kanini.springer.dto.DocumentCollection.RequiredDocumentDTO;
 import com.kanini.springer.entity.utils.EmailTemplate;
-import com.kanini.springer.repository.EmailTemplateRepository;
+import com.kanini.springer.repository.Common.EmailTemplateRepository;
 import com.kanini.springer.service.DocumentCollection.IEmailService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

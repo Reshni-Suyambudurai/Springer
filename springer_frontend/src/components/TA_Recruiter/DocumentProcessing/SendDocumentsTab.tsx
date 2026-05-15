@@ -17,7 +17,8 @@ import { documentLinkApi } from '../../../services/document.api';
 import { showToast } from '../../../utils/toast';
 import { useDocumentProcessing } from '../../../contexts/DocumentProcessingContext';
 import FilterSelect from '../../Common/FilterSelect';
-import type { DocProcessingContextProps } from '../../../types/DocumentCollection/document.types';
+import type { DocumentTypeResponse, DocProcessingContextProps } from '../../../types/DocumentCollection/document.types';
+import type { CandidateDocResponse } from '../../../types/TA_Recruiter/Drive/candidate.types';
 import '../../../css/TA_Recruiter/DocumentProcessing/SendDocumentsTab.css';
 
 const SendDocumentsTab = ({ context }: { context: DocProcessingContextProps }) => {

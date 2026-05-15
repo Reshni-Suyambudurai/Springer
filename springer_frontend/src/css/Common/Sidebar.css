@@ -131,6 +131,9 @@
   height: 20px;
 }
 
+.sidebar-link:hover .sidebar-icon { color: var(--color-primary-dark); transform: scale(1.1); }
+.sidebar-link.active .sidebar-icon { color: var(--color-primary); transform: scale(1.1); }
+
 .sidebar-text {
   font-size: var(--text-sm);
   font-weight: var(--font-weight-medium);
@@ -143,6 +146,9 @@
   transition: opacity 0.2s ease;
   pointer-events: none;
 }
+
+.sidebar-link:hover .sidebar-text { color: var(--color-primary); }
+.sidebar-link.active .sidebar-text { color: var(--color-primary); }
 
 .sidebar.collapsed .sidebar-header {
   flex-direction: column;

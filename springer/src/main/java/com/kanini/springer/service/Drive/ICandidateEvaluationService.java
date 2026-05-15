@@ -46,6 +46,11 @@ public interface ICandidateEvaluationService {
      * @return List of CandidateEvaluationResponse for the specified application
      */
     List<CandidateEvaluationResponse> getEvaluationsByApplicationId(Long applicationId);
+
+    /**
+     * Get evaluation by application ID, round config ID, and reviewer user ID
+     */
+    CandidateEvaluationResponse getEvaluationByApplicationAndRound(Long applicationId, Long roundConfigId, Long userId);
     
     /**
      * Get candidate evaluations summary by drive ID
@@ -87,4 +92,25 @@ public interface ICandidateEvaluationService {
      * @return RoundEvaluationResponse with round template + evaluation list
      */
     RoundEvaluationResponse getEvaluationsByRoundAndApplications(RoundEvaluationRequest request);
+
+    void bulkUpdateEvaluationStatus(BulkEvaluationStatusUpdateRequest request);
+
+    /**
+     * Bulk skip/hold/absent a round for multiple candidates.
+     * SKIP/HOLD: updates existing CandidateEvaluation status only.
+     * ABSENT: sets Application status to DROPPED (no evaluation record touched).
+     * All-or-nothing transactional.
+     */
+    void bulkRoundSkip(BulkRoundSkipRequest request);
+
+    /**
+     * Check if candidate evaluations already exist for a given round.
+     * Validates that all applications belong to the specified drive,
+     * then checks if evaluations exist for the given roundConfigId.
+     * Returns list of registration codes with existing evaluations and reason.
+     *
+     * @param request CheckExistingEvaluationsRequest with driveId, roundConfigId, and candidate list
+     * @return CheckExistingEvaluationsResponse with existing evaluation details
+     */
+    CheckExistingEvaluationsResponse checkExistingEvaluations(CheckExistingEvaluationsRequest request);
 }

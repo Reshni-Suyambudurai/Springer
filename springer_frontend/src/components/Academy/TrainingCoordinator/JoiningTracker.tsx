@@ -100,7 +100,10 @@ const JoiningTracker = ({ context }: { context: AcademyContextProps }) => {
       return;
     }
     setLoading(true);
-    joiningTrackerApi.getCandidatesByCycle(selectedCycleId)
+    joiningTrackerApi.getCandidatesByCycleAndStages({
+      cycleId: selectedCycleId,
+      applicationStages: ['ACCEPTED', 'JOINED', 'DROPPED'],
+    })
       .then(res => {
         const all = (res.success && res.data) ? res.data : [];
         const normalized: JoiningTrackerCandidate[] = all.map(c => ({

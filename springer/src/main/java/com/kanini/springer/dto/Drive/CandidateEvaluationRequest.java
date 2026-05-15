@@ -17,6 +17,7 @@ public class CandidateEvaluationRequest {
     private Integer score; // required - calculated score from frontend
     private Object sectionScore; // optional - JSON object with section-wise scores
     private String review; // optional - review comments
-    private String evaluationStatus; // required - PASS, FAIL, ABSENT, HOLD
+    private String evaluationStatus; // required - PASS, FAIL, ABSENT, HOLD, SKIP
     private Long reviewedBy; // required - user ID
+    private String status; // required - SUBMIT or DRAFT or HOLD -> create if not present or else update
 }

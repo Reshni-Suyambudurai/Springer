@@ -2,7 +2,111 @@
 .dc-container {
   padding: 16px;
   background-color: var(--color-bg);
-  min-height: 100vh;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+/* ========== Filter Bar ========== */
+.dc-filter-bar {
+  display: flex !important;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 20px !important;
+  margin-bottom: 16px;
+  background: var(--color-surface) !important;
+  border: 1px solid var(--color-border) !important;
+  border-radius: 10px !important;
+  box-shadow: none !important;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+
+.dc-filter-bar-spacer {
+  flex: 1;
+}
+
+.dc-filter-input {
+  flex: 1;
+  min-width: 180px;
+  padding: 8px 12px;
+  font-size: 13px;
+  font-family: inherit;
+  color: var(--color-text);
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+
+.dc-filter-input::placeholder {
+  color: var(--color-text-muted);
+}
+
+.dc-filter-input:focus {
+  border-color: var(--color-primary);
+}
+
+.dc-filter-select {
+  min-width: 140px;
+  padding: 8px 12px;
+  font-size: 13px;
+  font-family: inherit;
+  color: var(--color-text);
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  outline: none;
+  cursor: pointer;
+  transition: border-color 0.2s ease;
+}
+
+.dc-filter-select:focus {
+  border-color: var(--color-primary);
+}
+
+/* ========== Round Checkboxes ========== */
+.dc-round-checkboxes {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.dc-round-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 50px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1.5px solid var(--color-border);
+  color: var(--color-text-muted);
+  background: var(--color-bg);
+  transition: all 0.15s ease;
+  user-select: none;
+}
+.dc-round-chip input[type="checkbox"] {
+  display: none;
+}
+.dc-round-chip-active {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+  background: var(--color-primary-light, #e0e7ff);
+}
+
+/* ========== Checkbox ========== */
+.dc-checkbox .MuiSvgIcon-root {
+  color: var(--color-primary) !important;
+  font-size: 20px;
+}
+
+.dc-th-check {
+  width: 48px;
+  max-width: 48px;
 }
 
 /* ========== Header — mirrors InstitutesList / DriveList pattern ========== */
@@ -88,6 +192,81 @@
 
 .dc-btn-action:hover {
   background-color: var(--color-primary-hover) !important;
+}
+
+.dc-btn-action:disabled,
+.dc-btn-action.Mui-disabled {
+  background-color: var(--color-grey-350) !important;
+  color: var(--color-text-disabled) !important;
+  box-shadow: none !important;
+  cursor: not-allowed !important;
+  pointer-events: auto !important;
+}
+
+/* Select mode toggle button (active/outlined state) */
+.dc-btn-select-active {
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  border-radius: 8px !important;
+  padding: 6px 16px !important;
+  background-color: transparent !important;
+  color: var(--color-primary) !important;
+  border: 1.5px solid var(--color-primary) !important;
+  text-transform: none !important;
+  white-space: nowrap;
+  transition: background-color 0.2s ease !important;
+}
+
+.dc-btn-select-active:hover {
+  background-color: var(--color-primary-hover-4) !important;
+}
+
+/* ── Shared icon button base (Refresh, Email, etc.) ── */
+.dc-icon-btn {
+  color: var(--color-primary) !important;
+  border-radius: 8px !important;
+  transition: background-color 0.2s ease, color 0.2s ease !important;
+  height: 30px;
+  width: 30px;
+}
+
+.dc-icon-btn:hover {
+  background-color: var(--color-primary) !important;
+  color: var(--color-surface) !important;
+}
+
+/* ── Email icon button ── */
+.dc-email-btn {
+  color: var(--color-primary) !important;
+  border-radius: 8px !important;
+  transition: background-color 0.2s ease, color 0.2s ease !important;
+  height: 30px;
+  width: 30px;
+}
+
+.dc-email-btn:hover {
+  background-color: var(--color-primary) !important;
+  color: var(--color-surface) !important;
+}
+
+.dc-copy-pass-btn {
+  color: var(--color-primary) !important;
+  border-radius: 8px !important;
+  transition: background-color 0.2s ease, color 0.2s ease !important;
+  height: 30px;
+  width: 30px;
+}
+
+.dc-copy-pass-btn:hover {
+  background-color: var(--color-primary) !important;
+  color: var(--color-surface) !important;
+}
+
+.dc-copy-pass-btn-copied {
+  color: var(--color-success, #2e7d32) !important;
+  border-radius: 8px !important;
+  height: 30px;
+  width: 30px;
 }
 
 /* ========== Loading ========== */
@@ -186,40 +365,57 @@
 }
 
 .dc-status-in-drive {
-  border: 1.5px solid #1d4ed8;
-  color: #1d4ed8;
-  background-color: #dbeafe;
+  border: 1.5px solid var(--color-blue-500);
+  color: var(--color-blue-500);
+  background-color: var(--color-blue-50);
 }
 
 .dc-status-passed {
-  border: 1.5px solid #16a34a;
-  color: #16a34a;
-  background-color: #dcfce7;
+  border: 1.5px solid var(--color-success);
+  color: var(--color-success);
+  background-color: var(--color-success-light);
 }
 
 .dc-status-selected {
-  border: 1.5px solid #15803d;
-  color: #15803d;
-  background-color: #d1fae5;
+  border: 1.5px solid var(--color-success-dark);
+  color: var(--color-success-dark);
+  background-color: var(--color-green-50);
 }
 
 .dc-status-failed {
-  border: 1.5px solid #dc2626;
-  color: #dc2626;
-  background-color: #fee2e2;
+  border: 1.5px solid var(--color-danger);
+  color: var(--color-danger);
+  background-color: var(--color-error-light);
 }
 
 .dc-status-dropped {
-  border: 1.5px solid #6b7280;
-  color: #6b7280;
-  background-color: #f3f4f6;
+  border: 1.5px solid var(--color-grey-500);
+  color: var(--color-grey-500);
+  background-color: var(--color-grey-150);
 }
 
 .dc-status-on-hold {
-  border: 1.5px solid #d97706;
-  color: #d97706;
-  background-color: #fef3c7;
+  border: 1.5px solid var(--color-warning);
+  color: var(--color-warning);
+  background-color: var(--color-warning-bg);
 }
+
+/* ========== Evaluation Status Badges ========== */
+.dc-eval-badge {
+  padding: 3px 10px;
+  border-radius: 50px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  white-space: nowrap;
+}
+.dc-eval-pending { color: var(--color-warning); background: var(--color-warning-bg); border: 1px solid var(--color-warning); }
+.dc-eval-pass    { color: var(--color-success); background: var(--color-success-light); border: 1px solid var(--color-success); }
+.dc-eval-fail    { color: var(--color-danger); background: var(--color-error-light); border: 1px solid var(--color-danger); }
+.dc-eval-absent  { color: var(--color-pink-600); background: var(--color-pink-50); border: 1px solid var(--color-pink-600); }
+.dc-eval-hold    { color: var(--color-blue-500); background: var(--color-blue-50); border: 1px solid var(--color-blue-500); }
+.dc-eval-skip    { color: var(--color-grey-500); background: var(--color-grey-150); border: 1px solid var(--color-grey-500); }
 
 /* ========== Table ========== */
 .dc-table-container {
@@ -228,7 +424,8 @@
   background: var(--color-surface) !important;
   box-shadow: none !important;
   overflow: auto;
-  max-height: calc(100vh - 234px);
+  max-height: calc(100vh - 10px);
+  padding-bottom: 48px !important;
 }
 
 .dc-table-head-row {
@@ -238,7 +435,7 @@
 .dc-th {
   font-size: 13px !important;
   font-weight: 700 !important;
-  color: #ffffff !important;
+  color: var(--color-white) !important;
   text-transform: uppercase;
   letter-spacing: 0.5px;
   border-bottom: 2px solid var(--color-primary) !important;
@@ -258,6 +455,15 @@
   background-color: var(--color-bg) !important;
 }
 
+/* Selected row (double-click) */
+.dc-row-selected .dc-td {
+  background-color: var(--color-primary-light) !important;
+}
+
+.dc-row-selected:hover .dc-td {
+  background-color: var(--color-primary-light) !important;
+}
+
 .dc-td {
   font-size: 14px !important;
   color: var(--color-text) !important;
@@ -270,34 +476,545 @@
   font-weight: 600 !important;
 }
 
+/* ========== User name + Tooltip ========== */
+.dc-user-name {
+  cursor: default;
+}
+
+.dc-tooltip-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.dc-tooltip-date {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.dc-tooltip-time {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+}
+
+/* ========== Skip Reason Overlay ========== */
+.dc-overlay-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: var(--opacity-black-medium);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1300;
+}
+
+.dc-overlay-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  padding: 24px;
+  width: 400px;
+  max-width: 90vw;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  box-shadow: 0 8px 24px var(--opacity-shadow-dark);
+}
+
+.dc-overlay-title {
+  font-size: var(--text-lg) !important;
+  font-weight: 700 !important;
+  color: var(--color-text-primary) !important;
+}
+
+.dc-overlay-textarea {
+  width: 100%;
+  padding: 10px 12px;
+  font-size: var(--text-sm);
+  font-family: inherit;
+  color: var(--color-text-primary);
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-input-border);
+  border-radius: 8px;
+  resize: vertical;
+  outline: none;
+  transition: border-color 0.2s ease;
+  box-sizing: border-box;
+}
+
+.dc-overlay-textarea:focus {
+  border-color: var(--color-primary);
+}
+
+.dc-overlay-textarea::placeholder {
+  color: var(--color-text-muted);
+}
+
+.dc-overlay-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.dc-overlay-btn-cancel {
+  color: var(--color-text-secondary) !important;
+  border-color: var(--color-border) !important;
+  text-transform: none !important;
+  font-size: var(--text-sm) !important;
+  font-weight: 600 !important;
+}
+
+.dc-overlay-btn-cancel:hover {
+  background: var(--color-bg-secondary) !important;
+}
+
+.dc-overlay-btn-submit {
+  background: var(--color-primary) !important;
+  color: var(--color-white) !important;
+  text-transform: none !important;
+  font-size: var(--text-sm) !important;
+  font-weight: 600 !important;
+}
+
+.dc-overlay-btn-submit:hover {
+  background: var(--color-primary-dark) !important;
+}
+
+.dc-overlay-btn-submit:disabled {
+  background: var(--color-inactive-bg) !important;
+  color: var(--color-text-disabled) !important;
+}
+
+/* ========== Finalize Confirmation Dialog ========== */
+.dc-finalize-dialog {
+  background: var(--color-surface);
+  border-radius: 12px;
+  padding: 24px;
+  min-width: 400px;
+  max-width: 500px;
+  box-shadow: 0 8px 24px var(--opacity-shadow-dark);
+  animation: slideUp 0.2s ease-out;
+}
+
+.dc-dialog-title {
+  font-size: var(--text-lg);
+  font-weight: 700;
+  color: var(--color-text-primary);
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dc-dialog-title-warning {
+  color: var(--color-warning);
+}
+
+.dc-dialog-message {
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+  line-height: 1.6;
+  margin-bottom: 20px;
+}
+
+.dc-dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.dc-dialog-btn-cancel {
+  background: transparent !important;
+  border: 1px solid var(--color-border-table) !important;
+  color: var(--color-text-secondary) !important;
+  text-transform: none !important;
+  font-size: var(--text-sm) !important;
+  font-weight: 600 !important;
+  padding: 6px 16px !important;
+}
+
+.dc-dialog-btn-cancel:hover {
+  background: var(--color-bg-secondary) !important;
+  border-color: var(--color-primary) !important;
+  color: var(--color-primary) !important;
+}
+
+.dc-dialog-btn-proceed,
+.dc-dialog-btn-confirm {
+  background: var(--color-primary) !important;
+  color: var(--color-white) !important;
+  text-transform: none !important;
+  font-size: var(--text-sm) !important;
+  font-weight: 600 !important;
+  padding: 6px 16px !important;
+}
+
+.dc-dialog-btn-proceed:hover,
+.dc-dialog-btn-confirm:hover {
+  background: var(--color-primary-dark) !important;
+}
+
+.dc-dialog-btn-proceed:disabled,
+.dc-dialog-btn-confirm:disabled {
+  background: var(--color-inactive-bg) !important;
+  color: var(--color-text-disabled) !important;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 /* ========== Responsive ========== */
-@media (max-width: 768px) {
+
+/* Large tablets and below - Adjust header layout */
+@media (max-width: 1200px) {
+  .dc-header {
+    flex-wrap: wrap;
+  }
+
+  .dc-header-left {
+    width: 100%;
+    margin-bottom: 8px;
+  }
+
+  .dc-header-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+}
+
+/* Tablets - Simplify filter bar */
+@media (max-width: 992px) {
   .dc-container {
     padding: 12px;
   }
 
-  .dc-title {
-    font-size: 15px !important;
-  }
-
-  .dc-header-center {
-    position: static;
-    transform: none;
-  }
-
   .dc-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 12px;
+    padding: 12px 16px !important;
   }
 
-  .dc-header-spacer {
-    display: none;
+  .dc-filter-bar {
+    padding: 10px 16px !important;
+    gap: 8px;
+  }
+
+  .dc-round-checkboxes {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .dc-select {
+    min-width: 110px;
+  }
+
+  .dc-select .MuiSelect-select {
+    font-size: 12px;
+    padding: 6px 10px;
+  }
+
+  .dc-btn-action,
+  .dc-btn-select-active {
+    font-size: 12px !important;
+    padding: 5px 12px !important;
+  }
+
+  .dc-filter-input,
+  .dc-filter-select {
+    min-width: 110px;
+    font-size: 12px;
+    padding: 6px 10px;
   }
 
   .dc-th,
   .dc-td {
     padding: 10px 12px !important;
     font-size: 12px !important;
+  }
+
+  .dc-table-container {
+    max-height: calc(100vh - 250px);
+  }
+}
+
+/* Mobile landscape and below */
+@media (max-width: 768px) {
+  .dc-container {
+    padding: 8px;
+  }
+
+  .dc-header {
+    padding: 10px 12px !important;
+    margin-bottom: 12px;
+  }
+
+  .dc-header-left {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .dc-title {
+    font-size: 15px !important;
+  }
+
+  .dc-header-actions {
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .dc-select {
+    min-width: 90px;
+    flex: 1;
+  }
+
+  .dc-btn-action,
+  .dc-btn-select-active {
+    font-size: 11px !important;
+    padding: 5px 10px !important;
+    flex: 1;
+  }
+
+  .dc-filter-bar {
+    padding: 8px 12px !important;
+    gap: 6px;
+  }
+
+  .dc-round-chip {
+    font-size: 11px;
+    padding: 3px 8px;
+  }
+
+  .dc-filter-input,
+  .dc-filter-select {
+    flex: 1;
+    min-width: 100px;
+    font-size: 11px;
+    padding: 6px 8px;
+  }
+
+  .dc-th,
+  .dc-td {
+    padding: 8px 6px !important;
+    font-size: 11px !important;
+  }
+
+  .dc-td-name {
+    font-size: 12px !important;
+  }
+
+  .dc-status-badge {
+    font-size: 9px;
+    padding: 3px 8px;
+  }
+
+  .dc-eval-badge {
+    font-size: 8px;
+    padding: 2px 6px;
+  }
+
+  .dc-table-container {
+    max-height: calc(100vh - 280px);
+    border-radius: 8px !important;
+  }
+
+  .dc-empty-card {
+    padding: 40px 20px !important;
+  }
+
+  .dc-empty-title {
+    font-size: 16px !important;
+  }
+
+  .dc-empty-subtitle {
+    font-size: 13px !important;
+  }
+
+  .dc-finalize-dialog {
+    min-width: 90vw;
+    max-width: 90vw;
+    padding: 20px;
+  }
+
+  .dc-dialog-title {
+    font-size: 16px;
+  }
+
+  .dc-dialog-message {
+    font-size: 13px;
+  }
+}
+
+/* Mobile portrait */
+@media (max-width: 480px) {
+  .dc-container {
+    padding: 4px;
+    height: 100vh;
+  }
+
+  .dc-header {
+    padding: 8px !important;
+    margin-bottom: 8px;
+    border-radius: 8px !important;
+  }
+
+  .dc-title {
+    font-size: 14px !important;
+  }
+
+  .dc-header-actions {
+    gap: 6px;
+  }
+
+  .dc-select {
+    min-width: 80px;
+  }
+
+  .dc-select .MuiSelect-select {
+    font-size: 11px;
+    padding: 5px 8px;
+  }
+
+  .dc-btn-action,
+  .dc-btn-select-active {
+    font-size: 10px !important;
+    padding: 4px 8px !important;
+    white-space: nowrap;
+  }
+
+  .dc-filter-bar {
+    padding: 6px 8px !important;
+    gap: 4px;
+    margin-bottom: 8px;
+    border-radius: 8px !important;
+  }
+
+  .dc-round-checkboxes {
+    gap: 4px;
+  }
+
+  .dc-round-chip {
+    font-size: 10px;
+    padding: 3px 6px;
+  }
+
+  .dc-filter-input,
+  .dc-filter-select {
+    min-width: 90px;
+    font-size: 11px;
+    padding: 5px 8px;
+  }
+
+  .dc-table-container {
+    border-radius: 6px !important;
+    max-height: calc(100vh - 300px);
+  }
+
+  .dc-th {
+    font-size: 10px !important;
+    padding: 8px 4px !important;
+    letter-spacing: 0.3px;
+  }
+
+  .dc-td {
+    font-size: 10px !important;
+    padding: 6px 4px !important;
+  }
+
+  .dc-td-name {
+    font-size: 11px !important;
+  }
+
+  .dc-status-badge {
+    font-size: 8px;
+    padding: 2px 6px;
+  }
+
+  .dc-eval-badge {
+    font-size: 7px;
+    padding: 2px 5px;
+  }
+
+  .dc-overlay-card {
+    width: 95vw;
+    max-width: 95vw;
+    padding: 16px;
+  }
+
+  .dc-overlay-title {
+    font-size: 16px !important;
+  }
+
+  .dc-overlay-textarea {
+    font-size: 13px;
+    padding: 8px 10px;
+  }
+
+  .dc-overlay-btn-cancel,
+  .dc-overlay-btn-submit {
+    font-size: 12px !important;
+    padding: 5px 12px !important;
+  }
+
+  .dc-finalize-dialog {
+    padding: 16px;
+  }
+
+  .dc-dialog-btn-cancel,
+  .dc-dialog-btn-proceed,
+  .dc-dialog-btn-confirm {
+    font-size: 12px !important;
+    padding: 5px 12px !important;
+  }
+
+  .dc-loading {
+    padding: 40px 16px;
+  }
+
+  .dc-loading-text {
+    font-size: 13px !important;
+  }
+}
+
+/* Extra small devices */
+@media (max-width: 360px) {
+  .dc-header-actions {
+    width: 100%;
+  }
+
+  .dc-select,
+  .dc-btn-action,
+  .dc-btn-select-active {
+    width: 100%;
+  }
+
+  .dc-filter-bar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .dc-round-checkboxes,
+  .dc-filter-input,
+  .dc-filter-select {
+    width: 100%;
+  }
+
+  .dc-th,
+  .dc-td {
+    font-size: 9px !important;
+    padding: 6px 3px !important;
   }
 }

@@ -16,7 +16,7 @@ import com.kanini.springer.entity.enums.Enums.EvaluationStatus;
 @Entity
 @Table(name = "candidates_evaluations",
     uniqueConstraints = {
-        @UniqueConstraint(name = "uk_eval_app_round", columnNames = {"application_id", "round_config_id"})
+        @UniqueConstraint(name = "uk_eval_app_round_reviewer", columnNames = {"application_id", "round_config_id", "reviewed_by"})
     },
     indexes = {
         @Index(name = "idx_eval_application_id", columnList = "application_id"),

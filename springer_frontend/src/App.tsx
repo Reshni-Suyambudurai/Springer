@@ -12,10 +12,12 @@ import CandidateList from './components/TA_Recruiter/Candidates/CandidateList'
 import CandidatesHistory from './components/TA_Recruiter/Candidates/CandidatesHistory'
 import CandidateDetails from './components/TA_Recruiter/Candidates/CandidateDetails'
 import AddCandidates from './components/TA_Recruiter/Candidates/AddCandidates'
+import Form from './components/TA_Recruiter/Candidates/Form'
+import PublicCandidateRegistration from './components/TA_Recruiter/Candidates/PublicCandidateRegistration'
 
 // Settings
 import Settings from './components/TA_Recruiter/Settings/Settings'
-import DocumentsManagement from './components/TA_Recruiter/Settings/DocumentsManagement'
+import EmailTemplateManagement from './components/TA_Recruiter/Settings/EmailTemplateManagement'
 import EligibilityManagement from './components/TA_Recruiter/Settings/EligibilityManagement'
 import RoundTemplateManagement from './components/TA_Recruiter/Settings/RoundTemplateManagement'
 import SkillsManagement from './components/TA_Recruiter/Settings/SkillsManagement'
@@ -50,31 +52,31 @@ import InternCalendarPage from './components/Academy/Intern/InternCalendarPage'
 import InternLeavePage from './components/Academy/Intern/InternLeavePage'
 import InternWarningsPage from './components/Academy/Intern/InternWarningsPage'
 // TA Head
-import DashboardTAH from './components/TA_Head/DashboardTAH'
 import TAHiringCycleList from './components/TA_Head/HiringCycle/HiringCycleList'
 import TAHiringCycleDetails from './components/TA_Head/HiringCycle/HiringCycleDetails'
 import TAHiringDemandDetails from './components/TA_Head/HiringCycle/HiringDemandDetails'
 
 // Hiring Manager
-import DashboardHM from './components/HiringManager/DashboardHM'
 import HiringCycleList from './components/HiringManager/HiringCycle/HiringCycleList'
 import HiringCycleDetails from './components/HiringManager/HiringCycle/HiringCycleDetails'
 import AddHiringDemand from './components/HiringManager/HiringDemand/AddHiringDemand'
 import HiringDemandDetails from './components/HiringManager/HiringDemand/HiringDemandDetails'
 
 // Panel
-import DashboardPM from './components/Panel_Member/DashboardPM'
 import PanelAssignments from './components/Panel_Member/PanelAllocation'
 import PanelScoring from './components/Panel_Member/PanelScoring'
 import AllocationHistory from './components/Panel_Member/AllocationHistory'
 
 // Admin
 import AdminDashboard from './components/Admin/AdminDashboard'
+import AddUsers from './components/Admin/AddUsers'
+import Manage from './components/Admin/Manage'
 
 // Common
 import ProtectedRoute from './auth/ProtectedRoutes'
 import DashboardLayout from './components/Common/DashboardLayout'
 import LoginRedirect from './components/Authentication/LoginRedirect'
+import SendEmail from './components/Common/SendEmail'
 import { tokenstore } from './auth/tokenstore'
 
 // Pages
@@ -101,22 +103,24 @@ function App() {
       <Route path="/login" element={<LoginRedirect />} />
       <Route path="/unauthorized" element={<Unauthorized />} />
       <Route path="/documents/submit" element={<DocumentSubmitPage />} />
+      <Route path="/kanini-reg/:driveName/:formName/:formId" element={<PublicCandidateRegistration />} />
 
       <Route element={<DashboardLayout />}>
 
         {/* TA_HEAD */}
         <Route element={<ProtectedRoute allowedRoles={['TA_HEAD']} />}>
-          <Route path="/ta-head/dashboard" element={<DashboardTAH />} />
+          <Route path="/ta-head/dashboard" element={<DashboardTAR />} />
           <Route path="/ta-head/hiring-cycles" element={<TAHiringCycleList />} />
           <Route path="/ta-head/hiring-cycles/:cycleId" element={<TAHiringCycleDetails />} />
           <Route path="/ta-head/hiring-demands/:demandId" element={<TAHiringDemandDetails />} />
           <Route path="/ta-head/drive-calendar" element={<DriveCalendar />} />
           <Route path="/ta-head/academy" element={<AcademyDashboard />} />
           <Route path="/ta-head/settings" element={<Settings />} />
-          <Route path="/ta-head/settings/documents" element={<DocumentsManagement />} />
+          <Route path="/ta-head/settings/email-templates" element={<EmailTemplateManagement />} />
           <Route path="/ta-head/settings/eligibility" element={<EligibilityManagement />} />
           <Route path="/ta-head/settings/round-templates" element={<RoundTemplateManagement />} />
           <Route path="/ta-head/settings/skills" element={<SkillsManagement />} />
+          <Route path="/ta-head/drive-analytics" element={<DashboardTAR />} />
         </Route>
 
         {/* TA_MANAGER */}
@@ -131,6 +135,7 @@ function App() {
           <Route path="/ta-recruiter/candidates" element={<CandidateList />} />
           <Route path="/ta-recruiter/candidates/history" element={<CandidatesHistory />} />
           <Route path="/ta-recruiter/candidates/add" element={<AddCandidates />} />
+          <Route path="/ta-recruiter/forms" element={<Form />} />
           <Route path="/ta-recruiter/candidates/:id" element={<CandidateDetails />} />
           <Route path="/ta-recruiter/documents" element={<DocumentProcessingDashboard />} />
           <Route path="/ta-recruiter/academy" element={<AcademyDashboard />} />
@@ -149,15 +154,15 @@ function App() {
 
           {/* Settings */}
           <Route path="/ta-recruiter/settings" element={<Settings />} />
-          <Route path="/ta-recruiter/settings/documents" element={<DocumentsManagement />} />
+          <Route path="/ta-recruiter/settings/email-templates" element={<EmailTemplateManagement />} />
           <Route path="/ta-recruiter/settings/eligibility" element={<EligibilityManagement />} />
           <Route path="/ta-recruiter/settings/round-templates" element={<RoundTemplateManagement />} />
           <Route path="/ta-recruiter/settings/skills" element={<SkillsManagement />} />
+          <Route path="/ta-recruiter/send-email" element={<SendEmail />} />
         </Route>
 
         {/* HIRING_MANAGER */}
         <Route element={<ProtectedRoute allowedRoles={['HIRING_MANAGER']} />}>
-          <Route path="/hiring-manager/dashboard" element={<DashboardHM />} />
           <Route path="/hiring-manager/hiring-cycles" element={<HiringCycleList />} />
           <Route path="/hiring-manager/hiring-cycles/:cycleId" element={<HiringCycleDetails />} />
           <Route path="/hiring-manager/hiring-demands/add" element={<AddHiringDemand />} />
@@ -166,16 +171,19 @@ function App() {
 
         {/* MEMBERS */}
         <Route element={<ProtectedRoute allowedRoles={['MEMBERS']} />}>
-          <Route path="/members/dashboard" element={<DashboardPM />} />
+          <Route path="/members/dashboard" element={<DashboardTAR />} />
           <Route path="/members/panel-assignments" element={<PanelAssignments />} />
           <Route path="/members/panel-scoring" element={<PanelScoring />} />
           <Route path="/members/panel-history" element={<AllocationHistory />} />
+          <Route path="/members/drive-analytics" element={<DashboardTAR />} />
           <Route path="/members/academy" element={<AcademyDashboard />} />
         </Route>
 
         {/* ADMIN */}
         <Route element={<ProtectedRoute allowedRoles={['SYSTEM_ADMIN']} />}>
           <Route path="/admin/dashboard" element={<AdminDashboard />} />
+          <Route path="/admin/users" element={<AddUsers />} />
+          <Route path="/admin/manage" element={<Manage />} />
         </Route>
 
         {/* INTERN */}

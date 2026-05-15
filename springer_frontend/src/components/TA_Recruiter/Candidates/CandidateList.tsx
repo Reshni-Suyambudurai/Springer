@@ -2,7 +2,7 @@
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { candidateApi } from "../../../services/drive.api";
 import { hiringCycleApi } from "../../../services/hiring.api";
-import type { HiringCycleSummaryResponse } from "../../../types/TA_Recruiter/Hiring/hiringCycle.types";
+import type { CycleWithDrivesResponse, DriveInfo } from "../../../types/TA_Recruiter/Hiring/hiringCycle.types";
 import { showToast } from "../../../utils/toast";
 import { tokenstore } from "../../../auth/tokenstore";
 import { useCandidateFilters } from "../../../hooks/useCandidateFilters";
@@ -64,8 +64,10 @@ const TYPE_CLASS_MAP: Record<string, string> = {
 const CandidateList: React.FC = () => {
   const navigate = useNavigate();
   const [, setSearchParams] = useSearchParams();
-  const [cycles, setCycles] = useState<HiringCycleSummaryResponse[]>([]);
+  const [cycles, setCycles] = useState<CycleWithDrivesResponse[]>([]);
   const [selectedCycle, setSelectedCycle] = useState<number | null>(null);
+  const [selectedDrive, setSelectedDrive] = useState<number | "">("");
+  const [drives, setDrives] = useState<DriveInfo[]>([]);
   const [bulkStatusUpdate, setBulkStatusUpdate] = useState<string>("");
   const [updatingBulkStatus, setUpdatingBulkStatus] = useState<boolean>(false);
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(() => tokenstore.getSidebarOpen());
@@ -183,14 +185,14 @@ const CandidateList: React.FC = () => {
 
   const fetchCycles = async () => {
     try {
-      const response = await hiringCycleApi.getAllCycleSummaries();
+      const response = await hiringCycleApi.getAllCyclesWithDrives();
       if (response.data) {
-        // Sort by year descending (largest year first)
-        const sortedCycles = response.data.sort((a, b) => b.cycleYear - a.cycleYear);
-        setCycles(sortedCycles);
-        // Auto-select first cycle
-        if (sortedCycles.length > 0) {
-          setSelectedCycle(sortedCycles[0].cycleId);
+        const cyclesWithDrives = response.data;
+
+        setCycles(cyclesWithDrives);
+        if (cyclesWithDrives.length > 0) {
+          setSelectedCycle(cyclesWithDrives[0].cycleId);
+          setDrives(cyclesWithDrives[0].drives);
         }
       }
     } catch (error) {
@@ -206,13 +208,17 @@ const CandidateList: React.FC = () => {
     }
   }, [selectedCycle, fetchFilterOptions]);
 
-  // Fetch candidates when cycle OR filters change (always resets to page 0)
+  // Fetch candidates when cycle, drive OR filters change (always resets to page 0)
   useEffect(() => {
     if (selectedCycle !== null) {
-      fetchCandidates(selectedCycle, filters, false); // false = reset pagination
+      const filtersWithDrive = {
+        ...filters,
+        driveId: selectedDrive || undefined,
+      };
+      fetchCandidates(selectedCycle, filtersWithDrive, false); // false = reset pagination
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedCycle, filters.candidateName, filters.instituteName, filters.state, 
+  }, [selectedCycle, selectedDrive, filters.candidateName, filters.instituteName, filters.state, 
       filters.cities, filters.degrees, filters.departments, filters.eligibility,
       filters.applicationTypes, filters.applicationStages, filters.skills,
       filters.sortBy, filters.sortDirection]);
@@ -221,7 +227,8 @@ const CandidateList: React.FC = () => {
 
   // Infinite scroll handler
   const handleScroll = (event: React.UIEvent<HTMLDivElement>) => {
-    handleScrollHook(event, selectedCycle, filters);
+    const filtersWithDrive = { ...filters, driveId: selectedDrive || undefined };
+    handleScrollHook(event, selectedCycle, filtersWithDrive);
   };
 
   const handleCandidateView = (candidateId: number) => {
@@ -230,11 +237,15 @@ const CandidateList: React.FC = () => {
 
   const handleAddCandidate = () => {
     const selectedCycleData = cycles.find(c => c.cycleId === selectedCycle);
+    const selectedDriveData = drives.find(d => d.driveId === selectedDrive);
     navigate("/ta-recruiter/candidates/add", { 
       state: { 
         cycleId: selectedCycle,
         cycleYear: selectedCycleData?.cycleYear,
-        cycleName: selectedCycleData?.cycleName
+        cycleName: selectedCycleData?.cycleName,
+        driveId: selectedDrive || undefined,
+        driveName: selectedDriveData?.driveName || undefined,
+        instituteName: selectedDriveData?.instituteName || undefined,
       } 
     });
   };
@@ -336,7 +347,7 @@ const CandidateList: React.FC = () => {
             setSelectMode(false);
           }
           if (selectedCycle) {
-            await fetchCandidates(selectedCycle, filters, false);
+            await fetchCandidates(selectedCycle, { ...filters, driveId: selectedDrive || undefined }, false);
           }
         }
       } else {
@@ -396,7 +407,7 @@ const CandidateList: React.FC = () => {
             setSelectMode(false);
           }
           if (selectedCycle) {
-            await fetchCandidates(selectedCycle, filters, false);
+            await fetchCandidates(selectedCycle, { ...filters, driveId: selectedDrive || undefined }, false);
           }
         }
       }
@@ -418,7 +429,7 @@ const CandidateList: React.FC = () => {
     
     // Refresh candidates with current filters
     if (selectedCycle) {
-      await fetchCandidates(selectedCycle, filters, false);
+      await fetchCandidates(selectedCycle, { ...filters, driveId: selectedDrive || undefined }, false);
     }
   };
 
@@ -468,7 +479,13 @@ const CandidateList: React.FC = () => {
                 <Select
                   value={selectedCycle || ""}
                   label="Hiring Cycle"
-                  onChange={(e) => setSelectedCycle(Number(e.target.value))}
+                  onChange={(e) => {
+                    const cycleId = Number(e.target.value);
+                    setSelectedCycle(cycleId);
+                    const cycle = cycles.find((c) => c.cycleId === cycleId);
+                    setDrives(cycle?.drives || []);
+                    setSelectedDrive("");
+                  }}
                 >
                   {cycles.map((cycle) => (
                     <MenuItem 
@@ -479,6 +496,34 @@ const CandidateList: React.FC = () => {
                       {cycle.cycleName} - {cycle.cycleYear}
                     </MenuItem>
                   ))}
+                </Select>
+              </FormControl>
+
+              <FormControl size="small" className="drive-dropdown">
+                <InputLabel>Drive</InputLabel>
+                <Select
+                  value={selectedDrive}
+                  label="Drive"
+                  onChange={(e) => setSelectedDrive(e.target.value as number | "")}
+                >
+                  <MenuItem value="">All Drives</MenuItem>
+                  {drives.map((drive) => {
+                    const isPast = drive.startDate
+                      ? new Date(drive.startDate) < new Date(new Date().toDateString())
+                      : false;
+                    return (
+                      <MenuItem
+                        key={drive.driveId}
+                        value={drive.driveId}
+                        className={isPast ? "drive-menu-item-past" : ""}
+                      >
+                        <Box className="drive-option">
+                          <span className={`drive-mode-dot ${drive.mode === "ON_CAMPUS" ? "oncampus" : "offcampus"}`} />
+                          <span className={isPast ? "drive-name-past" : ""}>{drive.driveName}</span>
+                        </Box>
+                      </MenuItem>
+                    );
+                  })}
                 </Select>
               </FormControl>
 
@@ -495,12 +540,8 @@ const CandidateList: React.FC = () => {
                       <MenuItem value="">Select Status</MenuItem>                 
                       <MenuItem value="SHORTLISTED">SHORTLISTED</MenuItem>   
                                   
-                      <MenuItem value="SELECTED">SELECTED</MenuItem>
-                      <MenuItem value="REJECTED">REJECTED</MenuItem>
-                      <MenuItem value="OFFERED">OFFERED</MenuItem>
-                      <MenuItem value="JOINED">JOINED</MenuItem>
-                      <MenuItem value="DROPPED">DROPPED</MenuItem>
-                      <MenuItem value="CLOSED" sx={{ color: 'var(--color-error-delete)' }}>MOVE TO HISTORY</MenuItem>
+                     
+                      <MenuItem value="CLOSED" className="cl-move-to-history">MOVE TO HISTORY</MenuItem>
                     </Select>
                   </FormControl>
 
@@ -549,12 +590,14 @@ const CandidateList: React.FC = () => {
 
                   <ScheduleDrive
                     cycleId={selectedCycle}
+                    driveId={selectedDrive || null}
                     candidateIds={selectMode ? Array.from(selectedCandidates) : []}
                     selectMode={selectMode}
                     selectedCount={selectedCandidates.size}
                     totalElements={totalElements}
                     filterRequest={!selectMode && selectedCycle ? {
                       cycleId: selectedCycle,
+                      driveId: selectedDrive || undefined,
                       lifecycleStatus: 'ACTIVE',
                       candidateName: filters.candidateName || undefined,
                       instituteName: filters.instituteName || undefined,
@@ -579,7 +622,7 @@ const CandidateList: React.FC = () => {
                     startIcon={<AddIcon />}
                     onClick={handleAddCandidate}
                     className="t-btn-primary"
-                    disabled={selectedCycle ? cycles.find(c => c.cycleId === selectedCycle)?.status === "CLOSED" : false}
+                    disabled={!selectedDrive || (selectedCycle ? cycles.find(c => c.cycleId === selectedCycle)?.status === "CLOSED" : false)}
                   >
                     Add Candidate
                   </Button>

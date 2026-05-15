@@ -86,7 +86,7 @@ public class TrainingProgramController {
     @PreAuthorize("hasAnyRole('TRAINING_COORDINATOR','TA_HEAD','TA_MANAGER')")
     @PostMapping("/joining-tracker/candidates")
     public ResponseEntity<ApiResponse<List<JoiningTrackerResponse>>> getJoiningTrackerCandidates(
-            @Valid @RequestBody JoiningTrackerRequest request) {
+            @RequestBody JoiningTrackerRequest request) {
         List<JoiningTrackerResponse> responses = programService.getCandidatesByCycleAndStages(request);
         return ResponseEntity.ok(ApiResponse.success("Candidates retrieved successfully", responses));
     }
@@ -94,7 +94,7 @@ public class TrainingProgramController {
     @PreAuthorize("hasAnyRole('TRAINING_COORDINATOR','TA_HEAD','TA_MANAGER')")
     @PostMapping("/batch-allocation/candidates")
     public ResponseEntity<ApiResponse<List<BatchCandidateResponse>>> getBatchAllocationCandidates(
-            @Valid @RequestBody JoiningTrackerRequest request) {
+            @RequestBody JoiningTrackerRequest request) {
         List<BatchCandidateResponse> responses = programService.getBatchCandidatesByCycleAndStages(request);
         return ResponseEntity.ok(ApiResponse.success("Candidates retrieved successfully", responses));
     }

@@ -33,4 +33,20 @@ public interface DriveRepository extends JpaRepository<Drive, Long> {
            "WHERE d.cycle.cycleId = :cycleId " +
            "GROUP BY d.location")
     List<Object[]> countByLocationByCycle(@Param("cycleId") Long cycleId);
+
+    /**
+     * Count drives grouped by driveMode for a cycle (1 query).
+     * Returns rows of [DriveMode, count].
+     */
+    @Query("SELECT d.driveMode, COUNT(d) FROM Drive d " +
+           "WHERE d.cycle.cycleId = :cycleId " +
+           "GROUP BY d.driveMode")
+    List<Object[]> countByDriveModeByCycle(@Param("cycleId") Long cycleId);
+
+    /**
+     * Fetch all drives for a cycle with institute eagerly loaded (1 query).
+     */
+    @Query("SELECT d FROM Drive d LEFT JOIN FETCH d.institute LEFT JOIN FETCH d.cycle " +
+           "WHERE d.cycle.cycleId = :cycleId")
+    List<Drive> findByCycleIdWithInstitute(@Param("cycleId") Long cycleId);
 }

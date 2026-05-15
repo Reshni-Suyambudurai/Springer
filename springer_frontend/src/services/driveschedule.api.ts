@@ -14,10 +14,14 @@ import type {
   ApplicationRequest,
   ApplicationResponse,
   ApplicationStatusUpdateRequest,
+  BatchTimeUpdateRequest,
   BulkApplicationResponse,
   BulkApplicationStatusUpdateRequest,
   BulkApplicationStatusUpdateResponse,
   BatchCandidatesMap,
+  CandidateHistoryResponse,
+  FinalizeApplicationsRequest,
+  FinalizeApplicationsResponse,
 } from "../types/TA_Recruiter/DriveSchedule/application.types";
 import type {
   DriveAssignmentRequest,
@@ -26,6 +30,7 @@ import type {
   BulkDriveAssignmentRequest,
   BulkDriveAssignmentResponse,
   BulkDeleteAssignmentRequest,
+  PanelAllocationStatusResponse,
 } from "../types/TA_Recruiter/DriveSchedule/driveAssignment.types";
 import type {
   CandidateEvaluationRequest,
@@ -36,6 +41,10 @@ import type {
   BulkCandidateEvaluationResponse,
   RoundEvaluationRequest,
   RoundEvaluationResponse,
+  BulkEvaluationStatusUpdateRequest,
+  BulkRoundSkipRequest,
+  CheckExistingEvaluationsRequest,
+  CheckExistingEvaluationsResponse,
 } from "../types/TA_Recruiter/DriveSchedule/candidateEvaluation.types";
 
 /**
@@ -272,6 +281,43 @@ export const applicationApi = {
   },
 
   /**
+   * Get distinct batch times for a drive
+   * Returns all distinct non-null batch times for the given drive, sorted ascending.
+   * GET /api/applications/drive/{driveId}/batch-times
+   * @param driveId - The drive schedule ID
+   * @returns List of batch time strings (ISO-8601 format)
+   */
+  async getDistinctBatchTimes(driveId: number) {
+    try {
+      const response = await http.get<ApiResponse<string[]>>(
+        `/applications/drive/${driveId}/batch-times`
+      );
+      return response.data;
+    } catch (error) {
+      throw handleAxiosError(error);
+    }
+  },
+
+  /**
+   * Update batch time of an application
+   * Updates batchTime for a specific application. Validates driveId, applicationId and oldBatchTime match.
+   * PATCH /api/applications/batch-time
+   * @param request - BatchTimeUpdateRequest with driveId, applicationId, oldBatchTime, newBatchTime
+   * @returns Updated application
+   */
+  async updateBatchTime(request: BatchTimeUpdateRequest) {
+    try {
+      const response = await http.patch<ApiResponse<ApplicationResponse>>(
+        "/applications/batch-time-update",
+        request
+      );
+      return response.data;
+    } catch (error) {
+      throw handleAxiosError(error);
+    }
+  },
+
+  /**
    * Get batch-wise application IDs for a drive
    * Returns a map of batchTime â†’ list of application IDs for that batch.
    * Applications with no batchTime are grouped under 'UNSCHEDULED'.
@@ -284,6 +330,41 @@ export const applicationApi = {
         `/applications/drive/${driveId}/batches`
       );
       return response;
+    } catch (error) {
+      throw handleAxiosError(error);
+    }
+  },
+
+  /**
+   * Get candidate history in a drive
+   * GET /api/applications/drive/{driveId}/candidate/{candidateId}/history
+   */
+  async getCandidateHistory(driveId: number, candidateId: number): Promise<ApiResponse<CandidateHistoryResponse>> {
+    try {
+      const response = await http.get(`/applications/drive/${driveId}/candidate/${candidateId}/history`);
+      return response.data;
+    } catch (error) {
+      throw handleAxiosError(error);
+    }
+  },
+
+  async overrideDriveStatus(data: { applicationId: number; status: string; reason: string; userId: number }): Promise<ApiResponse<ApplicationResponse>> {
+    try {
+      const response = await http.patch<ApiResponse<ApplicationResponse>>("/applications/override-status", data);
+      return response.data;
+    } catch (error) {
+      throw handleAxiosError(error);
+    }
+  },
+
+  /**
+   * Finalize applications - Apply application status to candidate stages
+   * POST /api/applications/finalize
+   */
+  async finalizeApplications(data: FinalizeApplicationsRequest): Promise<ApiResponse<FinalizeApplicationsResponse>> {
+    try {
+      const response = await http.post<ApiResponse<FinalizeApplicationsResponse>>("/applications/finalize", data);
+      return response.data;
     } catch (error) {
       throw handleAxiosError(error);
     }
@@ -398,6 +479,47 @@ export const driveAssignmentApi = {
     } catch (error) {
       throw handleAxiosError(error);
     }
+  },
+
+  /**
+   * Get assignments by user ID and drive ID — DTO projection
+   * GET /api/drive-assignments/user/{userId}/drive/{driveId}
+   */
+  async getAssignmentsByUserId(userId: number, driveId: number): Promise<ApiResponse<DriveAssignmentResponse[]>> {
+    try {
+      const response = await http.get(`/drive-assignments/user/${userId}/drive/${driveId}`);
+      return response.data;
+    } catch (error) {
+      throw handleAxiosError(error);
+    }
+  },
+
+  /**
+   * Get assignments by user ID and status — DTO projection
+   * GET /api/drive-assignments/user/{userId}/status/{status}
+   */
+  async getAssignmentsByUserIdAndStatus(userId: number, status: string): Promise<ApiResponse<DriveAssignmentResponse[]>> {
+    try {
+      const response = await http.get(`/drive-assignments/user/${userId}/status/${status}`);
+      return response.data;
+    } catch (error) {
+      throw handleAxiosError(error);
+    }
+  },
+
+  /**
+   * Get panel allocation status per candidate
+   * GET /api/drive-assignments/allocation-status?driveId=X&roundNo=Y&applicationIds=1,2,3
+   */
+  async getAllocationStatus(driveId: number, roundNo: number, applicationIds: number[]): Promise<ApiResponse<PanelAllocationStatusResponse[]>> {
+    try {
+      const response = await http.get('/drive-assignments/allocation-status', {
+        params: { driveId, roundNo, applicationIds: applicationIds.join(',') }
+      });
+      return response.data;
+    } catch (error) {
+      throw handleAxiosError(error);
+    }
   }
 };
 
@@ -460,6 +582,19 @@ export const candidateEvaluationApi = {
   },
 
   /**
+   * Get evaluation by application ID, round config ID, and user ID
+   * GET /api/candidate-evaluations/application/{applicationId}/round/{roundConfigId}/user/{userId}
+   */
+  async getEvaluationByApplicationAndRound(applicationId: number, roundConfigId: number, userId: number): Promise<ApiResponse<CandidateEvaluationResponse>> {
+    try {
+      const response = await http.get(`/candidate-evaluations/application/${applicationId}/round/${roundConfigId}/user/${userId}`);
+      return response.data;
+    } catch (error) {
+      throw handleAxiosError(error);
+    }
+  },
+
+  /**
    * Update evaluation status
    * PATCH /api/candidate-evaluations/{scoreId}/status
    */
@@ -481,6 +616,50 @@ export const candidateEvaluationApi = {
   async getEvaluationsByRoundAndApplications(data: RoundEvaluationRequest): Promise<ApiResponse<RoundEvaluationResponse>> {
     try {
       const response = await http.post('/candidate-evaluations/by-round', data);
+      return response.data;
+    } catch (error) {
+      throw handleAxiosError(error);
+    }
+  },
+
+  /**
+   * Bulk update evaluation status for multiple applications
+   * PATCH /api/candidate-evaluations/bulk-status
+   */
+  async bulkUpdateEvaluationStatus(data: BulkEvaluationStatusUpdateRequest): Promise<ApiResponse<void>> {
+    try {
+      const response = await http.patch('/candidate-evaluations/bulk-status', data);
+      return response.data;
+    } catch (error) {
+      throw handleAxiosError(error);
+    }
+  },
+
+  /**
+   * Bulk skip/hold/absent a round for multiple applications
+   * SKIP/HOLD: creates CandidateEvaluation with status only.
+   * ABSENT: sets Application status to DROPPED.
+   * PATCH /api/candidate-evaluations/bulk-round-skip
+   */
+  async bulkRoundSkip(data: BulkRoundSkipRequest): Promise<ApiResponse<void>> {
+    try {
+      const response = await http.patch('/candidate-evaluations/bulk-round-skip', data);
+      return response.data;
+    } catch (error) {
+      throw handleAxiosError(error);
+    }
+  },
+
+  /**
+   * Check for existing candidate evaluations
+   * Validates that all applications belong to the specified drive,
+   * then checks if evaluations already exist for the given roundConfigId.
+   * Returns a list of registration codes with existing evaluations and reason.
+   * POST /api/candidate-evaluations/check-existing
+   */
+  async checkExistingEvaluations(data: CheckExistingEvaluationsRequest): Promise<ApiResponse<CheckExistingEvaluationsResponse>> {
+    try {
+      const response = await http.post('/candidate-evaluations/check-existing', data);
       return response.data;
     } catch (error) {
       throw handleAxiosError(error);

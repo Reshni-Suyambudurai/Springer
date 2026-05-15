@@ -6,6 +6,10 @@ import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 
+/**
+ * Lightweight response DTO for batch allocation candidate selection dialog.
+ * Contains only the fields displayed when selecting candidates for batch allocation.
+ */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor

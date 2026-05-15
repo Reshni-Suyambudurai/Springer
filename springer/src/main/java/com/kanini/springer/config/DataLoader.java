@@ -12,11 +12,12 @@ import com.kanini.springer.repository.Hiring.RoleRepository;
 import com.kanini.springer.repository.Hiring.SkillRepository;
 import com.kanini.springer.repository.Hiring.UserRepository;
 import com.kanini.springer.repository.Drive.RoundTemplateRepository;
-import com.kanini.springer.repository.EmailTemplateRepository;
+import com.kanini.springer.repository.Common.EmailTemplateRepository;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -27,10 +28,22 @@ import java.util.List;
 
 /**
  * Data loader to seed initial/demo data into the database
+ * 
+ * IMPORTANT: This DataLoader is DISABLED in production environments.
+ * In production, use Flyway migrations (V2__Seed_Data.sql) for data seeding.
+ * 
+ * Enable/Disable via property: app.data-loader.enabled
+ * - Set to 'false' in production (application-prod.properties)
+ * - Set to 'true' in dev/test (application-dev.properties, application-test.properties)
  */
 @Configuration
 @RequiredArgsConstructor
 @Slf4j
+@ConditionalOnProperty(
+    name = "app.data-loader.enabled",
+    havingValue = "true",
+    matchIfMissing = false  // Defaults to disabled if property not set
+)
 public class DataLoader {
 
     private final RoleRepository roleRepository;
@@ -89,7 +102,21 @@ public class DataLoader {
             // 7. Seed Skills
             seedSkills();
 
+            // 8. Seed Round Templates
+            seedRoundTemplates();
+
             log.info("Data seeding completed successfully!");
+        };
+    }
+
+    @Bean
+    @Transactional
+    public CommandLineRunner loadRoundTemplates() {
+        return args -> {
+            // Seed round templates independently if they don't exist
+            if (roundTemplateRepository.count() == 0) {
+                seedRoundTemplates();
+            }
         };
     }
 
@@ -140,7 +167,7 @@ public class DataLoader {
             createUser("Priya Rajagopalan", "priya.r@kanini.com", "password@123", "Product Engineering", "Coimbatore", membersRole),
             createUser("Mozhiarasan", "mozhiarasan@kanini.com", "password@123", "Product Engineering", "Coimbatore", membersRole),
             createUser("Praveen Kumar", "praveen@kanini.com", "password123", "Product Engineering", "Coimbatore", membersRole),
-            createUser("Reshni", "reshni@kanini.com", "password123", "Data Analytics & AI", "Coimbatore", adminRole),
+            createUser("Admin", "admin@kanini.com", "admin@123", "Data Analytics & AI", "Coimbatore", adminRole),
             createUser("Lavanya", "lavanya@kanini.com", "password123", "Data Analytics & AI", "Coimbatore", trainingCoordinatorRole),
             createUser("John", "john@kanini.com", "password123", "Training", "Coimbatore", internRole),
             createUser("Joe", "joe@kanini.com", "password123", "Training", "Coimbatore", internRole)
@@ -189,6 +216,7 @@ public class DataLoader {
         log.info("Seeding institutes...");
 
         Institute[] institutes = {
+            createInstitute("OTHERS", "TIER_1", "Tamil Nadu", "Chennai"),
             createInstitute("Anna University", "TIER_1", "Tamil Nadu", "Chennai"),
             createInstitute("SSN College of Engineering", "TIER_1", "Tamil Nadu", "Chennai"),
             createInstitute("PSG College of Technology", "TIER_2", "Tamil Nadu", "Coimbatore"),
@@ -196,8 +224,7 @@ public class DataLoader {
             createInstitute("VIT University", "TIER_1", "Tamil Nadu", "Vellore"),
             createInstitute("SRM Institute of Science and Technology", "TIER_2", "Tamil Nadu", "Chennai"),
             createInstitute("Karunya Institute of Technology", "TIER_2", "Tamil Nadu", "Coimbatore"),
-            createInstitute("CEG - College of Engineering Guindy", "TIER_1", "Tamil Nadu", "Chennai"),
-            createInstitute("OTHERS College", "TIER_1", "Tamil Nadu", "Chennai")
+            createInstitute("CEG - College of Engineering Guindy", "TIER_1", "Tamil Nadu", "Chennai")
         };
 
         instituteRepository.saveAll(java.util.Arrays.asList(institutes));
@@ -554,6 +581,198 @@ public class DataLoader {
             "</body></html>"
         );
         saveOrUpdateTemplate(rejectionTemplate);
+
+        // ── Kanini On-Campus Drive ─────────────────────────────────────────────
+        EmailTemplate onCampusTemplate = new EmailTemplate();
+        onCampusTemplate.setTemplateName("KANINI ONCAMPUS DRIVE");
+        onCampusTemplate.setSubject("Request to Conduct Kanini On-Campus Recruitment Drive");
+        onCampusTemplate.setBody(
+            "<p>Dear Sir/Madam,</p>" +
+            "<p> Greetings from Kanini Software Solutions.</p>" +
+            "<p>We hope you are doing well.</p>" +
+            "<p>We are pleased to express our interest in conducting an <strong>On-Campus Recruitment Drive</strong> at your esteemed institution for the current graduating batch.</p>" +
+            "<p>At Kanini Software Solutions, we continuously seek talented and enthusiastic graduates who can contribute to our growing organization. We believe that your institution has a strong pool of capable students, and we would be delighted to engage with them through this recruitment initiative.</p>" +
+            "<p><br></p>" +
+            "<p>Please find the proposed drive details below:</p>" +
+            "<p>Drive Name: {{DRIVE_NAME}}</p>" +
+            "<p>Proposed Drive Date: {{DRIVE_DATE}}</p>" +
+            "<p>Venue/Location: {{LOCATION}}</p>" +
+            "<p>Eligible Departments: {{ELIGIBLE_DEPARTMENTS}}</p>" +
+            "<p><br></p>" +
+            "<p>We kindly request your support in facilitating the recruitment process and coordinating the necessary arrangements for the drive.</p>" +
+            "<p>Additionally, we request you to share the list of eligible students in the prescribed format for further processing.</p>" +
+            "<p>Please let us know your confirmation and any additional requirements from our end to proceed with the coordination activities.</p>" +
+            "<p>For any queries or further discussion, feel free to contact us at <a href=\"mailto:hrops.india@kanini.com\" rel=\"noopener noreferrer\" target=\"_blank\">hrops.india@kanini.com</a>.</p>" +
+            "<p>We look forward to collaborating with your institution.</p>" +
+            "<p style=\"text-align: right;\"><br></p>" +
+            "<p style=\"text-align: right;\">Warm regards,</p>" +
+            "<p style=\"text-align: right;\">Kanini Talent Acquisition Team</p>" +
+            "<p style=\"text-align: right;\">Kanini Software Solutions</p>"
+        );
+        saveOrUpdateTemplate(onCampusTemplate);
+
+        // ── Kanini Off-Campus Drive ────────────────────────────────────────────
+        EmailTemplate offCampusTemplate = new EmailTemplate();
+        offCampusTemplate.setTemplateName("KANINI OFFCAMPUS DRIVE");
+        offCampusTemplate.setSubject("Invitation to Participate in Kanini Off-Campus Recruitment Drive");
+        offCampusTemplate.setBody(
+            "<p>Dear Sir/Madam,</p>" +
+            "<p><br></p>" +
+            "<p><strong>Greetings from Kanini Software Solutions.</strong></p>" +
+            "<p>We are pleased to invite students from your esteemed institution to participate in our upcoming Off-Campus Recruitment Drive.</p>" +
+            "<p>The drive is being organized to identify talented and aspiring graduates for opportunities at Kanini Software Solutions. We would be grateful if your institution could encourage eligible students to participate in the recruitment process.</p>" +
+            "<p><br></p>" +
+            "<p>Please find the drive details below:</p>" +
+            "<p><br></p>" +
+            "<p>Drive Date:</p>" +
+            "<p>Drive Location:</p>" +
+            "<p>Registration Deadline:</p>" +
+            "<p><br></p>" +
+            "<p>Kindly share the attached student details template with interested candidates and request them to complete the required information accurately.</p>" +
+            "<p><br></p>" +
+            "<p>Eligible students are advised to carry the necessary documents during the recruitment process, including:</p>" +
+            "<p><br></p>" +
+            "<p>\u2022 Updated Resume</p>" +
+            "<p>\u2022 College ID Card</p>" +
+            "<p>\u2022 Personal laptop</p>" +
+            "<p><br></p>" +
+            "<p>For any queries or clarification, please contact us at <a href=\"mailto:hrops.india@kanini.com\">hrops.india@kanini.com</a>.</p>" +
+            "<p><br></p>" +
+            "<p>We look forward to your institution's participation and continued collaboration.</p>" +
+            "<p style=\"text-align: right;\"><br></p>" +
+            "<p style=\"text-align: right;\">Warm regards,</p>" +
+            "<p style=\"text-align: right;\"><em>Kanini Talent Acquisition Team</em></p>" +
+            "<p style=\"text-align: right;\"><em>Kanini Software Solutions</em></p>" +
+            "<p style=\"text-align: right;\"><br></p>" +
+            "<p style=\"text-align: right;\"><img src=\"/siganture.png\"></p>"
+        );
+        saveOrUpdateTemplate(offCampusTemplate);
+
+        // ── Kanini Shortlisted Invite ──────────────────────────────────────────
+        EmailTemplate shortlistedTemplate = new EmailTemplate();
+        shortlistedTemplate.setTemplateName("KANINI SHORTLISTED INVITE");
+        shortlistedTemplate.setSubject("Shortlisted for Drive \u2013 Kanini Software Solutions");
+        shortlistedTemplate.setBody(
+            "<p>Dear {{CANDIDATE_NAME}},</p>" +
+            "<p>Greetings from Kanini Software Solutions.</p>" +
+            "<p>We are pleased to inform you that you have been successfully shortlisted to participate in the <strong>{{DRIVE_NAME}}</strong> recruitment drive.</p>" +
+            "<p><br></p>" +
+            "<p>Please find your drive details below:</p>" +
+            "<p><em>Registration Code: </em><strong><em>{{REGISTRATION_CODE}}</em></strong></p>" +
+            "<p><em>Drive Date: </em><strong><em>{{START_DATE}}</em></strong></p>" +
+            "<p><em>Reporting Batch Time: </em><strong><em>{{BATCH_TIME}}</em></strong></p>" +
+            "<p><em>Drive Location: </em><strong><em>{{LOCATION}}</em></strong></p>" +
+            "<p><br></p>" +
+            "<p>You are requested to report to the venue on time and carry the following documents for verification:</p>" +
+            "<p><br></p>" +
+            "<p>\u2022 Updated Resume</p>" +
+            "<p>\u2022 College ID Card</p>" +
+            "<p>\u2022 Personal Laptop for first round</p>" +
+            "<p><br></p>" +
+            "<p>Kindly ensure that you adhere to the reporting time and maintain professional attire throughout the recruitment process.</p>" +
+            "<p>Please keep your Registration Code handy for future communication and verification purposes.</p>" +
+            "<p><br></p>" +
+            "<p>For any queries or assistance, feel free to contact us at <a href=\"mailto:hrops.india@kanini.com\">hrops.india@kanini.com</a>.</p>" +
+            "<p>We wish you all the very best and look forward to meeting you during the drive.</p>" +
+            "<p><br></p>" +
+            "<p style=\"text-align: right;\">Warm regards,</p>" +
+            "<p style=\"text-align: right;\">Kanini Talent Acquisition Team</p>" +
+            "<p style=\"text-align: right;\">Kanini Software Solutions</p>" +
+            "<p style=\"text-align: right;\"><img src=\"/siganture.png\"></p>"
+        );
+        saveOrUpdateTemplate(shortlistedTemplate);
+
+        // ── Round Selected ─────────────────────────────────────────────────────
+        EmailTemplate roundSelectedTemplate = new EmailTemplate();
+        roundSelectedTemplate.setTemplateName("ROUND SELECTED");
+        roundSelectedTemplate.setSubject("KANINI SELECTION UPDATE");
+        roundSelectedTemplate.setBody(
+            "<p>Dear {{NAME}},</p>" +
+            "<p><br></p>" +
+            "<p>Greetings from Kanini Software Solutions.</p>" +
+            "<p><br></p>" +
+            "<p>We are pleased to inform you that you have been selected in Round {{ROUND_NO}} of the recruitment process.</p>" +
+            "<p><br></p>" +
+            "<p>Further details will be shared shortly. Kindly stay prepared and keep checking your email for updates.</p>" +
+            "<p><br></p>" +
+            "<p>We congratulate you on your progress and wish you the very best.</p>" +
+            "<p><br></p>" +
+            "<p>Warm regards,</p>" +
+            "<p>Kanini Talent Acquisition Team</p>" +
+            "<p>Kanini Software Solutions</p>" +
+            "<p><img src=\"/siganture.png\"></p>"
+        );
+        saveOrUpdateTemplate(roundSelectedTemplate);
+
+        // ── Round Hold ─────────────────────────────────────────────────────────
+        EmailTemplate roundHoldTemplate = new EmailTemplate();
+        roundHoldTemplate.setTemplateName("ROUND HOLD");
+        roundHoldTemplate.setSubject("KANINI DRIVE UPDATE");
+        roundHoldTemplate.setBody(
+            "<p>Dear {{NAME}},</p>" +
+            "<p><br></p>" +
+            "<p>Greetings from Kanini Software Solutions.</p>" +
+            "<p><br></p>" +
+            "<p>Thank you for participating in Round {{ROUND_NO}} of our recruitment process.</p>" +
+            "<p><br></p>" +
+            "<p>We would like to inform you that your profile is currently on hold for further evaluation. Our team is reviewing the next steps, and any updates regarding your candidature will be communicated to you shortly.</p>" +
+            "<p><br></p>" +
+            "<p>We appreciate your patience and continued interest in Kanini Software Solutions.</p>" +
+            "<p><br></p>" +
+            "<p>Warm regards,</p>" +
+            "<p>Kanini Talent Acquisition Team</p>" +
+            "<p>Kanini Software Solutions</p>" +
+            "<p><img src=\"/siganture.png\"></p>"
+        );
+        saveOrUpdateTemplate(roundHoldTemplate);
+
+        // ── Round Rejected ─────────────────────────────────────────────────────
+        EmailTemplate roundRejectedTemplate = new EmailTemplate();
+        roundRejectedTemplate.setTemplateName("ROUND REJECTED");
+        roundRejectedTemplate.setSubject("KANINI DRIVE UPDATE");
+        roundRejectedTemplate.setBody(
+            "<p>Dear {{NAME}},</p>" +
+            "<p><br></p>" +
+            "<p>Greetings from Kanini Software Solutions.</p>" +
+            "<p><br></p>" +
+            "<p>Thank you for participating in Round {{ROUND_NO}} of our recruitment process.</p>" +
+            "<p><br></p>" +
+            "<p>After careful evaluation, we regret to inform you that you have not been shortlisted for the next round.</p>" +
+            "<p><br></p>" +
+            "<p>We appreciate your interest in Kanini Software Solutions and thank you for the time and effort invested in the process.</p>" +
+            "<p><br></p>" +
+            "<p>We wish you all the very best for your future opportunities.</p>" +
+            "<p><br></p>" +
+            "<p>Warm regards,</p>" +
+            "<p>Kanini Talent Acquisition Team</p>" +
+            "<p>Kanini Software Solutions</p>" +
+            "<p><img src=\"/siganture.png\"></p>"
+        );
+        saveOrUpdateTemplate(roundRejectedTemplate);
+
+        // ── Round Dropped ──────────────────────────────────────────────────────
+        EmailTemplate roundDroppedTemplate = new EmailTemplate();
+        roundDroppedTemplate.setTemplateName("ROUND DROPPED");
+        roundDroppedTemplate.setSubject("KANINI DRIVE UPDATE");
+        roundDroppedTemplate.setBody(
+            "<p>Dear {{NAME}},</p>" +
+            "<p><br></p>" +
+            "<p>Greetings from Kanini Software Solutions.</p>" +
+            "<p><br></p>" +
+            "<p>This is to inform you that your status for Round {{ROUND_NO}} of the recruitment process has been marked as {{STATUS}}.</p>" +
+            "<p><br></p>" +
+            "<p>As a result, your candidature will not be considered for further rounds of the current recruitment process.</p>" +
+            "<p><br></p>" +
+            "<p>We appreciate your interest in Kanini Software Solutions and thank you for your participation.</p>" +
+            "<p><br></p>" +
+            "<p>We wish you all the very best for your future opportunities.</p>" +
+            "<p><br></p>" +
+            "<p>Warm regards,</p>" +
+            "<p>Kanini Talent Acquisition Team</p>" +
+            "<p>Kanini Software Solutions</p>" +
+            "<p><img src=\"/siganture.png\"></p>"
+        );
+        saveOrUpdateTemplate(roundDroppedTemplate);
 
         log.info("Email templates are seeded/updated successfully");
     }

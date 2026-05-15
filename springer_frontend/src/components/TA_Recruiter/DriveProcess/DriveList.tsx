@@ -112,8 +112,8 @@ const DriveList: React.FC = () => {
                   <span className={`drive-list-badge drive-list-mode-${drive.driveMode.toLowerCase().replace("_", "-")}`}>
                     {drive.driveMode.replace("_", " ")}
                   </span>
-                  <span className={`drive-list-badge drive-list-status-${drive.status.toLowerCase()}`}>
-                    {drive.status}
+                  <span className={`drive-list-badge drive-list-status-${drive.status.toLowerCase().replace("_", "-")}`}>
+                    {drive.status.replace("_", " ")}
                   </span>
                 </Box>
               </Box>

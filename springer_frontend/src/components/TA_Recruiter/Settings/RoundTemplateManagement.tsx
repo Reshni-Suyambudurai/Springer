@@ -1,14 +1,13 @@
-﻿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Box, Card, Typography, Stack, Button, IconButton, CircularProgress,
   Alert, Chip, TextField, Divider, Select, MenuItem, FormControl, InputLabel,
   Dialog, DialogTitle, DialogContent, DialogActions,
 } from '@mui/material';
 import ViewListIcon from '@mui/icons-material/ViewList';
-import ToggleOnIcon from '@mui/icons-material/ToggleOn';
-import ToggleOffIcon from '@mui/icons-material/ToggleOff';
-import { FigmaCloseIcon as CloseIcon } from '../../Common/FigmaIcons';
-import { FigmaAddIcon as AddIcon, FigmaEditIcon as EditIcon } from '../../Common/FigmaIcons';
+import AddIcon from '@mui/icons-material/Add';
+import EditIcon from '@mui/icons-material/Edit';
+import CloseIcon from '@mui/icons-material/Close';
 import BackButton from '../../Common/BackButton';
 import { useNavigate } from 'react-router-dom';
 import { roundTemplateApi } from '../../../services/drive.api';
@@ -57,20 +56,13 @@ const RoundTemplateManagement = () => {
     finally { setLoading(false); }
   };
 
-  const openAdd = () => { setEditMode(false); setCurrent(null); setForm(EMPTY_FORM); setSections([]); setDialogOpen(true); };
+  // const openAdd = () => { setEditMode(false); setCurrent(null); setForm(EMPTY_FORM); setSections([]); setDialogOpen(true); };
 
   const openEdit = (t: Template) => {
     setEditMode(true); setCurrent(t);
     setForm({ roundNo: String(t.roundNo), roundName: t.roundName, outoffScore: String(t.outoffScore), minScore: String(t.minScore), weightage: String(t.weightage) });
     setSections(t.sections.length ? [...t.sections] : []);
     setDialogOpen(true);
-  };
-
-  const toggleStatus = async (t: Template) => {
-    try {
-      const res = await roundTemplateApi.deleteRoundTemplate(t.roundConfigId);
-      if (res.success) { showToast(`Template ${t.isActive ? 'deactivated' : 'activated'}`, 'success'); fetchTemplates(); }
-    } catch { showToast('Failed to update status', 'error'); }
   };
 
   const validate = () => {
@@ -139,10 +131,10 @@ const RoundTemplateManagement = () => {
               <Typography className="t-page-subtitle">Configure interview round templates</Typography>
             </Stack>
           </Stack>
-          <Button variant="contained" startIcon={<AddIcon />} className="t-btn-primary" onClick={openAdd}
+          {/* <Button variant="contained" startIcon={<AddIcon />} className="t-btn-primary" onClick={openAdd}
             sx={{ backgroundColor: 'var(--color-primary)', '&:hover': { backgroundColor: 'var(--color-primary-dark)' } }}>
             Add Template
-          </Button>
+          </Button> */}
         </Box>
 
         <Box className="t-separator" />
@@ -187,10 +179,6 @@ const RoundTemplateManagement = () => {
                       <IconButton size="small" className="t-action-btn" onClick={() => openEdit(t)} title="Edit">
                         <EditIcon fontSize="small" />
                       </IconButton>
-                      <IconButton size="small" className="t-action-btn" onClick={() => toggleStatus(t)}
-                        title={t.isActive ? 'Deactivate' : 'Activate'}>
-                        {t.isActive ? <ToggleOnIcon fontSize="small" sx={{ color: 'var(--color-success)' }} /> : <ToggleOffIcon fontSize="small" />}
-                      </IconButton>
                     </Stack>
                   </Box>
 
@@ -226,7 +214,7 @@ const RoundTemplateManagement = () => {
         <DialogTitle>
           <Stack direction="row" justifyContent="space-between" alignItems="center">
             <Typography fontWeight={700} fontSize="var(--text-md)">{editMode ? 'Edit Template' : 'Create Template'}</Typography>
-            <IconButton size="small" onClick={() => setDialogOpen(false)}><CloseIcon style={{ fontSize: '1.25rem' }} /></IconButton>
+            <IconButton size="small" onClick={() => setDialogOpen(false)}><CloseIcon fontSize="small" /></IconButton>
           </Stack>
         </DialogTitle>
         <DialogContent>

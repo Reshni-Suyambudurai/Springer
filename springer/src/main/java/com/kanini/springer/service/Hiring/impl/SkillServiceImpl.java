@@ -58,7 +58,7 @@ public class SkillServiceImpl implements ISkills {
     public List<SkillResponse> getAllSkills() {
         return skillRepository.findAll().stream()
                 .map(mapper::toResponse)
-                .collect(Collectors.toList());
+                .toList();
     }
     
     @Override

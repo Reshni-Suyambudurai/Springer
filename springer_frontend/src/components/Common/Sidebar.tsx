@@ -26,7 +26,7 @@ function Sidebar({ collapsed, onToggle }: SidebarProps) {
     TA_HEAD: [
       {
         name: "Dashboard",
-        path: "/ta-head/dashboard",
+        path: "/ta-head/drive-analytics",
         icon: (
           <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <rect x="3" y="3" width="7" height="7" />
@@ -102,16 +102,16 @@ function Sidebar({ collapsed, onToggle }: SidebarProps) {
       },
     ],
 
-    TA_RECRUITER: [
+    TA_MANAGER: [
       {
         name: "Dashboard",
         path: "/ta-recruiter/dashboard",
         icon: (
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <rect x="3" y="3" width="8" height="8" rx="1" />
-            <rect x="13" y="3" width="8" height="8" rx="1" />
-            <rect x="3" y="13" width="8" height="8" rx="1" />
-            <rect x="13" y="13" width="8" height="8" rx="1" />
+            <rect x="3" y="3" width="7" height="7" />
+            <rect x="14" y="3" width="7" height="7" />
+            <rect x="14" y="14" width="7" height="7" />
+            <rect x="3" y="14" width="7" height="7" />
           </svg>
         )
       },
@@ -200,35 +200,12 @@ function Sidebar({ collapsed, onToggle }: SidebarProps) {
     ],
 
     HIRING_MANAGER: [
-      {
-        name: "Dashboard",
-        path: "/hiring-manager/dashboard",
-        icon: (
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <rect x="3" y="3" width="7" height="7" />
-            <rect x="14" y="3" width="7" height="7" />
-            <rect x="14" y="14" width="7" height="7" />
-            <rect x="3" y="14" width="7" height="7" />
-          </svg>
-        )
-      },
+     
       {
         name: "Hiring Cycle",
         path: "/hiring-manager/hiring-cycles",
         icon: (
           <img src="/hiring_lifeCycle.png" alt="Hiring Cycle" width="20" height="20" style={{ objectFit: 'contain', filter: 'brightness(0) invert(1)' }} />
-        )
-      },
-      {
-        name: "Request",
-        path: "/hiring-manager/requests",
-        icon: (
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <rect x="8" y="2" width="8" height="4" />
-            <path d="M16 4h3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h3" />
-            <line x1="9" y1="12" x2="15" y2="12" />
-            <line x1="9" y1="16" x2="15" y2="16" />
-          </svg>
         )
       }
     ],
@@ -236,7 +213,7 @@ function Sidebar({ collapsed, onToggle }: SidebarProps) {
     MEMBERS: [
       {
         name: "Dashboard",
-        path: "/members/dashboard",
+        path: "/members/drive-analytics",
         icon: (
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <rect x="3" y="3" width="7" height="7" />
@@ -247,26 +224,20 @@ function Sidebar({ collapsed, onToggle }: SidebarProps) {
         )
       },
       {
-        name: "Hiring Cycle",
-        path: "/hiring-cycle",
-        icon: (
-          <img src="/hiring_lifeCycle.png" alt="Hiring Cycle" width="20" height="20" style={{ objectFit: 'contain', filter: 'brightness(0) invert(1)' }} />
-        )
-      },
-      {
-        name: "My Demands",
-        path: "/members/my-demands",
+        name: "Panel Allocation",
+        path: "/members/panel-assignments",
         icon: (
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <rect x="8" y="2" width="8" height="4" />
-            <path d="M16 4h2a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h2" />
-            <line x1="9" y1="12" x2="15" y2="12" />
+            <path d="M17 21v-2a4 4 0 00-8 0v2" />
+            <circle cx="9" cy="7" r="4" />
+            <path d="M23 21v-2a4 4 0 00-3-3.87" />
+            <path d="M16 3.13a4 4 0 010 7.75" />
           </svg>
         )
       },
       {
-        name: "Panel Allocation",
-        path: "/members/panel-allocation",
+        name: "Panel History",
+        path: "/members/panel-history",
         icon: (
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <path d="M17 21v-2a4 4 0 00-8 0v2" />
@@ -281,27 +252,17 @@ function Sidebar({ collapsed, onToggle }: SidebarProps) {
         path: "/members/academy",
         icon: (
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <line x1="12" y1="20" x2="12" y2="10" />
-            <line x1="18" y1="20" x2="18" y2="4" />
-            <line x1="6" y1="20" x2="6" y2="14" />
+            <path d="M22 10L12 5 2 10l10 5 10-5z" />
+            <path d="M6 12v5c3 2 9 2 12 0v-5" />
+            <line x1="12" y1="15" x2="12" y2="22" />
           </svg>
         )
       }
+
     ],
 
     SYSTEM_ADMIN: [
-      {
-        name: "Dashboard",
-        path: "/admin/dashboard",
-        icon: (
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <rect x="3" y="3" width="7" height="7" />
-            <rect x="14" y="3" width="7" height="7" />
-            <rect x="14" y="14" width="7" height="7" />
-            <rect x="3" y="14" width="7" height="7" />
-          </svg>
-        )
-      },
+     
       {
         name: "Users",
         path: "/admin/users",
@@ -313,12 +274,14 @@ function Sidebar({ collapsed, onToggle }: SidebarProps) {
         )
       },
       {
-        name: "Settings",
-        path: "/admin/settings",
+        name: "Manage Users",
+        path: "/admin/manage",
         icon: (
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <circle cx="12" cy="12" r="3" />
-            <path d="M19.4 15a1.65 1.65 0 000-6" />
+            <path d="M17 21v-2a4 4 0 00-8 0v2" />
+            <circle cx="12" cy="7" r="4" />
+            <path d="M23 21v-2a4 4 0 00-3-3.87" />
+            <path d="M16 3.13a4 4 0 010 7.75" />
           </svg>
         )
       }
@@ -414,9 +377,6 @@ function Sidebar({ collapsed, onToggle }: SidebarProps) {
     ]
   };
 
-  // TA_MANAGER uses the same sidebar menu as TA_RECRUITER
-  menu.TA_MANAGER = menu.TA_RECRUITER;
-
   const links = menu[role as keyof typeof menu] || [];
 
   return (
@@ -452,42 +412,6 @@ function Sidebar({ collapsed, onToggle }: SidebarProps) {
           </Link>
         ))}
       </nav>
-      <div className="sidebar-user" onClick={() => setShowUserMenu(!showUserMenu)}>
-        {showUserMenu && (
-          <div className="sidebar-user-popup">
-            <div className="sidebar-user-popup-header">
-              <span className="sidebar-user-popup-name">{user?.username}</span>
-              <span className="sidebar-user-popup-role">{user?.roleName}</span>
-            </div>
-            <button className="sidebar-user-logout" onClick={handleLogout}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-                <polyline points="16 17 21 12 16 7" />
-                <line x1="21" y1="12" x2="9" y2="12" />
-              </svg>
-              Logout
-            </button>
-          </div>
-        )}
-        <div className="sidebar-user-avatar">
-          {user?.username?.charAt(0).toUpperCase()}
-        </div>
-        {!collapsed && (
-          <div className="sidebar-user-info">
-            <span className="sidebar-user-name">{user?.username}</span>
-            <span className="sidebar-user-role">{user?.roleName}</span>
-          </div>
-        )}
-        {!collapsed && (
-          <svg
-            className="sidebar-user-chevron"
-            width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
-            style={{ transform: showUserMenu ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s ease', marginLeft: 'auto', flexShrink: 0 }}
-          >
-            <polyline points="18 15 12 9 6 15" />
-          </svg>
-        )}
-      </div>
     </aside>
   );
 }

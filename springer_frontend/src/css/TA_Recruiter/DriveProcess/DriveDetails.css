@@ -415,8 +415,462 @@
   font-weight: 700;
 }
 
+/* ========== Analytics Overview Section ========== */
+.dd-analytics-card {
+  background: linear-gradient(135deg, var(--color-surface) 0%, var(--color-grey-50) 100%) !important;
+}
+
+.dd-analytics-container {
+  display: flex;
+  gap: 24px;
+  margin-top: 20px;
+}
+
+.dd-analytics-section-title {
+  font-size: 14px !important;
+  font-weight: 700 !important;
+  color: var(--color-primary) !important;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  margin-bottom: 16px !important;
+  padding-bottom: 8px;
+  border-bottom: 2px solid var(--color-primary);
+}
+
+/* Left Section: Application Status Progress Bars */
+.dd-analytics-left {
+  width: 280px;
+  flex-shrink: 0;
+}
+
+.dd-status-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.dd-status-item {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 8px 12px;
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  transition: all 0.3s ease;
+}
+
+.dd-status-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px var(--color-primary-shadow-8);
+  border-color: var(--color-primary);
+}
+
+.dd-status-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.dd-status-label {
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  color: var(--color-text) !important;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.dd-status-count {
+  font-size: 16px !important;
+  font-weight: 700 !important;
+  color: var(--color-primary) !important;
+}
+
+.dd-progress-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dd-progress-container {
+  flex: 1;
+  height: 6px;
+  background-color: var(--color-grey-200);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.dd-progress-bar {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.6s ease;
+}
+
+.dd-progress-alloted {
+  background: linear-gradient(90deg, var(--color-blue-500), var(--color-blue-600));
+}
+
+.dd-progress-in-drive {
+  background: linear-gradient(90deg, var(--color-yellow-500), var(--color-yellow-600));
+}
+
+.dd-progress-dropped {
+  background: linear-gradient(90deg, var(--color-grey-500), var(--color-grey-600));
+}
+
+.dd-progress-failed {
+  background: linear-gradient(90deg, var(--color-red-500), var(--color-red-600));
+}
+
+.dd-progress-selected {
+  background: linear-gradient(90deg, var(--color-green-500), var(--color-green-700));
+}
+
+.dd-progress-default {
+  background: linear-gradient(90deg, var(--color-grey-400), var(--color-grey-500));
+}
+
+.dd-status-percentage {
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  color: var(--color-primary) !important;
+  min-width: 38px;
+  text-align: right;
+}
+
+/* Right Section: Round Evaluations */
+.dd-analytics-right {
+  flex: 1;
+  min-width: 0;
+}
+
+.dd-rounds-container {
+  display: flex;
+  flex-direction: row;
+  gap: 4px;
+  align-items: stretch;
+}
+
+.dd-round-card {
+  flex: 1;
+  background: var(--gradient-primary-border);
+  border: none;
+  padding: 2px;
+  transition: all 0.3s ease;
+  position: relative;
+  clip-path: polygon(
+    0 0,
+    calc(100% - 25px) 0,
+    100% 50%,
+    calc(100% - 25px) 100%,
+    0 100%
+  );
+}
+
+.dd-round-card-inner {
+  background-color: var(--color-surface);
+  padding: 14px 28px 14px 16px;
+  height: 100%;
+  clip-path: polygon(
+    0 0,
+    calc(100% - 25px) 0,
+    100% 50%,
+    calc(100% - 25px) 100%,
+    0 100%
+  );
+}
+
+.dd-round-card:last-child {
+  clip-path: none;
+  border-radius: 0 10px 10px 0;
+  padding: 2px;
+  border: none;
+  background: var(--gradient-primary-border);
+}
+
+.dd-round-card:last-child .dd-round-card-inner {
+  clip-path: none;
+  border-radius: 0 8px 8px 0;
+  padding: 14px 16px;
+}
+
+.dd-round-empty:last-child {
+  background-color: transparent;
+}
+
+.dd-round-empty:last-child .dd-round-card-inner {
+  background-color: var(--color-grey-50);
+}
+
+.dd-round-card:first-child {
+  border-radius: 10px 0 0 10px;
+}
+
+.dd-round-card:first-child .dd-round-card-inner {
+  border-radius: 8px 0 0 8px;
+}
+
+.dd-round-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, var(--color-primary-hover), var(--color-primary));
+  clip-path: polygon(
+    0 0,
+    calc(100% - 25px) 0,
+    100% 50%,
+    calc(100% - 25px) 100%,
+    0 100%
+  );
+  z-index: -1;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.dd-round-card:last-child::before {
+  clip-path: none;
+  border-radius: 0 10px 10px 0;
+}
+
+.dd-round-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px var(--color-primary-shadow-18);
+  background: linear-gradient(to right, var(--color-primary-hover), var(--color-blue-700), var(--color-primary-gradient-end));
+}
+
+.dd-round-card:last-child:hover {
+  background: linear-gradient(to right, var(--color-primary-hover), var(--color-blue-700), var(--color-primary-gradient-end));
+}
+
+.dd-round-card:hover::before {
+  opacity: 0.15;
+}
+
+.dd-round-empty {
+  background: linear-gradient(to right, var(--color-grey-300), var(--color-grey-400), var(--color-grey-500));
+  border-style: dashed;
+}
+
+.dd-round-empty .dd-round-card-inner {
+  text-align: center;
+  padding: 24px 20px;
+  background-color: var(--color-grey-50);
+}
+
+.dd-round-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.dd-round-name {
+  font-size: 15px !important;
+  font-weight: 700 !important;
+  color: var(--color-text) !important;
+  letter-spacing: 0.3px;
+}
+
+.dd-round-empty-text {
+  font-size: 13px !important;
+  color: var(--color-text-muted) !important;
+  font-style: italic;
+}
+
+.dd-round-attended {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+.dd-round-attended-count {
+  font-size: 20px !important;
+  font-weight: 700 !important;
+  color: var(--color-primary) !important;
+  line-height: 1 !important;
+}
+
+.dd-round-attended-label {
+  font-size: 10px !important;
+  font-weight: 600 !important;
+  color: var(--color-text-muted) !important;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.dd-round-status-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.dd-round-status-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.dd-round-progress-wrapper {
+  position: relative;
+  height: 36px;
+  background-color: var(--color-grey-50);
+  border: 2px solid var(--color-grey-400);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.dd-round-progress-fill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  transition: width 0.6s ease;
+  opacity: 0.3;
+}
+
+.dd-round-progress-content {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 100%;
+  padding: 0 12px;
+  z-index: 1;
+}
+
+.dd-round-progress-label {
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  color: var(--color-grey-700) !important;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  flex: 0 0 auto;
+}
+
+.dd-round-progress-percent {
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  color: var(--color-grey-800) !important;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.dd-round-progress-count {
+  font-size: 14px !important;
+  font-weight: 700 !important;
+  color: var(--color-grey-800) !important;
+  flex: 0 0 auto;
+}
+
+.dd-round-status-badge {
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  border: 1.5px solid;
+  display: inline-block;
+}
+
+/* Evaluation Status Badge Colors (kept for empty state if needed) */
+.dd-eval-pass {
+  background-color: var(--color-success-light);
+  border-color: var(--color-success-border);
+  color: var(--color-success);
+}
+
+.dd-eval-fail {
+  background-color: var(--color-error-light);
+  border-color: var(--color-error-border);
+  color: var(--color-error);
+}
+
+.dd-eval-absent {
+  background-color: var(--color-warning-bg);
+  border-color: var(--color-warning-border);
+  color: var(--color-warning-text);
+}
+
+.dd-eval-pending {
+  background-color: var(--color-blue-50);
+  border-color: var(--color-blue-100);
+  color: var(--color-blue-500);
+}
+
+.dd-eval-hold {
+  background-color: var(--color-yellow-50);
+  border-color: var(--color-yellow-100);
+  color: var(--color-yellow-600);
+}
+
+.dd-eval-skip {
+  background-color: var(--color-grey-150);
+  border-color: var(--color-grey-250);
+  color: var(--color-grey-550);
+}
+
+.dd-eval-default {
+  background-color: var(--color-grey-100);
+  border-color: var(--color-grey-300);
+  color: var(--color-grey-600);
+}
+
+/* Evaluation Status Progress Bars */
+.dd-eval-bar-pass {
+  background: linear-gradient(90deg, var(--color-success), var(--color-success-dark));
+}
+
+.dd-eval-bar-fail {
+  background: linear-gradient(90deg, var(--color-error), var(--color-error-dark));
+}
+
+.dd-eval-bar-absent {
+  background: linear-gradient(90deg, var(--color-warning), var(--color-yellow-600));
+}
+
+.dd-eval-bar-pending {
+  background: linear-gradient(90deg, var(--color-blue-500), var(--color-blue-600));
+}
+
+.dd-eval-bar-hold {
+  background: linear-gradient(90deg, var(--color-yellow-500), var(--color-yellow-600));
+}
+
+.dd-eval-bar-skip {
+  background: linear-gradient(90deg, var(--color-grey-400), var(--color-grey-500));
+}
+
+.dd-eval-bar-default {
+  background: linear-gradient(90deg, var(--color-grey-400), var(--color-grey-500));
+}
+
+.dd-eval-bar-default {
+  background: linear-gradient(90deg, var(--color-grey-400), var(--color-grey-500));
+}
+
 /* ========== Responsive ========== */
+@media (max-width: 1024px) {
+  .dd-rounds-container {
+    flex-direction: column;
+  }
+}
+
 @media (max-width: 768px) {
+  .dd-analytics-container {
+    flex-direction: column;
+  }
+
+  .dd-analytics-left {
+    width: 100%;
+  }
+
   .dd-cards-row {
     flex-direction: column;
   }

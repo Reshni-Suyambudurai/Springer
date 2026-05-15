@@ -14,12 +14,12 @@ import {
   SwapHoriz as TransferIcon,
 } from '@mui/icons-material';
 import { FigmaEditIcon as EditIcon, FigmaDeleteIcon as DeleteIcon, FigmaCloseIcon as CloseIcon } from '../../Common/FigmaIcons';
-import { batchAllocationApi, batchScheduleApi } from '../../../services/academy.api';
+import { batchAllocationApi, trainingProgramApi, batchScheduleApi, batchCandidateApi } from '../../../services/academy.api';
 import { candidateApi } from '../../../services/drive.api';
 import { showToast } from '../../../utils/toast';
 import type {
   BatchAllocationResponse, BatchAllocationRequest, BatchTransferRequest,
-  AcademyContextProps,
+  TrainingProgramResponse, AcademyContextProps,
   BatchScheduleResponse, BatchCandidateResponse,
 } from '../../../types/Academy/academy.types';
 import FilterSelect from '../../Common/FilterSelect';

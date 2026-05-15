@@ -28,6 +28,7 @@ import {
   TableRow,
   Paper,
   Autocomplete,
+  Tooltip,
 } from "@mui/material";
 import BackButton from "../../Common/BackButton";
 import UploadIcon from "@mui/icons-material/Upload";
@@ -42,6 +43,7 @@ const AddInstitute: React.FC = () => {
   const [addDialog, setAddDialog] = useState(false);
   const [bulkData, setBulkData] = useState<InstituteRequest[]>([]);
   const [duplicateIndices, setDuplicateIndices] = useState<Set<number>>(new Set());
+  const [batchDuplicateIndices, setBatchDuplicateIndices] = useState<Set<number>>(new Set());
   const [showErrorOverlay, setShowErrorOverlay] = useState(false);
   const [errorMessages, setErrorMessages] = useState<string[]>([]);
   const [singleForm, setSingleForm] = useState<InstituteRequest>({
@@ -152,7 +154,24 @@ const AddInstitute: React.FC = () => {
         } else {
           setBulkData(institutes);
           
-          // Check for duplicates against existing institutes
+          // Check for duplicates within the uploaded batch itself (only mark 2nd+ occurrences)
+          const batchDups = new Set<number>();
+          const nameCountMap = new Map<string, number[]>();
+          institutes.forEach((inst, idx) => {
+            const key = inst.instituteName.toLowerCase().trim();
+            if (!nameCountMap.has(key)) {
+              nameCountMap.set(key, []);
+            }
+            nameCountMap.get(key)!.push(idx);
+          });
+          nameCountMap.forEach((indices) => {
+            if (indices.length > 1) {
+              indices.slice(1).forEach(idx => batchDups.add(idx));
+            }
+          });
+          setBatchDuplicateIndices(batchDups);
+          
+          // Check for duplicates against existing institutes in DB
           try {
             const response = await instituteApi.getAllInstituteNames();
             const existingNames = new Set(
@@ -168,8 +187,11 @@ const AddInstitute: React.FC = () => {
             
             setDuplicateIndices(duplicates);
             
-            if (duplicates.size > 0) {
-              showToast(`${institutes.length} institutes loaded. ${duplicates.size} duplicate(s) found - highlighted in warning color`, "error");
+            if (duplicates.size > 0 || batchDups.size > 0) {
+              const msgs: string[] = [];
+              if (duplicates.size > 0) msgs.push(`${duplicates.size} DB duplicate(s)`);
+              if (batchDups.size > 0) msgs.push(`${batchDups.size} batch duplicate(s)`);
+              showToast(`${institutes.length} institutes loaded. ${msgs.join(", ")} found`, "error");
             } else {
               showToast(`${institutes.length} institutes loaded`, "success");
             }
@@ -232,7 +254,7 @@ const AddInstitute: React.FC = () => {
     const updated = bulkData.filter((_, idx) => idx !== index);
     setBulkData(updated);
     
-    // Update duplicate indices
+    // Update DB duplicate indices
     const newDuplicates = new Set<number>();
     duplicateIndices.forEach(dupIdx => {
       if (dupIdx < index) {
@@ -243,15 +265,34 @@ const AddInstitute: React.FC = () => {
     });
     setDuplicateIndices(newDuplicates);
     
+    // Recalculate batch duplicates from scratch with updated data (only mark 2nd+ occurrences)
+    const batchDups = new Set<number>();
+    const nameCountMap = new Map<string, number[]>();
+    updated.forEach((inst, idx) => {
+      const key = inst.instituteName.toLowerCase().trim();
+      if (!nameCountMap.has(key)) {
+        nameCountMap.set(key, []);
+      }
+      nameCountMap.get(key)!.push(idx);
+    });
+    nameCountMap.forEach((indices) => {
+      if (indices.length > 1) {
+        indices.slice(1).forEach(idx => batchDups.add(idx));
+      }
+    });
+    setBatchDuplicateIndices(batchDups);
+    
     showToast("Row removed", "success");
   };
 
   const handleRemoveDuplicates = () => {
-    if (duplicateIndices.size === 0) return;
-    const count = duplicateIndices.size;
-    const filtered = bulkData.filter((_, idx) => !duplicateIndices.has(idx));
+    const allDuplicates = new Set([...duplicateIndices, ...batchDuplicateIndices]);
+    if (allDuplicates.size === 0) return;
+    const count = allDuplicates.size;
+    const filtered = bulkData.filter((_, idx) => !allDuplicates.has(idx));
     setBulkData(filtered);
     setDuplicateIndices(new Set());
+    setBatchDuplicateIndices(new Set());
     showToast(`Removed ${count} duplicate row(s)`, "success");
   };
 
@@ -283,16 +324,6 @@ const AddInstitute: React.FC = () => {
           </Button>
 
           <Button
-            component="label"
-            startIcon={<UploadIcon />}
-            variant="contained"
-            className="add-institute-header-btn t-btn-success"
-          >
-            Upload Institutes
-            <input type="file" hidden accept=".xlsx,.xls" onChange={handleFileUpload} />
-          </Button>
-
-          <Button
             startIcon={<DownloadIcon />}
             onClick={handleDownloadFormat}
             variant="outlined"
@@ -303,6 +334,30 @@ const AddInstitute: React.FC = () => {
         </Box>
       </Card>
 
+      {/* Upload Drop Zone */}
+      {bulkData.length === 0 && (
+        <Card className="add-institute-upload-zone">
+          <CardContent className="add-institute-upload-zone-content">
+            <UploadIcon className="add-institute-upload-zone-icon" />
+            <Typography variant="h6" className="add-institute-upload-zone-title">
+              Upload Institutes
+            </Typography>
+            <Typography variant="body2" className="add-institute-upload-zone-subtitle">
+              Upload an Excel file (.xlsx, .xls) with institute data
+            </Typography>
+            <Button
+              variant="contained"
+              component="label"
+              startIcon={<UploadIcon />}
+              className="add-institute-upload-zone-btn t-btn-primary"
+            >
+              Choose File
+              <input type="file" hidden accept=".xlsx,.xls" onChange={handleFileUpload} />
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Bulk Data Table */}
       {bulkData.length > 0 && (
         <Card className="add-institute-bulk-card">
@@ -310,7 +365,7 @@ const AddInstitute: React.FC = () => {
             <Box className="add-institute-bulk-header">
               <Typography variant="h6">Uploaded Data ({bulkData.length} institutes)</Typography>
               <Box className="add-institute-bulk-header-actions">
-                {duplicateIndices.size > 0 && (
+                {(duplicateIndices.size > 0 || batchDuplicateIndices.size > 0) && (
                   <Button
                     variant="outlined"
                     startIcon={<DeleteIcon />}
@@ -324,7 +379,7 @@ const AddInstitute: React.FC = () => {
                   variant="contained" 
                   onClick={handleBulkUpload} 
                   className="t-btn-primary"
-                  disabled={duplicateIndices.size > 0}
+                  disabled={duplicateIndices.size > 0 || batchDuplicateIndices.size > 0}
                 >
                   Upload to Database
                 </Button>
@@ -332,7 +387,7 @@ const AddInstitute: React.FC = () => {
             </Box>
 
             <TableContainer component={Paper} className="add-institute-bulk-table">
-              <Table>
+              <Table stickyHeader>
                 <TableHead>
                   <TableRow>
                     <TableCell className="t-head-cell">Institute Name</TableCell>
@@ -348,10 +403,27 @@ const AddInstitute: React.FC = () => {
                     <TableRow key={index}>
                       <TableCell>
                         {duplicateIndices.has(index) ? (
-                          <Box className="duplicate-name-container">
-                            <span className="warning-dot"></span>
-                            <span className="duplicate-name-text">{inst.instituteName}</span>
-                          </Box>
+                          <Tooltip
+                            title="Duplicate: Already exists in database"
+                            arrow
+                            classes={{ tooltip: "g-tooltip", arrow: "g-tooltip-arrow" }}
+                          >
+                            <Box className="duplicate-name-container">
+                              <span className="warning-dot"></span>
+                              <span className="duplicate-name-text">{inst.instituteName}</span>
+                            </Box>
+                          </Tooltip>
+                        ) : batchDuplicateIndices.has(index) ? (
+                          <Tooltip
+                            title="Duplicate: Repeated in uploaded file"
+                            arrow
+                            classes={{ tooltip: "g-tooltip", arrow: "g-tooltip-arrow" }}
+                          >
+                            <Box className="batch-duplicate-name-container">
+                              <span className="batch-warning-dot"></span>
+                              <span className="batch-duplicate-name-text">{inst.instituteName}</span>
+                            </Box>
+                          </Tooltip>
                         ) : (
                           inst.instituteName
                         )}
@@ -407,7 +479,7 @@ const AddInstitute: React.FC = () => {
           
             <Autocomplete
               freeSolo
-              options={["Tamil Nadu", "Andhra Pradesh", "Kerala", "Karnataka"]}
+              options={["Tamil Nadu", "Andhra Pradesh", "Kerala", "Karnataka", "Puducherry","Telangana","Maharashtra","Others"]}
               value={singleForm.state}
               onChange={(_, newValue) => setSingleForm({ ...singleForm, state: newValue || "" })}
               onInputChange={(_, newValue) => setSingleForm({ ...singleForm, state: newValue })}

@@ -21,6 +21,8 @@ import type {
   TrainingScoreResponse,
   UserSummary,
   JoiningStatusUpdateRequest,
+  JoiningTrackerRequest,
+  BatchCandidateResponse,
   ExcelUploadResponse,
 } from '../types/Academy/academy.types';
 import type { CandidateResponse } from '../types/TA_Recruiter/Drive/candidate.types';
@@ -502,6 +504,37 @@ export const joiningTrackerApi = {
   async updateJoiningStatus(candidateId: number, data: JoiningStatusUpdateRequest): Promise<ApiResponse<CandidateResponse>> {
     try {
       const response = await http.patch(`/candidates/${candidateId}/status`, data);
+      return response.data;
+    } catch (error) {
+      throw handleAxiosError(error);
+    }
+  },
+
+  async getCandidatesByCycleAndStages(request: JoiningTrackerRequest): Promise<ApiResponse<CandidateResponse[]>> {
+    try {
+      const response = await http.post('/candidates/filter', {
+        cycleId: request.cycleId,
+        applicationStages: request.applicationStages,
+        page: 0,
+        size: 1000,
+      });
+      const page = response.data?.data;
+      return {
+        success: response.data?.success ?? false,
+        message: response.data?.message ?? '',
+        data: page?.content ?? [],
+      };
+    } catch (error) {
+      throw handleAxiosError(error);
+    }
+  },
+};
+
+// ==================== BATCH ALLOCATION CANDIDATE APIs ====================
+export const batchCandidateApi = {
+  async getCandidatesByCycleAndStages(request: JoiningTrackerRequest): Promise<ApiResponse<BatchCandidateResponse[]>> {
+    try {
+      const response = await http.post('/academy/programs/batch-allocation/candidates', request);
       return response.data;
     } catch (error) {
       throw handleAxiosError(error);

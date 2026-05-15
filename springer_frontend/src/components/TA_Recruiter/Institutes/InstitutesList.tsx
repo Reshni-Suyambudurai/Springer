@@ -4,6 +4,7 @@ import { instituteApi } from "../../../services/hiring.api";
 import type { InstituteResponse } from "../../../types/TA_Recruiter/Hiring/institute.types";
 import { showToast } from "../../../utils/toast";
 import { tokenstore } from "../../../auth/tokenstore";
+import { EMAIL_TEMPLATE_IDS } from "../../../config/emailTemplateConfig";
 import {
   Box,
   Button,
@@ -64,6 +65,7 @@ const InstitutesList: React.FC = () => {
     status: "",
     programs: [],
   });
+  const [sendingEmail, setSendingEmail] = useState<number | null>(null);
   const [editDialog, setEditDialog] = useState(false);
   const [editInstitute, setEditInstitute] = useState<InstituteResponse | null>(null);
   const [editForm, setEditForm] = useState({
@@ -248,10 +250,34 @@ const InstitutesList: React.FC = () => {
     navigate(`/ta-recruiter/institutes/${instituteId}`);
   };
 
-  const handleInvite = (instituteId: number, instituteName: string) => {
-    // TODO: Implement invite functionality
-    showToast(`Invite sent to ${instituteName}`, "success");
-    console.log("Invite institute:", instituteId);
+  const handleInvite = async (instituteId: number) => {
+    setSendingEmail(instituteId);
+    try {
+      const res = await instituteApi.getInstituteWithTPOsById(instituteId);
+      if (!res.success || !res.data) {
+        showToast(res.message || 'Failed to load institute contacts', 'error');
+        return;
+      }
+      const emailIds: string[] = (res.data.tpoDetails ?? [])
+        .map((tpo: { tpoEmail: string }) => tpo.tpoEmail)
+        .filter(Boolean);
+
+      if (emailIds.length === 0) {
+        showToast('No TPO contacts found for this institute', 'error');
+        return;
+      }
+      navigate('/ta-recruiter/send-email', {
+        state: {
+          templateIds: [EMAIL_TEMPLATE_IDS.INSTITUTE_INVITE_ONCAMPUS, EMAIL_TEMPLATE_IDS.INSTITUTE_INVITE_OFFCAMPUS],
+          emailIds,
+        },
+      });
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } }; message?: string };
+      showToast(err?.response?.data?.message ?? err?.message ?? 'Failed to load institute contacts', 'error');
+    } finally {
+      setSendingEmail(null);
+    }
   };
 
   const handleAddInstitute = () => {
@@ -612,11 +638,14 @@ const InstitutesList: React.FC = () => {
                             className="t-action-btn"
                             onClick={(e) => {
                               e.stopPropagation();
-                              handleInvite(institute.instituteId, institute.instituteName);
+                              handleInvite(institute.instituteId);
                             }}
-                            title="Send Invite"
+                            disabled={sendingEmail === institute.instituteId}
+                            title="Send Email to TPO"
                           >
-                            <EmailIcon fontSize="small" />
+                            {sendingEmail === institute.instituteId
+                              ? <CircularProgress size={14} />
+                              : <EmailIcon fontSize="small" />}
                           </IconButton>
                         </Box>
                       </TableCell>

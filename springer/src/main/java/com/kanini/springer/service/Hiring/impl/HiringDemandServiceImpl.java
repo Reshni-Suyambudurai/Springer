@@ -19,6 +19,7 @@ import com.kanini.springer.repository.Hiring.HiringDemandRepository;
 import com.kanini.springer.repository.Hiring.SkillRepository;
 import com.kanini.springer.repository.Hiring.UserRepository;
 import com.kanini.springer.service.Hiring.IHiringDemandService;
+import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -37,6 +38,7 @@ public class HiringDemandServiceImpl implements IHiringDemandService {
     private final SkillRepository skillRepository;
     private final RequisitionSkillRepository requisitionSkillRepository;
     private final HiringDemandMapper mapper;
+    private final EntityManager entityManager;
     
     @Override
     @Transactional
@@ -109,7 +111,7 @@ public class HiringDemandServiceImpl implements IHiringDemandService {
     public List<HiringDemandResponse> getAllDemands() {
         return demandRepository.findAll().stream()
                 .map(mapper::toResponse)
-                .collect(Collectors.toList());
+                .toList();
     }
     
     @Override
@@ -122,7 +124,7 @@ public class HiringDemandServiceImpl implements IHiringDemandService {
         
         return demandRepository.findByCycleCycleId(cycleId).stream()
                 .map(mapper::toResponse)
-                .collect(Collectors.toList());
+                .toList();
     }
     
     @Override
@@ -132,7 +134,7 @@ public class HiringDemandServiceImpl implements IHiringDemandService {
             ApprovalStatus approvalStatus = ApprovalStatus.valueOf(status.toUpperCase());
             return demandRepository.findByApprovalStatus(approvalStatus).stream()
                     .map(mapper::toResponse)
-                    .collect(Collectors.toList());
+                    .toList();
         } catch (IllegalArgumentException e) {
             throw new ValidationException("Invalid approval status: " + status + 
                     ". Valid values are: DRAFT, SUBMITTED, APPROVED, REJECTED");
@@ -190,8 +192,6 @@ public class HiringDemandServiceImpl implements IHiringDemandService {
             demand.setApprovalStatus(request.getApprovalStatus());
         }
         
-        HiringDemand updatedDemand = demandRepository.save(demand);
-        
         // Update RequisitionSkills only if skillIds are provided
         if (request.getSkillIds() != null && !request.getSkillIds().isEmpty()) {
             // Validation: Check if all skill IDs exist
@@ -202,22 +202,22 @@ public class HiringDemandServiceImpl implements IHiringDemandService {
                 skills.add(skill);
             }
             
-            // Delete old skills and create new ones
-            requisitionSkillRepository.deleteByDemandDemandId(demandId);
+            // Clear existing skills via the parent collection (orphanRemoval handles DELETE)
+            demand.getRequisitionSkills().clear();
             
-            List<RequisitionSkill> requisitionSkills = new ArrayList<>();
+            // Force flush so DELETE executes before new INSERTs
+            entityManager.flush();
+            
+            // Add new skills to the parent collection (cascade handles INSERT)
             for (Skill skill : skills) {
                 RequisitionSkill requisitionSkill = new RequisitionSkill();
-                requisitionSkill.setDemand(updatedDemand);
+                requisitionSkill.setDemand(demand);
                 requisitionSkill.setSkill(skill);
-                requisitionSkills.add(requisitionSkill);
+                demand.getRequisitionSkills().add(requisitionSkill);
             }
-            requisitionSkillRepository.saveAll(requisitionSkills);
         }
         
-        // Reload demand to get the updated requisition skills
-        updatedDemand = demandRepository.findById(demandId)
-                .orElseThrow(() -> new ResourceNotFoundException("Hiring demand", "ID", demandId));
+        HiringDemand updatedDemand = demandRepository.save(demand);
         
         return mapper.toResponse(updatedDemand);
     }

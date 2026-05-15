@@ -1,0 +1,495 @@
+
+
+.ps-back-btn {
+  background: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+}
+
+.ps-back-icon {
+  font-size: 20px !important;
+  color: var(--color-text-secondary);
+}
+
+.ps-header-icon {
+  font-size: 20px !important;
+  color: var(--color-primary);
+}
+
+/* ── 2-Column Layout ── */
+
+.ps-layout {
+  display: flex;
+  gap: 24px;
+  min-height: 0;
+  margin-top:2%;
+  align-items: stretch;
+}
+
+.ps-col-left {
+  flex: 1;
+  min-width: 0;
+}
+
+.ps-col-right {
+  flex: 1;
+  min-width: 0;
+}
+
+/* ── Left Card (outer wrapper) ── */
+
+.ps-left-card {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-card-border);
+  border-radius: 14px;
+  padding: 36px 28px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  box-shadow: 0 2px 12px var(--opacity-shadow-light),
+              0 8px 24px -4px var(--opacity-shadow-dark);
+  transition: box-shadow 0.3s ease;
+}
+
+.ps-left-card:hover {
+  box-shadow: 0 4px 18px var(--opacity-shadow-light),
+              0 12px 32px -4px var(--opacity-shadow-dark);
+}
+
+/* ── Right Card ── */
+
+.ps-right-card {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-card-border);
+  border-radius: 14px;
+  padding: 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  height: 100%;
+  box-shadow: 0 2px 12px var(--opacity-shadow-light),
+              0 8px 24px -4px var(--opacity-shadow-dark);
+  transition: box-shadow 0.3s ease;
+}
+
+.ps-right-card:hover {
+  box-shadow: 0 4px 18px var(--opacity-shadow-light),
+              0 12px 32px -4px var(--opacity-shadow-dark);
+}
+
+/* ── Right Card Header (title + total inline) ── */
+
+.ps-right-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.ps-total-badge {
+  display: flex;
+  align-items: baseline;
+  gap: 3px;
+  background-color: var(--color-primary-light);
+  border: 1px solid var(--color-blue-100);
+  border-radius: 8px;
+  padding: 6px 14px;
+}
+
+.ps-total-value {
+  font-size: 1.25rem !important;
+  font-weight: 800 !important;
+  color: var(--color-primary) !important;
+  line-height: 1 !important;
+}
+
+.ps-total-outof {
+  font-size: 0.8rem !important;
+  font-weight: 500 !important;
+  color: var(--color-grey-450) !important;
+}
+
+
+/* ── Review Textarea ── */
+
+.ps-review-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ps-review-label {
+  font-size: 0.75rem !important;
+  font-weight: 600 !important;
+  color: var(--color-grey-450) !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.05em !important;
+}
+
+.ps-review-textarea {
+  width: 100%;
+  min-height: 72px;
+  padding: 10px 14px;
+  border: 1px solid var(--color-input-border);
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 0.875rem;
+  font-weight: 400;
+  color: var(--color-text-primary);
+  background-color: var(--color-surface);
+  resize: vertical;
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  box-sizing: border-box;
+}
+
+.ps-review-textarea::placeholder {
+  color: var(--color-grey-375);
+}
+
+.ps-review-textarea:hover {
+  border-color: var(--color-input-border-hover);
+}
+
+.ps-review-textarea:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px var(--color-primary-hover-14);
+}
+
+.ps-review-textarea.ps-review-error {
+  border-color: var(--color-red-500);
+}
+
+.ps-review-textarea.ps-review-error:focus {
+  box-shadow: 0 0 0 2px rgba(192, 57, 43, 0.14);
+}
+
+/* ── Compact Inline Scoring Rows ── */
+
+.ps-scoring-list {
+  display: flex;
+  flex-direction: column;
+  gap: 25px;
+}
+
+.ps-score-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  border-radius: 8px;
+  padding: 8px 14px;
+}
+
+.ps-score-name {
+  font-size: 0.85rem !important;
+  font-weight: 600 !important;
+  color: var(--color-text-primary) !important;
+  white-space: nowrap;
+  min-width: 120px;
+  flex-shrink: 0;
+}
+
+.ps-score-input-wrap {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+}
+
+.ps-score-input {
+  width: 64px;
+  padding: 6px 10px;
+  border: 1.5px solid var(--color-grey-250);
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  background-color: var(--color-surface);
+  text-align: center;
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  -moz-appearance: textfield;
+}
+.ps-score-input::-webkit-outer-spin-button,
+.ps-score-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.ps-score-input:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-primary-hover-14);
+}
+.ps-score-input:disabled {
+  background-color: var(--color-grey-100);
+  color: var(--color-text-disabled);
+  cursor: not-allowed;
+}
+
+.ps-score-badge {
+  font-size: 0.9rem !important;
+  font-weight: 800 !important;
+  color: var(--color-primary) !important;
+  white-space: nowrap;
+  min-width: 48px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+/* ── Status Dropdown ── */
+
+.ps-status-section {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: -12px;
+  justify-content: flex-end;
+}
+
+.ps-status-label {
+  font-size: 0.82rem !important;
+  font-weight: 600 !important;
+  color: var(--color-text-secondary) !important;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.ps-status-select .MuiOutlinedInput-root {
+  border-radius: 8px;
+  font-size: 0.85rem;
+  background-color: var(--color-hover-bg);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.ps-status-select .MuiOutlinedInput-root:hover .MuiOutlinedInput-notchedOutline {
+  border-color: var(--color-primary);
+}
+
+.ps-status-select .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px var(--color-primary-hover-14);
+}
+
+/* ── Action Buttons ── */
+
+.ps-action-btns {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 4px;
+}
+
+.ps-btn-draft {
+  background-color: var(--color-primary) !important;
+  color: var(--color-white) !important;
+  border-radius: 8px !important;
+  padding: 8px 24px !important;
+  font-size: 0.85rem !important;
+  font-weight: 600 !important;
+  text-transform: none !important;
+  box-shadow: 0 2px 6px var(--color-primary-shadow-18) !important;
+  transition: background-color 0.2s ease, box-shadow 0.2s ease !important;
+}
+
+.ps-btn-draft:hover {
+  background-color: var(--color-primary-dark) !important;
+  box-shadow: 0 3px 10px var(--color-primary-shadow-28) !important;
+}
+
+.ps-btn-draft:disabled {
+  background-color: var(--color-grey-250) !important;
+  color: var(--color-text-disabled) !important;
+  box-shadow: none !important;
+}
+
+.ps-btn-submit {
+  background-color: var(--color-success) !important;
+  color: var(--color-white) !important;
+  border-radius: 8px !important;
+  padding: 8px 24px !important;
+  font-size: 0.85rem !important;
+  font-weight: 600 !important;
+  text-transform: none !important;
+  box-shadow: 0 2px 6px rgba(141, 198, 63, 0.28) !important;
+  transition: background-color 0.2s ease, box-shadow 0.2s ease !important;
+}
+
+.ps-btn-submit:hover {
+  background-color: var(--color-success-dark) !important;
+  box-shadow: 0 3px 10px rgba(141, 198, 63, 0.38) !important;
+}
+
+.ps-btn-submit:disabled {
+  background-color: var(--color-grey-250) !important;
+  color: var(--color-text-disabled) !important;
+  box-shadow: none !important;
+}
+
+.ps-section {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.ps-divider {
+  height: 1px;
+  background-color: var(--color-grey-200);
+  margin: 32px 0;
+}
+
+/* ── Section Title (primary color) ── */
+
+.ps-section-title {
+  font-size: 0.85rem !important;
+  font-weight: 700 !important;
+  color: var(--color-primary) !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.08em !important;
+}
+
+/* ── Candidate Header ── */
+
+.ps-candidate-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.ps-avatar {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--color-primary-light), var(--color-blue-100));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px var(--color-primary-shadow-18);
+}
+
+.ps-avatar-icon {
+  font-size: 28px !important;
+  color: var(--color-primary);
+}
+
+.ps-candidate-name {
+  font-size: 1.15rem !important;
+  font-weight: 700 !important;
+  color: var(--color-text-primary) !important;
+  line-height: 1.3 !important;
+}
+
+.ps-candidate-id {
+  font-size: 0.8rem !important;
+  color: var(--color-grey-450) !important;
+  font-weight: 500 !important;
+}
+
+/* ── Detail Grid (candidate info) ── */
+
+.ps-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 26px;
+}
+
+.ps-detail-item {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ps-detail-label {
+  font-size: 0.75rem !important;
+  font-weight: 600 !important;
+  color: var(--color-grey-450) !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.05em !important;
+}
+
+.ps-detail-value {
+  font-size: 0.95rem !important;
+  font-weight: 600 !important;
+  color: var(--color-text-primary) !important;
+}
+
+.ps-round-chip {
+  font-size: 0.75rem !important;
+  font-weight: 600 !important;
+  height: 24px !important;
+  border-radius: 6px !important;
+  background-color: var(--color-purple-50) !important;
+  color: var(--color-purple-600) !important;
+  border: 1px solid var(--color-purple-100) !important;
+  width: fit-content;
+}
+
+.ps-chip-contained {
+  width: fit-content !important;
+}
+
+/* ── Stat Cards (round config) ── */
+
+.ps-stats-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 18px;
+}
+
+.ps-stat-card {
+  background-color: var(--color-hover-bg);
+  border-radius: 10px;
+  padding: 22px 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.ps-stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px var(--opacity-shadow-light);
+}
+
+.ps-stat-value {
+  font-size: 1.35rem !important;
+  font-weight: 800 !important;
+  color: var(--color-primary) !important;
+  line-height: 1.2 !important;
+}
+
+.ps-stat-label {
+  font-size: 0.7rem !important;
+  font-weight: 600 !important;
+  color: var(--color-grey-450) !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.04em !important;
+}
+
+/* ── Empty Sections ── */
+
+.ps-sections-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 20px;
+  gap: 12px;
+}
+
+.ps-empty-icon {
+  font-size: 40px !important;
+  color: var(--color-empty-icon) !important;
+}
+
+.ps-empty-text {
+  font-size: 0.95rem !important;
+  font-weight: 500 !important;
+  color: var(--color-empty-text) !important;
+}

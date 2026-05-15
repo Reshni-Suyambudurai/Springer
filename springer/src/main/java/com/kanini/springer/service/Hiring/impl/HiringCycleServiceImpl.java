@@ -1,5 +1,6 @@
 package com.kanini.springer.service.Hiring.impl;
 
+import com.kanini.springer.dto.Hiring.CycleWithDrivesResponse;
 import com.kanini.springer.dto.Hiring.HiringCycleRequest;
 import com.kanini.springer.dto.Hiring.HiringCycleResponse;
 import com.kanini.springer.dto.Hiring.HiringCycleSummaryResponse;
@@ -43,6 +44,7 @@ public class HiringCycleServiceImpl implements IHiringCycleService {
         cycle.setCycleName(request.getCycleName());
         cycle.setCompensationBand(request.getCompensationBand());
         cycle.setBudget(request.getBudget());
+        cycle.setTotalIntake(request.getTotalIntake());
         cycle.setStatus(CycleStatus.OPEN); // Always set to OPEN on creation
         
         // Handle JD file upload
@@ -69,7 +71,7 @@ public class HiringCycleServiceImpl implements IHiringCycleService {
     public List<HiringCycleResponse> getAllCycles() {
         return cycleRepository.findAll().stream()
                 .map(mapper::toResponse)
-                .collect(Collectors.toList());
+                .toList();
     }
     
     @Override
@@ -81,7 +83,7 @@ public class HiringCycleServiceImpl implements IHiringCycleService {
                     cycle.getCycleName(),
                     cycle.getStatus().toString()
                 ))
-                .collect(Collectors.toList());
+                .toList();
     }
     
     @Override
@@ -90,7 +92,7 @@ public class HiringCycleServiceImpl implements IHiringCycleService {
             CycleStatus cycleStatus = CycleStatus.valueOf(status.toUpperCase());
             return cycleRepository.findByStatus(cycleStatus).stream()
                     .map(mapper::toResponse)
-                    .collect(Collectors.toList());
+                    .toList();
         } catch (IllegalArgumentException e) {
             throw new ValidationException("Invalid cycle status: " + status + ". Valid values are: OPEN, CLOSED");
         }
@@ -128,6 +130,11 @@ public class HiringCycleServiceImpl implements IHiringCycleService {
         // Update budget if provided
         if (request.getBudget() != null) {
             cycle.setBudget(request.getBudget());
+        }
+        
+        // Update totalIntake if provided
+        if (request.getTotalIntake() != null) {
+            cycle.setTotalIntake(request.getTotalIntake());
         }
         
         // Handle JD file upload (only update if new file is provided)
@@ -183,5 +190,14 @@ public class HiringCycleServiceImpl implements IHiringCycleService {
         }
         
         return cycle.getJd();
+    }
+    
+    @Override
+    @Transactional(readOnly = true)
+    public List<CycleWithDrivesResponse> getAllCyclesWithDrives() {
+        List<HiringCycle> cycles = cycleRepository.findAllWithDrivesAndInstitutes();
+        return cycles.stream()
+                .map(mapper::toCycleWithDrivesResponse)
+                .toList();
     }
 }

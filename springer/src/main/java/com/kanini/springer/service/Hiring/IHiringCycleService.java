@@ -1,5 +1,6 @@
 package com.kanini.springer.service.Hiring;
 
+import com.kanini.springer.dto.Hiring.CycleWithDrivesResponse;
 import com.kanini.springer.dto.Hiring.HiringCycleRequest;
 import com.kanini.springer.dto.Hiring.HiringCycleResponse;
 import com.kanini.springer.dto.Hiring.HiringCycleSummaryResponse;
@@ -25,4 +26,6 @@ public interface IHiringCycleService {
     HiringCycleResponse toggleCycleStatus(Long cycleId);
     
     byte[] getJdByCycleId(Long cycleId);
+    
+    List<CycleWithDrivesResponse> getAllCyclesWithDrives();
 }

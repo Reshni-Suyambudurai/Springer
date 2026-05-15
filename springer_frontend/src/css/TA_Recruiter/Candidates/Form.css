@@ -1,0 +1,493 @@
+/* Form Page Container */
+.form-page-container {
+  padding: 10px;
+  max-width: 100%;
+  background-color: var(--color-surface);
+  display: flex;
+  flex-direction: column;
+
+}
+
+/* Header Card */
+.form-header-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px !important;
+  margin-bottom: 20px !important;
+  border-radius: 12px !important;
+  border: 1px solid var(--color-border) !important;
+  background: var(--color-surface) !important;
+  box-shadow: 0 1px 4px var(--opacity-shadow-card) !important;
+  gap: 16px;
+}
+
+.form-header-left {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 16px;
+  flex: 1;
+}
+
+.form-header-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.form-header-title {
+  font-weight: 600 !important;
+  color: var(--color-text-primary) !important;
+  white-space: nowrap;
+  padding: 8px 16px;
+  background: var(--color-surface);
+  border-radius: 8px;
+  border: 1px solid var(--color-border);
+}
+
+.form-header-subtitle {
+  font-weight: 500 !important;
+  color: var(--color-primary) !important;
+  white-space: nowrap;
+  padding: 6px 14px;
+  background: var(--color-primary-light);
+  border-radius: 8px;
+  border: 1px solid var(--color-blue-100);
+  font-size: var(--text-sm) !important;
+}
+
+/* Forms List Card */
+.form-list-card {
+  padding-left: 1.5rem;
+  padding-right: 1.5rem ;
+  background: var(--color-white);
+  border-radius: var(--border-radius-md);
+  box-shadow: var(--shadow-sm);
+}
+
+.form-section-title {
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin-bottom: 1rem;
+}
+
+.form-empty-state {
+  padding: 3rem 1.5rem;
+  text-align: center;
+  background: var(--color-background-light);
+  border-radius: var(--border-radius-md);
+  border: 1px dashed var(--color-border);
+}
+
+.form-empty-text {
+  color: var(--color-text-secondary);
+}
+
+/* Form Cards Grid */
+.form-cards-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+  gap: 1rem;
+  max-height: 150px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.form-card {
+  padding: 0.875rem 1rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 2px solid var(--color-border);
+  background: var(--color-white);
+}
+
+.form-card:hover {
+  border-color: var(--color-primary);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+
+.form-card-selected {
+  border-color: var(--color-primary);
+  background: var(--color-primary-light);
+}
+
+.form-card-header {
+  margin-bottom: 0.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+
+.form-card-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin: 0;
+  word-break: break-word;
+}
+
+.form-status-text {
+  padding: 0.125rem 0.5rem;
+  border-radius: 4px;
+  border: 1.5px solid;
+  transition: all 0.2s ease;
+  font-weight: 500;
+  font-size: 0.75rem;
+  white-space: nowrap;
+}
+
+.form-card-details {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.form-card-detail {
+  color: var(--color-text-secondary);
+  font-size: 0.8125rem;
+}
+
+.form-status-active {
+  background-color: rgba(34, 197, 94, 0.1);
+  border-color: #22c55e;
+  color: #15803d;
+}
+
+.form-status-inactive {
+  background-color: rgba(239, 68, 68, 0.1);
+  border-color: #ef4444;
+  color: #b91c1c;
+}
+
+/* Clickable Card Area */
+.form-card-clickable {
+  cursor: pointer;
+}
+
+/* Action Buttons */
+.form-card-actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--color-border);
+  margin-top: 0.75rem;
+}
+
+.form-action-btn {
+  border: 1px solid var(--color-border) !important;
+  border-radius: var(--border-radius-md) !important;
+  color: var(--color-icon-primary) !important;
+  background: var(--color-white) !important;
+  transition: all 0.3s ease !important;
+  padding: 8px !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+}
+
+.form-action-btn:hover {
+  background: var(--color-primary-light) !important;
+  border-color: var(--color-primary) !important;
+  color: var(--color-primary-dark) !important;
+  box-shadow: 0 4px 8px var(--color-primary-shadow-18) !important;
+  transform: translateY(-2px);
+}
+
+.form-action-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 3px var(--color-primary-shadow-8) !important;
+}
+
+.form-action-btn svg {
+  font-size: 1.125rem;
+}
+
+/* Registrations Card */
+.form-registrations-card {
+  padding-left: 1.5rem;
+  padding-right: 1.5rem ;
+  padding-top: 10px;
+  padding-bottom: 5px;
+  background: var(--color-white);
+  border-radius: var(--border-radius-md);
+  box-shadow: var(--shadow-sm);
+}
+
+.form-registrations-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  gap: 1rem;
+}
+
+.form-registrations-actions {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.form-registrations-count {
+  color: var(--color-text-secondary);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.form-validating-text {
+  margin-left: 8px;
+  color: var(--color-warning);
+  font-weight: 500;
+}
+
+.form-name-with-validation {
+  cursor: help;
+  text-decoration: underline dotted;
+  text-decoration-color: var(--color-border);
+  text-underline-offset: 3px;
+}
+
+/* Validation Indicators */
+.index-cell-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.warning-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: var(--color-warning);
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+.danger-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: var(--color-error-delete);
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+/* Row Status Coloring */
+.table-row-duplicate td {
+  color: var(--color-error-delete) !important;
+  font-weight: 600;
+  background-color: var(--color-error-light) !important;
+}
+
+.table-row-old td {
+  color: var(--color-success-dark) !important;
+  font-weight: 600;
+}
+
+.table-row-old .warning-dot {
+  background-color: var(--color-success-dark);
+}
+
+.table-row-batch-duplicate td {
+  color: var(--color-yellow-500) !important;
+  font-weight: 600;
+  background-color: var(--color-yellow-50) !important;
+}
+
+.batch-duplicate-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: var(--color-warning);
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+.table-row-duplicate:hover td,
+.table-row-old:hover td,
+.table-row-batch-duplicate:hover td {
+  background-color: var(--color-hover-bg) !important;
+}
+
+/* Others Institute Row */
+.table-row-others-institute td {
+  background-color: var(--color-purple-50) !important;
+}
+
+.table-row-others-institute:hover td {
+  background-color: var(--color-purple-100) !important;
+}
+
+.form-others-college-name {
+  color: var(--color-purple-600);
+  font-weight: 500;
+  cursor: default;
+  text-decoration: underline dotted var(--color-purple-500);
+  text-underline-offset: 3px;
+}
+
+.form-new-college-count {
+  color: var(--color-purple-600);
+  font-weight: 600;
+}
+
+/* Inline cell editing */
+.form-cell-editable {
+  cursor: default;
+  position: relative;
+}
+
+.form-cell-editable:not(:has(input)):hover::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border: 1.5px dashed var(--color-primary);
+  border-radius: 4px;
+  pointer-events: none;
+  opacity: 0.5;
+}
+
+.form-inline-input {
+  width: 100%;
+  min-width: 120px;
+  padding: 3px 6px;
+  border: 1.5px solid var(--color-primary);
+  border-radius: 4px;
+  font-size: inherit;
+  font-family: inherit;
+  color: var(--color-text-primary);
+  background: var(--color-white);
+  outline: none;
+  box-shadow: 0 0 0 3px var(--color-primary-shadow-8);
+}
+
+.form-inline-input:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Table Styles */
+.form-table-container {
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-md);
+  overflow: auto;
+  max-height: 50vh;
+  background: var(--color-surface);
+
+}
+
+.form-table-container tbody tr {
+  transition: background-color 0.2s ease;
+}
+
+.form-table-container tbody tr:hover {
+  background-color: var(--color-hover-bg);
+}
+
+.form-table-container tbody td {
+  padding: 12px 16px;
+  color: var(--color-text-primary);
+  border-bottom: 1px solid var(--color-border-table);
+}
+
+.form-status-pending {
+  background-color: var(--color-warning) !important;
+  color: var(--color-text-primary) !important;
+}
+
+.form-status-imported {
+  background-color: var(--color-success) !important;
+  color: var(--color-white) !important;
+}
+
+/* Dialog Styles */
+.form-dialog-title {
+  font-weight: 600;
+  color: var(--color-text-primary);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.form-dialog-content {
+  padding-top: 1.5rem !important;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.form-dialog-field {
+  margin-top: 0.5rem;
+}
+
+.form-dialog-switch {
+  margin-top: 0.5rem;
+}
+
+.form-dialog-actions {
+  padding: 1rem 1.5rem;
+  border-top: 1px solid var(--color-border);
+  gap: 0.75rem;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .form-header-left {
+    flex-wrap: wrap;
+  }
+  .form-header-title {
+    flex: 1 0 100%;
+    text-align: center;
+  }
+  
+  .form-cards-container {
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .form-page-container {
+    padding: 12px;
+  }
+
+  .form-header-card {
+    padding: 12px 16px !important;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .form-header-left {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .form-header-title {
+    text-align: center;
+  }
+
+  .form-header-right {
+    width: 100%;
+  }
+
+  .form-header-right button {
+    width: 100%;
+  }
+
+  .form-cards-container {
+    grid-template-columns: 1fr;
+  }
+
+  .form-table-container {
+    max-height: 50vh;
+  }
+
+  .form-table-header,
+  .form-table-row td {
+    padding: 0.75rem;
+    font-size: 0.875rem;
+  }
+}

@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
+import java.util.Map;
 
 /**
  * DTO for upcoming drive summary with minimal fields
@@ -18,4 +19,13 @@ public class UpcomingDriveSummaryResponse {
     private String driveName;
     private DriveMode driveMode;
     private LocalDate startDate;
+    private String location;
+    private Map<String, Long> applicationsPerBatchTime;
+
+    public UpcomingDriveSummaryResponse(Long driveId, String driveName, DriveMode driveMode, LocalDate startDate) {
+        this.driveId = driveId;
+        this.driveName = driveName;
+        this.driveMode = driveMode;
+        this.startDate = startDate;
+    }
 }

@@ -27,10 +27,10 @@ const CARDS = [
     path: '/ta-recruiter/settings/round-templates',
   },
   {
-    title: 'Documents Management',
-    desc: 'Manage required documents and verification settings',
+    title: 'Email Template Management',
+    desc: 'Create and manage email templates for candidate communication',
     icon: <DescriptionIcon sx={{ fontSize: 22 }} />,
-    path: '/ta-recruiter/settings/documents',
+    path: '/ta-recruiter/settings/email-templates',
   },
 ];
 

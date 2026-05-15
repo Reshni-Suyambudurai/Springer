@@ -7,6 +7,12 @@ echo.
 echo  ============================================
 echo    SPRINGER - Application Launcher
 echo  ============================================
+echo    - Creates database if missing
+echo    - Runs Flyway migrations (schema + data)
+echo    - Auto-validates schema (Hibernate)
+echo    - Builds backend if needed
+echo    - Installs frontend deps if needed
+echo  ============================================
 echo.
 
 REM -- Load config --
@@ -18,7 +24,7 @@ if not exist config.bat (
 call config.bat
 
 REM -- Check prerequisites --
-echo  [1/5] Checking prerequisites...
+echo  [1/6] Checking prerequisites...
 
 where java >nul 2>&1
 if %errorlevel% neq 0 (
@@ -52,7 +58,7 @@ if exist "springer\mvnw.cmd" (
 
 REM -- Check MySQL Service --
 echo.
-echo  [2/5] Checking MySQL service...
+echo  [2/6] Checking MySQL service...
 sc query %MYSQL_SERVICE% >nul 2>&1
 if %errorlevel% neq 0 (
     echo  [WARNING] MySQL service "%MYSQL_SERVICE%" not found. Continuing...
@@ -72,22 +78,47 @@ if %errorlevel% neq 0 (
     )
 )
 
-REM -- Test Database Connection --
+REM -- Test Database Connection & Create DB if needed --
 echo.
-echo  [3/5] Testing database connection...
+echo  [3/6] Checking database...
 powershell -command "try { $tcp = New-Object System.Net.Sockets.TcpClient; $tcp.Connect('%DB_HOST%', %DB_PORT%); $tcp.Close(); exit 0 } catch { exit 1 }" >nul 2>&1
 if %errorlevel% neq 0 (
     echo  [WARNING] Cannot reach MySQL at %DB_HOST%:%DB_PORT%
     set /p CONTINUE="  Continue anyway? (Y/N): "
     if /i not "%CONTINUE%"=="Y" exit /b 1
-) else (
-    echo        Database ........ Connected
+    goto skip_db_check
 )
+
+echo        MySQL ........... Connected
+echo        Creating database if not exists...
+mysql -h%DB_HOST% -P%DB_PORT% -u%DB_USER% -p%DB_PASS% -e "CREATE DATABASE IF NOT EXISTS %DB_NAME%;" 2>nul
+if %errorlevel% equ 0 (
+    echo        Database ........ Ready (%DB_NAME%)
+    goto skip_db_check
+)
+echo  [WARNING] Could not create database. Ensure it exists manually.
+
+:skip_db_check
 
 REM -- Start Backend (skip if already running) --
 echo.
-echo  [4/5] Starting Spring Boot backend...
-powershell -command "try { Invoke-WebRequest -Uri 'http://localhost:%BACKEND_PORT%/v3/api-docs' -UseBasicParsing -TimeoutSec 2 -ErrorAction Stop | Out-Null; exit 0 } catch { exit 1 }" >nul 2>&1
+echo  [4/6] Preparing backend...
+cd /d "%~dp0springer"
+if not exist "target" (
+    echo        Building backend for first time...
+    call %MVN_CMD% clean install -DskipTests
+    if %errorlevel% neq 0 (
+        echo  [ERROR] Backend build failed!
+        pause
+        exit /b 1
+    )
+    echo        Backend ......... Built
+) else (
+    echo        Backend ......... Already built
+)
+cd /d "%~dp0"
+
+powershell -command "try { $tcp = New-Object System.Net.Sockets.TcpClient; $tcp.Connect('localhost', %BACKEND_PORT%); $tcp.Close(); exit 0 } catch { exit 1 }" >nul 2>&1
 if %errorlevel% equ 0 (
     echo        Backend ......... Already Running
     goto backend_ready
@@ -100,7 +131,7 @@ set RETRIES=0
 :wait_backend
 timeout /t 5 /nobreak >nul
 set /a RETRIES+=1
-powershell -command "try { Invoke-WebRequest -Uri 'http://localhost:%BACKEND_PORT%/v3/api-docs' -UseBasicParsing -TimeoutSec 3 -ErrorAction Stop | Out-Null; exit 0 } catch { exit 1 }" >nul 2>&1
+powershell -command "try { $tcp = New-Object System.Net.Sockets.TcpClient; $tcp.Connect('localhost', %BACKEND_PORT%); $tcp.Close(); exit 0 } catch { exit 1 }" >nul 2>&1
 if %errorlevel% equ 0 (
     echo        Backend ......... Ready
     goto backend_ready
@@ -115,7 +146,23 @@ echo  [WARNING] Backend took too long. Starting frontend anyway...
 
 REM -- Start Frontend --
 echo.
-echo  [5/5] Starting React frontend...
+echo  [5/6] Preparing frontend...
+cd /d "%~dp0springer_frontend"
+if not exist "node_modules" (
+    echo        Installing npm dependencies...
+    call npm install
+    if %errorlevel% neq 0 (
+        echo  [ERROR] npm install failed!
+        pause
+        exit /b 1
+    )
+    echo        Frontend ........ Dependencies installed
+) else (
+    echo        Frontend ........ Dependencies OK
+)
+cd /d "%~dp0"
+
+echo  [6/6] Starting React frontend...
 start "Springer Frontend" cmd /k "title Springer Frontend & color 0E & cd /d %~dp0springer_frontend & npm run dev"
 
 REM -- Open browser --

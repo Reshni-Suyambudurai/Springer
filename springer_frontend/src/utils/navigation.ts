@@ -5,7 +5,7 @@ export const getDashboardPathByRole = (roleName: string): string => {
     case "TA_MANAGER":
       return "/ta-recruiter/dashboard";
     case "HIRING_MANAGER":
-      return "/hiring-manager/dashboard";
+      return "/hiring-manager/hiring-cycles";
     case "MEMBERS":
       return "/members/dashboard";
     case "SYSTEM_ADMIN":

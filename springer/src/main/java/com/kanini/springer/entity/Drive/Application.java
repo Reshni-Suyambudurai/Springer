@@ -51,6 +51,9 @@ public class Application {
     @Enumerated(EnumType.STRING)
     private ApplicationStatus applicationStatus; // ALLOTED, IN_DRIVE, DROPPED, FAILED, SELECTED
     
+    @Column(columnDefinition = "TEXT")
+    private String history;
+    
     private LocalDateTime createdAt;
     
     @ManyToOne(fetch = FetchType.LAZY)

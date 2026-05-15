@@ -16,6 +16,7 @@ public class HiringCycleResponse {
     private String cycleName;
     private Integer compensationBand;
     private Integer budget;
+    private Integer totalIntake;
     private boolean hasJd; // Indicates if JD file is uploaded
     private String status;
     private LocalDateTime createdAt;

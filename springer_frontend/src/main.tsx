@@ -1,7 +1,6 @@
-import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
-import { SnackbarProvider } from 'notistack'
+import { SnackbarProvider, closeSnackbar } from 'notistack'
 import { ThemeProvider as MuiThemeProvider, CssBaseline, createTheme, StyledEngineProvider } from '@mui/material'
 import { FilterOptionsProvider } from './contexts/FilterOptionsContext'
 
@@ -12,12 +11,11 @@ import App from './App.tsx'
 
 const muiTheme = createTheme({
   typography: {
-    fontFamily: "'Inter', 'Segoe UI', 'Roboto', sans-serif",
+    fontFamily: "'Inter', 'Segoe UI', Arial, sans-serif",
   },
 });
 
 createRoot(document.getElementById('root')!).render(
-  <StrictMode>
     <BrowserRouter>
       <StyledEngineProvider injectFirst>
         <MuiThemeProvider theme={muiTheme}>
@@ -25,6 +23,23 @@ createRoot(document.getElementById('root')!).render(
           <SnackbarProvider
             maxSnack={3}
             anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+            autoHideDuration={3000}
+            action={(snackbarId) => (
+              <button
+                onClick={() => closeSnackbar(snackbarId)}
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  color: 'white',
+                  cursor: 'pointer',
+                  fontSize: '18px',
+                  padding: '4px 8px',
+                  lineHeight: 1,
+                }}
+              >
+                ✕
+              </button>
+            )}
           >
             <FilterOptionsProvider>
               <App />
@@ -33,5 +48,4 @@ createRoot(document.getElementById('root')!).render(
         </MuiThemeProvider>
       </StyledEngineProvider>
     </BrowserRouter>
-  </StrictMode>
 )

@@ -1,21 +1,25 @@
-﻿import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   Box, Card, Typography, Stack, Chip, Button,
   CircularProgress, Alert, Table, TableBody, TableCell,
   TableContainer, TableHead, TableRow,
+  Dialog, DialogTitle, DialogContent, DialogActions,
+  TextField, IconButton,
 } from '@mui/material';
 import {
   DateRange as CycleIcon,
-  FileUpload as UploadIcon,
   FileDownload as DownloadIcon,
+  Add as AddIcon,
+  Edit as EditIcon,
+  Close as CloseIcon,
 } from '@mui/icons-material';
-import { FigmaAddIcon as AddIcon } from '../../Common/FigmaIcons';
 import { useNavigate, useParams } from 'react-router-dom';
 import BackButton from '../../Common/BackButton';
 import { hiringCycleApi, hiringDemandApi } from '../../../services/hiring.api';
 import type { HiringCycleResponse } from '../../../types/TA_Recruiter/Hiring/hiringCycle.types';
 import type { HiringDemandResponse } from '../../../types/TA_Recruiter/Hiring/hiringDemand.types';
 import { showToast } from '../../../utils/toast';
+import type { AppError } from '../../../services/api.error';
 import '../../../css/TA_Recruiter/HiringCycle/HiringCycleDetails.css';
 
 const buLabelMap: Record<string, string> = {
@@ -34,7 +38,18 @@ const TARHiringCycleDetails = () => {
   const [demands, setDemands] = useState<HiringDemandResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [uploading, setUploading] = useState(false);
+
+  // Edit dialog state
+  const [editOpen, setEditOpen] = useState(false);
+  const [editSubmitting, setEditSubmitting] = useState(false);
+  const [editForm, setEditForm] = useState({
+    cycleName: '',
+    cycleYear: '',
+    compensationBand: '',
+    budget: '',
+    totalIntake: '',
+    jd: null as File | null,
+  });
 
   const load = async () => {
     try {
@@ -48,8 +63,9 @@ const TARHiringCycleDetails = () => {
       if (demandsRes.success && demandsRes.data) {
         setDemands(demandsRes.data.filter(d => d.approvalStatus === 'APPROVED'));
       }
-    } catch (err: any) {
-      setError(err.message || 'Failed to load cycle details.');
+    } catch (err: unknown) {
+      const error = err as AppError;
+      setError(error.message || 'Failed to load cycle details.');
     } finally {
       setLoading(false);
     }
@@ -69,23 +85,53 @@ const TARHiringCycleDetails = () => {
     } catch { showToast('Failed to download JD.', 'error'); }
   };
 
-  const handleUploadJd = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setUploading(true);
+  const handleEditOpen = () => {
+    if (!cycle) return;
+    setEditForm({
+      cycleName: cycle.cycleName,
+      cycleYear: String(cycle.cycleYear),
+      compensationBand: cycle.compensationBand ? String(cycle.compensationBand) : '',
+      budget: cycle.budget ? String(cycle.budget) : '',
+      totalIntake: cycle.totalIntake ? String(cycle.totalIntake) : '',
+      jd: null,
+    });
+    setEditOpen(true);
+  };
+
+  const handleEditClose = () => setEditOpen(false);
+
+  const handleEditChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setEditForm(prev => ({ ...prev, [e.target.name]: e.target.value }));
+  };
+
+  const handleEditJdChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0] ?? null;
+    setEditForm(prev => ({ ...prev, jd: file }));
+  };
+
+  const handleEditSubmit = async () => {
+    setEditSubmitting(true);
     try {
-      const res = await hiringCycleApi.updateCycle(id, { jd: file });
+      const res = await hiringCycleApi.updateCycle(id, {
+        cycleName: editForm.cycleName || undefined,
+        cycleYear: editForm.cycleYear ? Number(editForm.cycleYear) : undefined,
+        compensationBand: editForm.compensationBand ? Number(editForm.compensationBand) : undefined,
+        budget: editForm.budget ? Number(editForm.budget) : undefined,
+        totalIntake: editForm.totalIntake ? Number(editForm.totalIntake) : undefined,
+        jd: editForm.jd ?? undefined,
+      });
       if (res.success) {
-        showToast('JD uploaded successfully.', 'success');
+        showToast('Cycle updated successfully.', 'success');
+        setEditOpen(false);
         await load();
       } else {
-        showToast(res.message || 'Failed to upload JD.', 'error');
+        showToast(res.message || 'Failed to update cycle.', 'error');
       }
-    } catch (err: any) {
-      showToast(err.message || 'Failed to upload JD.', 'error');
+    } catch (err: unknown) {
+      const error = err as AppError;
+      showToast(error.message || 'Failed to update cycle.', 'error');
     } finally {
-      setUploading(false);
-      if (fileInputRef.current) fileInputRef.current.value = '';
+      setEditSubmitting(false);
     }
   };
 
@@ -137,22 +183,14 @@ const TARHiringCycleDetails = () => {
                   Download JD
                 </Button>
               )}
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept=".pdf"
-                style={{ display: 'none' }}
-                onChange={handleUploadJd}
-              />
               <Button
                 variant="contained"
                 size="small"
-                startIcon={<UploadIcon />}
+                startIcon={<EditIcon />}
                 className="t-btn-primary"
-                onClick={() => fileInputRef.current?.click()}
-                disabled={uploading}
+                onClick={handleEditOpen}
               >
-                {uploading ? 'Uploading...' : (cycle.hasJd ? 'Update JD' : 'Upload JD')}
+                Edit
               </Button>
             </Stack>
           )}
@@ -187,8 +225,12 @@ const TARHiringCycleDetails = () => {
               <Box className="t-info-field">
                 <Typography className="t-info-label">Budget</Typography>
                 <Typography className="t-info-value">
-                  {cycle.budget ? `â‚¹ ${cycle.budget.toLocaleString('en-IN')}` : 'â€”'}
+                  {cycle.budget ? `₹ ${cycle.budget.toLocaleString('en-IN')}` : '—'}
                 </Typography>
+              </Box>
+              <Box className="t-info-field">
+                <Typography className="t-info-label">Total Intake</Typography>
+                <Typography className="t-info-value">{cycle.totalIntake ?? '—'}</Typography>
               </Box>
               <Box className="t-info-field">
                 <Typography className="t-info-label">Total Approved Positions</Typography>
@@ -273,6 +315,93 @@ const TARHiringCycleDetails = () => {
           </Box>
         )}
       </Card>
+
+      {/* Edit Cycle Dialog */}
+      <Dialog open={editOpen} onClose={handleEditClose} maxWidth="sm" fullWidth classes={{ paper: 'tar-hcd-dialog' }}>
+        <DialogTitle className="tar-hcd-dialog-title" component="div">
+          <span>Edit Cycle Information</span>
+          <IconButton className="tar-hcd-dialog-close" onClick={handleEditClose} size="small">
+            <CloseIcon fontSize="small" />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent className="tar-hcd-dialog-content">
+          <TextField
+            label="Cycle Name"
+            name="cycleName"
+            value={editForm.cycleName}
+            onChange={handleEditChange}
+            fullWidth
+            size="small"
+            className="tar-hcd-field"
+          />
+          <TextField
+            label="Cycle Year"
+            name="cycleYear"
+            type="number"
+            value={editForm.cycleYear}
+            onChange={handleEditChange}
+            fullWidth
+            size="small"
+            className="tar-hcd-field"
+          />
+          <TextField
+            label="Compensation Band (₹)"
+            name="compensationBand"
+            type="number"
+            value={editForm.compensationBand}
+            onChange={handleEditChange}
+            fullWidth
+            size="small"
+            className="tar-hcd-field"
+          />
+          <TextField
+            label="Budget (₹)"
+            name="budget"
+            type="number"
+            value={editForm.budget}
+            onChange={handleEditChange}
+            fullWidth
+            size="small"
+            className="tar-hcd-field"
+          />
+          <TextField
+            label="Total Intake"
+            name="totalIntake"
+            type="number"
+            value={editForm.totalIntake}
+            onChange={handleEditChange}
+            fullWidth
+            size="small"
+            className="tar-hcd-field"
+          />
+          <Box className="tar-hcd-jd-upload">
+            <Typography className="tar-hcd-jd-label">Job Description (PDF)</Typography>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".pdf"
+              className="tar-hcd-jd-input"
+              onChange={handleEditJdChange}
+            />
+            {editForm.jd && (
+              <Typography className="tar-hcd-jd-name">{editForm.jd.name}</Typography>
+            )}
+          </Box>
+        </DialogContent>
+        <DialogActions className="tar-hcd-dialog-actions">
+          <Button variant="outlined" className="t-btn-outlined-primary" onClick={handleEditClose}>
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            className="t-btn-primary"
+            onClick={handleEditSubmit}
+            disabled={editSubmitting}
+          >
+            {editSubmitting ? 'Saving...' : 'Save Changes'}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };

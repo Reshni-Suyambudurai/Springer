@@ -15,6 +15,9 @@ import com.kanini.springer.entity.enums.Enums.AssignmentStatus;
  */
 @Entity
 @Table(name = "drivepanel_assignments",
+    uniqueConstraints = {
+        @UniqueConstraint(name = "uk_assignment_app_round_user", columnNames = {"application_id", "round_config_id", "user_id"})
+    },
     indexes = {
         @Index(name = "idx_assignment_drive_id", columnList = "drive_id"),
         @Index(name = "idx_assignment_application_id", columnList = "application_id"),

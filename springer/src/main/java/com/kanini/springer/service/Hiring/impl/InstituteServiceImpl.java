@@ -191,7 +191,7 @@ public class InstituteServiceImpl implements IInstituteService {
         
         List<InstituteResponse> responses = savedInstitutes.stream()
                 .map(mapper::toResponse)
-                .collect(Collectors.toList());
+                .toList();
         
         BulkInsertResponse<InstituteResponse> response = new BulkInsertResponse<>();
         response.setSuccessfulInserts(responses);
@@ -205,14 +205,15 @@ public class InstituteServiceImpl implements IInstituteService {
     @Override
     @Transactional(readOnly = true)
     public List<InstituteResponse> getAllInstitutes() {
-        return instituteRepository.findAll().stream()
+        return instituteRepository.findAllWithPrograms().stream()
                 .map(mapper::toResponse)
-                .collect(Collectors.toList());
+                .toList();
     }
     
     @Override
+    @Transactional(readOnly = true)
     public InstituteResponse getInstituteById(Long instituteId) {
-        Institute institute = instituteRepository.findById(instituteId)
+        Institute institute = instituteRepository.findByIdWithPrograms(instituteId)
                 .orElseThrow(() -> new ResourceNotFoundException("Institute", "ID", instituteId));
         return mapper.toResponse(institute);
     }
@@ -225,13 +226,12 @@ public class InstituteServiceImpl implements IInstituteService {
         
         // Partial update - only update fields that are provided
         if (request.getInstituteName() != null && !request.getInstituteName().isBlank()) {
-            // Check if new name already exists (excluding current institute)
-            instituteRepository.findByInstituteName(request.getInstituteName())
-                    .ifPresent(existingInstitute -> {
-                        if (!existingInstitute.getInstituteId().equals(instituteId)) {
-                            throw new ValidationException("Institute already exists with name: " + request.getInstituteName());
-                        }
-                    });
+            // Only check uniqueness if the name actually changed
+            if (!institute.getInstituteName().equalsIgnoreCase(request.getInstituteName())) {
+                if (instituteRepository.findByInstituteName(request.getInstituteName()).isPresent()) {
+                    throw new ValidationException("Institute already exists with name: " + request.getInstituteName());
+                }
+            }
             institute.setInstituteName(request.getInstituteName());
         }
         
@@ -318,6 +318,6 @@ public class InstituteServiceImpl implements IInstituteService {
                         institute.getInstituteId(),
                         institute.getInstituteName()
                 ))
-                .collect(Collectors.toList());
+                .toList();
     }
 }

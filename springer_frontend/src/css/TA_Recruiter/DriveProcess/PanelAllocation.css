@@ -1,4 +1,29 @@
-﻿/* ========== Container ========== */
+/* ========== Search Bar ========== */
+.pa-search-bar {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  margin-bottom: 12px;
+}
+
+.pa-search-input {
+  width: 320px;
+  max-width: 100%;
+  padding: 8px 14px;
+  border: 1.5px solid var(--color-border);
+  border-radius: 8px;
+  font-size: var(--text-sm);
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.2s;
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+}
+.pa-search-input:focus {
+  border-color: var(--color-primary);
+}
+/* ========== Container ========== */
 .pa-container {
   padding: 16px;
   background-color: var(--color-bg);
@@ -188,9 +213,11 @@
   flex: 1;
   overflow-y: auto;
   min-height: 0;
+  max-height: none;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 7px;
+margin-bottom: 68px;
 }
 
 .pa-scroll-area::-webkit-scrollbar { width: 6px; }
@@ -221,7 +248,7 @@
   min-height: 0;
 }
 
-/* ========== Cards Grid ΓÇö 2 per row ========== */
+/* ========== Cards Grid — 2 per row ========== */
 .pa-cards-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -252,13 +279,13 @@
   border-left: 3px solid var(--color-success) !important;
 }
 
-/* Already allocated (from backend) ΓÇö primary color left border */
+/* Already allocated (from backend) — primary color left border */
 .pa-card-allocated {
   border-left: 3px solid var(--color-primary) !important;
   background: var(--color-primary-hover-4) !important;
 }
 
-/* Evaluated ΓÇö locked, muted appearance */
+/* Evaluated — locked, muted appearance */
 .pa-card-evaluated {
   border-left: 3px solid var(--color-success) !important;
   background: var(--color-primary-hover-4) !important;
@@ -289,7 +316,7 @@
   white-space: nowrap;
 }
 
-/* Card Top ΓÇö index + name */
+/* Card Top — index + name */
 .pa-card-top {
   display: flex;
   align-items: center;
@@ -323,7 +350,7 @@
   text-overflow: ellipsis;
 }
 
-/* Card Bottom ΓÇö score + dropdown inline */
+/* Card Bottom — score + dropdown inline */
 .pa-card-bottom {
   display: flex;
   align-items: center;

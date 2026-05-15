@@ -1,0 +1,170 @@
+/* Public Candidate Registration Container */
+.public-reg-container {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+/* Others college name input wrapper */
+.public-reg-others-college-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  width: 100%;
+  grid-column: 1 / -1;
+}
+
+.public-reg-others-college-wrapper .public-reg-full-width {
+  width: 100%;
+  grid-column: unset;
+}
+
+/* Header Card */
+.public-reg-header-card {
+  width: 100%;
+  max-width: 800px;
+  padding: 2rem !important;
+  background: var(--color-white) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1) !important;
+}
+
+.public-reg-header-content {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+}
+
+.public-reg-header-logo {
+  height: 100%;
+  max-height: 60px;
+  width: auto;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.public-reg-header-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  flex: 1;
+}
+
+.public-reg-title {
+  font-weight: 700 !important;
+  color: var(--color-text-primary) !important;
+  margin: 0 !important;
+  line-height: 1.2 !important;
+}
+
+.public-reg-subtitle {
+  font-weight: 700 !important;
+  color: var(--color-primary) !important;
+  margin: 0 !important;
+  line-height: 1.2 !important;
+  letter-spacing: 1px;
+}
+
+.public-reg-drive-name {
+  color: var(--color-text-secondary) !important;
+  text-transform: capitalize;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--color-border);
+}
+
+/* Form Card */
+.public-reg-form-card {
+  width: 100%;
+  max-width: 800px;
+  background: var(--color-white) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1) !important;
+}
+
+.public-reg-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.5rem;
+}
+
+.public-reg-full-width {
+  grid-column: 1 / -1;
+}
+
+.public-reg-submit-container {
+  margin-top: 2rem;
+  display: flex;
+  justify-content: center;
+}
+
+.public-reg-submit-container button {
+  min-width: 200px;
+}
+
+/* Success Card */
+.public-reg-success-card {
+  width: 100%;
+  max-width: 600px;
+  padding: 3rem !important;
+  text-align: center;
+  background: var(--color-white) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1) !important;
+}
+
+.public-reg-success-title {
+  font-weight: 700 !important;
+  color: var(--color-success) !important;
+  margin-bottom: 1rem !important;
+}
+
+.public-reg-success-message {
+  color: var(--color-text-primary) !important;
+}
+
+/* Error State */
+.public-reg-error-title {
+  font-weight: 700 !important;
+  color: var(--color-error-delete) !important;
+  margin-bottom: 1rem !important;
+}
+
+.public-reg-error-message {
+  color: var(--color-text-primary) !important;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .public-reg-container {
+    padding: 1rem;
+  }
+
+  .public-reg-header-card {
+    padding: 1.5rem !important;
+  }
+
+  .public-reg-header-logo {
+    max-height: 48px;
+  }
+
+  .public-reg-title {
+    font-size: 1.25rem !important;
+  }
+
+  .public-reg-subtitle {
+    font-size: 1rem !important;
+  }
+
+  .public-reg-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .public-reg-header-card {
+    padding: 1.5rem !important;
+  }
+}
