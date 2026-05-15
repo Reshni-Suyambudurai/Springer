@@ -55,6 +55,7 @@ const COORDINATOR_TRAINING: AcademyTab[] = [
 const COORDINATOR_MANAGEMENT: AcademyTab[] = [
   { key: 'leaves',    label: 'Leave Requests', group: 'management' },
   { key: 'warnings',  label: 'Disciplinary',   group: 'management' },
+  { key: 'calendar',  label: 'Calendar',        group: 'management' },
 ];
 
 const RECRUITER_GROUPS: AcademyTabGroup[] = [
