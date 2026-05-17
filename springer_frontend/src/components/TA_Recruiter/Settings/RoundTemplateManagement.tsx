@@ -1,15 +1,12 @@
 import { useState, useEffect } from 'react';
 import {
-  Box, Card, Typography, Stack, Button, IconButton, CircularProgress,
-  Alert, Chip, TextField, Divider, Select, MenuItem, FormControl,
-  Dialog, DialogTitle, DialogContent, DialogActions,
+  Box, Card, Typography, Stack, IconButton, CircularProgress,
+  Alert, Chip, Select, MenuItem, FormControl,
+  Dialog,
 } from '@mui/material';
-import ViewListIcon from '@mui/icons-material/ViewList';
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
 import CloseIcon from '@mui/icons-material/Close';
-import BackButton from '../../Common/BackButton';
-import { useNavigate } from 'react-router-dom';
 import { roundTemplateApi } from '../../../services/drive.api';
 import { showToast } from '../../../utils/toast';
 import { tokenstore } from '../../../auth/tokenstore';
@@ -23,7 +20,6 @@ type Template = Omit<RoundTemplateResponse, 'sections'> & { sections: Section[] 
 const EMPTY_FORM = { roundNo: '', roundName: '', outoffScore: '', minScore: '', weightage: '' };
 
 const RoundTemplateManagement = () => {
-  const navigate = useNavigate();
   const { setAction } = useNavbarAction();
   const [loading, setLoading] = useState(true);
   const [templates, setTemplates] = useState<Template[]>([]);

@@ -69,11 +69,11 @@ const AcademyCalendar: React.FC<{ context?: AcademyContextProps }> = ({ context 
 
   const programYear = context?.programYear ?? currentYear;
   const yearPrograms = context?.programs ?? standalonePrograms.filter(p => p.programYear === programYear);
-  const yearOptions = Array.from({ length: 4 }, (_, i) => currentYear - i);
+  // const yearOptions = Array.from({ length: 4 }, (_, i) => currentYear - i);
 
   const [loading, setLoading]             = useState(true);
   const [currentDate, setCurrentDate]     = useState(new Date());
-  const [selectedYear, setSelectedYear]   = useState(currentYear);
+  // const [selectedYear, setSelectedYear] = useState(currentYear);
   const [schedules, setSchedules]         = useState<BatchScheduleResponse[]>([]);
   const [batchCourses, setBatchCourses]   = useState<BatchCourseResponse[]>([]);
   const [attMap, setAttMap]               = useState<Record<string, DayAtt>>({});
@@ -197,7 +197,7 @@ const AcademyCalendar: React.FC<{ context?: AcademyContextProps }> = ({ context 
   const prevMonth = () => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1));
   const nextMonth = () => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1));
   const goToday   = () => setCurrentDate(new Date());
-  const changeYear = (year: number) => { setSelectedYear(year); setCurrentDate(new Date(year, currentDate.getMonth(), 1)); };
+  // const changeYear = (year: number) => { setSelectedYear(year); setCurrentDate(new Date(year, currentDate.getMonth(), 1)); };
 
   // ── Scoped data ───────────────────────────────────────────────────────────
   const scopedPrograms = yearPrograms.filter(p =>

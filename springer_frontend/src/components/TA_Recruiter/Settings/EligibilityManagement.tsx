@@ -1,14 +1,11 @@
 import { useState, useEffect } from 'react';
 import {
-  Box, Card, Typography, Stack, Button, CircularProgress,
+  Box, Card, Typography, Button, CircularProgress,
   Alert, Chip, TextField, Checkbox, FormControlLabel, FormHelperText,
 } from '@mui/material';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import EditIcon from '@mui/icons-material/Edit';
 import SaveIcon from '@mui/icons-material/Save';
 import CancelIcon from '@mui/icons-material/Cancel';
-import BackButton from '../../Common/BackButton';
-import { useNavigate } from 'react-router-dom';
 import { candidateApi } from '../../../services/drive.api';
 import { showToast } from '../../../utils/toast';
 import { syncEligibilityFiltersToSession } from '../../../utils/eligibilityFilterSync';
@@ -25,7 +22,6 @@ const FIELD_LABELS: Record<string, string> = {
 };
 
 const EligibilityManagement = () => {
-  const navigate = useNavigate();
   const { setAction } = useNavbarAction();
   const [loading, setLoading] = useState(true);
   const [editMode, setEditMode] = useState(false);

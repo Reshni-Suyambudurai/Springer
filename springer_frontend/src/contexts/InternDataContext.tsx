@@ -1,4 +1,5 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect } from 'react';
+import type { ReactNode } from 'react';
 import { tokenstore } from '../auth/tokenstore';
 import { internApi } from '../services/intern.api';
 import { showToast } from '../utils/toast';

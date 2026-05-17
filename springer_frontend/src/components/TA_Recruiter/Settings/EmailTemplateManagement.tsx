@@ -4,13 +4,10 @@ import {
   CircularProgress, Alert, Dialog, DialogTitle,
   DialogContent, DialogActions, FormControl, InputLabel, Select, MenuItem,
 } from '@mui/material';
-import EmailIcon from '@mui/icons-material/Email';
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import CloseIcon from '@mui/icons-material/Close';
-import BackButton from '../../Common/BackButton';
-import { useNavigate } from 'react-router-dom';
 import Quill from 'quill';
 import 'quill/dist/quill.snow.css';
 import { emailTemplateApi } from '../../../services/emailtemplate.api';
@@ -57,7 +54,6 @@ const QUILL_TOOLBAR = [
 ];
 
 const EmailTemplateManagement = () => {
-  const navigate = useNavigate();
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);

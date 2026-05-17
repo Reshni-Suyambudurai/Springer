@@ -48,4 +48,24 @@ export const emailTemplateApi = {
       throw handleAxiosError(error);
     }
   },
+
+  async getEmailTemplatesByIds(ids: number[]): Promise<ApiResponse<EmailTemplateResponse[]>> {
+    try {
+      const response = await http.post('/email-templates/by-ids', ids);
+      return response.data;
+    } catch (error) {
+      throw handleAxiosError(error);
+    }
+  },
+
+  async sendBulkEmail(formData: FormData): Promise<ApiResponse<{ successCount: number; skippedCount: number }>> {
+    try {
+      const response = await http.post('/email-templates/send-bulk', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      return response.data;
+    } catch (error) {
+      throw handleAxiosError(error);
+    }
+  },
 };
