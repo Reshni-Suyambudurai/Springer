@@ -24,7 +24,10 @@ public class WebSocketConfig implements WebSocketConfigurer {
                     "http://localhost:5176",
                     "http://localhost:5177",
                     "http://localhost:3000",
-                    "http://localhost:4200"
+                    "http://localhost:4200",
+                    "https://springer-backend-production.up.railway.app",
+                    "https://springer-frontend.vercel.app",
+                    "https://ka25-springer.vercel.app"
                 );
     }
 }
