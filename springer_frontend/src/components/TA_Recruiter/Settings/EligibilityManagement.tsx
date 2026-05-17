@@ -4,9 +4,9 @@ import {
   Alert, Chip, TextField, Checkbox, FormControlLabel, FormHelperText,
 } from '@mui/material';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import EditIcon from '@mui/icons-material/Edit';
 import SaveIcon from '@mui/icons-material/Save';
 import CancelIcon from '@mui/icons-material/Cancel';
-import { FigmaEditIcon as EditIcon } from '../../Common/FigmaIcons';
 import BackButton from '../../Common/BackButton';
 import { useNavigate } from 'react-router-dom';
 import { candidateApi } from '../../../services/drive.api';
@@ -14,6 +14,7 @@ import { showToast } from '../../../utils/toast';
 import { syncEligibilityFiltersToSession } from '../../../utils/eligibilityFilterSync';
 import { Degree, Department } from '../../../types/TA_Recruiter/Drive/candidate.types';
 import type { EligibilityRuleDTO, EligibilityRuleUpdateRequest } from '../../../types/TA_Recruiter/Drive/eligibility.types';
+import { useNavbarAction } from '../../../contexts/NavbarActionContext';
 import '../../../css/TA_Recruiter/Settings/EligibilityManagement.css';
 
 const DEGREE_OPTIONS = Object.values(Degree);
@@ -25,6 +26,7 @@ const FIELD_LABELS: Record<string, string> = {
 
 const EligibilityManagement = () => {
   const navigate = useNavigate();
+  const { setAction } = useNavbarAction();
   const [loading, setLoading] = useState(true);
   const [editMode, setEditMode] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -33,6 +35,20 @@ const EligibilityManagement = () => {
   const [errors, setErrors] = useState<Record<number, string>>({});
 
   useEffect(() => { fetchRules(); }, []);
+
+  // Register Edit Values button in navbar
+  useEffect(() => {
+    if (!editMode) {
+      setAction({
+        label: 'Edit Values',
+        onClick: () => setEditMode(true),
+        icon: <EditIcon style={{ fontSize: 16 }} />,
+      });
+    } else {
+      setAction(null);
+    }
+    return () => setAction(null);
+  }, [editMode]);
 
   const fetchRules = async () => {
     try {
@@ -185,43 +201,8 @@ const EligibilityManagement = () => {
   };
 
   return (
-    <Box className="t-page">
-      <Card className="t-card">
-
-        {/* Header */}
-        <Box className="t-header">
-          <Stack direction="row" alignItems="center" gap={1.5}>
-            <BackButton onClick={() => navigate('/ta-recruiter/settings')} variant="header" />
-            <Box className="t-icon-box">
-              <CheckCircleIcon sx={{ fontSize: 20, color: 'var(--color-primary)' }} />
-            </Box>
-            <Stack gap="2px">
-              <Typography className="t-page-title">Eligibility Management</Typography>
-              <Typography className="t-page-subtitle">Configure candidate eligibility criteria</Typography>
-            </Stack>
-          </Stack>
-          {/* Edit Values button — t-header is already space-between */}
-          {!editMode ? (
-            <Button variant="contained" startIcon={<EditIcon />} onClick={() => setEditMode(true)}
-              className="t-btn-primary"
-              sx={{ backgroundColor: 'var(--color-primary)', '&:hover': { backgroundColor: 'var(--color-primary-dark)' } }}>
-              Edit Values
-            </Button>
-          ) : (
-            <Stack direction="row" gap={1.5}>
-              <Button variant="outlined" startIcon={<CancelIcon />}
-                onClick={() => { if (original) setRules(original.rules || []); setErrors({}); setEditMode(false); }}
-                disabled={saving} className="t-btn-secondary">Cancel</Button>
-              <Button variant="contained" startIcon={<SaveIcon />} onClick={handleSave} disabled={saving}
-                className="t-btn-success"
-                sx={{ backgroundColor: 'var(--color-success-dark)', '&:hover': { backgroundColor: 'var(--color-success-dark)' } }}>
-                {saving ? 'Saving...' : 'Save Changes'}
-              </Button>
-            </Stack>
-          )}
-        </Box>
-
-        <Box className="t-separator" />
+    <Box className="t-page settings-page-override">
+      <Card className="t-card settings-card-override">
 
         {/* Body */}
         <Box className="t-body">
@@ -233,30 +214,76 @@ const EligibilityManagement = () => {
           ) : rules.length === 0 ? (
             <Alert severity="info">No eligibility rules configured.</Alert>
           ) : (
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: '1px' }}>
-              <Box sx={{ display: 'grid', gridTemplateColumns: '160px 120px 1fr', background: 'var(--color-bg-table-header)', borderRadius: '10px 10px 0 0', border: '1px solid var(--color-border-card)' }}>
-                <Typography className="t-head-cell" sx={{ padding: '10px 16px' }}>Field</Typography>
-                <Typography className="t-head-cell" sx={{ padding: '10px 16px' }}>Operator</Typography>
-                <Typography className="t-head-cell" sx={{ padding: '10px 16px' }}>Value</Typography>
+            <Box className="eligibility-table-wrap">
+              <Box className="eligibility-table-header">
+                <Typography className="eligibility-table-header-cell t-head-cell">Field</Typography>
+                <Typography className="eligibility-table-header-cell t-head-cell">Operator</Typography>
+                <Typography className="eligibility-table-header-cell t-head-cell">Value</Typography>
               </Box>
-              {rules.map((rule, index) => (
-                <Box key={index} sx={{
-                  display: 'grid', gridTemplateColumns: '160px 120px 1fr',
-                  border: '1px solid var(--color-border-card)', borderTop: 'none',
-                  background: 'var(--color-surface)',
-                  '&:last-child': { borderRadius: '0 0 10px 10px' }
-                }}>
-                  <Box sx={{ padding: '14px 16px', borderRight: '1px solid var(--color-border-table)' }}>
-                    <Typography className="eligibility-field-text">{FIELD_LABELS[rule.field] || rule.field}</Typography>
+              {rules.map((rule, index) => {
+                const isExpandedIN = editMode && rule.operator === 'IN';
+                return isExpandedIN ? (
+                  <Box key={index} className="eligibility-table-row--expanded">
+                    <Box className="eligibility-table-row-top">
+                      <Box className="eligibility-table-cell">
+                        <Typography className="eligibility-field-text">{FIELD_LABELS[rule.field] || rule.field}</Typography>
+                      </Box>
+                      <Box className="eligibility-table-cell">
+                        <Typography className="eligibility-operator-text">{rule.operator}</Typography>
+                      </Box>
+                      <Box className="eligibility-table-cell">
+                        <Box className="eligibility-select-all-row">
+                          <Button size="small" variant="outlined" className="t-btn-small"
+                            onClick={() => handleChange(index, 'allowedValues', rule.field === 'degree' ? DEGREE_OPTIONS : DEPARTMENT_OPTIONS)}>Select All</Button>
+                          <Button size="small" variant="outlined" className="t-btn-small"
+                            onClick={() => handleChange(index, 'allowedValues', [])}>Clear</Button>
+                          <Typography className="eligibility-between-text">
+                            {rule.allowedValues?.length || 0} selected
+                          </Typography>
+                        </Box>
+                      </Box>
+                    </Box>
+                    <Box className="eligibility-checkbox-expanded">
+                      <Box className="eligibility-checkbox-grid">
+                        {(rule.field === 'degree' ? DEGREE_OPTIONS : DEPARTMENT_OPTIONS).map((opt) => (
+                          <FormControlLabel key={opt} label={<Typography fontSize="var(--text-xs)">{opt}</Typography>}
+                            control={<Checkbox size="small" checked={rule.allowedValues?.includes(opt) || false}
+                              onChange={(e) => {
+                                const cur = rule.allowedValues || [];
+                                handleChange(index, 'allowedValues', e.target.checked ? [...cur, opt] : cur.filter(v => v !== opt));
+                              }} />} />
+                        ))}
+                      </Box>
+                      {errors[index] && <FormHelperText error>{errors[index]}</FormHelperText>}
+                    </Box>
                   </Box>
-                  <Box sx={{ padding: '14px 16px', borderRight: '1px solid var(--color-border-table)' }}>
-                    <Typography className="eligibility-operator-text">{rule.operator}</Typography>
+                ) : (
+                  <Box key={index} className="eligibility-table-row">
+                    <Box className="eligibility-table-cell">
+                      <Typography className="eligibility-field-text">{FIELD_LABELS[rule.field] || rule.field}</Typography>
+                    </Box>
+                    <Box className="eligibility-table-cell">
+                      <Typography className="eligibility-operator-text">{rule.operator}</Typography>
+                    </Box>
+                    <Box className="eligibility-table-cell">
+                      {renderValue(rule, index)}
+                    </Box>
                   </Box>
-                  <Box sx={{ padding: '14px 16px' }}>
-                    {renderValue(rule, index)}
-                  </Box>
-                </Box>
-              ))}
+                );
+              })}
+            </Box>
+          )}
+          {/* Save/Cancel buttons when in edit mode */}
+          {editMode && (
+            <Box className="eligibility-edit-actions">
+              <Button variant="outlined" startIcon={<CancelIcon />}
+                onClick={() => { if (original) setRules(original.rules || []); setErrors({}); setEditMode(false); }}
+                disabled={saving} className="t-btn-secondary">Cancel</Button>
+              <Button variant="contained" startIcon={<SaveIcon />} onClick={handleSave} disabled={saving}
+                className="t-btn-success"
+                sx={{ backgroundColor: 'var(--color-success-dark)', '&:hover': { backgroundColor: 'var(--color-success-dark)' } }}>
+                {saving ? 'Saving...' : 'Save Changes'}
+              </Button>
             </Box>
           )}
         </Box>

@@ -12,6 +12,7 @@ import {
   Chip,
 } from "@mui/material";
 import EventIcon from "@mui/icons-material/Event";
+import CloseIcon from "@mui/icons-material/Close";
 import { driveScheduleApi, applicationApi } from "../../../services/driveschedule.api";
 import type { UpcomingDriveSummaryResponse } from "../../../types/TA_Recruiter/DriveSchedule/driveSchedule.types";
 import { showToast } from "../../../utils/toast";
@@ -194,12 +195,24 @@ const ScheduleDrive: React.FC<ScheduleDriveProps> = ({
         open={showConfirmDialog}
         onClose={handleCloseDialog}
         className="schedule-drive-dialog"
+        maxWidth={false}
+        PaperProps={{ className: "schedule-drive-dialog-paper" }}
       >
         <DialogTitle className="schedule-drive-dialog-title">
-          Confirm Schedule
+          <Box className="schedule-drive-header-row">
+            <Box>
+              <Typography className="schedule-drive-title-text">Confirm Schedule</Typography>
+              <Typography className="schedule-drive-subtitle-text">
+                Confirm candidate scheduling details before proceeding.
+              </Typography>
+            </Box>
+            <IconButton size="small" onClick={handleCloseDialog}>
+              <CloseIcon fontSize="small" />
+            </IconButton>
+          </Box>
         </DialogTitle>
         <DialogContent className="schedule-drive-dialog-content">
-          <Typography>
+          <Typography className="schedule-drive-primary-text">
             Are you sure you want to schedule the selected candidates to{" "}
             <strong>{selectedDrive?.driveName}</strong>?
           </Typography>
@@ -207,25 +220,23 @@ const ScheduleDrive: React.FC<ScheduleDriveProps> = ({
             {selectMode ? selectedCount : totalElements} candidate(s) will be scheduled.
           </Typography>
 
-          {/* Drive date display */}
-          {selectedDrive?.startDate && (
-            <Box className="schedule-drive-date-row">
-              <Typography className="schedule-drive-field-label">Drive Date</Typography>
-              <Typography className="schedule-drive-field-value">
-                {new Date(selectedDrive.startDate).toLocaleDateString("en-IN", {
-                  day: "2-digit", month: "short", year: "numeric",
-                })}
-              </Typography>
-            </Box>
-          )}
+          <Box className="schedule-drive-form">
+            {selectedDrive?.startDate && (
+              <Box className="schedule-drive-field-block">
+                <Typography className="schedule-drive-field-label">Drive Date</Typography>
+                <Box className="schedule-drive-readonly-value">
+                  {new Date(selectedDrive.startDate).toLocaleDateString("en-IN", {
+                    day: "2-digit", month: "short", year: "numeric",
+                  })}
+                </Box>
+              </Box>
+            )}
 
-          {/* Batch time picker */}
-          <Box className="schedule-drive-time-row">
-            <Typography className={`schedule-drive-field-label${batchTimeError ? " schedule-drive-field-label--error" : ""}`}>
-              Batch Time <span className="schedule-drive-required">*</span>
-            </Typography>
-            <Box className="schedule-drive-time-input-wrap">
-              {/* Existing batch times as selectable chips */}
+            <Box className="schedule-drive-field-block">
+              <Typography className={`schedule-drive-field-label${batchTimeError ? " schedule-drive-field-label--error" : ""}`}>
+                Batch Time <span className="schedule-drive-required">*</span>
+              </Typography>
+
               {selectedDrive?.applicationsPerBatchTime &&
                 Object.keys(selectedDrive.applicationsPerBatchTime).length > 0 && (
                   <Box className="schedule-drive-batch-chips">
@@ -249,16 +260,19 @@ const ScheduleDrive: React.FC<ScheduleDriveProps> = ({
                     )}
                   </Box>
                 )}
-              <input
-                type="time"
-                value={batchTimeInput}
-                onChange={(e) => { setBatchTimeInput(e.target.value); setBatchTimeError(false); }}
-                className={`schedule-drive-time-input${batchTimeError ? " schedule-drive-time-input--error" : ""}`}
-                disabled={scheduling}
-              />
-              {batchTimeError && (
-                <Typography className="schedule-drive-time-error">Batch time is required</Typography>
-              )}
+
+              <Box className="schedule-drive-time-input-wrap">
+                <input
+                  type="time"
+                  value={batchTimeInput}
+                  onChange={(e) => { setBatchTimeInput(e.target.value); setBatchTimeError(false); }}
+                  className={`schedule-drive-time-input${batchTimeError ? " schedule-drive-time-input--error" : ""}`}
+                  disabled={scheduling}
+                />
+                {batchTimeError && (
+                  <Typography className="schedule-drive-time-error">Batch time is required</Typography>
+                )}
+              </Box>
             </Box>
           </Box>
         </DialogContent>

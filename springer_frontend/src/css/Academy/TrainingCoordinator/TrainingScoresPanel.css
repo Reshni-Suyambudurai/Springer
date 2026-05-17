@@ -124,6 +124,8 @@
   flex: 1;
   overflow: auto !important;
   min-height: 0;
+  border: 0.8px solid var(--color-inactive-border);
+  border-radius: 10px;
   scrollbar-width: thin;
   scrollbar-color: var(--color-grey-350) var(--color-grey-150);
 }
@@ -132,36 +134,39 @@
 .sc-table-container::-webkit-scrollbar-thumb { background: var(--color-grey-350); border-radius: 4px; }
 .sc-table-container::-webkit-scrollbar-thumb:hover { background: var(--color-grey-500); }
 
-.sc-table-head-row { background-color: var(--color-bg-table-header); height: 48px; }
+.sc-table-head-row { background-color: var(--color-inactive-bg); height: 48px; }
 
 .sc-table-head-cell {
-  font-size: var(--text-xs) !important;
-  font-weight: 700 !important;
-  color: var(--color-grey-600) !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  color: var(--color-chip-count-text) !important;
   text-transform: uppercase !important;
-  letter-spacing: 0.75px !important;
-  background-color: var(--color-bg-table-header) !important;
+  letter-spacing: 0.6px !important;
+  background-color: var(--color-inactive-bg) !important;
   padding: 8px 16px !important;
-  border-bottom-color: var(--color-border-table) !important;
+  border-bottom: 0.8px solid var(--color-inactive-border) !important;
+  font-family: 'Inter', sans-serif !important;
 }
 
-.sc-table-row { height: 64px; transition: all 0.15s ease; }
+.sc-table-row { height: 64px; transition: background-color 0.15s ease; }
 .sc-table-row--even { background-color: var(--color-surface); }
-.sc-table-row--odd  { background-color: var(--color-surface-alt); }
-.sc-table-row td { border-bottom: 1px solid var(--color-border-table); }
-.sc-table-row:hover { background-color: var(--color-hover-bg) !important; }
+.sc-table-row--odd  { background-color: var(--color-surface); }
+.sc-table-row td { border-bottom: 0.8px solid var(--color-border-subtle); }
+.sc-table-row:hover { background-color: var(--color-inactive-bg) !important; }
 
 .sc-table-cell { padding: 12px 16px !important; vertical-align: middle !important; }
 
 .sc-row-primary {
-  font-size: var(--text-sm) !important;
-  font-weight: 700 !important;
+  font-size: 16px !important;
+  font-weight: 500 !important;
   color: var(--color-text-primary) !important;
-  line-height: 1.4 !important;
+  line-height: 24px !important;
+  font-family: 'Inter', sans-serif !important;
 }
 
 .sc-row-secondary {
-  font-size: var(--text-xs) !important;
+  font-size: var(--text-sm) !important;
+  font-weight: 400 !important;
   color: var(--color-text-secondary) !important;
 }
 

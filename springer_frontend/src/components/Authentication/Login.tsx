@@ -123,22 +123,30 @@ const Login: React.FC = () => {
 
   return (
     <div className="login-page">
-      <div className="login-overlay-card">
-        {/* Left: Form */}
-        <div className="login-left">
+      {/* Left: Image */}
+      <div className="login-left-image" aria-hidden="true" />
+
+      {/* Right: Form */}
+      <div className="login-right-form">
+        <div className="login-form-wrapper">
           <Box className="login-brand">
-            <Typography variant="h4" className="login-title" textAlign="center">
-              Welcome back
+            <div className="login-logo">
+              <img src="/Image (Springer).png" alt="Springer" className="login-logo-img" />
+              <span className="login-logo-text">SPRINGER</span>
+            </div>
+            <Typography variant="h5" className="login-title">
+              Welcome Back
             </Typography>
-            <Typography variant="body2" className="login-subtitle" textAlign="center">
-              Login to S-TEMS
+            <Typography variant="body2" className="login-subtitle">
+              Sign in to access the Hiring Portal
             </Typography>
           </Box>
 
           <Box component="form" onSubmit={handleSubmit} className="login-form" noValidate>
             <div>
+              <label className="login-label">Email Address</label>
               <TextField
-                label="Email"
+                placeholder="Enter your email"
                 name="email"
                 type="email"
                 value={formData.email}
@@ -148,6 +156,7 @@ const Login: React.FC = () => {
                 fullWidth
                 className="login-field"
                 error={!!emailError}
+                size="small"
               />
               <Typography 
                 variant="caption" 
@@ -159,8 +168,9 @@ const Login: React.FC = () => {
             </div>
 
             <div>
+              <label className="login-label">Password</label>
               <TextField
-                label="Password"
+                placeholder="Enter your password"
                 name="password"
                 type={showPassword ? "text" : "password"}
                 value={formData.password}
@@ -170,6 +180,7 @@ const Login: React.FC = () => {
                 fullWidth
                 className="login-field"
                 error={!!passwordError}
+                size="small"
                 slotProps={{
                   input: {
                     endAdornment: (
@@ -208,6 +219,28 @@ const Login: React.FC = () => {
               </Typography>
             </div>
 
+            <div className="login-options">
+              <label className="login-remember">
+                <input type="checkbox" className="login-checkbox" />
+                <span>Remember me</span>
+              </label>
+              <button type="button" className="login-forgot" onClick={() => {}}>
+                Forgot Password?
+              </button>
+            </div>
+
+            {/* Error message */}
+            {error && (
+              <Alert
+                className="login-error"
+                variant="outlined"
+                severity="error"
+                onClose={() => setError("")}
+              >
+                {error}
+              </Alert>
+            )}
+
             <Button
               type="submit"
               variant="contained"
@@ -218,35 +251,18 @@ const Login: React.FC = () => {
               {loading ? (
                 <span className="login-btn-loading">
                   <CircularProgress size={18} className="login-spinner" />
-                  Logging in...
+                  Signing in...
                 </span>
               ) : (
-                "Login"
+                "Sign In"
               )}
             </Button>
-
-            <Typography className="login-footer" variant="caption">
-              Talent Enablement Management System
-            </Typography>
-
-            {/* Error message slot - always rendered to prevent layout shift */}
-            <div className="login-error-slot">
-              {error && (
-                <Alert
-                  className="login-error"
-                  variant="outlined"
-                  severity="error"
-                  onClose={() => setError("")}
-                >
-                  {error}
-                </Alert>
-              )}
-            </div>
           </Box>
         </div>
 
-        {/* Right: Image */}
-        <div className="login-right" aria-hidden="true" />
+        <Typography className="login-copyright" variant="caption">
+          © 2026 Springer. All rights reserved.
+        </Typography>
       </div>
     </div>
   );

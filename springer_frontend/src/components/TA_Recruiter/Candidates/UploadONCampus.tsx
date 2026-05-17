@@ -8,7 +8,8 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import DownloadIcon from "@mui/icons-material/Download";
+import FileUploadOutlinedIcon from "@mui/icons-material/FileUploadOutlined";
+import FileDownloadOutlinedIcon from "@mui/icons-material/FileDownloadOutlined";
 import UploadIcon from "@mui/icons-material/Upload";
 import { instituteApi } from "../../../services/hiring.api";
 import type { InstituteResponse } from "../../../types/TA_Recruiter/Hiring/institute.types";
@@ -35,6 +36,7 @@ const UploadONCampus: React.FC<UploadONCampusProps> = ({
   cycleName,
   driveId,
   driveName,
+  instituteName,
 }) => {
   const [institutes, setInstitutes] = useState<InstituteResponse[]>([]);
   const [selectedInstitute, setSelectedInstitute] = useState<InstituteResponse | null>(null);
@@ -47,13 +49,21 @@ const UploadONCampus: React.FC<UploadONCampusProps> = ({
         const response = await instituteApi.getAllInstitutes();
         if (response.data) {
           setInstitutes(response.data);
+          if (instituteName) {
+            const matchedInstitute = response.data.find(
+              (institute) => institute.instituteName === instituteName
+            );
+            if (matchedInstitute) {
+              setSelectedInstitute(matchedInstitute);
+            }
+          }
         }
       } catch (error) {
         console.error("Error fetching institutes:", error);
       }
     };
     fetchInstitutes();
-  }, []);
+  }, [instituteName]);
 
   const handleDownloadTemplate = () => {
     const link = document.createElement("a");
@@ -102,38 +112,55 @@ const UploadONCampus: React.FC<UploadONCampusProps> = ({
 
   return (
     <Box className="oncampus-wrapper">
-      {/* Institute selector + Download Template row */}
+      {/* Drive/Institute meta + controls row */}
       <Box className="oncampus-top-row">
-        <Autocomplete
-          className="oncampus-institute-dropdown"
-          options={institutes}
-          getOptionLabel={(option) => option.instituteName}
-          value={selectedInstitute}
-          onChange={(_, newValue) => {
-            setSelectedInstitute(newValue);
-            bulk.resetBulkState();
-          }}
-          renderInput={(params) => (
-            <TextField {...params} label="Institute" placeholder="Search institute..." size="small" />
+        <Box className="oncampus-meta-row">
+          {(cycleName || cycleYear) && (
+            <Typography className="oncampus-meta-chip">
+              {cycleName ? `${cycleName}${cycleYear ? ` - ${cycleYear}` : ""}` : cycleYear}
+            </Typography>
           )}
-        />
-        <Button
-          variant="outlined"
-          startIcon={<DownloadIcon />}
-          onClick={handleDownloadTemplate}
-          className="oncampus-download-btn t-btn-small"
-        >
-          Download On-Campus Template
-        </Button>
+
+          {driveName && <Typography className="oncampus-meta-chip">{driveName}</Typography>}
+          <Typography className="oncampus-meta-chip">
+            {selectedInstitute?.instituteName || instituteName || "Select Institute"}
+          </Typography>
+        </Box>
+
+        <Box className="oncampus-controls-row">
+          <Autocomplete
+            className="oncampus-institute-dropdown"
+            options={institutes}
+            getOptionLabel={(option) => option.instituteName}
+            value={selectedInstitute}
+            onChange={(_, newValue) => {
+              setSelectedInstitute(newValue);
+              bulk.resetBulkState();
+            }}
+            renderInput={(params) => (
+              <TextField {...params} label="Institute" placeholder="Search institute..." size="small" />
+            )}
+          />
+          <Button
+            variant="outlined"
+            startIcon={<FileDownloadOutlinedIcon />}
+            onClick={handleDownloadTemplate}
+            className="oncampus-download-btn t-btn-small"
+          >
+            Download On-Campus Template
+          </Button>
+        </Box>
       </Box>
 
       {/* Upload zone - shown only when institute is selected and no data loaded */}
       {selectedInstitute && bulk.bulkData.length === 0 && (
-        <Card className="add-candidates-upload-zone">
+        <Card className="add-candidates-upload-zone oncampus-upload-zone">
           <CardContent className="upload-zone-content">
-            <UploadIcon className="upload-zone-icon" />
+            <Box className="upload-zone-icon-shell">
+              <FileUploadOutlinedIcon className="upload-zone-icon" />
+            </Box>
             <Typography variant="h6" className="upload-zone-title">
-              Upload On-Campus Candidates
+              Upload Candidates
             </Typography>
             <Typography variant="body2" className="upload-zone-subtitle">
               {driveName
@@ -149,6 +176,29 @@ const UploadONCampus: React.FC<UploadONCampusProps> = ({
               Upload File
               <input type="file" hidden accept=".xlsx,.xls" onChange={handleFileUpload} />
             </Button>
+            <Typography className="upload-zone-formats">
+              Supported formats: .xlsx, .xls, .csv
+            </Typography>
+          </CardContent>
+        </Card>
+      )}
+
+      {selectedInstitute && bulk.bulkData.length === 0 && (
+        <Card className="oncampus-instructions-card">
+          <CardContent>
+            <Typography className="oncampus-instructions-title">Instructions:</Typography>
+            <Typography className="oncampus-instructions-text">
+              Download the template using the "Download On-Campus Template" button
+            </Typography>
+            <Typography className="oncampus-instructions-text">
+              Fill in candidate details in the template
+            </Typography>
+            <Typography className="oncampus-instructions-text">
+              Upload the completed file using the "Upload File" button
+            </Typography>
+            <Typography className="oncampus-instructions-text">
+              Ensure all required fields are filled correctly
+            </Typography>
           </CardContent>
         </Card>
       )}

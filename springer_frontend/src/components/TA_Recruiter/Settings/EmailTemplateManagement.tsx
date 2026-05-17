@@ -286,21 +286,10 @@ const EmailTemplateManagement = () => {
   };
 
   return (
-    <Box className="t-page">
-      <Card className="t-card">
-        {/* Header */}
+    <Box className="t-page settings-page-override">
+      <Card className="t-card settings-card-override">
+        {/* Action Buttons */}
         <Box className="t-header">
-          <Stack direction="row" alignItems="center" className="et-header-icon-stack">
-            <BackButton onClick={() => navigate('/ta-recruiter/settings')} variant="header" />
-            <Box className="t-icon-box">
-              <EmailIcon className="email-template-header-icon" />
-            </Box>
-            <Stack className="et-title-stack">
-              <Typography className="t-page-title">Email Template Management</Typography>
-              <Typography className="t-page-subtitle">Manage email templates for candidate communication</Typography>
-            </Stack>
-          </Stack>
-
           <Button
             variant="contained"
             startIcon={<AddIcon />}

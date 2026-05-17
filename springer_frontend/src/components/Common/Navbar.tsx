@@ -1,7 +1,8 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import { tokenstore } from '../../auth/tokenstore';
 import { notificationApi } from '../../services/notification.api';
+import { useNavbarAction } from '../../contexts/NavbarActionContext';
 import type { NotificationResponse } from '../../types/notification.types';
 import '../../css/Common/Navbar.css';
 
@@ -15,6 +16,14 @@ const PAGE_TITLES: Record<string, { title: string; subtitle: string }> = {
   '/ta-recruiter/documents': { title: 'Document Processing', subtitle: 'Manage candidate documents and offers' },
   '/ta-recruiter/academy': { title: 'Academy', subtitle: 'Manage training programs, courses, and intern progress' },
   '/ta-recruiter/settings': { title: 'Manage', subtitle: 'Settings and configurations' },
+  '/ta-recruiter/settings/skills': { title: 'Skills Management', subtitle: 'Manage technical and soft skills' },
+  '/ta-recruiter/settings/eligibility': { title: 'Eligibility Management', subtitle: 'Define and configure candidate eligibility criteria' },
+  '/ta-recruiter/settings/round-templates': { title: 'Round Template Management', subtitle: 'Create and manage interview round templates' },
+  '/ta-recruiter/settings/email-templates': { title: 'Email Template Management', subtitle: 'Manage email templates for candidate communication' },
+  '/ta-head/settings/skills': { title: 'Skills Management', subtitle: 'Manage technical and soft skills' },
+  '/ta-head/settings/eligibility': { title: 'Eligibility Management', subtitle: 'Define and configure candidate eligibility criteria' },
+  '/ta-head/settings/round-templates': { title: 'Round Template Management', subtitle: 'Create and manage interview round templates' },
+  '/ta-head/settings/email-templates': { title: 'Email Template Management', subtitle: 'Manage email templates for candidate communication' },
   '/drive-process/drive-cycle': { title: 'Drive Dashboard', subtitle: 'Manage drive cycles' },
   '/ta-head/dashboard': { title: 'Dashboard', subtitle: 'Welcome back' },
   '/ta-head/hiring-cycles': { title: 'Hiring Cycle', subtitle: 'Manage hiring cycles' },
@@ -41,26 +50,43 @@ const PAGE_TITLES: Record<string, { title: string; subtitle: string }> = {
   '/intern/warnings': { title: 'Notices', subtitle: 'View and acknowledge notices' },
 };
 
-function Navbar() {
+interface NavbarProps {
+    onMobileMenuToggle?: () => void;
+}
+
+function Navbar({ onMobileMenuToggle }: NavbarProps) {
     const [notifications, setNotifications] = useState<NotificationResponse[]>([]);
     const [showNotifications, setShowNotifications] = useState(false);
-    const [showProfile, setShowProfile] = useState(false);
-    const [showChangePwd, setShowChangePwd] = useState(false);
     const notifRef = useRef<HTMLDivElement>(null);
-    const profileRef = useRef<HTMLDivElement>(null);
     const wsRef = useRef<WebSocket | null>(null);
     const location = useLocation();
-    const navigate = useNavigate();
     const user = tokenstore.getUser();
+    const { action } = useNavbarAction();
+    const [theme, setTheme] = useState<'light' | 'dark'>(tokenstore.getTheme());
+
+    const isSettingsSubPage = [
+        '/ta-recruiter/settings/skills',
+        '/ta-recruiter/settings/eligibility',
+        '/ta-recruiter/settings/round-templates',
+        '/ta-recruiter/settings/email-templates',
+        '/ta-head/settings/skills',
+        '/ta-head/settings/eligibility',
+        '/ta-head/settings/round-templates',
+        '/ta-head/settings/email-templates',
+    ].includes(location.pathname);
+    const showBackBtn = location.pathname.startsWith('/ta-recruiter/institutes/') || isSettingsSubPage;
 
     const unreadCount = notifications.filter(n => !n.isRead).length;
 
     const getPageInfo = () => {
         const path = location.pathname;
         if (PAGE_TITLES[path]) return PAGE_TITLES[path];
-        // Check for dynamic routes like /ta-recruiter/institutes/:id
-        const base = '/' + path.split('/').slice(1, 3).join('/');
-        if (PAGE_TITLES[base]) return PAGE_TITLES[base];
+        // Check for 3-segment paths like /ta-recruiter/settings/skills
+        const base3 = '/' + path.split('/').slice(1, 4).join('/');
+        if (PAGE_TITLES[base3]) return PAGE_TITLES[base3];
+        // Check for 2-segment paths like /ta-recruiter/institutes/:id
+        const base2 = '/' + path.split('/').slice(1, 3).join('/');
+        if (PAGE_TITLES[base2]) return PAGE_TITLES[base2];
         return { title: 'Springer', subtitle: '' };
     };
 
@@ -121,24 +147,32 @@ function Navbar() {
             if (notifRef.current && !notifRef.current.contains(event.target as Node)) {
                 setShowNotifications(false);
             }
-            if (profileRef.current && !profileRef.current.contains(event.target as Node)) {
-                setShowProfile(false);
-            }
         };
         document.addEventListener('mousedown', handleClickOutside);
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
-    const handleLogout = () => {
-        tokenstore.clear();
-        navigate('/login');
+    const toggleTheme = () => {
+        const newTheme = theme === 'light' ? 'dark' : 'light';
+        setTheme(newTheme);
+        tokenstore.setTheme(newTheme);
+        document.documentElement.setAttribute('data-theme', newTheme);
     };
 
     return (
         <nav className="navbar">
             <div className="navbar-content">
                 <div className="navbar-left">
-                    {location.pathname.startsWith('/ta-recruiter/institutes/') && (
+                    {onMobileMenuToggle && (
+                        <button className="navbar-hamburger" onClick={onMobileMenuToggle} aria-label="Open menu">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                                <line x1="3" y1="6" x2="21" y2="6" />
+                                <line x1="3" y1="12" x2="21" y2="12" />
+                                <line x1="3" y1="18" x2="21" y2="18" />
+                            </svg>
+                        </button>
+                    )}
+                    {showBackBtn && (
                         <button className="navbar-back-btn" onClick={() => window.history.back()} aria-label="Go back">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                                 <polyline points="15 18 9 12 15 6" />
@@ -153,6 +187,14 @@ function Navbar() {
 
                 {/* Right: Page Actions + Notification */}
                 <div className="navbar-right">
+
+                    {/* Page Action Button (from NavbarActionContext) */}
+                    {action && (
+                        <button className="navbar-action-btn" onClick={action.onClick}>
+                            {action.icon && <span className="navbar-action-btn-icon">{action.icon}</span>}
+                            {action.label}
+                        </button>
+                    )}
 
                     {/* Portal target for page-level actions (e.g. cycle selector) */}
                     <div id="navbar-actions-slot" />
@@ -203,59 +245,30 @@ function Navbar() {
                         )}
                     </div>
 
-                    <div className="navbar-profile" ref={profileRef}>
-                        <button
-                            className="navbar-profile-avatar-btn"
-                            onClick={() => setShowProfile(!showProfile)}
-                            aria-label="Profile menu"
-                            title="Profile"
-                        >
-                            {user?.username.charAt(0).toUpperCase()}
-                        </button>
-
-                        {showProfile && user && (
-                            <div className="profile-overlay">
-                                <div className="profile-header">
-                                    <div className="profile-avatar">
-                                        {user.username.charAt(0).toUpperCase()}
-                                    </div>
-                                    <div className="profile-info">
-                                        <h3 className="profile-name">{user.username}</h3>
-                                        <p className="profile-role">{user.roleName}</p>
-                                    </div>
-                                </div>
-                                <div className="profile-details">
-                                    <div className="profile-detail-item">
-                                        <svg
-                                            width="16"
-                                            height="16"
-                                            viewBox="0 0 24 24"
-                                            fill="none"
-                                            stroke="currentColor"
-                                            strokeWidth="2"
-                                            strokeLinecap="round"
-                                            strokeLinejoin="round"
-                                        >
-                                            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
-                                            <polyline points="22,6 12,13 2,6" />
-                                        </svg>
-                                        <span>{user.email}</span>
-                                    </div>
-                                </div>
-                                <button className="profile-change-pwd-btn" onClick={() => { setShowProfile(false); setShowChangePwd(true); }}>
-                                    🔐 Change Password
-                                </button>
-                                <button className="profile-logout-btn" onClick={handleLogout}>
-                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-                                        <polyline points="16 17 21 12 16 7" />
-                                        <line x1="21" y1="12" x2="9" y2="12" />
-                                    </svg>
-                                    Logout
-                                </button>
-                            </div>
+                    <button
+                        className="navbar-icon-btn navbar-theme-btn"
+                        onClick={toggleTheme}
+                        aria-label="Toggle theme"
+                        title={theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}
+                    >
+                        {theme === 'light' ? (
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+                            </svg>
+                        ) : (
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <circle cx="12" cy="12" r="5" />
+                                <line x1="12" y1="1" x2="12" y2="3" />
+                                <line x1="12" y1="21" x2="12" y2="23" />
+                                <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
+                                <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+                                <line x1="1" y1="12" x2="3" y2="12" />
+                                <line x1="21" y1="12" x2="23" y2="12" />
+                                <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
+                                <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+                            </svg>
                         )}
-                    </div>
+                    </button>
                 </div>
             </div>
         </nav>

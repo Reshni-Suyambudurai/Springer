@@ -271,3 +271,133 @@ h6 { font-size: var(--text-xs); font-weight: 500; line-height: 1.5; }
 .MuiMenuItem-root.Mui-selected:hover {
   background-color: var(--color-grey-200) !important;
 }
+
+/* ═══════════════════════════════════════════════════ */
+/* GLOBAL MOBILE RESPONSIVE                           */
+/* ═══════════════════════════════════════════════════ */
+
+@media (max-width: 768px) {
+  /* MUI Tables: horizontal scroll */
+  .MuiTableContainer-root {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .MuiTable-root {
+    min-width: 600px;
+  }
+
+  /* Plain HTML tables: horizontal scroll */
+  table {
+    min-width: 500px;
+  }
+
+  /* MUI Dialogs: full-width on mobile */
+  .MuiDialog-paper {
+    margin: 16px !important;
+    width: calc(100% - 32px) !important;
+    max-width: 100% !important;
+    max-height: calc(100vh - 32px) !important;
+  }
+
+  /* Global page padding reduction */
+  .g-loading {
+    min-height: 250px;
+  }
+
+  .g-empty-content {
+    padding: 32px 16px !important;
+  }
+
+  /* ── Page container padding: tablet ── */
+  .int-container,
+  .ical-page,
+  .ins-page,
+  .inp-page,
+  .ipt-page,
+  .inc-page,
+  .ilv-page,
+  .ina-page,
+  .iwarn-page,
+  .lmg-page,
+  .tcd-page,
+  .dashboard-container,
+  .dp-page,
+  .acd-page {
+    padding-left: 16px !important;
+    padding-right: 16px !important;
+  }
+
+  /* ── Stat cards: wrap on smaller screens ── */
+  .int-stats,
+  .ins-stats,
+  .dp-stats-row,
+  .tcd-stat-row {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  /* ── Charts & grids: stack vertically ── */
+  .int-charts-row,
+  .tcd-chart-row,
+  .int-row {
+    flex-direction: column;
+  }
+
+  /* ── Tab text smaller on mobile ── */
+  .MuiTab-root {
+    font-size: 12px !important;
+    min-width: auto !important;
+    padding: 6px 12px !important;
+  }
+
+  .MuiTabs-flexContainer {
+    overflow-x: auto;
+  }
+}
+
+@media (max-width: 480px) {
+  .MuiTable-root {
+    min-width: 500px;
+  }
+
+  .g-btn-primary,
+  .g-btn-success,
+  .g-btn-danger,
+  .g-btn-outline-primary {
+    font-size: 12px !important;
+    padding: 6px 12px !important;
+  }
+
+  h1 { font-size: 1.5rem; }
+  h2 { font-size: 1.25rem; }
+  h3 { font-size: 1.1rem; }
+
+  /* ── Page container padding: phone ── */
+  .int-container,
+  .ical-page,
+  .ins-page,
+  .inp-page,
+  .ipt-page,
+  .inc-page,
+  .ilv-page,
+  .ina-page,
+  .iwarn-page,
+  .lmg-page,
+  .tcd-page,
+  .dashboard-container,
+  .dp-page,
+  .acd-page {
+    padding-left: 10px !important;
+    padding-right: 10px !important;
+  }
+
+  /* ── Stat cards: full width on phone ── */
+  .int-stats > *,
+  .ins-stats > *,
+  .dp-stats-row > *,
+  .tcd-stat-row > * {
+    min-width: 0;
+    flex: 1 1 calc(50% - 8px);
+  }
+}

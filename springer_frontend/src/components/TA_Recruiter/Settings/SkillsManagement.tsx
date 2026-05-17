@@ -1,25 +1,21 @@
-﻿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Box, Card, TextField, Typography, Stack, Button, IconButton,
-  CircularProgress, Alert, Divider, Dialog, DialogTitle,
-  DialogContent, DialogActions, FormControl, InputLabel, Select, MenuItem,
+  CircularProgress, Alert, Divider, Dialog, Select, MenuItem,
 } from '@mui/material';
-import SchoolIcon from '@mui/icons-material/School';
-import { FigmaCloseIcon as CloseIcon } from '../../Common/FigmaIcons';
-import { FigmaAddIcon as AddIcon, FigmaEditIcon as EditIcon, FigmaSearchIcon as SearchIcon } from '../../Common/FigmaIcons';
-import BackButton from '../../Common/BackButton';
-import { useNavigate } from 'react-router-dom';
+import AddIcon from '@mui/icons-material/Add';
+import EditIcon from '@mui/icons-material/Edit';
+import SearchIcon from '@mui/icons-material/Search';
+import CloseIcon from '@mui/icons-material/Close';
 import { skillsApi } from '../../../services/hiring.api';
 import { showToast } from '../../../utils/toast';
 import type { SkillRequest, SkillResponse, SkillCategory } from '../../../types/TA_Recruiter/Hiring/skill.types';
 import '../../../css/TA_Recruiter/Settings/SkillsManagement.css';
 
 const CATEGORIES: SkillCategory[] = ['TECHNICAL', 'SOFT_SKILL'];
-
 const categoryLabel = (c: SkillCategory) => c === 'TECHNICAL' ? 'Technical Skills' : 'Soft Skills';
 
 const SkillsManagement = () => {
-  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [skills, setSkills] = useState<SkillResponse[]>([]);
   const [search, setSearch] = useState('');
@@ -42,25 +38,14 @@ const SkillsManagement = () => {
         showToast(response.message || 'Failed to load skills', 'error');
       }
     } catch (error: unknown) {
-      console.error('Error fetching skills:', error);
-      let errorMessage = 'Failed to load skills';
-      if (error && typeof error === 'object') {
-        if ('message' in error && typeof error.message === 'string') {
-          errorMessage = error.message;
-        } else if ('response' in error) {
-          const axiosError = error as { response?: { data?: { message?: string } } };
-          if (axiosError.response?.data?.message) errorMessage = axiosError.response.data.message;
-        }
-      }
-      showToast(errorMessage, 'error');
+      const axiosError = error as { response?: { data?: { message?: string } }; message?: string };
+      showToast(axiosError?.response?.data?.message ?? axiosError?.message ?? 'Failed to load skills', 'error');
     } finally {
       setLoading(false);
     }
   };
 
-  const filtered = skills.filter(s =>
-    s.skillName.toLowerCase().includes(search.toLowerCase())
-  );
+  const filtered = skills.filter(s => s.skillName.toLowerCase().includes(search.toLowerCase()));
 
   const openAdd = (cat: SkillCategory) => {
     setEditMode(false); setCurrent(null);
@@ -91,55 +76,40 @@ const SkillsManagement = () => {
         fetchSkills(); closeDialog();
       } else showToast(res.message || 'Failed', 'error');
     } catch (error: unknown) {
-      console.error('Error saving skill:', error);
-      let errorMessage = editMode ? 'Failed to update skill' : 'Failed to create skill';
-      if (error && typeof error === 'object') {
-        if ('message' in error && typeof error.message === 'string') {
-          errorMessage = error.message;
-        } else if ('response' in error) {
-          const axiosError = error as { response?: { data?: { message?: string } } };
-          if (axiosError.response?.data?.message) errorMessage = axiosError.response.data.message;
-        }
-      }
-      showToast(errorMessage, 'error');
+      const axiosError = error as { response?: { data?: { message?: string } }; message?: string };
+      showToast(axiosError?.response?.data?.message ?? axiosError?.message ?? 'Failed to save skill', 'error');
     } finally { setSaving(false); }
   };
 
   return (
-    <Box className="t-page">
-      <Card className="t-card">
+    <Box className="t-page settings-page-override">
+      <Card className="t-card settings-card-override">
+        <Box className="t-body settings-body-override">
 
-        {/* Header */}
-        <Box className="t-header">
-          <Stack direction="row" alignItems="center" gap={1.5}>
-            <BackButton onClick={() => navigate('/ta-recruiter/settings')} variant="header" />
-            <Box className="t-icon-box">
-              <SchoolIcon sx={{ fontSize: 20, color: 'var(--color-primary)' }} />
-            </Box>
-            <Stack gap="2px">
-              <Typography className="t-page-title">Skills Management</Typography>
-              <Typography className="t-page-subtitle">Manage technical and soft skills</Typography>
-            </Stack>
+          {/* Search + Add button row */}
+          <Stack direction="row" alignItems="center" justifyContent="space-between" gap={2}>
+            <TextField
+              size="small"
+              placeholder="Search skills..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="t-search-field"
+              InputProps={{ startAdornment: <SearchIcon className="t-search-icon" /> }}
+            />
+            <Button
+              variant="contained"
+              size="small"
+              startIcon={<AddIcon />}
+              onClick={() => openAdd('TECHNICAL')}
+              className="skills-add-btn"
+            >
+              Add Skills
+            </Button>
           </Stack>
-        </Box>
-
-        <Box className="t-separator" />
-
-        {/* Body */}
-        <Box className="t-body">
-
-          <TextField
-            size="small"
-            placeholder="Search skills..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="t-search-field"
-            InputProps={{ startAdornment: <SearchIcon className="t-search-icon" style={{ marginRight: 8 }} /> }}
-          />
 
           {loading ? (
             <Box className="t-loading">
-              <CircularProgress size={32} sx={{ color: 'var(--color-primary)' }} />
+              <CircularProgress size={32} className="skills-spinner" />
               <Typography className="t-loading-text">Loading skills...</Typography>
             </Box>
           ) : filtered.length === 0 ? (
@@ -152,18 +122,12 @@ const SkillsManagement = () => {
               if (catSkills.length === 0 && search) return null;
               return (
                 <Box key={cat} className="skills-category-section">
-                  <Stack direction="row" alignItems="center" justifyContent="space-between">
-                    <Typography className="t-section-label">{categoryLabel(cat)}</Typography>
-                    <Button variant="contained" size="small" startIcon={<AddIcon />}
-                      className="t-btn-primary"
-                      onClick={() => openAdd(cat)}
-                      sx={{ backgroundColor: 'var(--color-primary)', '&:hover': { backgroundColor: 'var(--color-primary-dark)' } }}>
-                      Add {cat === 'TECHNICAL' ? 'Technical' : 'Soft'} Skill
-                    </Button>
+                  <Stack direction="row" alignItems="center">
+                    <Typography className="skills-category-label">{categoryLabel(cat)}</Typography>
                   </Stack>
 
                   {catSkills.length === 0 ? (
-                    <Alert severity="info" sx={{ fontSize: '0.8125rem' }}>
+                    <Alert severity="info" className="skills-empty-alert">
                       No {categoryLabel(cat).toLowerCase()} yet.
                     </Alert>
                   ) : (
@@ -174,7 +138,7 @@ const SkillsManagement = () => {
                             <Box className="skill-card-inner">
                               <Typography className="skill-name">{skill.skillName}</Typography>
                               <IconButton size="small" className="skill-edit-btn" onClick={() => openEdit(skill)}>
-                                <EditIcon style={{ fontSize: 15 }} />
+                                <EditIcon className="skill-edit-icon" />
                               </IconButton>
                             </Box>
                           </Box>
@@ -183,7 +147,7 @@ const SkillsManagement = () => {
                     </Box>
                   )}
 
-                  <Divider className="skills-category-divider" sx={{ mt: 1.5 }} />
+                  <Divider className="skills-category-divider" />
                 </Box>
               );
             })
@@ -192,46 +156,58 @@ const SkillsManagement = () => {
       </Card>
 
       {/* Add / Edit Dialog */}
-      <Dialog open={dialogOpen} onClose={closeDialog} maxWidth="xs" fullWidth>
-        <DialogTitle>
-          <Stack direction="row" justifyContent="space-between" alignItems="center">
-            <Typography fontWeight={700} fontSize="1rem">
-              {editMode ? 'Edit Skill' : 'Add Skill'}
-            </Typography>
-            <IconButton size="small" onClick={closeDialog}><CloseIcon style={{ fontSize: '1.25rem' }} /></IconButton>
-          </Stack>
-        </DialogTitle>
-        <DialogContent>
-          <Stack gap={2} mt={1}>
-            {editMode ? (
-              <FormControl size="small" fullWidth>
-                <InputLabel>Category</InputLabel>
-                <Select value={category} label="Category" onChange={(e) => setCategory(e.target.value as SkillCategory)}>
-                  <MenuItem value="TECHNICAL">Technical Skills</MenuItem>
-                  <MenuItem value="SOFT_SKILL">Soft Skills</MenuItem>
-                </Select>
-              </FormControl>
-            ) : (
-              <TextField size="small" fullWidth label="Category" value={categoryLabel(category)} disabled />
-            )}
+      <Dialog open={dialogOpen} onClose={closeDialog} classes={{ paper: 'skills-dialog-paper' }}>
+        {/* Header */}
+        <Box className="skills-dialog-header">
+          <Typography className="skills-dialog-title">
+            {editMode ? 'Edit Skill' : 'Add Skill'}
+          </Typography>
+          <IconButton size="small" onClick={closeDialog} className="skills-dialog-close-btn">
+            <CloseIcon className="skills-dialog-close-icon" />
+          </IconButton>
+        </Box>
+
+        {/* Body */}
+        <Box className="skills-dialog-body">
+          <Box className="skills-dialog-field">
+            <Typography className="skills-dialog-label">Category</Typography>
+            <Select
+              value={category}
+              onChange={(e) => setCategory(e.target.value as SkillCategory)}
+              displayEmpty
+              size="small"
+              className="skills-dialog-select"
+            >
+              <MenuItem value="TECHNICAL">Technical Skills</MenuItem>
+              <MenuItem value="SOFT_SKILL">Soft Skills</MenuItem>
+            </Select>
+          </Box>
+
+          <Box className="skills-dialog-field">
+            <Typography className="skills-dialog-label">Skill Name</Typography>
             <TextField
-              autoFocus size="small" fullWidth label="Skill Name"
-              value={skillName} onChange={(e) => setSkillName(e.target.value)}
-              placeholder="e.g. Java, Python, Communication"
+              autoFocus
+              size="small"
+              value={skillName}
+              onChange={(e) => setSkillName(e.target.value)}
+              placeholder="e.g., Java, Python, Communication"
               onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
+              className="skills-dialog-input"
             />
-          </Stack>
-        </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button variant="outlined" onClick={closeDialog} disabled={saving} className="t-dialog-cancel-btn">Cancel</Button>
+          </Box>
+        </Box>
+
+        {/* Footer */}
+        <Box className="skills-dialog-footer">
           <Button
-            variant="contained" onClick={handleSubmit} disabled={saving}
-            className="t-dialog-confirm-btn"
-            sx={{ backgroundColor: 'var(--color-primary)', '&:hover': { backgroundColor: 'var(--color-primary-dark)' } }}
+            variant="contained"
+            onClick={handleSubmit}
+            disabled={saving || !skillName.trim()}
+            className="skills-dialog-submit-btn"
           >
             {saving ? 'Saving...' : editMode ? 'Update' : 'Create'}
           </Button>
-        </DialogActions>
+        </Box>
       </Dialog>
     </Box>
   );

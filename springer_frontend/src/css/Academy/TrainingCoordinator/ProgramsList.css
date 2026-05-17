@@ -141,6 +141,8 @@
   flex: 1;
   overflow: auto !important;
   min-height: 0;
+  border: 0.8px solid var(--color-inactive-border);
+  border-radius: 10px;
   scrollbar-width: thin;
   scrollbar-color: var(--color-grey-350) var(--color-grey-150);
 }
@@ -151,19 +153,20 @@
 
 /* Ã¢â€â‚¬Ã¢â€â‚¬ Table Head Ã¢â€â‚¬Ã¢â€â‚¬ */
 .prog-table-head-row {
-  background-color: var(--color-bg-table-header);
+  background-color: var(--color-inactive-bg);
   height: 48px;
 }
 
 .prog-table-head-cell {
-  font-size: var(--text-xs) !important;
-  font-weight: 700 !important;
-  color: var(--color-grey-600) !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  color: var(--color-chip-count-text) !important;
   text-transform: uppercase !important;
-  letter-spacing: 0.75px !important;
-  background-color: var(--color-bg-table-header) !important;
+  letter-spacing: 0.6px !important;
+  background-color: var(--color-inactive-bg) !important;
   padding: 8px 16px !important;
-  border-bottom-color: var(--color-border-table) !important;
+  border-bottom: 0.8px solid var(--color-inactive-border) !important;
+  font-family: 'Inter', sans-serif !important;
 }
 
 .prog-table-head-cell--actions {
@@ -182,16 +185,15 @@
 }
 
 .prog-table-row--odd {
-  background-color: var(--color-surface-alt);
+  background-color: var(--color-surface);
 }
 
 .prog-table-row td {
-  border-bottom: 1px solid var(--color-border-table);
+  border-bottom: 0.8px solid var(--color-border-subtle);
 }
 
 .prog-table-row:hover {
-  background-color: var(--color-hover-bg) !important;
-  box-shadow: inset 0 2px 4px var(--color-primary-shadow-8);
+  background-color: var(--color-inactive-bg) !important;
 }
 
 .prog-table-cell {
@@ -211,10 +213,10 @@
 }
 
 .prog-name-icon-box {
-  width: 36px;
-  height: 36px;
-  border-radius: 8px;
-  background-color: var(--color-icon-bg);
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: var(--color-sidebar-bg);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -223,22 +225,23 @@
 
 .prog-name-icon {
   font-size: 18px !important;
-  color: var(--color-primary) !important;
+  color: white !important;
 }
 
 .prog-row-primary {
-  font-size: var(--text-sm) !important;
-  font-weight: 700 !important;
+  font-size: 16px !important;
+  font-weight: 500 !important;
   color: var(--color-text-primary) !important;
-  line-height: 1.4 !important;
+  line-height: 24px !important;
+  font-family: 'Inter', sans-serif !important;
   margin: 0 !important;
 }
 
 .prog-row-secondary {
-  font-size: var(--text-xs) !important;
-  font-weight: 500 !important;
+  font-size: var(--text-sm) !important;
+  font-weight: 400 !important;
   color: var(--color-text-secondary) !important;
-  line-height: 1.4 !important;
+  line-height: 20px !important;
   margin: 0 !important;
 }
 

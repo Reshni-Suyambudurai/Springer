@@ -1,5 +1,6 @@
+import { useEffect, useState } from "react";
 import { tokenstore } from "../../auth/tokenstore";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import type { MenuItem } from "../../types/sidebar";
 import '../../css/Common/Sidebar.css';
 
@@ -9,16 +10,35 @@ interface SidebarProps {
 }
 
 function Sidebar({ collapsed, onToggle }: SidebarProps) {
+  const [collapsedHoverEnabled, setCollapsedHoverEnabled] = useState(false);
+  const [showCollapsedToggle, setShowCollapsedToggle] = useState(false);
+  const [showUserMenu, setShowUserMenu] = useState(false);
   const user = tokenstore.getUser();
   const location = useLocation();
+  const navigate = useNavigate();
   const role = user?.roleName;
+
+  const handleLogout = () => {
+    tokenstore.clear();
+    navigate('/login');
+  };
+
+  useEffect(() => {
+    if (collapsed) {
+      setCollapsedHoverEnabled(false);
+      setShowCollapsedToggle(false);
+      return;
+    }
+    setCollapsedHoverEnabled(false);
+    setShowCollapsedToggle(false);
+  }, [collapsed]);
 
   const menu: Record<string, MenuItem[]> = {
 
     TA_HEAD: [
       {
         name: "Dashboard",
-        path: "/ta-head/drive-analytics",
+        path: "/ta-head/dashboard",
         icon: (
           <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <rect x="3" y="3" width="7" height="7" />
@@ -192,12 +212,35 @@ function Sidebar({ collapsed, onToggle }: SidebarProps) {
     ],
 
     HIRING_MANAGER: [
-     
+      {
+        name: "Dashboard",
+        path: "/hiring-manager/dashboard",
+        icon: (
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <rect x="3" y="3" width="7" height="7" />
+            <rect x="14" y="3" width="7" height="7" />
+            <rect x="14" y="14" width="7" height="7" />
+            <rect x="3" y="14" width="7" height="7" />
+          </svg>
+        )
+      },
       {
         name: "Hiring Cycle",
         path: "/hiring-manager/hiring-cycles",
         icon: (
           <img src="/hiring_lifeCycle.png" alt="Hiring Cycle" width="20" height="20" style={{ objectFit: 'contain', filter: 'brightness(0) invert(1)' }} />
+        )
+      },
+      {
+        name: "Request",
+        path: "/hiring-manager/requests",
+        icon: (
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <rect x="8" y="2" width="8" height="4" />
+            <path d="M16 4h3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h3" />
+            <line x1="9" y1="12" x2="15" y2="12" />
+            <line x1="9" y1="16" x2="15" y2="16" />
+          </svg>
         )
       }
     ],
@@ -205,7 +248,7 @@ function Sidebar({ collapsed, onToggle }: SidebarProps) {
     MEMBERS: [
       {
         name: "Dashboard",
-        path: "/members/drive-analytics",
+        path: "/members/dashboard",
         icon: (
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <rect x="3" y="3" width="7" height="7" />
@@ -254,7 +297,18 @@ function Sidebar({ collapsed, onToggle }: SidebarProps) {
     ],
 
     SYSTEM_ADMIN: [
-     
+      {
+        name: "Dashboard",
+        path: "/admin/dashboard",
+        icon: (
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <rect x="3" y="3" width="7" height="7" />
+            <rect x="14" y="3" width="7" height="7" />
+            <rect x="14" y="14" width="7" height="7" />
+            <rect x="3" y="14" width="7" height="7" />
+          </svg>
+        )
+      },
       {
         name: "Users",
         path: "/admin/users",
@@ -374,36 +428,101 @@ function Sidebar({ collapsed, onToggle }: SidebarProps) {
   return (
     <aside className={`sidebar${collapsed ? ' collapsed' : ''}`}>
       <div className="sidebar-header">
-        <div className="sidebar-logo">
-          <img src="/Image (Springer).png" alt="Springer" className="sidebar-logo-img" />
-          {!collapsed && <span className="sidebar-logo-text">SPRINGER</span>}
+        <div
+          className={`sidebar-logo-hamburger-wrapper${showCollapsedToggle ? ' show-collapsed-toggle' : ''}`}
+          onMouseEnter={() => {
+            if (collapsed && collapsedHoverEnabled) {
+              setShowCollapsedToggle(true);
+            }
+          }}
+          onMouseLeave={() => {
+            if (collapsed) {
+              setCollapsedHoverEnabled(true);
+              setShowCollapsedToggle(false);
+            }
+          }}
+        >
+          {collapsed ? (
+            <>
+              <div className="sidebar-logo sidebar-collapsed-logo">
+                <img src="/Image (Springer).png" alt="Springer" className="sidebar-logo-img" />
+              </div>
+              <button className="sidebar-hamburger" onClick={onToggle} aria-label="Expand sidebar" tabIndex={0}>
+                <svg width="21" height="21" viewBox="0 0 21 21" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <g clipPath="url(#clip0_3_2)">
+                    <path d="M6.6683 19.5016V0.834961M17.1683 19.5016H3.1683C2.54946 19.5016 1.95596 19.2558 1.51838 18.8182C1.08079 18.3806 0.834961 17.7871 0.834961 17.1683V3.16829C0.834961 2.54946 1.08079 1.95596 1.51838 1.51838C1.95596 1.08079 2.54946 0.834961 3.1683 0.834961H17.1683C17.7871 0.834961 18.3806 1.08079 18.8182 1.51838C19.2558 1.95596 19.5016 2.54946 19.5016 3.16829V17.1683C19.5016 17.7871 19.2558 18.3806 18.8182 18.8182C18.3806 19.2558 17.7871 19.5016 17.1683 19.5016Z" stroke="#D1D5DC" strokeWidth="1.67" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M14.8348 12.5016L12.5015 10.1683L14.8348 7.83496" stroke="#D1D5DC" strokeWidth="1.67" strokeLinecap="round" strokeLinejoin="round"/>
+                  </g>
+                  <defs>
+                    <clipPath id="clip0_3_2">
+                      <rect width="21" height="21" fill="white"/>
+                    </clipPath>
+                  </defs>
+                </svg>
+              </button>
+            </>
+          ) : (
+            <>
+              <div className="sidebar-logo">
+                <img src="/Image (Springer).png" alt="Springer" className="sidebar-logo-img" />
+                <span className="sidebar-logo-text">SPRINGER</span>
+              </div>
+              <button className="sidebar-hamburger sidebar-hamburger-expanded" onClick={onToggle} aria-label="Collapse sidebar" tabIndex={0}>
+                <svg width="21" height="21" viewBox="0 0 21 21" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <g clipPath="url(#clip0_3_2)">
+                    <path d="M6.6683 19.5016V0.834961M17.1683 19.5016H3.1683C2.54946 19.5016 1.95596 19.2558 1.51838 18.8182C1.08079 18.3806 0.834961 17.7871 0.834961 17.1683V3.16829C0.834961 2.54946 1.08079 1.95596 1.51838 1.51838C1.95596 1.08079 2.54946 0.834961 3.1683 0.834961H17.1683C17.7871 0.834961 18.3806 1.08079 18.8182 1.51838C19.2558 1.95596 19.5016 2.54946 19.5016 3.16829V17.1683C19.5016 17.7871 19.2558 18.3806 18.8182 18.8182C18.3806 19.2558 17.7871 19.5016 17.1683 19.5016Z" stroke="#D1D5DC" strokeWidth="1.67" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M14.8348 12.5016L12.5015 10.1683L14.8348 7.83496" stroke="#D1D5DC" strokeWidth="1.67" strokeLinecap="round" strokeLinejoin="round"/>
+                  </g>
+                  <defs>
+                    <clipPath id="clip0_3_2">
+                      <rect width="21" height="21" fill="white"/>
+                    </clipPath>
+                  </defs>
+                </svg>
+              </button>
+            </>
+          )}
         </div>
-        <button className="sidebar-hamburger" onClick={onToggle} aria-label="Toggle sidebar">
-          <svg width="21" height="21" viewBox="0 0 21 21" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <g clipPath="url(#clip0_3_2)">
-              <path d="M6.6683 19.5016V0.834961M17.1683 19.5016H3.1683C2.54946 19.5016 1.95596 19.2558 1.51838 18.8182C1.08079 18.3806 0.834961 17.7871 0.834961 17.1683V3.16829C0.834961 2.54946 1.08079 1.95596 1.51838 1.51838C1.95596 1.08079 2.54946 0.834961 3.1683 0.834961H17.1683C17.7871 0.834961 18.3806 1.08079 18.8182 1.51838C19.2558 1.95596 19.5016 2.54946 19.5016 3.16829V17.1683C19.5016 17.7871 19.2558 18.3806 18.8182 18.8182C18.3806 19.2558 17.7871 19.5016 17.1683 19.5016Z" stroke="#D1D5DC" strokeWidth="1.67" strokeLinecap="round" strokeLinejoin="round"/>
-              <path d="M14.8348 12.5016L12.5015 10.1683L14.8348 7.83496" stroke="#D1D5DC" strokeWidth="1.67" strokeLinecap="round" strokeLinejoin="round"/>
-            </g>
-            <defs>
-              <clipPath id="clip0_3_2">
-                <rect width="21" height="21" fill="white"/>
-              </clipPath>
-            </defs>
-          </svg>
-        </button>
       </div>
       <nav className="sidebar-nav">
         {links.map((item) => (
           <Link
             key={item.path}
             to={item.path}
-            className={`sidebar-link${location.pathname === item.path || (item.path === '/ta-recruiter/institutes' && location.pathname.startsWith('/ta-recruiter/institutes')) ? ' active' : ''}`}
+            className={`sidebar-link${location.pathname === item.path || location.pathname.startsWith(item.path + '/') ? ' active' : ''}`}
           >
             <span className="sidebar-icon">{item.icon}</span>
             {!collapsed && <span className="sidebar-text">{item.name}</span>}
           </Link>
         ))}
       </nav>
+      <div className="sidebar-user" onClick={() => setShowUserMenu(!showUserMenu)} style={{ cursor: 'pointer' }}>
+        {showUserMenu && (
+          <div className="sidebar-user-popup">
+            <div className="sidebar-user-popup-header">
+              <span className="sidebar-user-popup-name">{user?.username}</span>
+              <span className="sidebar-user-popup-role">{user?.roleName}</span>
+            </div>
+            <button className="sidebar-user-logout" onClick={(e) => { e.stopPropagation(); handleLogout(); }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                <polyline points="16 17 21 12 16 7" />
+                <line x1="21" y1="12" x2="9" y2="12" />
+              </svg>
+              Logout
+            </button>
+          </div>
+        )}
+        <div className="sidebar-user-avatar">
+          {user?.username?.charAt(0).toUpperCase()}
+        </div>
+        {!collapsed && (
+          <div className="sidebar-user-info">
+            <span className="sidebar-user-name">{user?.username}</span>
+            <span className="sidebar-user-role">{user?.roleName}</span>
+          </div>
+        )}
+      </div>
     </aside>
   );
 }

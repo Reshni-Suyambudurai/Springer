@@ -7,7 +7,6 @@ import {
   InputLabel,
   MenuItem,
   Select,
-  TextField,
   Typography,
   Accordion,
   AccordionSummary,
@@ -168,16 +167,6 @@ const CandidateFilter: React.FC<CandidateFilterProps> = ({
 
       {/* Sidebar Content */}
       <Box className="candidate-filter-content">
-        {/* Candidate Name - Text Field */}
-        <TextField
-          label="Candidate Name"
-          variant="outlined"
-          size="small"
-          fullWidth
-          value={filters.candidateName}
-          onChange={(e) => onFilterChange("candidateName", e.target.value)}
-          className="candidate-filter-field"
-        />
 
         {/* Institute - Dropdown */}
         <FormControl size="small" fullWidth className="candidate-filter-field">

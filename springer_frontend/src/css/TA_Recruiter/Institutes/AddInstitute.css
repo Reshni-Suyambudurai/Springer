@@ -164,65 +164,379 @@
   font-weight: 600;
 }
 
-/* ── Dialog form ── */
-.add-institute-form {
+/* ── Academic Program Chips ── */
+.ai-academic-title {
+  font-size: var(--text-sm) !important;
+  font-weight: 700 !important;
+  color: var(--color-text-primary) !important;
+  margin: 0 !important;
+}
+
+.ai-academic-subtitle {
+  font-size: var(--text-xs) !important;
+  color: var(--color-text-secondary) !important;
+  margin: 0 !important;
+}
+
+.ai-program-chips-wrap {
   display: flex;
-  flex-direction: column;
-  gap: 16px;
-  padding-top: 16px;
-}
-
-.add-institute-form .MuiTextField-root,
-.add-institute-form .MuiFormControl-root {
-  background: var(--color-surface);
-  border-radius: 8px;
-}
-
-.add-institute-form .MuiInputLabel-root { color: var(--color-text-primary); }
-.add-institute-form .MuiInputBase-input { color: var(--color-text-primary); }
-.add-institute-form .MuiOutlinedInput-notchedOutline { border-color: var(--color-border); }
-.add-institute-form .MuiInputBase-root.Mui-focused .MuiOutlinedInput-notchedOutline { border-color: var(--color-primary); }
-
-.add-institute-dialog-body { padding-top: 16px; }
-
-.add-institute-dialog-body--with-tpo {
-  display: flex;
-  flex-direction: row;
-  gap: 24px;
-}
-
-.add-institute-dialog-body--with-tpo .add-institute-form {
-  flex: 1;
-  min-width: 0;
-}
-
-/* ── TPO Section ── */
-.add-institute-tpo-toggle { align-self: flex-start; }
-
-.add-institute-tpo-section {
-  flex: 1;
-  min-width: 0;
+  flex-wrap: wrap;
+  gap: 8px;
   border: 1px solid var(--color-border);
   border-radius: 10px;
-  padding: 20px;
+  padding: 14px 12px;
   background: var(--color-surface);
-  align-self: flex-start;
 }
 
-.add-institute-tpo-title {
-  font-weight: 600 !important;
-  font-size: var(--text-sm) !important;
-  color: var(--color-text-primary) !important;
-  margin-bottom: 12px !important;
+.ai-program-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  width: 85px;
+  height: 27px;
+  padding: 3px 8px;
+  border-radius: 8px;
+  border: 1px solid var(--color-border);
+  background: var(--color-grey-150);
+  color: #1E429F;
+  font-size: var(--text-xs);
+  font-family: inherit;
+  font-weight: 500;
+  cursor: pointer;
+  box-sizing: border-box;
+  white-space: nowrap;
+  overflow: hidden;
 }
 
-.add-institute-tpo-fields {
+.ai-program-chip--active {
+  background: var(--color-surface);
+  color: #1E429F;
+  font-weight: 600;
+}
+
+.ai-chip-checkbox {
+  width: 14px;
+  height: 14px;
+  min-width: 14px;
+  border: 1.5px solid var(--color-grey-350);
+  border-radius: 3px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background: var(--color-white);
+}
+
+.ai-program-chip--active .ai-chip-checkbox {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+}
+
+.ai-chip-check {
+  width: 8px;
+  height: 8px;
+  display: block;
+  border-bottom: 2px solid var(--color-white);
+  border-right: 2px solid var(--color-white);
+  transform: rotate(45deg) translate(-1px, -1px);
+}
+
+.ai-input--half {
+  width: 50% !important;
+}
+
+/* ── Dialog Paper ── */
+.ai-dialog-paper {
+  width: 512px !important;
+  max-width: 512px !important;
+  min-height: 591px !important;
+  border-radius: 10px !important;
+  border: 0.8px solid var(--opacity-shadow-generic-light) !important;
+  background: var(--color-surface) !important;
+  opacity: 1 !important;
+  box-shadow: 0px 4px 6px -4px var(--opacity-shadow-generic-light),
+              0px 10px 15px -3px var(--opacity-shadow-generic-light) !important;
+}
+
+/* ── New Add Dialog Tabs ── */
+.ai-tabs {
+  display: flex;
+  background: var(--color-grey-150);
+  border-radius: 8px;
+  padding: 3px;
+  gap: 2px;
+  margin-top: 14px;
+}
+
+.ai-tab {
+  flex: 1;
+  padding: 7px 12px;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  color: var(--color-text-secondary);
+  font-size: var(--text-sm);
+  font-family: inherit;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.ai-tab--active {
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+  font-weight: 600;
+  box-shadow: 0 1px 3px var(--opacity-shadow-light);
+}
+
+.ai-form {
   display: flex;
   flex-direction: column;
   gap: 14px;
+  padding-top: 8px;
 }
 
-/* ── Responsive ── */
+.ai-row-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.ai-row-3 {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 12px;
+}
+
+.ai-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ai-label {
+  font-size: var(--text-xs);
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.ai-req { color: var(--color-error-dark); }
+
+.ai-input {
+  height: 36px;
+  padding: 0 12px;
+  border-radius: 8px;
+  border: 1px solid var(--color-border);
+  background: var(--color-grey-150);
+  font-size: var(--text-sm);
+  font-family: inherit;
+  color: var(--color-text-primary);
+  outline: none;
+  transition: border-color 0.2s ease;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.ai-input:focus { border-color: var(--color-primary); background: var(--color-surface); }
+.ai-input::placeholder { color: var(--color-text-secondary); }
+
+.ai-select {
+  height: 36px;
+  padding: 0 12px;
+  border-radius: 8px;
+  border: 1px solid var(--color-border);
+  background: var(--color-grey-150);
+  font-size: var(--text-sm);
+  font-family: inherit;
+  color: var(--color-text-primary);
+  outline: none;
+  cursor: pointer;
+  width: 100%;
+  box-sizing: border-box;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L6 7L11 1' stroke='%23667085' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 32px;
+}
+
+.ai-select:focus { border-color: var(--color-primary); background-color: var(--color-surface); }
+
+.ai-contact-card {
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: var(--color-surface);
+}
+
+.ai-contact-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.ai-contact-card-title {
+  font-size: var(--text-sm) !important;
+  font-weight: 700 !important;
+  color: var(--color-text-primary) !important;
+  margin: 0 !important;
+}
+
+.ai-add-contact-btn {
+  background: none;
+  border: none;
+  color: var(--color-sidebar-active-bg);
+  font-size: var(--text-sm);
+  font-family: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+}
+
+.ai-clear-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 20px;
+  border-radius: 8px;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+  font-size: var(--text-sm);
+  font-family: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.ai-clear-btn:hover { background: var(--color-bg-primary); }
+
+.ai-cancel-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 20px;
+  border-radius: 8px;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+  font-size: var(--text-sm);
+  font-family: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.ai-cancel-btn:hover { background: var(--color-bg-primary); }
+
+.ai-save-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 24px;
+  border-radius: 8px;
+  border: none;
+  background: var(--color-sidebar-active-bg);
+  color: var(--color-white);
+  font-size: var(--text-sm);
+  font-family: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+.ai-save-btn:hover { opacity: 0.9; }
+/* ── Dialog Title/Content/Actions ── */
+.ai-dialog-title-wrap { padding-bottom: 8px !important; }
+.ai-dialog-content-wrap { padding-top: 8px !important; }
+.ai-dialog-actions-wrap {
+  padding: 16px 24px !important;
+  gap: 8px !important;
+  border-top: 1px solid var(--color-border) !important;
+}
+
+.ai-dialog-title-box {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.ai-dialog-heading {
+  font-size: var(--text-lg) !important;
+  font-weight: 700 !important;
+  color: var(--color-text-primary) !important;
+}
+
+.ai-dialog-subheading {
+  font-size: var(--text-xs) !important;
+  color: var(--color-text-secondary) !important;
+  margin-top: 4px !important;
+}
+
+/* ── Academic tab info text ── */
+.ai-academic-info-text {
+  font-size: var(--text-xs) !important;
+  color: var(--color-text-secondary) !important;
+}
+
+/* ── Error Overlay ── */
+.ai-error-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-color: var(--opacity-black-medium);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.ai-error-box {
+  background-color: var(--color-surface);
+  border-radius: 12px;
+  padding: 24px;
+  max-width: 600px;
+  width: 90%;
+  max-height: 80vh;
+  overflow: auto;
+  position: relative;
+  border: 1px solid var(--color-border);
+  box-shadow: 0 1px 4px var(--opacity-shadow-card);
+}
+
+.ai-error-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.ai-error-title {
+  color: var(--color-danger) !important;
+  font-weight: 600 !important;
+}
+
+.ai-error-list { display: flex; flex-direction: column; gap: 12px; }
+
+.ai-error-item {
+  padding: 12px;
+  background-color: var(--color-surface);
+  border-radius: 8px;
+  border: 1px solid var(--color-border);
+  display: flex;
+  gap: 8px;
+}
+
+.ai-error-num {
+  font-weight: 600 !important;
+  color: var(--color-danger) !important;
+  min-width: 24px !important;
+}
+
+.ai-error-msg {
+  color: var(--color-text-primary) !important;
+  font-size: var(--text-sm) !important;
+}
 @media (max-width: 1024px) {
   .add-institute-header-left { flex-wrap: wrap; }
   .add-institute-title { flex: 1 0 100%; text-align: center; }

@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { showToast } from "../../../utils/toast";
 import { tokenstore } from "../../../auth/tokenstore";
@@ -8,6 +8,7 @@ import { useFilterOptions } from "../../../contexts/FilterOptionsContext";
 import CandidateFilter from "./CandidateFilter";
 import {
   Box,
+  Button,
   Card,
   CardContent,
   CircularProgress,
@@ -19,11 +20,11 @@ import {
   TableHead,
   TableRow,
   Paper,
-  IconButton,
   Tooltip,
 } from "@mui/material";
 import SchoolIcon from "@mui/icons-material/School";
-import MenuIcon from "@mui/icons-material/Menu"
+import FilterListIcon from "@mui/icons-material/FilterList";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import "../../../css/TA_Recruiter/Candidates/CandidateList.css";
 
 const STATUS_CLASS_MAP: Record<string, string> = {
@@ -34,16 +35,21 @@ const STATUS_CLASS_MAP: Record<string, string> = {
   SELECTED: "cl-status-selected",
   OFFERED: "cl-status-offered",
   JOINED: "cl-status-joined",
-  NOT_JOINED: "cl-status-dropped",
   REJECTED: "cl-status-rejected",
-  OFFER_ACCEPTED: "cl-status-accepted",
-  OFFER_REJECTED: "cl-status-rejected",
+  ACCEPTED: "cl-status-accepted",
   DROPPED: "cl-status-dropped",
 };
 
 const TYPE_CLASS_MAP: Record<string, string> = {
   PREMIUM: "cl-type-premium",
   STANDARD: "cl-type-standard",
+};
+
+const getInitials = (name: string): string => {
+  if (!name) return "??";
+  const words = name.trim().split(/\s+/);
+  if (words.length === 1) return words[0].substring(0, 2).toUpperCase();
+  return (words[0][0] + words[1][0]).toUpperCase();
 };
 
 const CandidatesHistory: React.FC = () => {
@@ -137,6 +143,10 @@ const CandidatesHistory: React.FC = () => {
     navigate(`/ta-recruiter/candidates/${candidateId}`);
   };
 
+  const handleBack = () => {
+    navigate("/ta-recruiter/candidates");
+  };
+
   if (!cycleId) {
     return (
       <Box className="candidates-container">
@@ -177,21 +187,31 @@ const CandidatesHistory: React.FC = () => {
 
         {/* Main Content Area */}
         <Box
-          className={`candidates-content ${sidebarOpen ? "sidebar-open" : ""}`}
+          className={`candidates-content${sidebarOpen ? " candidates-content--filter-open" : ""}`}
         >
           {/* Header */}
-          <Card className="candidates-header" sx={{ display: 'flex', alignItems: 'center', position: 'relative' }}>
-            <IconButton
-              onClick={toggleSidebar}
-              className="candidates-hamburger-btn"
-            >
-              <MenuIcon />
-            </IconButton>
-
-            <Typography className="t-page-title" sx={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)' }}>
-              History of {cycleName}
-            </Typography>
-          </Card>
+          <Box className="cl-page-header">
+            <Box className="ch-page-header-left">
+              <button className="navbar-back-btn--candidate-match" onClick={handleBack} aria-label="Go back">
+                <ArrowBackIcon fontSize="small" />
+              </button>
+              <Box className="ch-page-title-wrap">
+                <Typography className="cl-page-title">
+                  History of {cycleName}
+                </Typography>
+                <Typography className="cl-page-subtitle">
+                  Closed candidates for the selected hiring cycle
+                </Typography>
+              </Box>
+            </Box>
+            <Box className="cl-page-header-right">
+              {!sidebarOpen && (
+                <Button className="cl-filters-btn" onClick={toggleSidebar}>
+                  Filters <FilterListIcon style={{ fontSize: 18, marginLeft: 4, verticalAlign: 'middle' }} />
+                </Button>
+              )}
+            </Box>
+          </Box>
 
           {/* Table */}
           {candidatesLoading ? (
@@ -212,126 +232,130 @@ const CandidatesHistory: React.FC = () => {
               </CardContent>
             </Card>
           ) : (
-            <TableContainer
-              component={Paper}
-              className="candidates-table-container"
-              onScroll={handleScroll}
-            >
-              <Table stickyHeader>
-                <TableHead>
-                  <TableRow>
-                    <TableCell className="t-head-cell">College Name</TableCell>
-                    <TableCell className="t-head-cell">
-                      Candidate Name
-                    </TableCell>
-                    <TableCell className="t-head-cell">CGPA</TableCell>
-                    <TableCell className="t-head-cell">
-                      No.of Arrears
-                    </TableCell>
-                    <TableCell className="t-head-cell">Passout</TableCell>
-                    <TableCell className="t-head-cell">Status</TableCell>
-                    <TableCell className="t-head-cell">Category</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {allCandidates.map((candidate) => (
-                    <TableRow
-                      key={candidate.candidateId}
-                      className="candidate-row clickable-row"
-                      onClick={() => handleCandidateView(candidate.candidateId)}
-                    >
-                      <TableCell>
-                        <Tooltip
-                          title={candidate.instituteName || "N/A"}
-                          placement="top-start"
-                          arrow
-                          slotProps={{
-                            tooltip: { className: "g-tooltip" },
-                            arrow: { className: "g-tooltip-arrow" },
-                          }}
-                        >
-                          <Box className="institute-name-cell">
-                            <SchoolIcon className="institute-icon-small" />
-                            <Typography className="t-row-primary">
-                              {candidate.instituteName || "N/A"}
-                            </Typography>
-                          </Box>
-                        </Tooltip>
-                      </TableCell>
-                      <TableCell>
-                        <Tooltip
-                          title={
-                            candidate.reason || "No additional information"
-                          }
-                          arrow
-                          placement="top"
-                          slotProps={{
-                            tooltip: { className: "g-tooltip" },
-                            arrow: { className: "g-tooltip-arrow" },
-                          }}
-                        >
-                          <Typography
-                            className={
-                              candidate.isEligible
-                                ? "candidate-name-eligible"
-                                : "candidate-name-ineligible"
-                            }
-                          >
-                            {`${candidate.firstName} ${candidate.lastName}`}
-                          </Typography>
-                        </Tooltip>
-                      </TableCell>
-                      <TableCell>
-                        <Typography>
-                          {candidate.cgpa?.toFixed(2) || "N/A"}
-                        </Typography>
-                      </TableCell>
-                      <TableCell>
-                        <Typography>
-                          {candidate.historyOfArrears || 0}
-                        </Typography>
-                      </TableCell>
-                      <TableCell>
-                        <Typography>
-                          {candidate.passoutYear || "N/A"}
-                        </Typography>
-                      </TableCell>
-                      <TableCell>
-                        <Typography
-                          className={`cl-status-badge ${STATUS_CLASS_MAP[candidate.applicationStage] || ""}`}
-                        >
-                          {candidate.applicationStage}
-                        </Typography>
-                      </TableCell>
-                      <TableCell>
-                        <Typography
-                          className={`cl-status-badge ${TYPE_CLASS_MAP[candidate.applicationType] || ""}`}
-                        >
-                          {candidate.applicationType || "N/A"}
-                        </Typography>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                  {loadingMore && (
+            <Box className="cl-table-wrapper">
+              <TableContainer
+                component={Paper}
+                className="candidates-table-container"
+                onScroll={handleScroll}
+              >
+                <Table stickyHeader>
+                  <TableHead>
                     <TableRow>
-                      <TableCell
-                        colSpan={7}
-                        align="center"
-                        className="loading-more-cell"
-                      >
-                        <CircularProgress size={24} />
-                        <Typography
-                          variant="body2"
-                          className="loading-more-text"
-                        >
-                          Loading more candidates...
-                        </Typography>
+                      <TableCell className="t-head-cell">College Name</TableCell>
+                      <TableCell className="t-head-cell">
+                        Candidate Name
                       </TableCell>
+                      <TableCell className="t-head-cell">CGPA</TableCell>
+                      <TableCell className="t-head-cell">
+                        No.of Arrears
+                      </TableCell>
+                      <TableCell className="t-head-cell">Passout</TableCell>
+                      <TableCell className="t-head-cell">Status</TableCell>
+                      <TableCell className="t-head-cell">Category</TableCell>
                     </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </TableContainer>
+                  </TableHead>
+                  <TableBody>
+                    {allCandidates.map((candidate) => (
+                      <TableRow
+                        key={candidate.candidateId}
+                        className="candidate-row clickable-row"
+                        onClick={() => handleCandidateView(candidate.candidateId)}
+                      >
+                        <TableCell>
+                          <Tooltip
+                            title={candidate.instituteName || "N/A"}
+                            placement="top-start"
+                            arrow
+                            slotProps={{
+                              tooltip: { className: "g-tooltip" },
+                              arrow: { className: "g-tooltip-arrow" },
+                            }}
+                          >
+                            <Box className="institute-name-cell">
+                              <Box className="cl-institute-avatar">
+                                {getInitials(candidate.instituteName || "")}
+                              </Box>
+                              <Typography className="cl-institute-name">
+                                {candidate.instituteName || "N/A"}
+                              </Typography>
+                            </Box>
+                          </Tooltip>
+                        </TableCell>
+                        <TableCell>
+                          <Tooltip
+                            title={
+                              candidate.reason || "No additional information"
+                            }
+                            arrow
+                            placement="top"
+                            slotProps={{
+                              tooltip: { className: "g-tooltip" },
+                              arrow: { className: "g-tooltip-arrow" },
+                            }}
+                          >
+                            <Typography
+                              className={
+                                candidate.isEligible
+                                  ? "candidate-name-eligible"
+                                  : "candidate-name-ineligible"
+                              }
+                            >
+                              {`${candidate.firstName} ${candidate.lastName}`}
+                            </Typography>
+                          </Tooltip>
+                        </TableCell>
+                        <TableCell>
+                          <Typography>
+                            {candidate.cgpa?.toFixed(2) || "N/A"}
+                          </Typography>
+                        </TableCell>
+                        <TableCell>
+                          <Typography>
+                            {candidate.historyOfArrears || 0}
+                          </Typography>
+                        </TableCell>
+                        <TableCell>
+                          <Typography>
+                            {candidate.passoutYear || "N/A"}
+                          </Typography>
+                        </TableCell>
+                        <TableCell>
+                          <Typography
+                            className={`cl-status-badge ${STATUS_CLASS_MAP[candidate.applicationStage] || ""}`}
+                          >
+                            {candidate.applicationStage}
+                          </Typography>
+                        </TableCell>
+                        <TableCell>
+                          <Typography
+                            className={`cl-status-badge ${TYPE_CLASS_MAP[candidate.applicationType] || ""}`}
+                          >
+                            {candidate.applicationType || "N/A"}
+                          </Typography>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                    {loadingMore && (
+                      <TableRow>
+                        <TableCell
+                          colSpan={7}
+                          align="center"
+                          className="loading-more-cell"
+                        >
+                          <CircularProgress size={24} />
+                          <Typography
+                            variant="body2"
+                            className="loading-more-text"
+                          >
+                            Loading more candidates...
+                          </Typography>
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </Box>
           )}
         </Box>
       </Box>
