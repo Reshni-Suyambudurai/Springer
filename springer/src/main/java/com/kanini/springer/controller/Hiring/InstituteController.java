@@ -16,13 +16,16 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
 import java.util.List;
+
+
+import org.springframework.security.access.prepost.PreAuthorize;
 
 @RestController
 @RequestMapping("/api/institutes")
 @RequiredArgsConstructor
 @Tag(name = "Institute Management", description = "APIs for managing institutes/colleges")
+@PreAuthorize("hasAnyRole('SYSTEM_ADMIN','TA_HEAD','TA_MANAGER','HIRING_MANAGER')")
 public class InstituteController {
     
     private final IInstituteService instituteService;
@@ -114,3 +117,4 @@ public class InstituteController {
         return ResponseEntity.ok(new ApiResponse<>(true, "Institute names retrieved successfully", responses));
     }
 }
+

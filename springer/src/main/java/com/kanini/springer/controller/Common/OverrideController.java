@@ -11,14 +11,16 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.time.LocalDate;
 import java.util.List;
+import java.time.LocalDate;
+
+import org.springframework.security.access.prepost.PreAuthorize;
 
 @RestController
 @RequestMapping("/api/overrides")
 @RequiredArgsConstructor
 @Tag(name = "Manual Override Audit", description = "APIs for managing manual override audit records")
+@PreAuthorize("hasAnyRole('SYSTEM_ADMIN','TA_HEAD','TA_MANAGER')")
 public class OverrideController {
     
     private final IOverrideService overrideService;
@@ -91,4 +93,5 @@ public class OverrideController {
         return ResponseEntity.ok(new ApiResponse<>(true, "Overrides by user " + userId + " retrieved successfully", responses));
     }
 }
+
 

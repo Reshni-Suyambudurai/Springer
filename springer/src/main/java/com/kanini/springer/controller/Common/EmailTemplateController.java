@@ -17,8 +17,10 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import java.util.List;
 
 import java.util.List;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 /**
  * Controller for managing email templates
@@ -27,6 +29,7 @@ import java.util.List;
 @RequestMapping("/api/email-templates")
 @RequiredArgsConstructor
 @Tag(name = "Email Template Management", description = "APIs for managing email templates")
+@PreAuthorize("hasAnyRole('SYSTEM_ADMIN','TA_HEAD','TA_MANAGER')")
 public class EmailTemplateController {
 
     private final IEmailTemplateService emailTemplateService;
@@ -129,3 +132,4 @@ public class EmailTemplateController {
                 "Personalized emails queued for " + (context.getRecipients() != null ? context.getRecipients().size() : 0) + " recipient(s)", null));
     }
 }
+

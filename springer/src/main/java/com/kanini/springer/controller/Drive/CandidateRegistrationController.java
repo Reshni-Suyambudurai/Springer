@@ -15,6 +15,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 /**
  * Controller for managing candidate registrations
@@ -23,6 +24,7 @@ import java.util.List;
 @RequestMapping("/api/candidate-registrations")
 @RequiredArgsConstructor
 @Tag(name = "Candidate Registration Management", description = "APIs for managing candidate self-registrations")
+@PreAuthorize("hasAnyRole('SYSTEM_ADMIN','TA_HEAD','TA_MANAGER')")
 public class CandidateRegistrationController {
 
     private final ICandidateRegistrationService registrationService;
@@ -108,3 +110,4 @@ public class CandidateRegistrationController {
                         null));
     }
 }
+

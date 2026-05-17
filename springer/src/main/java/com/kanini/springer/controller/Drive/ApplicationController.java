@@ -22,12 +22,14 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import org.springframework.security.access.prepost.PreAuthorize;
 import java.util.Map;
 
 @RestController
 @RequestMapping("/api/applications")
 @RequiredArgsConstructor
 @Tag(name = "Application Management", description = "APIs for managing drive applications")
+@PreAuthorize("hasAnyRole('SYSTEM_ADMIN','TA_HEAD','TA_MANAGER','MEMBERS')")
 public class ApplicationController {
     
     private final IApplicationService applicationService;
@@ -142,3 +144,4 @@ public class ApplicationController {
                 response));
     }
 }
+

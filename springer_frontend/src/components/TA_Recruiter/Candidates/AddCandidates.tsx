@@ -632,6 +632,7 @@ console.log("Skills data:", response.data);
                 className={fieldErrors.dateOfBirth ? "ac-field-error" : ""}
                 error={!!fieldErrors.dateOfBirth}
                 InputLabelProps={{ shrink: true }}
+                inputProps={{ max: new Date().toISOString().split("T")[0] }}
                 value={singleForm.dateOfBirth}
                 onChange={(e) => { clearFieldError("dateOfBirth"); setSingleForm({ ...singleForm, dateOfBirth: e.target.value }); }}
               />

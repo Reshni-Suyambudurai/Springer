@@ -9,20 +9,25 @@ const THEME_KEY = "theme";
 const CANDIDATE_FILTERS_KEY = "savedCandidateFilters";
 const SIDEBAR_STATE_KEY = "sidebarOpen";
 
+/** sameSite=strict: browser won't send cookies on cross-site requests (CSRF mitigation) */
+const AUTH_COOKIE_OPTIONS: Cookies.CookieAttributes = {
+  expires: 7,
+  sameSite: "strict",
+  secure: window.location.protocol === "https:",
+  path: "/",
+};
+
 export const tokenstore = {
   getToken() {
     return Cookies.get(TOKEN_KEY) || null;
   },
 
   setToken(token: string) {
-    Cookies.set(TOKEN_KEY, token, { expires: 7, sameSite: "strict" });
+    Cookies.set(TOKEN_KEY, token, AUTH_COOKIE_OPTIONS);
   },
 
   setUser(user: AuthUser) {
-    Cookies.set(CUSTOMER_KEY, JSON.stringify(user), {
-      expires: 7,
-      sameSite: "strict",
-    });
+    Cookies.set(CUSTOMER_KEY, JSON.stringify(user), AUTH_COOKIE_OPTIONS);
   },
 
   getUser(): AuthUser | null {

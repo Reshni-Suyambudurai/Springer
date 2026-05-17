@@ -31,11 +31,13 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 @RestController
 @RequestMapping("/api/candidates")
 @RequiredArgsConstructor
 @Tag(name = "Candidate Management", description = "APIs for managing candidates in the recruitment system")
+@PreAuthorize("hasAnyRole('SYSTEM_ADMIN','TA_HEAD','TA_MANAGER','TRAINING_COORDINATOR')")
 public class CandidatesController {
     
     private final ICandidatesService candidatesService;
@@ -267,4 +269,5 @@ public class CandidatesController {
         return ResponseEntity.ok(new ApiResponse<>(true, "Eligibility rules updated successfully", updatedRules));
     }
 }
+
 

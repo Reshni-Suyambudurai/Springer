@@ -6,12 +6,15 @@ import com.kanini.springer.service.Common.INotificationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import java.util.List;
 
 import java.util.List;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 @RestController
 @RequestMapping("/api/notifications")
 @RequiredArgsConstructor
+@PreAuthorize("hasAnyRole('SYSTEM_ADMIN','TA_HEAD','TA_MANAGER','HIRING_MANAGER','MEMBERS','TRAINING_COORDINATOR','INTERN')")
 public class NotificationController {
 
     private final INotificationService notificationService;
@@ -37,3 +40,4 @@ public class NotificationController {
         return ResponseEntity.ok(ApiResponse.success("Notification marked as read", null));
     }
 }
+

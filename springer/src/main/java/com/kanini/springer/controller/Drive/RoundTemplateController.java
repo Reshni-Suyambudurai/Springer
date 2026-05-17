@@ -13,11 +13,13 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 @RestController
 @RequestMapping("/api/round-templates")
 @RequiredArgsConstructor
 @Tag(name = "Round Template Management", description = "APIs for managing round templates/configurations")
+@PreAuthorize("hasAnyRole('SYSTEM_ADMIN','TA_HEAD','TA_MANAGER','MEMBERS')")
 public class RoundTemplateController {
     
     private final IRoundTemplateService roundTemplateService;
@@ -67,3 +69,4 @@ public class RoundTemplateController {
         return ResponseEntity.ok(new ApiResponse<>(true, "Round template status toggled successfully", response));
     }
 }
+

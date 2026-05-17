@@ -14,6 +14,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 /**
  * Controller for managing forms
@@ -22,6 +23,7 @@ import java.util.List;
 @RequestMapping("/api/forms")
 @RequiredArgsConstructor
 @Tag(name = "Form Management", description = "APIs for managing registration forms")
+@PreAuthorize("hasAnyRole('SYSTEM_ADMIN','TA_HEAD','TA_MANAGER')")
 public class FormController {
 
     private final IFormService formService;
@@ -103,3 +105,4 @@ public class FormController {
                 new ApiResponse<>(true, "Form deleted successfully", null));
     }
 }
+

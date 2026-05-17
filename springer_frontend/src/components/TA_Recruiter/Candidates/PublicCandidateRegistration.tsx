@@ -424,6 +424,7 @@ const PublicCandidateRegistration: React.FC = () => {
               error={fieldErrors.dob}
               helperText={fieldErrors.dob && "Date of birth is required"}
               InputLabelProps={{ shrink: true }}
+              inputProps={{ max: new Date().toISOString().split("T")[0] }}
             />
 
 

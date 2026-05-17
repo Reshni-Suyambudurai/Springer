@@ -290,6 +290,7 @@ const AddSchedule: React.FC = () => {
                 helperText={errors.startDate}
                 className="add-schedule-input"
                 InputLabelProps={{ shrink: true }}
+                inputProps={{ min: new Date().toISOString().split("T")[0] }}
               />
 
               {/* End Date */}
@@ -303,6 +304,7 @@ const AddSchedule: React.FC = () => {
                 helperText={errors.endDate}
                 className="add-schedule-input"
                 InputLabelProps={{ shrink: true }}
+                inputProps={{ min: new Date().toISOString().split("T")[0] }}
               />
 
               {/* Drive Status */}

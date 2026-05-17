@@ -11,11 +11,13 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 @RestController
 @RequestMapping("/api/candidate-evaluations")
 @RequiredArgsConstructor
 @Tag(name = "Candidate Evaluation Management", description = "APIs for managing candidate evaluations and scores")
+@PreAuthorize("hasAnyRole('SYSTEM_ADMIN','TA_HEAD','TA_MANAGER','MEMBERS')")
 public class CandidateEvaluationController {
     
     private final ICandidateEvaluationService evaluationService;
@@ -128,3 +130,4 @@ public class CandidateEvaluationController {
         return ResponseEntity.ok(new ApiResponse<>(true, "Evaluation check completed successfully", response));
     }
 }
+

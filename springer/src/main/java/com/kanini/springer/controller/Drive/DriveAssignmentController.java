@@ -11,11 +11,13 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 @RestController
 @RequestMapping("/api/drive-assignments")
 @RequiredArgsConstructor
 @Tag(name = "Drive Panel Assignment Management", description = "APIs for managing drive panel assignments")
+@PreAuthorize("hasAnyRole('SYSTEM_ADMIN','TA_HEAD','TA_MANAGER','MEMBERS')")
 public class DriveAssignmentController {
     
     private final IDriveAssignmentService driveAssignmentService;
@@ -122,3 +124,4 @@ public class DriveAssignmentController {
         return ResponseEntity.ok(new ApiResponse<>(true, "Assignments deletion processed successfully", response));
     }
 }
+
