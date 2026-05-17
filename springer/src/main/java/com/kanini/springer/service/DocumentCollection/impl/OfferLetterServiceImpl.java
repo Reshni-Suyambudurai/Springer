@@ -83,6 +83,21 @@ public class OfferLetterServiceImpl implements IOfferLetterService {
     public BulkOfferGenerateResponse bulkGenerateOfferLetters(BulkOfferGenerateRequest request) {
         List<CandidateOfferResult> results = new ArrayList<>();
 
+        HiringCycle cycle = cycleRepository.findById(request.getCycleId()).orElse(null);
+        if (cycle == null) {
+            return BulkOfferGenerateResponse.builder()
+                    .totalRequested(request.getCandidateIds().size())
+                    .totalSuccess(0).totalSkipped(0)
+                    .totalFailed(request.getCandidateIds().size())
+                    .results(request.getCandidateIds().stream()
+                            .map(id -> CandidateOfferResult.builder()
+                                    .candidateId(id).status(OFFER_FAILED)
+                                    .reason("Hiring cycle not found with ID: " + request.getCycleId())
+                                    .build())
+                            .toList())
+                    .build();
+        }
+
         for (Long candidateId : request.getCandidateIds()) {
             if (offerRepository.findByCandidateId(candidateId).isPresent()) {
                 results.add(CandidateOfferResult.builder()
@@ -111,16 +126,6 @@ public class OfferLetterServiceImpl implements IOfferLetterService {
                         .status(OFFER_FAILED)
                         .reason("Documents not fully approved: " +
                                 completion.getTotalApproved() + "/" + completion.getTotalRequired() + " approved")
-                        .build());
-                continue;
-            }
-
-            HiringCycle cycle = cycleRepository.findById(request.getCycleId()).orElse(null);
-            if (cycle == null) {
-                results.add(CandidateOfferResult.builder()
-                        .candidateId(candidateId)
-                        .status(OFFER_FAILED)
-                        .reason("Hiring cycle not found with ID: " + request.getCycleId())
                         .build());
                 continue;
             }
@@ -158,7 +163,7 @@ public class OfferLetterServiceImpl implements IOfferLetterService {
     @Override
     @Transactional(readOnly = true)
     public OfferLetterResponse getOfferById(Long offerId) {
-        OfferLetter offer = offerRepository.findById(offerId)
+        OfferLetter offer = offerRepository.findByIdWithDetails(offerId)
                 .orElseThrow(() -> new ResourceNotFoundException("Offer not found with ID: " + offerId));
         return mapper.toResponse(offer);
     }
@@ -179,7 +184,7 @@ public class OfferLetterServiceImpl implements IOfferLetterService {
                 throw new ValidationException("Invalid offer response value: " + offerResponse, e);
             }
         } else {
-            offers = offerRepository.findAll(pageable);
+            offers = offerRepository.findAllWithDetails(pageable);
         }
 
         return offers.stream().map(mapper::toResponse).toList();
@@ -194,9 +199,9 @@ public class OfferLetterServiceImpl implements IOfferLetterService {
         return candidateRepository.findByApplicationStage(Enums.ApplicationStage.SELECTED).stream()
                 .filter(c -> !alreadyIssuedCandidateIds.contains(c.getCandidateId()))
                 .filter(c -> {
-                    var completion = verificationService.getDocumentCompletionStatus(
+                    var completion = verificationService.getOfferReadyStatus(
                             c.getCandidateId(), cycleId);
-                    return completion.getIsOfferReady();
+                    return completion;
                 })
                 .map(c -> OfferLetterResponse.builder()
                         .candidateId(c.getCandidateId())

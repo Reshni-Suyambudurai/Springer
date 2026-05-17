@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Box, Card, Typography, Stack, Chip, Button, IconButton,
   CircularProgress, Alert, Table, TableBody, TableCell,
@@ -191,13 +191,13 @@ const TAHiringCycleDetails = () => {
                 <Box className="tah-hcd-info-field">
                   <Typography className="tah-hcd-info-label">Budget</Typography>
                   <Typography className="tah-hcd-info-value">
-                    {cycle.budget ? `â‚¹ ${cycle.budget.toLocaleString('en-IN')}` : 'â€”'}
+                    {cycle.budget ? `₹ ${cycle.budget.toLocaleString('en-IN')}` : '—'}
                   </Typography>
                 </Box>
                 <Box className="tah-hcd-info-field">
                   <Typography className="tah-hcd-info-label">Compensation Band</Typography>
                   <Typography className="tah-hcd-info-value">
-                    {cycle.compensationBand ? `Band ${cycle.compensationBand}` : 'â€”'}
+                    {cycle.compensationBand ? `Band ${cycle.compensationBand}` : '—'}
                   </Typography>
                 </Box>
               </Box>
@@ -351,7 +351,7 @@ const TAHiringCycleDetails = () => {
               value={editForm.cycleName} onChange={(e) => setEditForm(p => ({ ...p, cycleName: e.target.value }))} />
             <TextField label="Compensation Band" size="small" fullWidth type="number"
               value={editForm.compensationBand} onChange={(e) => setEditForm(p => ({ ...p, compensationBand: e.target.value }))} />
-            <TextField label="Budget (â‚¹)" size="small" fullWidth type="number"
+            <TextField label="Budget (₹)" size="small" fullWidth type="number"
               value={editForm.budget} onChange={(e) => setEditForm(p => ({ ...p, budget: e.target.value }))} />
           </Stack>
         </DialogContent>

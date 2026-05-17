@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Box, Card, Typography, Stack, Chip,
   CircularProgress, Alert, Button, IconButton,
@@ -166,13 +166,13 @@ const HiringCycleDetails = () => {
                 <Box className="hcd-info-field">
                   <Typography className="hcd-info-label">Budget</Typography>
                   <Typography className="hcd-info-value">
-                    {cycle.budget ? `â‚¹ ${cycle.budget.toLocaleString('en-IN')}` : 'â€”'}
+                    {cycle.budget ? `₹ ${cycle.budget.toLocaleString('en-IN')}` : '—'}
                   </Typography>
                 </Box>
                 <Box className="hcd-info-field">
                   <Typography className="hcd-info-label">Compensation Band</Typography>
                   <Typography className="hcd-info-value">
-                    {cycle.compensationBand ? `Band ${cycle.compensationBand}` : 'â€”'}
+                    {cycle.compensationBand ? `Band ${cycle.compensationBand}` : '—'}
                   </Typography>
                 </Box>
                 <Box className="hcd-info-field">

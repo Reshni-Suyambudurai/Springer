@@ -17,4 +17,6 @@ public interface IVerificationService {
     List<VerificationResponse> getVerificationHistory(Long documentId);
     
     DocumentCompletionResponse getDocumentCompletionStatus(Long candidateId, Long cycleId);
+
+    boolean getOfferReadyStatus(Long candidateId, Long cycleId);
 }

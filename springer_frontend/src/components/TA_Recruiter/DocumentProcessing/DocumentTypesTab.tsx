@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useDebounce } from '../../../hooks/useDebounce';
 import { TableSkeleton } from '../../Common/TableSkeleton';
 import {
@@ -234,7 +234,7 @@ const DocumentTypesTab = () => {
                         </TableCell>
                         <TableCell className="dtt-table-cell">
                           <Typography className="dtt-row-secondary">
-                            {t.createdAt ? new Date(t.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : 'â€”'}
+                            {t.createdAt ? new Date(t.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'}
                           </Typography>
                         </TableCell>
                         <TableCell className="dtt-table-cell dtt-table-cell--actions">

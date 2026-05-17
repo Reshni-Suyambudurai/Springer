@@ -1,6 +1,5 @@
-import { useState } from "react";
 import { tokenstore } from "../../auth/tokenstore";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import type { MenuItem } from "../../types/sidebar";
 import '../../css/Common/Sidebar.css';
 
@@ -10,16 +9,9 @@ interface SidebarProps {
 }
 
 function Sidebar({ collapsed, onToggle }: SidebarProps) {
-  const [showUserMenu, setShowUserMenu] = useState(false);
   const user = tokenstore.getUser();
   const location = useLocation();
-  const navigate = useNavigate();
   const role = user?.roleName;
-
-  const handleLogout = () => {
-    tokenstore.clear();
-    navigate('/login');
-  };
 
   const menu: Record<string, MenuItem[]> = {
 

@@ -6,8 +6,8 @@
   gap: 20px;
   padding: 20px 24px;
   max-width: 100%;
-  height: calc(100vh - 118px);
-  overflow: hidden;
+  min-height: calc(100vh - 118px);
+  overflow-y: auto;
   background-color: var(--color-bg-primary);
 }
 

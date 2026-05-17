@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Box, Card, Typography, Stack, Chip, Button, IconButton,
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
@@ -226,12 +226,12 @@ const TAHiringCycleList = () => {
                           </TableCell>
                           <TableCell className="tah-hcl-cell">
                             <Typography className="tah-hcl-cell-secondary">
-                              {cycle.budget ? `â‚¹ ${cycle.budget.toLocaleString('en-IN')}` : 'â€”'}
+                              {cycle.budget ? `₹ ${cycle.budget.toLocaleString('en-IN')}` : '—'}
                             </Typography>
                           </TableCell>
                           <TableCell className="tah-hcl-cell">
                             <Typography className="tah-hcl-cell-secondary">
-                              {cycle.compensationBand ? `Band ${cycle.compensationBand}` : 'â€”'}
+                              {cycle.compensationBand ? `Band ${cycle.compensationBand}` : '—'}
                             </Typography>
                           </TableCell>
                           <TableCell className="tah-hcl-cell">
@@ -302,7 +302,7 @@ const TAHiringCycleList = () => {
               value={editForm.cycleName} onChange={(e) => setEditForm(p => ({ ...p, cycleName: e.target.value }))} />
             <TextField label="Compensation Band" size="small" fullWidth type="number"
               value={editForm.compensationBand} onChange={(e) => setEditForm(p => ({ ...p, compensationBand: e.target.value }))} />
-            <TextField label="Budget (â‚¹)" size="small" fullWidth type="number"
+            <TextField label="Budget (₹)" size="small" fullWidth type="number"
               value={editForm.budget} onChange={(e) => setEditForm(p => ({ ...p, budget: e.target.value }))} />
           </Stack>
         </DialogContent>
@@ -375,7 +375,7 @@ const TAHiringCycleList = () => {
               onChange={(e) => setForm(p => ({ ...p, compensationBand: e.target.value }))}
             />
             <TextField
-              label="Budget (â‚¹)"
+              label="Budget (₹)"
               size="small"
               fullWidth
               type="number"

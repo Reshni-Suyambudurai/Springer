@@ -6,14 +6,14 @@ import { candidateApi } from '../services/drive.api';
 import { showToast } from '../utils/toast';
 import type { HiringCycleResponse } from '../types/TA_Recruiter/Hiring/hiringCycle.types';
 import type { DocumentTypeResponse, DocumentSubmissionResponse } from '../types/DocumentCollection/document.types';
-import type { CandidateResponse } from '../types/TA_Recruiter/Drive/candidate.types';
+import type { CandidateListResponse } from '../types/TA_Recruiter/Drive/candidate.types';
 
 interface DocumentProcessingContextType {
   // Data
   cycles: HiringCycleResponse[];
   docTypes: DocumentTypeResponse[];
   submissions: DocumentSubmissionResponse[];
-  selectedCandidates: CandidateResponse[];
+  selectedCandidates: CandidateListResponse[];
   
   // Loading states
   loadingCycles: boolean;
@@ -35,7 +35,7 @@ export const DocumentProcessingProvider = ({ children }: { children: ReactNode }
   const [cycles, setCycles] = useState<HiringCycleResponse[]>([]);
   const [docTypes, setDocTypes] = useState<DocumentTypeResponse[]>([]);
   const [submissions, setSubmissions] = useState<DocumentSubmissionResponse[]>([]);
-  const [selectedCandidates, setSelectedCandidates] = useState<CandidateResponse[]>([]);
+  const [selectedCandidates, setSelectedCandidates] = useState<CandidateListResponse[]>([]);
   
   const [loadingCycles, setLoadingCycles] = useState(false);
   const [loadingDocTypes, setLoadingDocTypes] = useState(false);

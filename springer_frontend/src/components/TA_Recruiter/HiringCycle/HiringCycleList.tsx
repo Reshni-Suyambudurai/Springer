@@ -107,12 +107,12 @@ const TARHiringCycleList = () => {
                           </TableCell>
                           <TableCell className="t-cell">
                             <Typography className="t-row-secondary">
-                              {cycle.budget ? `â‚¹ ${cycle.budget.toLocaleString('en-IN')}` : 'â€”'}
+                              {cycle.budget ? `₹ ${cycle.budget.toLocaleString('en-IN')}` : '—'}
                             </Typography>
                           </TableCell>
                           <TableCell className="t-cell">
                             <Typography className="t-row-secondary">
-                              {cycle.compensationBand ? `Band ${cycle.compensationBand}` : 'â€”'}
+                              {cycle.compensationBand ? `Band ${cycle.compensationBand}` : '—'}
                             </Typography>
                           </TableCell>
                           <TableCell className="t-cell">

@@ -480,7 +480,7 @@ export const excelUploadApi = {
 // ==================== JOINING TRACKER APIs ====================
 export const joiningTrackerApi = {
 
-  // Fetches only OFFER_ACCEPTED, JOINED, NOT_JOINED candidates from backend â€” not all candidates
+  // Fetches only OFFER_ACCEPTED, JOINED, NOT_JOINED candidates from backend — not all candidates
   async getCandidatesByCycle(cycleId: number, page = 0, size = 500): Promise<ApiResponse<CandidateResponse[]>> {
     try {
       const response = await http.post('/candidates/filter', {

@@ -40,7 +40,7 @@ const BatchAttendancePanel = ({ context, readOnly = false }: { context: AcademyC
   const [uploading, setUploading]     = useState(false);
   const uploadRef                     = useRef<HTMLInputElement>(null);
 
-  useEffect(() => { fetchBase(); }, []);
+  useEffect(() => { fetchBase(); }, [yearPrograms, programYear]);
 
   // Fetch batch stats whenever program+batch filter changes — single API call
   useEffect(() => {

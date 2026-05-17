@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Box, Card, Typography, Stack, Chip, Button, IconButton,
   CircularProgress, Alert, TextField, MenuItem, Select,
@@ -185,7 +185,7 @@ const HiringDemandDetails = () => {
               </Box>
               <Stack>
                 <Typography className="hdd-title">
-                  {loading ? 'Demand Details' : `Demand â€” ${buLabelMap[demand?.businessUnit ?? ''] ?? demand?.businessUnit}`}
+                  {loading ? 'Demand Details' : `Demand — ${buLabelMap[demand?.businessUnit ?? ''] ?? demand?.businessUnit}`}
                 </Typography>
                 <Typography className="hdd-subtitle">{demand?.cycleName ?? 'Hiring demand details'}</Typography>
               </Stack>

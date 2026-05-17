@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Box, Card, Typography, Button, CircularProgress, Chip,
   Table, TableBody, TableCell, TableContainer, TableHead,
@@ -96,7 +96,7 @@ const OffersTab = ({ context }: { context: DocProcessingContextProps }) => {
     Promise.all([fetchEligible(), fetchOffers()]).finally(() => setLoadingCycleData(false));
   };
 
-  // Open generate offer dialog â€” init rows from eligible list
+  // Open generate offer dialog — init rows from eligible list
   const openOfferDialog = () => {
     setRows(eligible.map(c => ({
       candidateId: c.candidateId,
@@ -210,7 +210,7 @@ const OffersTab = ({ context }: { context: DocProcessingContextProps }) => {
   const pending  = offers.filter(o => o.response === 'PENDING').length;
 
   const formatDate = (d: string | null) =>
-    d ? new Date(d).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : 'â€”';
+    d ? new Date(d).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : '—';
 
   const RESPONSE_CLASS: Record<string, string> = {
     PENDING:        'oft-chip oft-chip--pending',
@@ -295,7 +295,7 @@ const OffersTab = ({ context }: { context: DocProcessingContextProps }) => {
             </Box>
           ) : viewMode === 'eligible' ? (
 
-            /* â”€â”€ ELIGIBLE TABLE â”€â”€ */
+            /* ── ELIGIBLE TABLE ── */
             <TableContainer className="oft-table-container">
               <Table stickyHeader>
                 <TableHead>
@@ -328,7 +328,7 @@ const OffersTab = ({ context }: { context: DocProcessingContextProps }) => {
                           </Box>
                         </TableCell>
                         <TableCell className="oft-table-cell">
-                          <Chip label="All Docs Approved âœ“" size="small" className="oft-chip oft-chip--accepted" />
+                          <Chip label="All Docs Approved ✓" size="small" className="oft-chip oft-chip--accepted" />
                         </TableCell>
                       </TableRow>
                     );})
@@ -339,7 +339,7 @@ const OffersTab = ({ context }: { context: DocProcessingContextProps }) => {
 
           ) : (
 
-            /* â”€â”€ RECORDED OFFERS TABLE â”€â”€ */
+            /* ── RECORDED OFFERS TABLE ── */
             <>
               <TableContainer className="oft-table-container">
                 <Table stickyHeader>
@@ -390,7 +390,7 @@ const OffersTab = ({ context }: { context: DocProcessingContextProps }) => {
                             <Typography className="oft-row-secondary">{formatDate(offer.respondedDate)}</Typography>
                           </TableCell>
                           <TableCell className="oft-table-cell">
-                            <Typography className="oft-decline-reason">{offer.declineReason || 'â€”'}</Typography>
+                            <Typography className="oft-decline-reason">{offer.declineReason || '—'}</Typography>
                           </TableCell>
                           <TableCell className="oft-table-cell oft-table-cell--actions">
                             {offer.response === 'PENDING' && (
@@ -437,10 +437,10 @@ const OffersTab = ({ context }: { context: DocProcessingContextProps }) => {
         </Box>
       </Card>
 
-      {/* â”€â”€ Generate Offer Dialog â”€â”€ */}
+      {/* ── Generate Offer Dialog ── */}
       <Dialog open={offerDialog} onClose={() => setOfferDialog(false)} maxWidth="md" fullWidth>
         <DialogTitle className="oft-dialog-title" sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          Generate Offers â€” {eligible.length} Eligible Candidate(s)
+          Generate Offers — {eligible.length} Eligible Candidate(s)
           <IconButton size="small" onClick={() => setOfferDialog(false)}><CloseIcon style={{ fontSize: '1.25rem' }} /></IconButton>
         </DialogTitle>
         <DialogContent>
@@ -568,10 +568,10 @@ const OffersTab = ({ context }: { context: DocProcessingContextProps }) => {
         </DialogActions>
       </Dialog>
 
-      {/* â”€â”€ Single Record Response Dialog â”€â”€ */}
+      {/* ── Single Record Response Dialog ── */}
       <Dialog open={singleDialog.open} onClose={() => setSingleDialog({ open: false, offer: null })} maxWidth="xs" fullWidth>
         <DialogTitle className="oft-dialog-title" sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          {isEditing ? 'Edit Response' : 'Record Response'} â€” {singleDialog.offer?.candidateName}
+          {isEditing ? 'Edit Response' : 'Record Response'} — {singleDialog.offer?.candidateName}
           <IconButton size="small" onClick={() => setSingleDialog({ open: false, offer: null })}><CloseIcon style={{ fontSize: '1.25rem' }} /></IconButton>
         </DialogTitle>
         <DialogContent>

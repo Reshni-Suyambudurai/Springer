@@ -1,4 +1,4 @@
-﻿import React, { useState } from "react";
+import React, { useState } from "react";
 import {
   Box,
   IconButton,
@@ -295,7 +295,7 @@ const ScheduleDrive: React.FC<ScheduleDriveProps> = ({
             {errorMessages.map((error, index) => (
               <Box key={index} className="schedule-drive-error-item">
                 <Typography className="schedule-drive-error-text">
-                  â€¢ {error}
+                  • {error}
                 </Typography>
               </Box>
             ))}

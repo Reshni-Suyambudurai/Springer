@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { candidateApi } from "../../../services/drive.api";
 import { hiringCycleApi } from "../../../services/hiring.api";
@@ -51,8 +51,10 @@ const STATUS_CLASS_MAP: Record<string, string> = {
   SELECTED: 'cl-status-selected',
   OFFERED: 'cl-status-offered',
   JOINED: 'cl-status-joined',
+  NOT_JOINED: 'cl-status-dropped',
   REJECTED: 'cl-status-rejected',
-  ACCEPTED: 'cl-status-accepted',
+  OFFER_ACCEPTED: 'cl-status-accepted',
+  OFFER_REJECTED: 'cl-status-rejected',
   DROPPED: 'cl-status-dropped',
 };
 
@@ -90,7 +92,7 @@ const CandidateList: React.FC = () => {
 
   // Use custom hook for filter state management
   // NOTE: Filtering is done by backend, not client-side!
-  // The 'filters' object is passed to fetchCandidates() â†’ backend /filter endpoint
+  // The 'filters' object is passed to fetchCandidates() → backend /filter endpoint
   const {
     filters,
     handleFilterChange,
@@ -292,7 +294,7 @@ const CandidateList: React.FC = () => {
 
     setUpdatingBulkStatus(true);
     try {
-      // If CLOSED â†’ use lifecycle status endpoint
+      // If CLOSED → use lifecycle status endpoint
       if (bulkStatusUpdate === "CLOSED") {
         let lifecycleRequest: Parameters<typeof candidateApi.bulkUpdateCandidateLifecycleStatus>[0];
 

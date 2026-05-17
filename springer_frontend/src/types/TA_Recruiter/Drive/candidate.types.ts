@@ -12,6 +12,7 @@ export type ApplicationType = typeof ApplicationType[keyof typeof ApplicationTyp
 export const ApplicationStage = {
   APPLIED: 'APPLIED',
   SHORTLISTED: 'SHORTLISTED',
+  INVITED: 'INVITED',
   SCHEDULED: 'SCHEDULED',
   SELECTED: 'SELECTED',
   OFFERED: 'OFFERED',
@@ -19,7 +20,7 @@ export const ApplicationStage = {
   NOT_JOINED: 'NOT_JOINED',
   OFFER_REJECTED: 'OFFER_REJECTED',
   REJECTED: 'REJECTED',
-  ACCEPTED: 'ACCEPTED',
+  OFFER_ACCEPTED: 'OFFER_ACCEPTED',
   DROPPED: 'DROPPED'
 } as const;
   
@@ -164,6 +165,8 @@ export interface CandidateListResponse {
   candidateId: number;
   firstName: string;
   lastName: string;
+  email: string;
+  department: string;
   instituteName: string;
   cgpa: number;
   historyOfArrears: number;

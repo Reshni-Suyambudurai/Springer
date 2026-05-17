@@ -1,8 +1,8 @@
-﻿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Box, Card, Typography, Table, TableBody, TableCell,
   TableContainer, TableHead, TableRow,
-  CircularProgress, Chip, MenuItem, TextField, Button, Stack, IconButton,
+  CircularProgress, MenuItem, TextField, Button, Stack, IconButton,
   Dialog, DialogTitle, DialogContent, DialogActions, InputAdornment,
 } from '@mui/material';
 import { Person as PersonIcon } from '@mui/icons-material';
@@ -53,7 +53,7 @@ const JoiningTracker = ({ context }: { context: AcademyContextProps }) => {
     try {
       const res = await internApi.activateIntern(activateDialog.candidateId, { outlookEmail: outlookEmail.trim() });
       if (res.success) {
-        showToast('âœ… Intern account activated. Login credentials sent!', 'success');
+        showToast('✅ Intern account activated. Login credentials sent!', 'success');
         const activatedCandidateId = activateDialog.candidateId;
         const returnedUserId = res.data?.userId ?? -1;
         setAllCycleCandidates(prev =>
@@ -75,7 +75,7 @@ const JoiningTracker = ({ context }: { context: AcademyContextProps }) => {
   };
 
   // Auto-select cycle when programYear or cycles change
-  // Derive cycle from programs (program.cycleId) â€” NOT from cycleYear matching
+  // Derive cycle from programs (program.cycleId) — NOT from cycleYear matching
   // because programYear may differ from cycleYear (e.g., cycle 2024, program 2025)
   useEffect(() => {
     if (programYear === 0 || cycles.length === 0) return;
@@ -102,7 +102,7 @@ const JoiningTracker = ({ context }: { context: AcademyContextProps }) => {
     setLoading(true);
     joiningTrackerApi.getCandidatesByCycleAndStages({
       cycleId: selectedCycleId,
-      applicationStages: ['ACCEPTED', 'JOINED', 'DROPPED'],
+      applicationStages: ['OFFER_ACCEPTED', 'JOINED', 'NOT_JOINED'],
     })
       .then(res => {
         const all = (res.success && res.data) ? res.data : [];
@@ -265,7 +265,7 @@ const JoiningTracker = ({ context }: { context: AcademyContextProps }) => {
             style={{ cursor: 'pointer' }}
           >
             <Typography className="jt-stat-label">Offer Accepted</Typography>
-            <Typography className="jt-stat-value">{selectedCycleId ? acceptedCount : 'â€”'}</Typography>
+            <Typography className="jt-stat-value">{selectedCycleId ? acceptedCount : '—'}</Typography>
           </Box>
           <Box
             className={`jt-stat-card jt-stat-card--joined ${stageFilter === 'JOINED' ? 'jt-stat-card--active' : ''}`}
@@ -273,7 +273,7 @@ const JoiningTracker = ({ context }: { context: AcademyContextProps }) => {
             style={{ cursor: 'pointer' }}
           >
             <Typography className="jt-stat-label">Joined</Typography>
-            <Typography className="jt-stat-value">{selectedCycleId ? joinedCount : 'â€”'}</Typography>
+            <Typography className="jt-stat-value">{selectedCycleId ? joinedCount : '—'}</Typography>
           </Box>
           <Box
             className={`jt-stat-card jt-stat-card--dropped ${stageFilter === 'NOT_JOINED' ? 'jt-stat-card--active' : ''}`}
@@ -281,7 +281,7 @@ const JoiningTracker = ({ context }: { context: AcademyContextProps }) => {
             style={{ cursor: 'pointer' }}
           >
             <Typography className="jt-stat-label">Not Joined</Typography>
-            <Typography className="jt-stat-value">{selectedCycleId ? notJoinedCount : 'â€”'}</Typography>
+            <Typography className="jt-stat-value">{selectedCycleId ? notJoinedCount : '—'}</Typography>
           </Box>
         </Box>
 
@@ -340,14 +340,13 @@ const JoiningTracker = ({ context }: { context: AcademyContextProps }) => {
                       <TableCell className="jt-table-head-cell">Institute</TableCell>
                       <TableCell className="jt-table-head-cell">Department</TableCell>
                       <TableCell className="jt-table-head-cell">Degree</TableCell>
-                      <TableCell className="jt-table-head-cell">Stage</TableCell>
                       <TableCell className="jt-table-head-cell jt-table-head-cell--actions">Actions</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
                     {filteredCandidates.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={6} className="jt-empty-cell">
+                        <TableCell colSpan={5} className="jt-empty-cell">
                           <PersonIcon className="jt-empty-icon" />
                           <Typography className="jt-empty-text">No candidates found for the selected status and filters</Typography>
                         </TableCell>
@@ -369,16 +368,13 @@ const JoiningTracker = ({ context }: { context: AcademyContextProps }) => {
                           </Box>
                         </TableCell>
                         <TableCell className="jt-table-cell">
-                          <Typography className="jt-row-secondary">{c.instituteName || 'â€”'}</Typography>
+                          <Typography className="jt-row-secondary">{c.instituteName || '—'}</Typography>
                         </TableCell>
                         <TableCell className="jt-table-cell">
-                          <Typography className="jt-row-secondary">{c.department || 'â€”'}</Typography>
+                          <Typography className="jt-row-secondary">{c.department || '—'}</Typography>
                         </TableCell>
                         <TableCell className="jt-table-cell">
-                          <Typography className="jt-row-secondary">{c.degree || 'â€”'}</Typography>
-                        </TableCell>
-                        <TableCell className="jt-table-cell">
-                          <Chip label={c.applicationStage} size="small" className="jt-stage-chip" />
+                          <Typography className="jt-row-secondary">{c.degree || '—'}</Typography>
                         </TableCell>
                         <TableCell className="jt-table-cell jt-table-cell--actions">
                           {renderActionCell(c)}
@@ -395,7 +391,7 @@ const JoiningTracker = ({ context }: { context: AcademyContextProps }) => {
       {/* Activate Intern Dialog */}
       <Dialog open={activateDialog.open} onClose={() => setActivateDialog({ open: false, candidateId: null, candidateName: '', candidateEmail: '' })} maxWidth="sm" fullWidth>
         <DialogTitle className="jt-dialog-title" sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          Activate Intern Account â€” {activateDialog.candidateName}
+          Activate Intern Account — {activateDialog.candidateName}
           <IconButton size="small" onClick={() => setActivateDialog({ open: false, candidateId: null, candidateName: '', candidateEmail: '' })}><CloseIcon style={{ fontSize: '1.25rem' }} /></IconButton>
         </DialogTitle>
         <DialogContent>
@@ -431,7 +427,7 @@ const JoiningTracker = ({ context }: { context: AcademyContextProps }) => {
         fullWidth
       >
         <DialogTitle className="jt-dialog-title" sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          Confirm â€” Mark as Not Joined
+          Confirm — Mark as Not Joined
           <IconButton size="small" onClick={() => setStatusConfirm({ open: false, candidateId: null, candidateName: '' })}><CloseIcon style={{ fontSize: '1.25rem' }} /></IconButton>
         </DialogTitle>
         <DialogContent>

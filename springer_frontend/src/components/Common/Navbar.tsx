@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { tokenstore } from '../../auth/tokenstore';
 import { notificationApi } from '../../services/notification.api';
 import type { NotificationResponse } from '../../types/notification.types';
@@ -19,20 +19,38 @@ const PAGE_TITLES: Record<string, { title: string; subtitle: string }> = {
   '/ta-head/dashboard': { title: 'Dashboard', subtitle: 'Welcome back' },
   '/ta-head/hiring-cycles': { title: 'Hiring Cycle', subtitle: 'Manage hiring cycles' },
   '/ta-head/academy': { title: 'Academy Dashboard', subtitle: 'Academy management' },
+  '/ta-head/settings': { title: 'Requests', subtitle: 'Manage pending requests' },
   '/hiring-manager/dashboard': { title: 'Dashboard', subtitle: 'Welcome back' },
   '/hiring-manager/hiring-cycles': { title: 'Hiring Cycle', subtitle: 'Manage hiring cycles' },
   '/hiring-manager/requests': { title: 'Requests', subtitle: 'Manage hiring requests' },
   '/admin/dashboard': { title: 'Dashboard', subtitle: 'System administration' },
   '/admin/users': { title: 'Users', subtitle: 'Manage system users' },
+  '/admin/manage': { title: 'Manage Users', subtitle: 'View and manage all users' },
   '/admin/settings': { title: 'Settings', subtitle: 'System settings' },
+  // Training Coordinator
+  '/training-coordinator/dashboard': { title: 'Dashboard', subtitle: 'Training overview and quick actions' },
+  '/training-coordinator/academy': { title: 'Academy', subtitle: 'Manage attendance, scores, and interns' },
+  // Intern
+  '/intern/dashboard': { title: 'Dashboard', subtitle: 'Your training overview' },
+  '/intern/scores': { title: 'My Scores', subtitle: 'View your course scores and leaderboard' },
+  '/intern/progress': { title: 'My Progress', subtitle: 'Track your training journey' },
+  '/intern/calendar': { title: 'Calendar', subtitle: 'View schedule and events' },
+  '/intern/certificates': { title: 'Certificates', subtitle: 'Upload and manage your certificates' },
+  '/intern/profile': { title: 'My Profile', subtitle: 'Update your profile and links' },
+  '/intern/leaves': { title: 'Leave Requests', subtitle: 'Apply and track your leave requests' },
+  '/intern/warnings': { title: 'Notices', subtitle: 'View and acknowledge notices' },
 };
 
 function Navbar() {
     const [notifications, setNotifications] = useState<NotificationResponse[]>([]);
     const [showNotifications, setShowNotifications] = useState(false);
+    const [showProfile, setShowProfile] = useState(false);
+    const [showChangePwd, setShowChangePwd] = useState(false);
     const notifRef = useRef<HTMLDivElement>(null);
+    const profileRef = useRef<HTMLDivElement>(null);
     const wsRef = useRef<WebSocket | null>(null);
     const location = useLocation();
+    const navigate = useNavigate();
     const user = tokenstore.getUser();
 
     const unreadCount = notifications.filter(n => !n.isRead).length;
@@ -103,10 +121,18 @@ function Navbar() {
             if (notifRef.current && !notifRef.current.contains(event.target as Node)) {
                 setShowNotifications(false);
             }
+            if (profileRef.current && !profileRef.current.contains(event.target as Node)) {
+                setShowProfile(false);
+            }
         };
         document.addEventListener('mousedown', handleClickOutside);
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
+
+    const handleLogout = () => {
+        tokenstore.clear();
+        navigate('/login');
+    };
 
     return (
         <nav className="navbar">

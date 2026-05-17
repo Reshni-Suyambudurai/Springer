@@ -1,4 +1,4 @@
-﻿import { useEffect } from 'react'
+import { useEffect } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 
 // TA Manager
@@ -142,7 +142,7 @@ function App() {
           <Route path="/ta-recruiter/drive-calendar" element={<DriveCalendar />} />
           <Route path="/ta-recruiter/drive-schedules/add" element={<AddSchedule />} />
 
-          {/* ðŸ”¥ Your Drive Process */}
+          {/* 🔥 Your Drive Process */}
           <Route path="/drive-process/drive-cycle" element={<DriveCycle />} />
           <Route path="/drive-process/drive-list/:cycleId" element={<DriveList />} />
           <Route path="/drive-process/drive-details/:driveId" element={<DriveDetails />} />
@@ -207,12 +207,12 @@ function App() {
           <Route path="/training-coordinator/academy" element={<AcademyDashboard />} />
         </Route>
 
-        {/* HR_OPERATIONS â€” redirect to unauthorized (no dedicated dashboard yet) */}
+        {/* HR_OPERATIONS — redirect to unauthorized (no dedicated dashboard yet) */}
         <Route element={<ProtectedRoute allowedRoles={['HR_OPERATIONS']} />}>
           <Route path="/hr-operations/dashboard" element={<Unauthorized />} />
         </Route>
 
-        {/* BU_SPOC â€” redirect to unauthorized (no dedicated dashboard yet) */}
+        {/* BU_SPOC — redirect to unauthorized (no dedicated dashboard yet) */}
         <Route element={<ProtectedRoute allowedRoles={['BU_SPOC']} />}>
           <Route path="/bu-spoc/dashboard" element={<Unauthorized />} />
         </Route>

@@ -1,4 +1,4 @@
-﻿import React, { useState } from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { instituteApi } from "../../../services/hiring.api";
 import type { InstituteRequest } from "../../../types/TA_Recruiter/Hiring/institute.types";
@@ -431,7 +431,7 @@ const AddInstitute: React.FC = () => {
                       <TableCell>{inst.instituteTier}</TableCell>
                       <TableCell>{inst.city}</TableCell>
                       <TableCell>{inst.state}</TableCell>
-                      <TableCell>{inst.tpoContact?.tpoName || "â€”"}</TableCell>
+                      <TableCell>{inst.tpoContact?.tpoName || "—"}</TableCell>
                       <TableCell>
                         <IconButton
                           size="small"

@@ -133,6 +133,8 @@ public class CandidateMapper {
         r.setCandidateId(candidate.getCandidateId());
         r.setFirstName(candidate.getFirstName());
         r.setLastName(candidate.getLastName());
+        r.setEmail(candidate.getEmail());
+        r.setDepartment(candidate.getDepartment());
         r.setInstituteName(candidate.getInstitute() != null ? candidate.getInstitute().getInstituteName() : null);
         r.setCgpa(candidate.getCgpa());
         r.setHistoryOfArrears(candidate.getHistoryOfArrears());

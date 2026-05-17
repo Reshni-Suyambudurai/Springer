@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Box, Card, Typography, Stack, Button, CircularProgress,
   Alert, Chip, TextField, Checkbox, FormControlLabel, FormHelperText,
@@ -71,7 +71,7 @@ const EligibilityManagement = () => {
         if (String(rule.min).length !== 4 || String(rule.max).length !== 4) return 'Year must be a 4-digit number';
         if (rule.min < 1900 || rule.min > 2100 || rule.max < 1900 || rule.max > 2100) return 'Year must be between 1900 and 2100';
       }
-      if (rule.min > rule.max) return 'Min must be â‰¤ Max';
+      if (rule.min > rule.max) return 'Min must be ≤ Max';
     } else if (rule.operator === 'IN') {
       return '';
     } else {
@@ -120,12 +120,12 @@ const EligibilityManagement = () => {
 
   const renderValue = (rule: EligibilityRuleDTO, index: number) => {
     if (!editMode) {
-      if (rule.operator === 'BETWEEN') return <Typography className="eligibility-value-text">{rule.min} â€” {rule.max}</Typography>;
+      if (rule.operator === 'BETWEEN') return <Typography className="eligibility-value-text">{rule.min} — {rule.max}</Typography>;
       if (rule.operator === 'IN') return (
         <Box className="eligibility-chips-wrap">
           {rule.allowedValues && rule.allowedValues.length > 0
             ? rule.allowedValues.map((v, i) => <Chip key={i} label={v} size="small" className="t-chip-primary" />)
-            : <Typography sx={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-secondary)', fontStyle: 'italic' }}>No values â€” click Edit to configure</Typography>
+            : <Typography sx={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-secondary)', fontStyle: 'italic' }}>No values — click Edit to configure</Typography>
           }
         </Box>
       );
@@ -200,7 +200,7 @@ const EligibilityManagement = () => {
               <Typography className="t-page-subtitle">Configure candidate eligibility criteria</Typography>
             </Stack>
           </Stack>
-          {/* Edit Values button â€” t-header is already space-between */}
+          {/* Edit Values button — t-header is already space-between */}
           {!editMode ? (
             <Button variant="contained" startIcon={<EditIcon />} onClick={() => setEditMode(true)}
               className="t-btn-primary"

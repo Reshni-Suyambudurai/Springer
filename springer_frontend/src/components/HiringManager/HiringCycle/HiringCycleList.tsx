@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Box, Card, Typography, Stack, Chip,
   Table, TableBody, TableCell, TableContainer,
@@ -137,12 +137,12 @@ const HiringCycleList = () => {
                           </TableCell>
                           <TableCell className="hcl-cell">
                             <Typography className="hcl-cell-secondary">
-                              {cycle.budget ? `â‚¹ ${cycle.budget.toLocaleString('en-IN')}` : 'â€”'}
+                              {cycle.budget ? `₹ ${cycle.budget.toLocaleString('en-IN')}` : '—'}
                             </Typography>
                           </TableCell>
                           <TableCell className="hcl-cell">
                             <Typography className="hcl-cell-secondary">
-                              {cycle.compensationBand ? `Band ${cycle.compensationBand}` : 'â€”'}
+                              {cycle.compensationBand ? `Band ${cycle.compensationBand}` : '—'}
                             </Typography>
                           </TableCell>
                           <TableCell className="hcl-cell">

@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Box, MenuItem, TextField, Typography } from '@mui/material';
 import { useLocation } from 'react-router-dom';
 import type { TrainingProgramResponse } from '../../../types/Academy/academy.types';
@@ -142,7 +142,7 @@ const AcademyDashboard = () => {
     <Box className="acd-page">
       <Box className="acd-header">
 
-        {/* â”€â”€ Single row: group pills (left) + year filter (right) â”€â”€ */}
+        {/* ── Single row: group pills (left) + year filter (right) ── */}
         <Box className="acd-top-row">
           <Box className="acd-group-bar">
             {tabGroups.map(group => (
@@ -176,7 +176,7 @@ const AcademyDashboard = () => {
           </Box>
         </Box>
 
-        {/* â”€â”€ Tab bar: only tabs of active group â”€â”€ */}
+        {/* ── Tab bar: only tabs of active group ── */}
         <Box className="acd-tab-bar">
           {activeGroupTabs.map(tab => (
             <button

@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useDebounce } from '../../../hooks/useDebounce';
 import { TableSkeleton } from '../../Common/TableSkeleton';
 import ProgressDialog from '../../Common/ProgressDialog';
@@ -17,8 +17,7 @@ import { documentLinkApi } from '../../../services/document.api';
 import { showToast } from '../../../utils/toast';
 import { useDocumentProcessing } from '../../../contexts/DocumentProcessingContext';
 import FilterSelect from '../../Common/FilterSelect';
-import type { DocumentTypeResponse, DocProcessingContextProps } from '../../../types/DocumentCollection/document.types';
-import type { CandidateDocResponse } from '../../../types/TA_Recruiter/Drive/candidate.types';
+import type { DocProcessingContextProps } from '../../../types/DocumentCollection/document.types';
 import '../../../css/TA_Recruiter/DocumentProcessing/SendDocumentsTab.css';
 
 const SendDocumentsTab = ({ context }: { context: DocProcessingContextProps }) => {
@@ -222,7 +221,7 @@ const SendDocumentsTab = ({ context }: { context: DocProcessingContextProps }) =
         showToast('Link resent successfully', 'success');
         await refreshAll(cycleId);
       } else {
-        showToast('Nothing to resend â€” all documents are submitted or approved', 'error');
+        showToast('Nothing to resend — all documents are submitted or approved', 'error');
       }
     } catch (err: any) {
       showToast(err.message || 'Failed to resend', 'error');
@@ -352,7 +351,7 @@ const SendDocumentsTab = ({ context }: { context: DocProcessingContextProps }) =
                               </Box>
                             </TableCell>
                             <TableCell className="sdt-table-cell">
-                              <Typography className="sdt-row-secondary">{c.department || 'â€”'}</Typography>
+                              <Typography className="sdt-row-secondary">{c.department || '—'}</Typography>
                             </TableCell>
                             <TableCell className="sdt-table-cell">
                               {(() => {
@@ -364,7 +363,7 @@ const SendDocumentsTab = ({ context }: { context: DocProcessingContextProps }) =
                                   <Box className="sdt-doc-tags">
                                     {details.map(d => (
                                       <span key={d.name} className={`sdt-doc-tag ${d.submitted ? 'sdt-doc-tag--done' : 'sdt-doc-tag--pending'}`}>
-                                        {d.submitted ? 'âœ“' : 'â—‹'} {d.name}
+                                        {d.submitted ? '✓' : '○'} {d.name}
                                       </span>
                                     ))}
                                   </Box>
@@ -403,7 +402,7 @@ const SendDocumentsTab = ({ context }: { context: DocProcessingContextProps }) =
         </Box>
       </Card>
 
-      {/* Send Dialog â€” choose doc types */}
+      {/* Send Dialog — choose doc types */}
       <Dialog open={sendDialog} onClose={() => setSendDialog(false)} maxWidth="xs" fullWidth>
         <DialogTitle className="sdt-dialog-title" sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           Select Document Types to Request

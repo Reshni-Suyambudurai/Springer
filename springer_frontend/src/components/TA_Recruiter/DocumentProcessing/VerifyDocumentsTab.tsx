@@ -130,7 +130,7 @@ const VerifyDocumentsTab = ({ context }: { context: DocProcessingContextProps })
       const req: VerificationRequest = { verifiedBy: user.userId, rejectionReason: rejectReason.trim() };
       const res = await verificationApi.rejectDocument(rejectDialog.doc.documentId, req);
       if (res.success) {
-        showToast('Document rejected â€” candidate notified via email', 'success');
+        showToast('Document rejected — candidate notified via email', 'success');
         setRejectDialog({ open: false, doc: null });
         setRejectReason('');
         await refreshAll(cycleId);
@@ -343,12 +343,12 @@ const VerifyDocumentsTab = ({ context }: { context: DocProcessingContextProps })
                               <TableCell className="vdt-table-cell">
                                 {item.collectedCount > 0
                                   ? <Chip label={item.collectedCount} size="small" className="vdt-badge vdt-badge--pending" />
-                                  : <Typography className="vdt-row-secondary">â€”</Typography>}
+                                  : <Typography className="vdt-row-secondary">—</Typography>}
                               </TableCell>
                               <TableCell className="vdt-table-cell">
                                 {item.rejectedCount > 0
                                   ? <Chip label={item.rejectedCount} size="small" className="vdt-badge vdt-badge--rejected" />
-                                  : <Typography className="vdt-row-secondary">â€”</Typography>}
+                                  : <Typography className="vdt-row-secondary">—</Typography>}
                               </TableCell>
                               <TableCell className="vdt-table-cell vdt-table-cell--actions" onClick={e => e.stopPropagation()}>
                                 <Stack direction="row" spacing={0.5} justifyContent="flex-end" alignItems="center">
@@ -364,7 +364,7 @@ const VerifyDocumentsTab = ({ context }: { context: DocProcessingContextProps })
                               </TableCell>
                             </TableRow>
 
-                            {/* Expanded doc cards â€” 3 per row grid */}
+                            {/* Expanded doc cards — 3 per row grid */}
                             {isExpanded && (
                               <TableRow className="vdt-doc-grid-row">
                                 <TableCell colSpan={5} className="vdt-doc-grid-cell">
@@ -391,7 +391,7 @@ const VerifyDocumentsTab = ({ context }: { context: DocProcessingContextProps })
                                           <Box className="vdt-doc-card-info">
                                             <Typography className="vdt-doc-card-type">{doc.documentType.replace(/_/g, ' ')}</Typography>
                                             <Typography className="vdt-doc-card-date">
-                                              Uploaded: {doc.uploadedAt ? new Date(doc.uploadedAt).toLocaleDateString('en-IN') : 'â€”'}
+                                              Uploaded: {doc.uploadedAt ? new Date(doc.uploadedAt).toLocaleDateString('en-IN') : '—'}
                                             </Typography>
                                           </Box>
                                           <Box className="vdt-doc-card-actions">

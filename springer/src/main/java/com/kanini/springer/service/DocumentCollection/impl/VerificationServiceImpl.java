@@ -222,4 +222,12 @@ public class VerificationServiceImpl implements IVerificationService {
                 .isOfferReady(isOfferReady)
                 .build();
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public boolean getOfferReadyStatus(Long candidateId, Long cycleId) {
+        List<DocumentSubmission> submissions = submissionRepository.findActiveSubmissionsByCandidateAndCycle(candidateId, cycleId);
+        if (submissions.isEmpty()) return false;
+        return submissions.stream().allMatch(s -> s.getVerificationStatus() == Enums.VerificationStatus.APPROVED);
+    }
 }

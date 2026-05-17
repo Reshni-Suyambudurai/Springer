@@ -34,8 +34,10 @@ const STATUS_CLASS_MAP: Record<string, string> = {
   SELECTED: "cl-status-selected",
   OFFERED: "cl-status-offered",
   JOINED: "cl-status-joined",
+  NOT_JOINED: "cl-status-dropped",
   REJECTED: "cl-status-rejected",
-  ACCEPTED: "cl-status-accepted",
+  OFFER_ACCEPTED: "cl-status-accepted",
+  OFFER_REJECTED: "cl-status-rejected",
   DROPPED: "cl-status-dropped",
 };
 

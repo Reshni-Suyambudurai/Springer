@@ -30,7 +30,7 @@ const LeaveManagementPanel = ({ context }: { context: AcademyContextProps }) => 
   const [page, setPage]                 = useState(0);
   const [rowsPerPage] = useState(20);
 
-  // Stats (derived from paginated data — no separate getAllLeaves call)
+  // Stats (derived from separate count queries per status)
   const [stats, setStats] = useState({ total: 0, pending: 0, approved: 0, rejected: 0 });
 
   // Review dialog — only TA
@@ -38,6 +38,29 @@ const LeaveManagementPanel = ({ context }: { context: AcademyContextProps }) => 
   const [decision, setDecision]       = useState<'APPROVE' | 'REJECT'>('APPROVE');
   const [remarks, setRemarks]         = useState('');
   const [submitting, setSubmitting]   = useState(false);
+
+  // Fetch stats (counts per status) — runs on mount and when year programs change
+  const fetchStats = async () => {
+    const yearProgramIds = yearPrograms.map(p => p.programId);
+    if (yearProgramIds.length === 0) return;
+    const base = { page: 0, size: 1, programIds: yearProgramIds };
+    try {
+      const [allRes, pendingRes, approvedRes, rejectedRes] = await Promise.all([
+        leaveApi.getLeavesFiltered(base),
+        leaveApi.getLeavesFiltered({ ...base, status: 'PENDING' }),
+        leaveApi.getLeavesFiltered({ ...base, status: 'APPROVED' }),
+        leaveApi.getLeavesFiltered({ ...base, status: 'REJECTED' }),
+      ]);
+      setStats({
+        total:    allRes.success && allRes.data ? allRes.data.totalElements : 0,
+        pending:  pendingRes.success && pendingRes.data ? pendingRes.data.totalElements : 0,
+        approved: approvedRes.success && approvedRes.data ? approvedRes.data.totalElements : 0,
+        rejected: rejectedRes.success && rejectedRes.data ? rejectedRes.data.totalElements : 0,
+      });
+    } catch { /* silent */ }
+  };
+
+  useEffect(() => { fetchStats(); }, [yearPrograms]);
 
   // Fetch paginated data whenever filters change
   useEffect(() => { fetchLeaves(); }, [filterStatus, filterProgram, filterBatch, search, page, rowsPerPage, yearPrograms]);
@@ -59,10 +82,6 @@ const LeaveManagementPanel = ({ context }: { context: AcademyContextProps }) => 
       if (res.success && res.data) {
         setLeaves(res.data.content);
         setTotalElements(res.data.totalElements);
-        // Derive stats from unfiltered total when no filters active
-        if (!filterStatus || filterStatus === 'ALL') {
-          setStats(prev => ({ ...prev, total: res.data!.totalElements }));
-        }
       }
     } catch { /* silent */ }
     finally { setLoading(false); }
@@ -84,13 +103,7 @@ const LeaveManagementPanel = ({ context }: { context: AcademyContextProps }) => 
         setReviewLeave(null);
         setRemarks('');
         fetchLeaves();
-        // Update stats optimistically
-        setStats(prev => ({
-          ...prev,
-          pending: Math.max(0, prev.pending - 1),
-          approved: decision === 'APPROVE' ? prev.approved + 1 : prev.approved,
-          rejected: decision === 'REJECT' ? prev.rejected + 1 : prev.rejected,
-        }));
+        fetchStats();
       }
     } catch (error) {
       const err = handleAxiosError(error);

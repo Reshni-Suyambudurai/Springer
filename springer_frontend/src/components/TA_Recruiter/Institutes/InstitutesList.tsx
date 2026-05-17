@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { instituteApi } from "../../../services/hiring.api";
 import type { InstituteResponse } from "../../../types/TA_Recruiter/Hiring/institute.types";
@@ -534,7 +534,7 @@ const InstitutesList: React.FC = () => {
                 Institutes Management
               </Typography>
               <Typography variant="body2" className="t-page-subtitle" sx={{ mb: 0 }}>
-                â€” Manage and view all registered institutes
+                — Manage and view all registered institutes
               </Typography>
             </Box>
 

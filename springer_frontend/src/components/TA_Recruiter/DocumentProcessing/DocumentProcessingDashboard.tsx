@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import {
   Box, Typography, MenuItem, TextField, CircularProgress,
@@ -122,7 +122,7 @@ const DocumentProcessingDashboardContent = () => {
             >
               {cycles.map(c => (
                 <MenuItem key={c.cycleId} value={c.cycleId}>
-                  {c.cycleName} ({c.cycleYear}) {c.status === 'OPEN' ? 'ðŸŸ¢' : 'ðŸ”´'}
+                  {c.cycleName} ({c.cycleYear}) {c.status === 'OPEN' ? '🟢' : '🔴'}
                 </MenuItem>
               ))}
             </TextField>
@@ -131,7 +131,7 @@ const DocumentProcessingDashboardContent = () => {
         document.getElementById('navbar-actions-slot')!
       )}
 
-      {/* Tab Bar Row â€” Tabs + Conditional Button */}
+      {/* Tab Bar Row — Tabs + Conditional Button */}
       <Box className="dp-header">
         <Box className="dp-header-top">
           <Box className="dp-tab-bar" sx={{ flex: 1, padding: '0 !important' }}>

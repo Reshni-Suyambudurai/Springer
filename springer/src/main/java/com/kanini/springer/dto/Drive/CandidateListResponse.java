@@ -17,6 +17,8 @@ public class CandidateListResponse {
     private Long candidateId;
     private String firstName;
     private String lastName;
+    private String email;
+    private String department;
     private String instituteName;
     private BigDecimal cgpa;
     private Integer historyOfArrears;
