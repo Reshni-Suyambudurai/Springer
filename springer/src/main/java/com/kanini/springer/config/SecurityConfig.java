@@ -60,20 +60,10 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(Arrays.asList(
-            "http://localhost:8080",  // Swagger UI
-            "http://localhost:5173",  // Vite React
-            "http://localhost:5174",  // Vite React (fallback port)
-            "http://localhost:5175",  // Vite React (fallback port)
-            "http://localhost:5176",  // Vite React (fallback port)
-            "http://localhost:5177",  // Vite React (fallback port)
-            "http://localhost:3000",  // React
-            "http://localhost:4200",  // Angular
-            "https://springer-backend-production.up.railway.app",  // Railway backend
-            "https://springer-frontend.vercel.app",  // Vercel frontend
-            "https://ka25-springer.vercel.app",  // Vercel frontend alt
-            "https://springerfrontend.vercel.app",  // Vercel frontend actual
-            "https://springerfrontend-f2u4vzbie-manohar-ka25s-projects.vercel.app"  // Vercel preview
+        configuration.setAllowedOriginPatterns(Arrays.asList(
+            "http://localhost:*",
+            "https://*.vercel.app",
+            "https://*.up.railway.app"
         ));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("*"));
