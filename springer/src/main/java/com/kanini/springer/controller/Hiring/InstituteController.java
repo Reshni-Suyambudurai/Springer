@@ -64,6 +64,7 @@ public class InstituteController {
     }
     
     @GetMapping
+    @PreAuthorize("permitAll()")
     @Operation(summary = "Get all institutes", description = "Retrieves all institutes in the system")
     public ResponseEntity<ApiResponse<List<InstituteResponse>>> getAllInstitutes() {
         List<InstituteResponse> responses = instituteService.getAllInstitutes();

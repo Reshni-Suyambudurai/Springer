@@ -72,6 +72,7 @@ public class FormController {
     }
 
     @GetMapping("/{formId}")
+    @PreAuthorize("permitAll()")
     @Operation(summary = "Get form by ID", 
                description = "Retrieves a specific form by ID")
     public ResponseEntity<ApiResponse<FormResponse>> getFormById(

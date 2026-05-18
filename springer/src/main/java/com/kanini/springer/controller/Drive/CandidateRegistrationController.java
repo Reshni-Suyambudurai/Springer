@@ -30,6 +30,7 @@ public class CandidateRegistrationController {
     private final ICandidateRegistrationService registrationService;
 
     @PostMapping("/drive/{driveId}/register")
+    @PreAuthorize("permitAll()")
     @Operation(summary = "Submit candidate registration", 
                description = "Allows a candidate to self-register for a drive without authentication")
     public ResponseEntity<ApiResponse<CandidateRegistrationResponse>> submitRegistration(

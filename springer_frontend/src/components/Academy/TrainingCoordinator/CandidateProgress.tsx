@@ -458,7 +458,7 @@ const CandidateProgress = ({ context }: { context: AcademyContextProps }) => {
                 </Box>
               </Box>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <button className="cp-action-btn"
+                <button
                   onClick={() => {
                     if (!selected || panelLoading) return;
                     const reportData: IndividualReportData = {

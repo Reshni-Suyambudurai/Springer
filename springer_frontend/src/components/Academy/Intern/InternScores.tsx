@@ -63,7 +63,7 @@ const InternScores = ({ data }: { data: InternDashboardData }) => {
   // Normalize a leaderboard course score for display (comm scores are raw sums)
   const normalizeLbScore = (score: number | null | undefined, courseId: number): number | null => {
     if (score == null) return null;
-    const courseInfo = courseOptions.find(c => c.courseId === courseId);
+    const _courseInfo = courseOptions.find(c => c.courseId === courseId); void _courseInfo;
     // courseOptions come from detailedLeaderboard[0].courseScores — no maxScore there
     // Use courseScores from the intern's own data to get maxScore
     const myCs = data.courseScores.find(c => c.courseId === courseId);

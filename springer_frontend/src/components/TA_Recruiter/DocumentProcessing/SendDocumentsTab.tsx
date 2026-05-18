@@ -15,7 +15,7 @@ import { candidateApi } from '../../../services/drive.api';
 import { showToast } from '../../../utils/toast';
 import FilterSelect from '../../Common/FilterSelect';
 import type { DocumentTypeResponse, DocProcessingContextProps } from '../../../types/DocumentCollection/document.types';
-import type { CandidateDocResponse } from '../../../types/TA_Recruiter/Drive/candidate.types';
+import type { CandidateResponse } from '../../../types/TA_Recruiter/Drive/candidate.types';
 import '../../../css/TA_Recruiter/DocumentProcessing/SendDocumentsTab.css';
 
 const SendDocumentsTab = ({ context }: { context: DocProcessingContextProps }) => {
@@ -323,7 +323,6 @@ const SendDocumentsTab = ({ context }: { context: DocProcessingContextProps }) =
                       </TableRow>
                     ) : (
                       paginated.map((c, idx) => {
-                        const submitted = submissions[c.candidateId] || 0;
                         return (
                           <TableRow
                             key={c.candidateId}
@@ -365,7 +364,6 @@ const SendDocumentsTab = ({ context }: { context: DocProcessingContextProps }) =
                             </TableCell>
                             <TableCell className="sdt-table-cell">
                               {(() => {
-                                const st = getSubmissionStatus(c.candidateId);
                                 const details = submissionDetails[c.candidateId];
                                 if (!details || details.length === 0) {
                                   return <Typography className="sdt-row-secondary">Not submitted</Typography>;

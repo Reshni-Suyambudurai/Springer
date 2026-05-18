@@ -53,6 +53,7 @@ public class SkillsController {
      * GET /api/skills
      */
     @GetMapping
+    @PreAuthorize("permitAll()")
     @Operation(summary = "Get all skills", description = "Retrieves all skills in the system")
     public ResponseEntity<ApiResponse<List<SkillResponse>>> getAllSkills() {
         List<SkillResponse> skills = skillService.getAllSkills();
