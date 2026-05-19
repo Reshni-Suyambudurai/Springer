@@ -1,29 +1,33 @@
 import { useState, useEffect } from 'react';
+import { useDebounce } from '../../../hooks/useDebounce';
+import { TableSkeleton } from '../../Common/TableSkeleton';
 import {
   Box, Card, Typography, Button, CircularProgress, Stack,
   IconButton, Table, TableBody, TableCell, TableContainer,
   TableHead, TableRow, Dialog, DialogTitle, DialogContent,
-  DialogActions, MenuItem, TextField, InputAdornment,
+  DialogActions, TextField, InputAdornment, Tooltip,
 } from '@mui/material';
-import { Add as AddIcon, Delete as DeleteIcon, Description as DocIcon, Search as SearchIcon } from '@mui/icons-material';
+import { Description as DocIcon, HelpOutline as HelpIcon } from '@mui/icons-material';
+import { FigmaEditIcon as EditIcon, FigmaDeleteIcon as DeleteIcon, FigmaAddIcon as AddIcon, FigmaSearchIcon as SearchIcon, FigmaCloseIcon as CloseIcon } from '../../Common/FigmaIcons';
 import { documentTypeApi } from '../../../services/document.api';
 import { showToast } from '../../../utils/toast';
 import type { DocumentTypeResponse } from '../../../types/DocumentCollection/document.types';
 import '../../../css/TA_Recruiter/DocumentProcessing/DocumentTypesTab.css';
 
-const DOCUMENT_TYPE_OPTIONS = [
-  'RESUME', 'PHOTO', 'ID_PROOF', 'MARKSHEET',
-  'PROVISIONAL_CERT', 'DEGREE_CERT', 'EXPERIENCE_LETTER', 'RELIEVING_LETTER',
-];
-
 const DocumentTypesTab = () => {
   const [types, setTypes] = useState<DocumentTypeResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const debouncedSearch = useDebounce(search, 300);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [selected, setSelected] = useState('');
+  const [newType, setNewType] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  // Inline editing state
+  const [editingCell, setEditingCell] = useState<{ typeId: number | null }>({ typeId: null });
+  const [editValue, setEditValue] = useState<string>('');
 
   useEffect(() => { fetchTypes(); }, []);
 
@@ -39,15 +43,32 @@ const DocumentTypesTab = () => {
     }
   };
 
+  const validateDocumentType = () => {
+    const type = newType.trim();
+    if (!type) {
+      setErrors(prev => ({ ...prev, documentType: 'Document type is required' }));
+      return false;
+    }
+    if (type.length < 3) {
+      setErrors(prev => ({ ...prev, documentType: 'Must be at least 3 characters' }));
+      return false;
+    }
+    setErrors(prev => ({ ...prev, documentType: '' }));
+    return true;
+  };
+
   const handleAdd = async () => {
-    if (!selected) { showToast('Select a document type', 'error'); return; }
+    if (!validateDocumentType()) {
+      return;
+    }
+    const trimmed = newType.trim();
     try {
       setSubmitting(true);
-      const res = await documentTypeApi.createType({ documentType: selected });
+      const res = await documentTypeApi.createType({ documentType: trimmed });
       if (res.success) {
         showToast('Document type added successfully', 'success');
         setDialogOpen(false);
-        setSelected('');
+        setNewType('');
         fetchTypes();
       }
     } catch (err: any) {
@@ -73,13 +94,43 @@ const DocumentTypesTab = () => {
     }
   };
 
-  const availableOptions = DOCUMENT_TYPE_OPTIONS.filter(
-    opt => !types.some(t => t.documentType === opt)
-  );
+  const handleInlineEdit = (type: DocumentTypeResponse) => {
+    setEditingCell({ typeId: type.documentTypeId });
+    setEditValue(type.documentType);
+  };
+
+  const handleInlineSave = async () => {
+    if (!editingCell.typeId) return;
+    const type = types.find(t => t.documentTypeId === editingCell.typeId);
+    if (!type) return;
+
+    const trimmed = editValue.trim();
+    if (!trimmed || trimmed.length < 3) {
+      showToast('Document type must be at least 3 characters', 'error');
+      return;
+    }
+
+    try {
+      const res = await documentTypeApi.updateType(type.documentTypeId, { documentType: trimmed });
+      if (res.success) {
+        showToast('Updated successfully', 'success');
+        fetchTypes();
+      }
+    } catch (err: any) {
+      showToast(err.message || 'Failed to update', 'error');
+    } finally {
+      setEditingCell({ typeId: null });
+    }
+  };
+
+  const handleInlineCancel = () => {
+    setEditingCell({ typeId: null });
+    setEditValue('');
+  };
 
   const filteredTypes = types.filter(t =>
-    search.trim() === '' ||
-    t.documentType.replace(/_/g, ' ').toLowerCase().includes(search.toLowerCase())
+    debouncedSearch.trim() === '' ||
+    t.documentType.replace(/_/g, ' ').toLowerCase().includes(debouncedSearch.toLowerCase())
   );
 
   return (
@@ -112,10 +163,7 @@ const DocumentTypesTab = () => {
         {/* Table */}
         <Box className="dtt-table-section">
           {loading ? (
-            <Box className="dtt-loading-state">
-              <CircularProgress size={32} sx={{ color: 'var(--color-primary)' }} />
-              <Typography className="dtt-empty-text">Loading document types...</Typography>
-            </Box>
+            <TableSkeleton rows={5} columns={3} />
           ) : (
             <TableContainer className="dtt-table-container">
               <Table stickyHeader>
@@ -128,9 +176,8 @@ const DocumentTypesTab = () => {
                         <Button
                           variant="contained"
                           startIcon={<AddIcon />}
-                          onClick={() => { setSelected(''); setDialogOpen(true); }}
+                          onClick={() => { setNewType(''); setDialogOpen(true); }}
                           className="dtt-add-button"
-                          disabled={availableOptions.length === 0}
                         >
                           Add Document Type
                         </Button>
@@ -158,15 +205,32 @@ const DocumentTypesTab = () => {
                         hover
                         className={`dtt-table-row ${idx % 2 === 0 ? 'dtt-table-row--even' : 'dtt-table-row--odd'}`}
                       >
-                        <TableCell className="dtt-table-cell">
-                          <Box className="dtt-name-cell">
-                            <Box className="dtt-name-icon-box">
-                              <DocIcon className="dtt-name-icon" />
+                        <TableCell className="dtt-table-cell" onDoubleClick={() => handleInlineEdit(t)}>
+                          {editingCell.typeId === t.documentTypeId ? (
+                            <TextField
+                              value={editValue}
+                              onChange={(e) => setEditValue(e.target.value)}
+                              onBlur={handleInlineSave}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') handleInlineSave();
+                                if (e.key === 'Escape') handleInlineCancel();
+                              }}
+                              autoFocus
+                              size="small"
+                              fullWidth
+                              sx={{ '& .MuiInputBase-root': { fontSize: 'var(--text-sm)' } }}
+                            />
+                          ) : (
+                            <Box className="dtt-name-cell" sx={{ cursor: 'pointer', '&:hover .edit-hint': { opacity: 0.5 } }}>
+                              <Box className="dtt-name-icon-box">
+                                <DocIcon className="dtt-name-icon" />
+                              </Box>
+                              <Typography className="dtt-row-primary">
+                                {t.documentType.replace(/_/g, ' ')}
+                              </Typography>
+                              <EditIcon className="edit-hint" style={{ fontSize: 14, marginLeft: 4, opacity: 0, transition: 'opacity 0.2s' }} />
                             </Box>
-                            <Typography className="dtt-row-primary">
-                              {t.documentType.replace(/_/g, ' ')}
-                            </Typography>
-                          </Box>
+                          )}
                         </TableCell>
                         <TableCell className="dtt-table-cell">
                           <Typography className="dtt-row-secondary">
@@ -200,26 +264,37 @@ const DocumentTypesTab = () => {
 
       {/* Add Dialog */}
       <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} maxWidth="xs" fullWidth>
-        <DialogTitle className="dtt-dialog-title">Add Document Type</DialogTitle>
+        <DialogTitle className="dtt-dialog-title" sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          Add Document Type
+          <IconButton size="small" onClick={() => setDialogOpen(false)}><CloseIcon style={{ fontSize: '1.25rem' }} /></IconButton>
+        </DialogTitle>
         <DialogContent>
           <Stack spacing={2} sx={{ mt: 1 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.5 }}>
+              <Typography component="label" sx={{ fontSize: 'var(--text-sm)', fontWeight: 500 }}>
+                Document Type Name *
+              </Typography>
+              <Tooltip 
+                title="Use UPPERCASE with underscores (e.g., OFFER_LETTER, NOC_CERTIFICATE). This name will be shown to candidates when requesting documents."
+                arrow
+                placement="top"
+              >
+                <HelpIcon sx={{ fontSize: 16, color: 'var(--color-text-secondary)', cursor: 'help' }} />
+              </Tooltip>
+            </Box>
             <TextField
-              select
-              label="Document Type *"
               size="small"
               fullWidth
-              value={selected}
-              onChange={e => setSelected(e.target.value)}
+              value={newType}
+              onChange={e => setNewType(e.target.value)}
+              onBlur={validateDocumentType}
+              error={!!errors.documentType}
+              helperText={errors.documentType || 'Letters, numbers, spaces, hyphens and underscores only. Max 50 characters.'}
+              placeholder="e.g. OFFER_LETTER, NOC_CERTIFICATE"
+              inputProps={{ maxLength: 50 }}
               className="dtt-dialog-field"
-            >
-              {availableOptions.length === 0 ? (
-                <MenuItem disabled>All types already added</MenuItem>
-              ) : (
-                availableOptions.map(opt => (
-                  <MenuItem key={opt} value={opt}>{opt.replace(/_/g, ' ')}</MenuItem>
-                ))
-              )}
-            </TextField>
+              onKeyDown={e => { if (e.key === 'Enter') handleAdd(); }}
+            />
           </Stack>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
@@ -227,7 +302,7 @@ const DocumentTypesTab = () => {
           <Button
             variant="contained"
             onClick={handleAdd}
-            disabled={submitting || !selected}
+            disabled={submitting || !newType.trim()}
             className="dtt-dialog-submit-btn"
           >
             {submitting ? 'Adding...' : 'Add'}

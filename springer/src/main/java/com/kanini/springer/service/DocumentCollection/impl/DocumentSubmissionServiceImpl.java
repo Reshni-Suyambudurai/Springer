@@ -38,6 +38,8 @@ public class DocumentSubmissionServiceImpl implements IDocumentSubmissionService
     private final DocumentSubmissionMapper mapper;
     
     private static final long MAX_FILE_SIZE = 10L * 1024 * 1024; // 10MB
+    private static final java.util.Set<String> ALLOWED_CONTENT_TYPES = java.util.Set.of(
+            "application/pdf", "image/jpeg", "image/png", "image/jpg");
     
     @Override
     @Transactional
@@ -59,6 +61,21 @@ public class DocumentSubmissionServiceImpl implements IDocumentSubmissionService
         // Validate file size
         if (request.getFile().getSize() > MAX_FILE_SIZE) {
             throw new ValidationException("File size exceeds 10MB limit");
+        }
+
+        // Validate file type — only PDF, JPEG, PNG allowed
+        String contentType = request.getFile().getContentType();
+        if (contentType == null || !ALLOWED_CONTENT_TYPES.contains(contentType.toLowerCase())) {
+            throw new ValidationException("Invalid file type. Only PDF, JPEG, and PNG files are accepted.");
+        }
+        // Also validate by file extension as defense-in-depth
+        String originalName = request.getFile().getOriginalFilename();
+        if (originalName != null) {
+            String lowerName = originalName.toLowerCase();
+            if (!lowerName.endsWith(".pdf") && !lowerName.endsWith(".jpg")
+                    && !lowerName.endsWith(".jpeg") && !lowerName.endsWith(".png")) {
+                throw new ValidationException("Invalid file extension. Only .pdf, .jpg, .jpeg, and .png are accepted.");
+            }
         }
         
         // Get document type, candidate, and cycle
@@ -120,6 +137,12 @@ public class DocumentSubmissionServiceImpl implements IDocumentSubmissionService
     @Override
     @Transactional(readOnly = true)
     public List<DocumentSubmissionResponse> getAllSubmissions(String status, Long cycleId, int page, int size) {
+        return getAllSubmissions(status, cycleId, null, page, size);
+    }
+    
+    @Override
+    @Transactional(readOnly = true)
+    public List<DocumentSubmissionResponse> getAllSubmissions(String status, Long cycleId, String applicationStage, int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
         Page<DocumentSubmission> submissions;
         
@@ -131,7 +154,17 @@ public class DocumentSubmissionServiceImpl implements IDocumentSubmissionService
                 throw new ValidationException("Invalid verification status: " + status, e);
             }
         } else if (cycleId != null) {
-            submissions = submissionRepository.findByCycleId(cycleId, pageable);
+            // NEW: Filter by applicationStage if provided
+            if (applicationStage != null) {
+                try {
+                    Enums.ApplicationStage appStage = Enums.ApplicationStage.valueOf(applicationStage.toUpperCase(java.util.Locale.ROOT));
+                    submissions = submissionRepository.findByCycleIdAndApplicationStage(cycleId, appStage, pageable);
+                } catch (IllegalArgumentException e) {
+                    throw new ValidationException("Invalid application stage: " + applicationStage, e);
+                }
+            } else {
+                submissions = submissionRepository.findByCycleId(cycleId, pageable);
+            }
         } else if (status != null) {
             try {
                 Enums.VerificationStatus verificationStatus = Enums.VerificationStatus.valueOf(status.toUpperCase(java.util.Locale.ROOT));

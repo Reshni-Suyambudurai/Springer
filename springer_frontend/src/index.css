@@ -8,6 +8,7 @@ html, body, #root {
 body {
   font-family: "Inter", "Segoe UI", Arial, sans-serif;
   font-size: 1rem;
+  font-weight: 400;
   line-height: 1.5;
 }
 
@@ -191,6 +192,54 @@ h6 { font-size: var(--text-xs); font-weight: 500; line-height: 1.5; }
 }
 
 /* ═══════════════════════════════════════════════════ */
+/* GLOBAL STATUS BADGES                               */
+/* ═══════════════════════════════════════════════════ */
+
+.g-status-active {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--color-status-active-bg);
+  color: var(--color-status-active-text);
+  border: 0.8px solid var(--color-status-active-border);
+  border-radius: 8px;
+  padding: 2px 8px;
+  gap: 4px;
+  font-family: "Inter", "Segoe UI", Arial, sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 16px;
+  letter-spacing: 0;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+  white-space: nowrap;
+}
+
+.g-status-active:hover { opacity: 0.85; }
+
+.g-status-inactive {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--color-status-inactive-bg);
+  color: var(--color-status-inactive-text);
+  border: 0.8px solid var(--color-status-inactive-border);
+  border-radius: 8px;
+  padding: 2px 8px;
+  gap: 4px;
+  font-family: "Inter", "Segoe UI", Arial, sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 16px;
+  letter-spacing: 0;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+  white-space: nowrap;
+}
+
+.g-status-inactive:hover { opacity: 0.85; }
+
+/* ═══════════════════════════════════════════════════ */
 /* GLOBAL LOADING STATE                               */
 /* ═══════════════════════════════════════════════════ */
 
@@ -204,6 +253,7 @@ h6 { font-size: var(--text-xs); font-weight: 500; line-height: 1.5; }
 }
 
 /* ═══════════════════════════════════════════════════ */
+<<<<<<< HEAD
 /* GLOBAL TOOLTIP                                     */
 /* ═══════════════════════════════════════════════════ */
 
@@ -237,5 +287,153 @@ h6 { font-size: var(--text-xs); font-weight: 500; line-height: 1.5; }
   to {
     opacity: 1;
     transform: translateY(0);
+=======
+/* MUI DROPDOWN OVERRIDES                             */
+/* ═══════════════════════════════════════════════════ */
+
+.MuiMenu-paper,
+.MuiPopover-paper {
+  box-shadow: none !important;
+  border: 1px solid var(--color-border) !important;
+  border-radius: 8px !important;
+}
+
+.MuiMenuItem-root.Mui-selected {
+  background-color: var(--color-grey-150) !important;
+  color: var(--color-text-primary) !important;
+}
+
+.MuiMenuItem-root.Mui-selected:hover {
+  background-color: var(--color-grey-200) !important;
+}
+
+/* ═══════════════════════════════════════════════════ */
+/* GLOBAL MOBILE RESPONSIVE                           */
+/* ═══════════════════════════════════════════════════ */
+
+@media (max-width: 768px) {
+  /* MUI Tables: horizontal scroll */
+  .MuiTableContainer-root {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .MuiTable-root {
+    min-width: 600px;
+  }
+
+  /* Plain HTML tables: horizontal scroll */
+  table {
+    min-width: 500px;
+  }
+
+  /* MUI Dialogs: full-width on mobile */
+  .MuiDialog-paper {
+    margin: 16px !important;
+    width: calc(100% - 32px) !important;
+    max-width: 100% !important;
+    max-height: calc(100vh - 32px) !important;
+  }
+
+  /* Global page padding reduction */
+  .g-loading {
+    min-height: 250px;
+  }
+
+  .g-empty-content {
+    padding: 32px 16px !important;
+  }
+
+  /* ── Page container padding: tablet ── */
+  .int-container,
+  .ical-page,
+  .ins-page,
+  .inp-page,
+  .ipt-page,
+  .inc-page,
+  .ilv-page,
+  .ina-page,
+  .iwarn-page,
+  .lmg-page,
+  .tcd-page,
+  .dashboard-container,
+  .dp-page,
+  .acd-page {
+    padding-left: 16px !important;
+    padding-right: 16px !important;
+  }
+
+  /* ── Stat cards: wrap on smaller screens ── */
+  .int-stats,
+  .ins-stats,
+  .dp-stats-row,
+  .tcd-stat-row {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  /* ── Charts & grids: stack vertically ── */
+  .int-charts-row,
+  .tcd-chart-row,
+  .int-row {
+    flex-direction: column;
+  }
+
+  /* ── Tab text smaller on mobile ── */
+  .MuiTab-root {
+    font-size: 12px !important;
+    min-width: auto !important;
+    padding: 6px 12px !important;
+  }
+
+  .MuiTabs-flexContainer {
+    overflow-x: auto;
+  }
+}
+
+@media (max-width: 480px) {
+  .MuiTable-root {
+    min-width: 500px;
+  }
+
+  .g-btn-primary,
+  .g-btn-success,
+  .g-btn-danger,
+  .g-btn-outline-primary {
+    font-size: 12px !important;
+    padding: 6px 12px !important;
+  }
+
+  h1 { font-size: 1.5rem; }
+  h2 { font-size: 1.25rem; }
+  h3 { font-size: 1.1rem; }
+
+  /* ── Page container padding: phone ── */
+  .int-container,
+  .ical-page,
+  .ins-page,
+  .inp-page,
+  .ipt-page,
+  .inc-page,
+  .ilv-page,
+  .ina-page,
+  .iwarn-page,
+  .lmg-page,
+  .tcd-page,
+  .dashboard-container,
+  .dp-page,
+  .acd-page {
+    padding-left: 10px !important;
+    padding-right: 10px !important;
+  }
+
+  /* ── Stat cards: full width on phone ── */
+  .int-stats > *,
+  .ins-stats > *,
+  .dp-stats-row > *,
+  .tcd-stat-row > * {
+    min-width: 0;
+    flex: 1 1 calc(50% - 8px);
+>>>>>>> origin/Mano-Branch
   }
 }

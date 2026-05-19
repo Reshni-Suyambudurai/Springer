@@ -1,4 +1,4 @@
-// ==================== TRAINING PROGRAM ====================
+﻿// ==================== TRAINING PROGRAM ====================
 
 export const TrainingLocation = {
   CHENNAI: 'CHENNAI',
@@ -250,6 +250,12 @@ export interface BatchCandidateResponse {
   department: string;
   cgpa: number;
   applicationStage: string;
+  instituteName: string;
+  mobile: string;
+  degree: string;
+  cycleId: number;
+  updatedAt: string;
+  userId?: number;
 }
 
 export interface JoiningTrackerCandidate {

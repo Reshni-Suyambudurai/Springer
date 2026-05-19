@@ -8,9 +8,9 @@ import {
 import {
   Loop as CycleIcon,
   ArrowBack as ArrowBackIcon,
-  Add as AddIcon,
   FileDownload as DownloadIcon,
 } from '@mui/icons-material';
+import { FigmaAddIcon as AddIcon } from '../../Common/FigmaIcons';
 import { useNavigate, useParams } from 'react-router-dom';
 import { hiringCycleApi } from '../../../services/hiring.api';
 import { hiringDemandApi } from '../../../services/hiring.api';
@@ -116,7 +116,7 @@ const HiringCycleDetails = () => {
                   <Button
                     variant="contained"
                     size="small"
-                    startIcon={<AddIcon sx={{ fontSize: '16px !important' }} />}
+                    startIcon={<AddIcon style={{ fontSize: '16px' }} />}
                     className="hcd-add-btn"
                     onClick={() => navigate(`/hiring-manager/hiring-demands/add?cycleId=${id}`)}
                   >

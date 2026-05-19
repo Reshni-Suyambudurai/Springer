@@ -24,6 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -65,7 +66,7 @@ public class VerificationServiceImpl implements IVerificationService {
         return VerificationResponse.builder()
                 .documentId(updated.getCandidateDocumentId().longValue())
                 .candidateId(updated.getCandidate().getCandidateId())
-                .documentType(updated.getDocumentType().getDocumentType().name())
+                .documentType(updated.getDocumentType().getDocumentType())
                 .verificationStatus(updated.getVerificationStatus().name())
                 .verifiedAt(LocalDateTime.now())
                 .verifiedBy(request.getVerifiedBy())
@@ -107,7 +108,7 @@ public class VerificationServiceImpl implements IVerificationService {
         return VerificationResponse.builder()
                 .documentId(submission.getCandidateDocumentId().longValue())
                 .candidateId(submission.getCandidate().getCandidateId())
-                .documentType(submission.getDocumentType().getDocumentType().name())
+                .documentType(submission.getDocumentType().getDocumentType())
                 .verificationStatus(submission.getVerificationStatus().name())
                 .verifiedAt(LocalDateTime.now())
                 .verifiedBy(request.getVerifiedBy())
@@ -135,10 +136,10 @@ public class VerificationServiceImpl implements IVerificationService {
                 .map(s -> VerificationResponse.builder()
                         .documentId(s.getCandidateDocumentId().longValue())
                         .candidateId(s.getCandidate().getCandidateId())
-                        .documentType(s.getDocumentType().getDocumentType().name())
+                        .documentType(s.getDocumentType().getDocumentType())
                         .verificationStatus(s.getVerificationStatus().name())
                         .build())
-                .toList();
+                .collect(Collectors.toList());
     }
     
     @Override
@@ -203,7 +204,7 @@ public class VerificationServiceImpl implements IVerificationService {
         List<DocumentSubmission> allSubmissions = submissionRepository.findByCandidateIdAndCycleId(candidateId, cycleId);
         List<DocumentCompletionResponse.DocumentStatusDetail> documents = allSubmissions.stream()
                 .map(s -> DocumentCompletionResponse.DocumentStatusDetail.builder()
-                        .documentType(s.getDocumentType() != null ? s.getDocumentType().getDocumentType().name() : "UNKNOWN")
+                        .documentType(s.getDocumentType() != null ? s.getDocumentType().getDocumentType() : "UNKNOWN")
                         .status(s.getVerificationStatus() != null ? s.getVerificationStatus().name() : "PENDING")
                         .verifiedAt(s.getCreatedAt() != null ? s.getCreatedAt().toString() : "")
                         .build())
@@ -220,5 +221,13 @@ public class VerificationServiceImpl implements IVerificationService {
                 .documents(documents)
                 .isOfferReady(isOfferReady)
                 .build();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public boolean getOfferReadyStatus(Long candidateId, Long cycleId) {
+        List<DocumentSubmission> submissions = submissionRepository.findActiveSubmissionsByCandidateAndCycle(candidateId, cycleId);
+        if (submissions.isEmpty()) return false;
+        return submissions.stream().allMatch(s -> s.getVerificationStatus() == Enums.VerificationStatus.APPROVED);
     }
 }

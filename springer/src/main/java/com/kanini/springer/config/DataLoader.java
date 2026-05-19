@@ -167,7 +167,7 @@ public class DataLoader {
             createUser("Priya Rajagopalan", "priya@kanini.com", "password@123", "Product Engineering", "Coimbatore", membersRole),
             createUser("Mozhiarasan", "mozhi@kanini.com", "password@123", "Product Engineering", "Coimbatore", membersRole),
             createUser("Praveen Kumar", "praveen@kanini.com", "password123", "Product Engineering", "Coimbatore", membersRole),
-            createUser("Admin", "admin@kanini.com", "admin@123", "Data Analytics & AI", "Coimbatore", adminRole),
+            createUser("Admin", "admin@kanini.com", "password123", "Data Analytics & AI", "Coimbatore", adminRole),
             createUser("Lavanya", "lavanya@kanini.com", "password123", "Data Analytics & AI", "Coimbatore", trainingCoordinatorRole),
             createUser("John", "john@kanini.com", "password123", "Training", "Coimbatore", internRole),
             createUser("Joe", "joe@kanini.com", "password123", "Training", "Coimbatore", internRole)
@@ -225,7 +225,6 @@ public class DataLoader {
             createInstitute("SRM Institute of Science and Technology", "TIER_2", "Tamil Nadu", "Chennai"),
             createInstitute("Karunya Institute of Technology", "TIER_2", "Tamil Nadu", "Coimbatore"),
             createInstitute("CEG - College of Engineering Guindy", "TIER_1", "Tamil Nadu", "Chennai")
-            
         };
 
         instituteRepository.saveAll(java.util.Arrays.asList(institutes));

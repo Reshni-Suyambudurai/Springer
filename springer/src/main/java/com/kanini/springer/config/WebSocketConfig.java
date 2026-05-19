@@ -20,7 +20,10 @@ public class WebSocketConfig implements WebSocketConfigurer {
                 .setAllowedOrigins(
                     "http://localhost:5173",
                     "http://localhost:5174",
-                    "http://localhost:3000"
+                  
+                    "https://springer-backend-production.up.railway.app",
+                    "https://springer-frontend.vercel.app",
+                    "https://ka25-springer.vercel.app"
                 );
     }
 }

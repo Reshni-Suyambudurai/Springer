@@ -9,17 +9,12 @@ import {
   Button,
   Card,
   CardContent,
-  TextField,
   Typography,
   IconButton,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
   Table,
   TableBody,
   TableCell,
@@ -27,21 +22,19 @@ import {
   TableHead,
   TableRow,
   Paper,
-  Autocomplete,
   Tooltip,
 } from "@mui/material";
 import BackButton from "../../Common/BackButton";
 import AddIcon from "@mui/icons-material/Add";
 import UploadIcon from "@mui/icons-material/Upload";
-import DownloadIcon from "@mui/icons-material/Download";
 import CloseIcon from "@mui/icons-material/Close";
 import DeleteIcon from "@mui/icons-material/Delete";
-import PersonAddIcon from "@mui/icons-material/PersonAdd";
 import "../../../css/TA_Recruiter/Institutes/AddInstitute.css";
 
 const AddInstitute: React.FC = () => {
   const navigate = useNavigate();
   const [addDialog, setAddDialog] = useState(false);
+  const [activeTab, setActiveTab] = useState<"basic" | "contact" | "academic">("basic");
   const [bulkData, setBulkData] = useState<InstituteRequest[]>([]);
   const [duplicateIndices, setDuplicateIndices] = useState<Set<number>>(new Set());
   const [batchDuplicateIndices, setBatchDuplicateIndices] = useState<Set<number>>(new Set());
@@ -219,15 +212,9 @@ const AddInstitute: React.FC = () => {
     }
     try {
       const response = await instituteApi.bulkCreateInstitutes(bulkData);
-      console.log("Bulk upload response:", response);
-      
-      // Check if there are any errors in the response
       if (response.data.errorMessages && response.data.errorMessages.length > 0) {
-        // Show error overlay
         setErrorMessages(response.data.errorMessages);
         setShowErrorOverlay(true);
-        
-        // Show success toast if some were successful
         if (response.data.successfulInserts && response.data.successfulInserts.length > 0) {
           showToast(`${response.data.successfulInserts.length} institutes uploaded, ${response.data.errorMessages.length} failed`, "error");
         }
@@ -236,12 +223,7 @@ const AddInstitute: React.FC = () => {
         setBulkData([]);
       }
     } catch (error: unknown) {
-      const err = error as {
-        message?: string;
-        success?: boolean;
-        data?: { errorMessages?: string[] };
-      };
-
+      const err = error as { message?: string; data?: { errorMessages?: string[] } };
       if (err.data?.errorMessages?.length) {
         setErrorMessages(err.data.errorMessages);
         setShowErrorOverlay(true);
@@ -297,13 +279,6 @@ const AddInstitute: React.FC = () => {
     showToast(`Removed ${count} duplicate row(s)`, "success");
   };
 
-  const handleDownloadFormat = () => {
-    const link = document.createElement("a");
-    link.href = "/files/college_template.xlsx";
-    link.download = "college_template.xlsx";
-    link.click();
-  };
-
   return (
     <Box className="add-institute-container">
       {/* Unified Header */}
@@ -324,14 +299,7 @@ const AddInstitute: React.FC = () => {
             Add Institute
           </Button>
 
-          <Button
-            startIcon={<DownloadIcon />}
-            onClick={handleDownloadFormat}
-            variant="outlined"
-            className="add-institute-header-btn t-btn-small"
-          >
-            Download Format
-          </Button>
+
         </Box>
       </Card>
 
@@ -453,167 +421,182 @@ const AddInstitute: React.FC = () => {
       )}
 
       {/* Add Single Institute Dialog */}
-      <Dialog open={addDialog} onClose={() => setAddDialog(false)} maxWidth={showTpoForm ? "md" : "sm"} fullWidth>
-        <DialogTitle>Add New Institute</DialogTitle>
-        <DialogContent>
-          <Box className={`add-institute-dialog-body${showTpoForm ? " add-institute-dialog-body--with-tpo" : ""}`}>
-            {/* Left: Institute Form */}
-            <Box className="add-institute-form">
-            <TextField
-              label="Institute Name *"
-              fullWidth
-              value={singleForm.instituteName}
-              onChange={(e) => setSingleForm({ ...singleForm, instituteName: e.target.value })}
-            />
-            <FormControl fullWidth>
-              <InputLabel>Tier *</InputLabel>
-              <Select
-                value={singleForm.instituteTier}
-                label="Tier"
-                onChange={(e) => setSingleForm({ ...singleForm, instituteTier: e.target.value })}
-              >
-                <MenuItem value="TIER_1">TIER 1</MenuItem>
-                <MenuItem value="TIER_2">TIER 2</MenuItem>
-                <MenuItem value="TIER_3">TIER 3</MenuItem>
-              </Select>
-            </FormControl>
-          
-            <Autocomplete
-              freeSolo
-              options={["Tamil Nadu", "Andhra Pradesh", "Kerala", "Karnataka", "Puducherry","Telangana","Maharashtra","Others"]}
-              value={singleForm.state}
-              onChange={(_, newValue) => setSingleForm({ ...singleForm, state: newValue || "" })}
-              onInputChange={(_, newValue) => setSingleForm({ ...singleForm, state: newValue })}
-              renderInput={(params) => (
-                <TextField {...params} label="State *" fullWidth />
-              )}
-            />
-              <TextField
-              label="City *"
-              fullWidth
-              value={singleForm.city}
-              onChange={(e) => setSingleForm({ ...singleForm, city: e.target.value })}
-            />
-
-            {/* TPO Toggle Button */}
-            <Button
-              variant="outlined"
-              startIcon={showTpoForm ? <CloseIcon /> : <PersonAddIcon />}
-              onClick={() => {
-                setShowTpoForm(!showTpoForm);
-                if (showTpoForm) setTpoForm({ tpoName: "", tpoEmail: "", tpoMobile: "", tpoDesignation: "" });
-              }}
-              className="t-btn-small add-institute-tpo-toggle"
-            >
-              {showTpoForm ? "Remove TPO" : "Add TPO Contact"}
-            </Button>
+      <Dialog open={addDialog} onClose={() => { setAddDialog(false); setActiveTab("basic"); }} maxWidth={false}
+        PaperProps={{ className: 'ai-dialog-paper' }}>
+        <DialogTitle className="ai-dialog-title-wrap">
+          <Box className="ai-dialog-title-box">
+            <Box>
+              <Typography className="ai-dialog-heading">Add New Institute</Typography>
+              <Typography className="ai-dialog-subheading">Enter all the details about the institute. All fields marked with * are required.</Typography>
             </Box>
+            <IconButton size="small" onClick={() => { setAddDialog(false); setActiveTab("basic"); }}><CloseIcon fontSize="small" /></IconButton>
+          </Box>
+          {/* Tabs */}
+          <Box className="ai-tabs">
+            {(["basic", "contact", "academic"] as const).map((tab) => (
+              <button key={tab} className={`ai-tab${activeTab === tab ? " ai-tab--active" : ""}`} onClick={() => setActiveTab(tab)}>
+                {tab === "basic" ? "Basic Information" : tab === "contact" ? "Contact Details" : "Academic"}
+              </button>
+            ))}
+          </Box>
+        </DialogTitle>
 
-            {/* Right: TPO Card */}
-            {showTpoForm && (
-              <Box className="add-institute-tpo-section">
-                <Typography className="add-institute-tpo-title">TPO Contact Details</Typography>
-                <Box className="add-institute-tpo-fields">
-                  <TextField
-                    label="TPO Name *"
-                    fullWidth
-                    value={tpoForm.tpoName}
-                    onChange={(e) => setTpoForm({ ...tpoForm, tpoName: e.target.value })}
-                  />
-                  <TextField
-                    label="TPO Email *"
-                    fullWidth
-                    type="email"
-                    value={tpoForm.tpoEmail}
-                    onChange={(e) => setTpoForm({ ...tpoForm, tpoEmail: e.target.value })}
-                  />
-                  <TextField
-                    label="TPO Mobile *"
-                    fullWidth
-                    value={tpoForm.tpoMobile}
-                    onChange={(e) => {
-                      const val = e.target.value.replace(/\D/g, "").slice(0, 10);
-                      setTpoForm({ ...tpoForm, tpoMobile: val });
-                    }}
-                  />
-                  <TextField
-                    label="TPO Designation"
-                    fullWidth
-                    value={tpoForm.tpoDesignation}
-                    onChange={(e) => setTpoForm({ ...tpoForm, tpoDesignation: e.target.value })}
-                  />
+        <DialogContent className="ai-dialog-content-wrap">
+          {/* Basic Information */}
+          {activeTab === "basic" && (
+            <Box className="ai-form">
+              <Box className="ai-row-2">
+                <Box className="ai-field">
+                  <label className="ai-label">Institute Name <span className="ai-req">*</span></label>
+                  <input className="ai-input" placeholder="Enter institute name" value={singleForm.instituteName}
+                    onChange={(e) => setSingleForm({ ...singleForm, instituteName: e.target.value })} />
+                </Box>
+                <Box className="ai-field">
+                  <label className="ai-label">Tier <span className="ai-req">*</span></label>
+                  <select className="ai-select" value={singleForm.instituteTier} onChange={(e) => setSingleForm({ ...singleForm, instituteTier: e.target.value })}>
+                    <option value="">Select tier</option>
+                    <option value="TIER_1">TIER 1</option>
+                    <option value="TIER_2">TIER 2</option>
+                    <option value="TIER_3">TIER 3</option>
+                  </select>
                 </Box>
               </Box>
-            )}
-          </Box>
+              <Box className="ai-row-3">
+                <Box className="ai-field">
+                  <label className="ai-label">City <span className="ai-req">*</span></label>
+                  <input className="ai-input" placeholder="Enter city" value={singleForm.city}
+                    onChange={(e) => setSingleForm({ ...singleForm, city: e.target.value })} />
+                </Box>
+                <Box className="ai-field">
+                  <label className="ai-label">State <span className="ai-req">*</span></label>
+                  <input className="ai-input" placeholder="Enter state" value={singleForm.state}
+                    onChange={(e) => setSingleForm({ ...singleForm, state: e.target.value })} />
+                </Box>
+                <Box className="ai-field">
+                  <label className="ai-label">Country</label>
+                  <input className="ai-input" placeholder="Enter country" defaultValue="India" />
+                </Box>
+              </Box>
+              <Box className="ai-row-2">
+                <Box className="ai-field">
+                  <label className="ai-label">Institute Type</label>
+                  <select className="ai-select">
+                    <option value="">Select type</option>
+                    <option value="ENGINEERING">Engineering</option>
+                    <option value="ARTS">Arts & Science</option>
+                    <option value="MANAGEMENT">Management</option>
+                    <option value="POLYTECHNIC">Polytechnic</option>
+                  </select>
+                </Box>
+                <Box className="ai-field">
+                  <label className="ai-label">Status <span className="ai-req">*</span></label>
+                  <select className="ai-select" value={singleForm.isActive ? "active" : "inactive"}
+                    onChange={(e) => setSingleForm({ ...singleForm, isActive: e.target.value === "active" })}>
+                    <option value="active">Active</option>
+                    <option value="inactive">Inactive</option>
+                  </select>
+                </Box>
+              </Box>
+            </Box>
+          )}
+
+          {/* Contact Details */}
+          {activeTab === "contact" && (
+            <Box className="ai-form">
+              <Box className="ai-row-2">
+                <Box className="ai-field">
+                  <label className="ai-label">Official Email <span className="ai-req">*</span></label>
+                  <input className="ai-input" placeholder="contact@institute.edu" type="email"
+                    value={tpoForm.tpoEmail} onChange={(e) => setTpoForm({ ...tpoForm, tpoEmail: e.target.value })} />
+                </Box>
+                <Box className="ai-field">
+                  <label className="ai-label">Alternate Email</label>
+                  <input className="ai-input" placeholder="admin@institute.edu" type="email" />
+                </Box>
+              </Box>
+              <Box className="ai-field">
+                <label className="ai-label">Website URL</label>
+                <input className="ai-input" placeholder="https://www.institute.edu" type="url" />
+              </Box>
+
+              {/* Primary Contact Person */}
+              <Box className="ai-contact-card">
+                <Box className="ai-contact-card-header">
+                  <Typography className="ai-contact-card-title">Primary Contact Person</Typography>
+                  {!showTpoForm && (
+                    <button className="ai-add-contact-btn" onClick={() => setShowTpoForm(true)}>
+                      + Add
+                    </button>
+                  )}
+                </Box>
+                {showTpoForm && (
+                  <>
+                    <Box className="ai-row-2">
+                      <Box className="ai-field">
+                        <label className="ai-label">TPO Name <span className="ai-req">*</span></label>
+                        <input className="ai-input" placeholder="Enter contact person name"
+                          value={tpoForm.tpoName} onChange={(e) => setTpoForm({ ...tpoForm, tpoName: e.target.value })} />
+                      </Box>
+                      <Box className="ai-field">
+                        <label className="ai-label">Phone <span className="ai-req">*</span></label>
+                        <input className="ai-input" placeholder="+91 98765 43210"
+                          value={tpoForm.tpoMobile} onChange={(e) => setTpoForm({ ...tpoForm, tpoMobile: e.target.value.replace(/\D/g, "").slice(0, 10) })} />
+                      </Box>
+                    </Box>
+                    <Box className="ai-field">
+                      <label className="ai-label">Email</label>
+                      <input className="ai-input" placeholder="person@institute.edu" type="email"
+                        value={tpoForm.tpoEmail} onChange={(e) => setTpoForm({ ...tpoForm, tpoEmail: e.target.value })} />
+                    </Box>
+                  </>
+                )}
+              </Box>
+
+
+            </Box>
+          )}
+
+          {/* Academic */}
+          {activeTab === "academic" && (
+            <Box className="ai-form">
+              <Typography className="ai-academic-info-text">Select programs offered by this institute. Programs can also be added later from the institute details page.</Typography>
+              <Box className="ai-field">
+                <label className="ai-label">Programs</label>
+                <Typography className="ai-academic-info-text">Programs can be added after creating the institute from the institute details page.</Typography>
+              </Box>
+            </Box>
+          )}
         </DialogContent>
-        <DialogActions>
-          <Button variant="outlined" onClick={() => setAddDialog(false)} className="t-dialog-cancel-btn">Cancel</Button>
-          <Button onClick={handleAddSingle} variant="contained" className="t-dialog-confirm-btn">
-            Add Institute
-          </Button>
+
+        <DialogActions className="ai-dialog-actions-wrap">
+          <button className="ai-cancel-btn" onClick={() => { setAddDialog(false); setActiveTab("basic"); }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+            Cancel
+          </button>
+          <button className="ai-save-btn" onClick={handleAddSingle}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z" /><polyline points="17 21 17 13 7 13 7 21" /><polyline points="7 3 7 8 15 8" /></svg>
+            Save
+          </button>
         </DialogActions>
       </Dialog>
 
       {/* Error Overlay */}
       {showErrorOverlay && (
-        <Box
-          sx={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'rgba(0,0,0,0.5)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 9999,
-          }}
-          onClick={() => setShowErrorOverlay(false)}
-        >
-          <Box
-            sx={{
-              backgroundColor: 'var(--color-surface)',
-              borderRadius: '12px',
-              padding: '24px',
-              maxWidth: '600px',
-              width: '90%',
-              maxHeight: '80vh',
-              overflow: 'auto',
-              position: 'relative',
-              border: '1px solid var(--color-border)',
-              boxShadow: '0 1px 4px var(--opacity-shadow-card)',
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-              <Typography variant="h6" sx={{ color: 'var(--color-danger)', fontWeight: 600 }}>
+        <Box className="ai-error-overlay" onClick={() => setShowErrorOverlay(false)}>
+          <Box className="ai-error-box" onClick={(e) => e.stopPropagation()}>
+            <Box className="ai-error-header">
+              <Typography variant="h6" className="ai-error-title">
                 Validation Errors ({errorMessages.length})
               </Typography>
               <IconButton onClick={() => setShowErrorOverlay(false)} size="small">
                 <CloseIcon />
               </IconButton>
             </Box>
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <Box className="ai-error-list">
               {errorMessages.map((error, index) => (
-                <Box
-                  key={index}
-                  sx={{
-                    padding: '12px',
-                    backgroundColor: 'var(--color-surface)',
-                    borderRadius: '8px',
-                    border: '1px solid var(--color-border)',
-                    display: 'flex',
-                    gap: '8px',
-                  }}
-                >
-                  <Typography sx={{ fontWeight: 600, color: 'var(--color-danger)', minWidth: '24px' }}>
-                    {index + 1}.
-                  </Typography>
-                  <Typography sx={{ color: 'var(--color-text-primary)', fontSize: 'var(--text-sm)' }}>
-                    {error}
-                  </Typography>
+                <Box key={index} className="ai-error-item">
+                  <Typography className="ai-error-num">{index + 1}.</Typography>
+                  <Typography className="ai-error-msg">{error}</Typography>
                 </Box>
               ))}
             </Box>

@@ -6,6 +6,7 @@ export interface InstituteContactRequest {
   tpoName: string;
   tpoEmail: string;
   tpoMobile: string;
+  tpoDesignation?: string;
   tpoStatus: string; // ACTIVE, INACTIVE
   isPrimary: boolean;
 }

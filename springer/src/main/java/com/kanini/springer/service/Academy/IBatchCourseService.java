@@ -20,6 +20,10 @@ public interface IBatchCourseService {
     List<BatchCourseResponse> getCoursesByBatch(Integer programId, Integer batchNumber);
     
     List<BatchCourseResponse> getCoursesByTrainingCourse(Integer courseId);
+
+    List<BatchCourseResponse> getCoursesByConductor(Long userId);
+
+    BatchCourseResponse rescheduleBatchCourse(Integer batchCourseId, java.time.LocalDate startDate, java.time.LocalDate endDate);
     
     void removeCourseFromBatch(Integer batchCourseId);
 }

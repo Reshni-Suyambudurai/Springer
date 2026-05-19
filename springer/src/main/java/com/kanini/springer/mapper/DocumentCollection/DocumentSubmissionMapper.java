@@ -31,7 +31,7 @@ public class DocumentSubmissionMapper {
         response.setUploadedAt(entity.getCreatedAt());
         
         if (entity.getDocumentType() != null) {
-            response.setDocumentType(entity.getDocumentType().getDocumentType().name());
+            response.setDocumentType(entity.getDocumentType().getDocumentType());
         }
         
         return response;

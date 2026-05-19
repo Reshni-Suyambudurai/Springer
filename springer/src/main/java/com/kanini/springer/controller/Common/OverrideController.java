@@ -6,6 +6,7 @@ import com.kanini.springer.dto.Common.ManualOverrideResponse;
 import com.kanini.springer.service.Common.IOverrideService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
@@ -27,7 +28,7 @@ public class OverrideController {
     
     @PostMapping
     @Operation(summary = "Log a manual override", description = "Creates an audit record for a manual override operation. Stores field-level changes, reason, and user who performed the override.")
-    public ResponseEntity<ApiResponse<ManualOverrideResponse>> logOverride(@RequestBody ManualOverrideRequest request) {
+    public ResponseEntity<ApiResponse<ManualOverrideResponse>> logOverride(@Valid @RequestBody ManualOverrideRequest request) {
         ManualOverrideResponse response = overrideService.logOverride(request);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(new ApiResponse<>(true, "Manual override logged successfully", response));

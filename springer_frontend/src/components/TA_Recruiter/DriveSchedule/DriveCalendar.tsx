@@ -18,9 +18,9 @@ import {
   InputLabel,
   Tooltip,
 } from "@mui/material";
-import AddIcon from "@mui/icons-material/Add";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
+import { FigmaAddIcon as AddIcon } from '../../Common/FigmaIcons';
 import EditDriveModal from "./EditDriveModal";
 import "../../../css/TA_Recruiter/DriveSchedule/DriveCalendar.css";
 

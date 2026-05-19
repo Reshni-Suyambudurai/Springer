@@ -16,8 +16,15 @@ const scoreColor = (score: number | null, min?: number) => {
   return 'var(--color-error)';
 };
 
-const rankLabel = (r: number) =>
-  r === 1 ? '1st' : r === 2 ? '2nd' : r === 3 ? '3rd' : `${r}th`;
+const rankLabel = (r: number) => {
+  if (r % 100 >= 11 && r % 100 <= 13) return `${r}th`;
+  switch (r % 10) {
+    case 1: return `${r}st`;
+    case 2: return `${r}nd`;
+    case 3: return `${r}rd`;
+    default: return `${r}th`;
+  }
+};
 
 const rankMedal = (r: number) =>
   r === 1 ? '🥇' : r === 2 ? '🥈' : r === 3 ? '🥉' : null;
@@ -63,8 +70,8 @@ const InternScores = ({ data }: { data: InternDashboardData }) => {
   // Normalize a leaderboard course score for display (comm scores are raw sums)
   const normalizeLbScore = (score: number | null | undefined, courseId: number): number | null => {
     if (score == null) return null;
-    const _courseInfo = courseOptions.find(c => c.courseId === courseId); void _courseInfo;
-    // courseOptions come from detailedLeaderboard[0].courseScores — no maxScore there
+    const courseInfo = courseOptions.find(c => c.courseId === courseId);
+    void courseInfo; // used for context only — actual normalization uses myCs below
     // Use courseScores from the intern's own data to get maxScore
     const myCs = data.courseScores.find(c => c.courseId === courseId);
     if (myCs?.isCommunication && myCs.maxScore) {

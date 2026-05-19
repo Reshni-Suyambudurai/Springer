@@ -44,6 +44,11 @@ public class AttendanceServiceImpl implements IAttendanceService {
         BatchAllocation student = allocationRepository.findByStudentId(request.getStudentId())
                 .orElseThrow(() -> new ResourceNotFoundException(STUDENT_NOT_FOUND + request.getStudentId()));
 
+        // Active student check
+        if (!Boolean.TRUE.equals(student.getIsActive())) {
+            throw new ValidationException("Cannot mark attendance for an inactive student (ID: " + request.getStudentId() + ").");
+        }
+
         validateAttendanceDate(request.getAttendanceDate());
 
         // Prevent duplicate marking on same day
@@ -176,6 +181,12 @@ public class AttendanceServiceImpl implements IAttendanceService {
     }
 
     // ── Helper ────────────────────────────────────────────────────────────────
+
+    @Override
+    @Transactional(readOnly = true)
+    public boolean isAttendanceMarkedForBatch(Integer programId, Integer batchNumber, LocalDate date) {
+        return attendanceRepository.countByBatchAndDate(programId, batchNumber, date) > 0;
+    }
 
     private void validateAttendanceDate(LocalDate attendanceDate) {
         if (attendanceDate.isAfter(LocalDate.now())) {

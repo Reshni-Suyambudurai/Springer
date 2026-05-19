@@ -1,15 +1,16 @@
 import { useState, useEffect, useRef } from 'react';
 import * as XLSX from 'xlsx';
 import {
-  Box, Card, TextField, Button, Typography, Stack,
+  Box, Card, TextField, Button, Typography, Stack, IconButton,
   Table, TableBody, TableCell, TableContainer, TableHead,
-  TableRow, TablePagination, CircularProgress, Chip,
+  TableRow, CircularProgress, Chip,
   Dialog, DialogTitle, DialogContent, DialogActions, MenuItem,
 } from '@mui/material';
 import {
-  Add as AddIcon, MenuBook as MenuBookIcon,
+  MenuBook as MenuBookIcon,
   Save as SaveIcon, Upload as UploadIcon, Download as DownloadIcon,
 } from '@mui/icons-material';
+import { FigmaAddIcon as AddIcon, FigmaCloseIcon as CloseIcon } from '../../Common/FigmaIcons';
 import {
   trainingScoreApi, trainingCourseApi,
   batchAllocationApi, batchCourseApi, trainingProgramApi,
@@ -37,7 +38,8 @@ const TrainingScoresPanel = ({ context, readOnly = false }: { context: AcademyCo
   const { programYear, programs: yearPrograms, cycles: ctxCycles = [] } = context;
   const loggedInUser = tokenstore.getUser();
   const userRole = loggedInUser?.roleName?.toUpperCase() ?? '';
-  const isTrainer = userRole === 'TRAINING_COORDINATOR' || userRole === 'MEMBERS';
+  const userId = loggedInUser?.userId ?? 0;
+  const isTrainer = userRole === 'TRAINING_COORDINATOR' || userRole === 'MEMBERS' || userRole === 'TA_MANAGER';
   const canEdit = !readOnly && isTrainer;
 
   // ── Base data ──
@@ -52,8 +54,6 @@ const TrainingScoresPanel = ({ context, readOnly = false }: { context: AcademyCo
   const [filterProgramId, setFilterProgramId] = useState(0);
   const [filterBatchNo, setFilterBatchNo]     = useState(0);
   const [filterCourseId, setFilterCourseId]   = useState(0);
-  const [page, setPage]                       = useState(0);
-  const [rowsPerPage, setRowsPerPage]         = useState(10);
 
   // ── Give Score dialog ──
   const [dlgOpen, setDlgOpen] = useState(false);
@@ -66,7 +66,7 @@ const TrainingScoresPanel = ({ context, readOnly = false }: { context: AcademyCo
 
   useEffect(() => {
     fetchBase();
-    setFilterProgramId(0); setFilterBatchNo(0); setFilterCourseId(0); setPage(0);
+    setFilterProgramId(0); setFilterBatchNo(0); setFilterCourseId(0);
   }, [yearPrograms]);
 
   // Fetch scores from backend only when program + batch + course are all selected
@@ -159,13 +159,18 @@ const TrainingScoresPanel = ({ context, readOnly = false }: { context: AcademyCo
     ? Array.from({ length: allPrograms.find(p => p.programId === filterProgramId)?.numberOfBatches ?? 0 }, (_, i) => i + 1)
     : [];
 
-  // Courses linked to selected program+batch (view) — all statuses visible
+  // Courses linked to selected program+batch (view) — all courses visible for viewing
   const coursesForBatch = (filterProgramId && filterBatchNo)
     ? batchCourses
         .filter(bc => bc.programId === filterProgramId && bc.batchNo === filterBatchNo)
         .map(bc => allCourses.find(c => c.courseId === bc.courseId))
         .filter((c): c is TrainingCourseResponse => !!c)
     : [];
+
+  // For TC and MEMBERS, restrict score editing to only their assigned courses
+  const isAssignedCourse = (userRole === 'TRAINING_COORDINATOR' || userRole === 'MEMBERS')
+    ? batchCourses.some(bc => bc.programId === filterProgramId && bc.batchNo === filterBatchNo && bc.courseId === filterCourseId && bc.conductedBy === userId)
+    : true;
 
   // Students for selected program+batch — from targeted batch endpoint
   const studentsForView = batchStudents;
@@ -178,8 +183,6 @@ const TrainingScoresPanel = ({ context, readOnly = false }: { context: AcademyCo
       }))
     : [];
 
-  const paginated = tableRows.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
-
   // ── Dialog derived — uses batchStudents from targeted endpoint ──
   const dlgStudents = batchStudents;
 
@@ -191,12 +194,13 @@ const TrainingScoresPanel = ({ context, readOnly = false }: { context: AcademyCo
     bc => bc.programId === filterProgramId && bc.batchNo === filterBatchNo && bc.courseId === filterCourseId
   )?.status;
   const isBatchCourseActive = selectedBatchCourseStatus === 'ACTIVE';
-  const canGiveScore = canEdit && filterProgramId !== 0 && filterBatchNo !== 0 && filterCourseId !== 0 && isSelectedProgramActive && isBatchCourseActive;
+  const canGiveScore = canEdit && filterProgramId !== 0 && filterBatchNo !== 0 && filterCourseId !== 0 && isSelectedProgramActive && isBatchCourseActive && isAssignedCourse;
 
   const getGiveScoreTooltip = () => {
     if (!canEdit) return '';
     if (filterProgramId === 0) return 'Select a specific program first';
     if (!isSelectedProgramActive) return 'Scores can only be given for active programs';
+    if (!isAssignedCourse) return 'You can only give scores for courses assigned to you';
     if (filterBatchNo === 0) return 'Select a batch first';
     if (filterCourseId === 0) return 'Select a course first';
     if (!isBatchCourseActive) return `Course is ${selectedBatchCourseStatus ?? 'not active'} — move it to ACTIVE first`;
@@ -310,6 +314,15 @@ const TrainingScoresPanel = ({ context, readOnly = false }: { context: AcademyCo
       }
     }
 
+    // Check if any entries will overwrite existing scores
+    const overwriteCount = entries.filter(([studentIdStr]) => {
+      const studentId = Number(studentIdStr);
+      return scores.some(sc => sc.courseId === filterCourseId && sc.studentId === studentId);
+    }).length;
+    if (overwriteCount > 0) {
+      if (!window.confirm(`${overwriteCount} student(s) already have scores for this course. Their scores will be updated. Continue?`)) return;
+    }
+
     try {
       setSaving(true);
       let saved = 0;
@@ -403,7 +416,7 @@ const TrainingScoresPanel = ({ context, readOnly = false }: { context: AcademyCo
             <FilterSelect label="Program" value={String(filterProgramId)}
               onChange={v => {
                 setFilterProgramId(Number(v));
-                setFilterBatchNo(0); setFilterCourseId(0); setPage(0);
+                setFilterBatchNo(0); setFilterCourseId(0);
 
               }}>
               <MenuItem value="0">All Programs</MenuItem>
@@ -414,7 +427,7 @@ const TrainingScoresPanel = ({ context, readOnly = false }: { context: AcademyCo
 
             {/* Batch */}
             <FilterSelect label="Batch" value={String(filterBatchNo)}
-              onChange={v => { setFilterBatchNo(Number(v)); setFilterCourseId(0); setPage(0); }}>
+              onChange={v => { setFilterBatchNo(Number(v)); setFilterCourseId(0); }}>
               <MenuItem value="0">All Batches</MenuItem>
               {batchesForProgram.map(b => (
                 <MenuItem key={b} value={String(b)}>Batch {b}</MenuItem>
@@ -426,7 +439,6 @@ const TrainingScoresPanel = ({ context, readOnly = false }: { context: AcademyCo
               onChange={v => {
                 const courseId = Number(v);
                 setFilterCourseId(courseId);
-                setPage(0);
                 if (!courseId) return;
                 // Auto-fill upward only if batch not already selected
                 if (!filterBatchNo) {
@@ -522,7 +534,7 @@ const TrainingScoresPanel = ({ context, readOnly = false }: { context: AcademyCo
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {paginated.map(({ student, score }, idx) => (
+                    {tableRows.map(({ student, score }, idx) => (
                       <TableRow key={student.studentId} hover
                         className={`sc-table-row ${idx % 2 === 0 ? 'sc-table-row--even' : 'sc-table-row--odd'}`}>
                         <TableCell className="sc-table-cell">
@@ -570,12 +582,6 @@ const TrainingScoresPanel = ({ context, readOnly = false }: { context: AcademyCo
                   </TableBody>
                 </Table>
               </TableContainer>
-              <TablePagination
-                component="div" count={tableRows.length} page={page}
-                onPageChange={(_, p) => setPage(p)} rowsPerPage={rowsPerPage}
-                onRowsPerPageChange={e => { setRowsPerPage(parseInt(e.target.value, 10)); setPage(0); }}
-                rowsPerPageOptions={[10, 25, 50]} className="sc-pagination"
-              />
             </>
           )}
         </Box>
@@ -583,8 +589,9 @@ const TrainingScoresPanel = ({ context, readOnly = false }: { context: AcademyCo
 
       {/* Give Score Dialog */}
       <Dialog open={dlgOpen} onClose={() => setDlgOpen(false)} maxWidth="md" fullWidth>
-        <DialogTitle className="sc-dialog-title">
+        <DialogTitle className="sc-dialog-title" sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           Give Score — {selectedProgramObj?.programName} · Batch {filterBatchNo} · {allCourses.find(c => c.courseId === filterCourseId)?.courseName}
+          <IconButton size="small" onClick={() => setDlgOpen(false)}><CloseIcon style={{ fontSize: '1.25rem' }} /></IconButton>
         </DialogTitle>
         <DialogContent>
           <Stack spacing={2} sx={{ mt: 1 }}>

@@ -5,6 +5,7 @@ import com.kanini.springer.dto.Academy.TrainingCourseResponse;
 import com.kanini.springer.entity.Academy.TrainingCourse;
 import com.kanini.springer.exception.ResourceNotFoundException;
 import com.kanini.springer.mapper.Academy.TrainingCourseMapper;
+import com.kanini.springer.repository.Academy.BatchCourseRepository;
 import com.kanini.springer.repository.Academy.TrainingCourseRepository;
 import com.kanini.springer.service.Academy.impl.TrainingCourseServiceImpl;
 import org.junit.jupiter.api.DisplayName;
@@ -28,6 +29,7 @@ class TrainingCourseServiceImplTest {
 
     @InjectMocks private TrainingCourseServiceImpl service;
     @Mock private TrainingCourseRepository courseRepository;
+    @Mock private BatchCourseRepository batchCourseRepository;
     @Mock private TrainingCourseMapper mapper;
 
     private TrainingCourse buildCourse(Integer id, String name) {
@@ -53,9 +55,12 @@ class TrainingCourseServiceImplTest {
         void create_valid_success() {
             TrainingCourseRequest req = new TrainingCourseRequest();
             req.setCourseName("Java Fundamentals");
+            req.setWeightage(30);
             TrainingCourse entity = buildCourse(1, "Java Fundamentals");
             TrainingCourseResponse response = buildResponse(1, "Java Fundamentals");
 
+            when(courseRepository.findByCourseName("Java Fundamentals")).thenReturn(Collections.emptyList());
+            when(courseRepository.findAll()).thenReturn(Collections.emptyList());
             when(mapper.toEntity(req)).thenReturn(entity);
             when(courseRepository.save(entity)).thenReturn(entity);
             when(mapper.toResponse(entity)).thenReturn(response);
@@ -140,16 +145,15 @@ class TrainingCourseServiceImplTest {
     @Nested @DisplayName("deleteCourse")
     class DeleteCourse {
 
-        @Test @DisplayName("success - archives course by prefixing name")
-        void delete_found_archivesCourse() {
+        @Test @DisplayName("success - deletes course not linked to batches")
+        void delete_found_deletesCourse() {
             TrainingCourse course = buildCourse(1, "Java Fundamentals");
             when(courseRepository.findByCourseId(1)).thenReturn(Optional.of(course));
-            when(courseRepository.save(course)).thenReturn(course);
+            when(batchCourseRepository.findByCourse_CourseId(1)).thenReturn(Collections.emptyList());
 
             service.deleteCourse(1);
 
-            assertThat(course.getCourseName()).startsWith("[ARCHIVED]");
-            verify(courseRepository).save(course);
+            verify(courseRepository).deleteById(1);
         }
 
         @Test @DisplayName("failure - throws ResourceNotFoundException when not found")

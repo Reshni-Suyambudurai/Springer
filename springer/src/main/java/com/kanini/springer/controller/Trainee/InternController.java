@@ -19,6 +19,7 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -38,6 +39,7 @@ public class InternController {
 
     // ── Dashboard ─────────────────────────────────────────────────────────────
 
+    @PreAuthorize("hasAnyRole('INTERN','TRAINING_COORDINATOR')")
     @GetMapping("/dashboard/{userId}")
     public ResponseEntity<ApiResponse<InternDashboardResponse>> getDashboard(
             @PathVariable Long userId) {
@@ -47,6 +49,7 @@ public class InternController {
 
     // ── Activation ────────────────────────────────────────────────────────────
 
+    @PreAuthorize("hasAnyRole('TRAINING_COORDINATOR','TA_MANAGER','TA_HEAD')")
     @PostMapping("/activate/{candidateId}")
     public ResponseEntity<ApiResponse<InternActivationResponse>> activateIntern(
             @PathVariable Long candidateId,
@@ -57,6 +60,7 @@ public class InternController {
 
     // ── Password ──────────────────────────────────────────────────────────────
 
+    @PreAuthorize("hasAnyRole('INTERN','TRAINING_COORDINATOR','TA_MANAGER')")
     @PostMapping("/change-password/{userId}")
     public ResponseEntity<ApiResponse<String>> changePassword(
             @PathVariable Long userId,
@@ -67,6 +71,7 @@ public class InternController {
 
     // ── Profile ───────────────────────────────────────────────────────────────
 
+    @PreAuthorize("hasAnyRole('INTERN','TRAINING_COORDINATOR')")
     @GetMapping("/profile/{userId}")
     public ResponseEntity<ApiResponse<InternProfileResponse>> getProfile(
             @PathVariable Long userId) {
@@ -74,6 +79,7 @@ public class InternController {
         return ResponseEntity.ok(ApiResponse.success("Profile retrieved successfully", response));
     }
 
+    @PreAuthorize("hasAnyRole('INTERN','TRAINING_COORDINATOR','TA_MANAGER')")
     @GetMapping("/profile/by-student/{studentId}")
     public ResponseEntity<ApiResponse<InternProfileResponse>> getProfileByStudent(
             @PathVariable Long studentId) {
@@ -81,6 +87,7 @@ public class InternController {
         return ResponseEntity.ok(ApiResponse.success("Profile retrieved successfully", response));
     }
 
+    @PreAuthorize("hasAnyRole('INTERN','TRAINING_COORDINATOR')")
     @PostMapping("/profile/{userId}")
     public ResponseEntity<ApiResponse<InternProfileResponse>> saveOrUpdateProfile(
             @PathVariable Long userId,
@@ -91,6 +98,7 @@ public class InternController {
 
     // ── Certificates ──────────────────────────────────────────────────────────
 
+    @PreAuthorize("hasAnyRole('INTERN')")
     @PostMapping(value = "/certificates/{studentId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApiResponse<InternCertificateResponse>> uploadCertificate(
             @PathVariable Long studentId,
@@ -104,6 +112,7 @@ public class InternController {
                 .body(ApiResponse.success("Certificate uploaded successfully", response));
     }
 
+    @PreAuthorize("hasAnyRole('INTERN','TRAINING_COORDINATOR','TA_MANAGER')")
     @GetMapping("/certificates/{studentId}")
     public ResponseEntity<ApiResponse<List<InternCertificateResponse>>> getCertificates(
             @PathVariable Long studentId) {
@@ -111,6 +120,7 @@ public class InternController {
         return ResponseEntity.ok(ApiResponse.success("Certificates retrieved successfully", response));
     }
 
+    @PreAuthorize("hasAnyRole('INTERN','TRAINING_COORDINATOR')")
     @GetMapping("/certificates/{certificateId}/file")
     public ResponseEntity<byte[]> downloadCertificate(
             @PathVariable Long certificateId) {
@@ -133,6 +143,7 @@ public class InternController {
                 .body(fileData);
     }
 
+    @PreAuthorize("hasAnyRole('INTERN')")
     @DeleteMapping("/certificates/{certificateId}")
     public ResponseEntity<ApiResponse<Void>> deleteCertificate(
             @PathVariable Long certificateId,

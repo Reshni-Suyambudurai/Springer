@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Box, Card, Typography, CircularProgress, Button, Chip, LinearProgress } from '@mui/material';
 import {
@@ -11,12 +11,10 @@ import {
   EmojiEvents as TrophyIcon,
 } from '@mui/icons-material';
 import { trainingProgramApi, batchAllocationApi } from '../../../services/academy.api';
-import type { BatchAllocationResponse } from '../../../types/Academy/academy.types';
+import type { TrainingProgramResponse, BatchAllocationResponse } from '../../../types/Academy/academy.types';
 import { tokenstore } from '../../../auth/tokenstore';
 import { showToast } from '../../../utils/toast';
 import '../../../css/Academy/TrainingCoordinator/TrainingCoordinatorDashboard.css';
-
-const CURRENT_YEAR = new Date().getFullYear();
 
 const getGreeting = () => {
   const h = new Date().getHours();
@@ -34,6 +32,10 @@ const TrainingCoordinatorDashboard = () => {
   const user = tokenstore.getUser();
 
   const [loading, setLoading] = useState(true);
+  const [allPrograms, setAllPrograms] = useState<TrainingProgramResponse[]>([]);
+  const [allAllocations, setAllAllocations] = useState<BatchAllocationResponse[]>([]);
+  const [availableYears, setAvailableYears] = useState<number[]>([]);
+  const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
   const [stats, setStats] = useState({
     activeStudents: 0,
     projectReady: 0,
@@ -45,46 +47,69 @@ const TrainingCoordinatorDashboard = () => {
     needLearning: 0,
   });
 
-  useEffect(() => { fetchStats(); }, []);
+  // Compute stats for a given year from cached data
+  const computeStats = useCallback((year: number, programs: TrainingProgramResponse[], allocations: BatchAllocationResponse[]) => {
+    const yearPrograms = programs.filter(p => p.programYear === year);
+    if (yearPrograms.length === 0) {
+      setStats({ activeStudents: 0, projectReady: 0, atRisk: 0, avgAttendance: 0, scoresRecorded: 0, totalScoreable: 0, excellent: 0, needLearning: 0 });
+      return;
+    }
 
-  const fetchStats = async () => {
+    const yearProgramIds = new Set(yearPrograms.map(p => p.programId));
+    const filtered = allocations.filter(a => yearProgramIds.has(a.programId));
+    const active = filtered.filter(a => a.isActive);
+    const avgAtt = active.length > 0
+      ? active.reduce((s, a) => s + Number(a.attendancePercentage ?? 0), 0) / active.length
+      : 0;
+    const scoresRecorded = active.filter(a => a.overallWeightedScore != null && Number(a.overallWeightedScore) > 0).length;
+
+    setStats({
+      activeStudents: active.length,
+      projectReady:   active.filter(a => a.performance === 'PROJECT_READY').length,
+      atRisk:         active.filter(a => Number(a.attendancePercentage ?? 0) > 0 && Number(a.attendancePercentage ?? 0) < 75).length,
+      avgAttendance:  Math.round(avgAtt * 10) / 10,
+      scoresRecorded,
+      totalScoreable: active.length,
+      excellent:      active.filter(a => Number(a.overallWeightedScore ?? 0) >= 90).length,
+      needLearning:   active.filter(a => a.overallWeightedScore != null && Number(a.overallWeightedScore) < 50).length,
+    });
+  }, []);
+
+  useEffect(() => { fetchData(); }, []);
+
+  // Recompute when year changes
+  useEffect(() => {
+    if (allPrograms.length > 0) {
+      computeStats(selectedYear, allPrograms, allAllocations);
+    }
+  }, [selectedYear, allPrograms, allAllocations, computeStats]);
+
+  const fetchData = async () => {
     try {
       setLoading(true);
       const progRes = await trainingProgramApi.getAllPrograms();
       const programs = (progRes.success && progRes.data) ? progRes.data : [];
+      setAllPrograms(programs);
 
-      // Only fetch allocations for current year programs — not all allocations
-      const currentYearPrograms = programs.filter(p => p.programYear === CURRENT_YEAR);
-      if (currentYearPrograms.length === 0) {
-        setStats({ activeStudents: 0, projectReady: 0, atRisk: 0, avgAttendance: 0, scoresRecorded: 0, totalScoreable: 0, excellent: 0, needLearning: 0 });
-        return;
+      // Get all unique years, sorted descending
+      const years = [...new Set(programs.map(p => p.programYear))].sort((a, b) => b - a);
+      setAvailableYears(years);
+
+      // Fetch allocations
+      const allocRes = await batchAllocationApi.getAllAllocations();
+      const allocations = (allocRes.success && allocRes.data) ? allocRes.data : [];
+      setAllAllocations(allocations);
+
+      // Auto-select: latest year that has active students, else latest year, else current year
+      const currentYear = new Date().getFullYear();
+      let bestYear = years[0] ?? currentYear;
+      for (const yr of years) {
+        const yrProgramIds = new Set(programs.filter(p => p.programYear === yr).map(p => p.programId));
+        const hasActive = allocations.some(a => a.isActive && yrProgramIds.has(a.programId));
+        if (hasActive) { bestYear = yr; break; }
       }
-
-      const allocResults = await Promise.allSettled(
-        currentYearPrograms.map(p => batchAllocationApi.getAllocationsByProgram(p.programId))
-      );
-      const allocations: BatchAllocationResponse[] = [];
-      allocResults.forEach(r => {
-        if (r.status === 'fulfilled' && r.value.success && r.value.data)
-          allocations.push(...r.value.data);
-      });
-
-      const active = allocations.filter(a => a.isActive);
-      const avgAtt = active.length > 0
-        ? active.reduce((s, a) => s + Number(a.attendancePercentage ?? 0), 0) / active.length
-        : 0;
-      const scoresRecorded = active.filter(a => a.overallWeightedScore != null && Number(a.overallWeightedScore) > 0).length;
-
-      setStats({
-        activeStudents: active.length,
-        projectReady:   active.filter(a => a.performance === 'PROJECT_READY').length,
-        atRisk:         active.filter(a => Number(a.attendancePercentage ?? 0) > 0 && Number(a.attendancePercentage ?? 0) < 75).length,
-        avgAttendance:  Math.round(avgAtt * 10) / 10,
-        scoresRecorded,
-        totalScoreable: active.length,
-        excellent:      active.filter(a => Number(a.overallWeightedScore ?? 0) >= 90).length,
-        needLearning:   active.filter(a => a.overallWeightedScore != null && Number(a.overallWeightedScore) < 50).length,
-      });
+      setSelectedYear(bestYear);
+      computeStats(bestYear, programs, allocations);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Failed to load dashboard';
       showToast(msg, 'error');
@@ -92,6 +117,12 @@ const TrainingCoordinatorDashboard = () => {
       setLoading(false);
     }
   };
+
+  // Program names for the selected year
+  const selectedYearPrograms = allPrograms.filter(p => p.programYear === selectedYear);
+  const programLabel = selectedYearPrograms.length > 0
+    ? selectedYearPrograms.map(p => p.programName).join(', ')
+    : `${selectedYear} Batch`;
 
   const attColor = (pct: number) =>
     pct < 50 ? 'var(--color-error)' : pct < 75 ? 'var(--color-warning)' : 'var(--color-success-dark)';
@@ -115,18 +146,41 @@ const TrainingCoordinatorDashboard = () => {
       <Box className="tcd-banner">
         <Box className="tcd-banner-left">
           <Typography className="tcd-greeting">
-            {getGreeting()}, {user?.username ?? 'Lavanya'} 👋
+            {getGreeting()}, {user?.username ?? 'Coordinator'} 👋
           </Typography>
           <Typography className="tcd-date">{today}</Typography>
           <Typography className="tcd-role-desc">
-            Training Coordinator — {CURRENT_YEAR} Batch
+            Training Coordinator — {programLabel}
           </Typography>
         </Box>
-        <Button variant="contained" endIcon={<ArrowForwardIcon />}
-          onClick={() => navigate('/training-coordinator/academy')}
-          className="tcd-goto-btn">
-          Open Academy
-        </Button>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          {availableYears.length > 1 && (
+            <Box sx={{ display: 'flex', gap: 0.75 }}>
+              {availableYears.map(yr => (
+                <Chip
+                  key={yr}
+                  label={yr}
+                  size="small"
+                  onClick={() => setSelectedYear(yr)}
+                  sx={{
+                    fontWeight: 700,
+                    fontSize: '12px',
+                    cursor: 'pointer',
+                    background: yr === selectedYear ? 'rgba(255,255,255,0.95)' : 'rgba(255,255,255,0.2)',
+                    color: yr === selectedYear ? 'var(--color-primary)' : 'rgba(255,255,255,0.9)',
+                    border: yr === selectedYear ? '2px solid var(--color-primary)' : '1px solid rgba(255,255,255,0.4)',
+                    '&:hover': { background: yr === selectedYear ? 'rgba(255,255,255,0.95)' : 'rgba(255,255,255,0.35)' },
+                  }}
+                />
+              ))}
+            </Box>
+          )}
+          <Button variant="contained" endIcon={<ArrowForwardIcon />}
+            onClick={() => navigate('/training-coordinator/academy')}
+            className="tcd-goto-btn">
+            Open Academy
+          </Button>
+        </Box>
       </Box>
 
       {/* ── Key Metrics ── */}

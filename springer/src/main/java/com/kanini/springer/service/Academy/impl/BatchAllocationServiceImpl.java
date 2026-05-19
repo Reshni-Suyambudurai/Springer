@@ -83,6 +83,14 @@ public class BatchAllocationServiceImpl implements IBatchAllocationService {
                 .map(mapper::toResponse)
                 .toList();
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<BatchAllocationResponse> getAllocationsByProgram(Integer programId, Boolean isActive) {
+        return allocationRepository.findByProgram_ProgramIdAndIsActive(programId, isActive).stream()
+                .map(mapper::toResponse)
+                .toList();
+    }
     
     @Override
     @Transactional(readOnly = true)

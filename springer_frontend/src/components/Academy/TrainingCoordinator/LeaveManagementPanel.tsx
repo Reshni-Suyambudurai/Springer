@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { FigmaCloseIcon as CloseIcon } from '../../Common/FigmaIcons';
 import { leaveApi } from '../../../services/leave.api';
 import type { LeaveRequestResponse } from '../../../services/leave.api';
 import { tokenstore } from '../../../auth/tokenstore';
@@ -13,17 +14,24 @@ const statusLabel: Record<string, { label: string; cls: string }> = {
   REJECTED: { label: 'Rejected', cls: 'lmg-status--rejected' },
 };
 
-const LeaveManagementPanel = ({ context: _context }: { context: AcademyContextProps }) => {
+const LeaveManagementPanel = ({ context }: { context: AcademyContextProps }) => {
+  const { programs: yearPrograms } = context;
   const user     = tokenstore.getUser();
   const userRole = user?.roleName?.toUpperCase() || '';
   const isTA     = userRole === 'TA_MANAGER' || userRole === 'TA_HEAD';
 
   const [leaves, setLeaves]             = useState<LeaveRequestResponse[]>([]);
+  const [totalElements, setTotalElements] = useState(0);
   const [loading, setLoading]           = useState(true);
   const [filterStatus, setFilterStatus] = useState('ALL');
   const [filterProgram, setFilterProgram] = useState('all');
   const [filterBatch, setFilterBatch]   = useState('all');
   const [search, setSearch]             = useState('');
+  const [page, setPage]                 = useState(0);
+  const [rowsPerPage] = useState(20);
+
+  // Stats (derived from separate count queries per status)
+  const [stats, setStats] = useState({ total: 0, pending: 0, approved: 0, rejected: 0 });
 
   // Review dialog — only TA
   const [reviewLeave, setReviewLeave] = useState<LeaveRequestResponse | null>(null);
@@ -31,19 +39,58 @@ const LeaveManagementPanel = ({ context: _context }: { context: AcademyContextPr
   const [remarks, setRemarks]         = useState('');
   const [submitting, setSubmitting]   = useState(false);
 
-  useEffect(() => { fetchLeaves(); }, []);
+  // Fetch stats (counts per status) — runs on mount and when year programs change
+  const fetchStats = async () => {
+    const yearProgramIds = yearPrograms.map(p => p.programId);
+    if (yearProgramIds.length === 0) return;
+    const base = { page: 0, size: 1, programIds: yearProgramIds };
+    try {
+      const [allRes, pendingRes, approvedRes, rejectedRes] = await Promise.all([
+        leaveApi.getLeavesFiltered(base),
+        leaveApi.getLeavesFiltered({ ...base, status: 'PENDING' }),
+        leaveApi.getLeavesFiltered({ ...base, status: 'APPROVED' }),
+        leaveApi.getLeavesFiltered({ ...base, status: 'REJECTED' }),
+      ]);
+      setStats({
+        total:    allRes.success && allRes.data ? allRes.data.totalElements : 0,
+        pending:  pendingRes.success && pendingRes.data ? pendingRes.data.totalElements : 0,
+        approved: approvedRes.success && approvedRes.data ? approvedRes.data.totalElements : 0,
+        rejected: rejectedRes.success && rejectedRes.data ? rejectedRes.data.totalElements : 0,
+      });
+    } catch { /* silent */ }
+  };
+
+  useEffect(() => { fetchStats(); }, [yearPrograms]);
+
+  // Fetch paginated data whenever filters change
+  useEffect(() => { fetchLeaves(); }, [filterStatus, filterProgram, filterBatch, search, page, rowsPerPage, yearPrograms]);
 
   const fetchLeaves = async () => {
     try {
       setLoading(true);
-      const res = await leaveApi.getAllLeaves();
-      if (res.success && res.data) setLeaves(res.data);
+      // Scope to year-selected programs when no specific program filter is set
+      const yearProgramIds = yearPrograms.map(p => p.programId);
+      const res = await leaveApi.getLeavesFiltered({
+        programId: filterProgram !== 'all' ? Number(filterProgram) : undefined,
+        programIds: filterProgram === 'all' && yearProgramIds.length > 0 ? yearProgramIds : undefined,
+        batchNumber: filterBatch !== 'all' ? Number(filterBatch) : undefined,
+        status: filterStatus !== 'ALL' ? filterStatus : undefined,
+        search: search.trim() || undefined,
+        page,
+        size: rowsPerPage,
+      });
+      if (res.success && res.data) {
+        setLeaves(res.data.content);
+        setTotalElements(res.data.totalElements);
+      }
     } catch { /* silent */ }
     finally { setLoading(false); }
   };
 
   const handleReview = async () => {
     if (!reviewLeave) return;
+    // Confirmation for reject action
+    if (decision === 'REJECT' && !window.confirm(`Are you sure you want to REJECT the leave request from ${reviewLeave.studentName}?`)) return;
     try {
       setSubmitting(true);
       const res = await leaveApi.reviewLeave(reviewLeave.leaveId, {
@@ -56,6 +103,7 @@ const LeaveManagementPanel = ({ context: _context }: { context: AcademyContextPr
         setReviewLeave(null);
         setRemarks('');
         fetchLeaves();
+        fetchStats();
       }
     } catch (error) {
       const err = handleAxiosError(error);
@@ -63,24 +111,14 @@ const LeaveManagementPanel = ({ context: _context }: { context: AcademyContextPr
     } finally { setSubmitting(false); }
   };
 
-  const availablePrograms = Array.from(new Set(leaves.map(l => l.programName))).sort();
-  const availableBatches  = Array.from(new Set(
-    leaves
-      .filter(l => filterProgram === 'all' || l.programName === filterProgram)
-      .map(l => l.batchNumber)
-  )).sort((a, b) => a - b);
+  const availablePrograms = yearPrograms;
+  const availableBatches: number[] = filterProgram !== 'all'
+    ? Array.from({ length: yearPrograms.find(p => p.programId === Number(filterProgram))?.numberOfBatches ?? 0 }, (_, i) => i + 1)
+    : [];
 
-  const filtered = leaves.filter(l => {
-    const matchStatus  = filterStatus === 'ALL'  || l.status === filterStatus;
-    const matchProgram = filterProgram === 'all' || l.programName === filterProgram;
-    const matchBatch   = filterBatch === 'all'   || String(l.batchNumber) === filterBatch;
-    const matchSearch  = search.trim() === ''    || l.studentName.toLowerCase().includes(search.toLowerCase());
-    return matchStatus && matchProgram && matchBatch && matchSearch;
-  });
-
-  const pendingCount  = leaves.filter(l => l.status === 'PENDING').length;
-  const approvedCount = leaves.filter(l => l.status === 'APPROVED').length;
-  const rejectedCount = leaves.filter(l => l.status === 'REJECTED').length;
+  const pendingCount  = stats.pending;
+  const approvedCount = stats.approved;
+  const rejectedCount = stats.rejected;
 
   return (
     <div className="lmg-page">
@@ -88,7 +126,7 @@ const LeaveManagementPanel = ({ context: _context }: { context: AcademyContextPr
       {/* Stats */}
       <div className="lmg-stats">
         <div className="lmg-stat">
-          <span className="lmg-stat-val">{leaves.length}</span>
+          <span className="lmg-stat-val">{stats.total}</span>
           <span className="lmg-stat-label">Total</span>
         </div>
         <div className="lmg-stat">
@@ -108,7 +146,7 @@ const LeaveManagementPanel = ({ context: _context }: { context: AcademyContextPr
       {/* Role info banner */}
       {!isTA && (
         <div className="lmg-info-banner">
-          👁 You can view leave requests. Only TA Head or TA Recruiter can approve or reject.
+          👁 You can view leave requests. Only TA Head or TA Manager can approve or reject.
         </div>
       )}
 
@@ -119,29 +157,29 @@ const LeaveManagementPanel = ({ context: _context }: { context: AcademyContextPr
           style={{ minWidth: 180 }}
           placeholder="Search student..."
           value={search}
-          onChange={e => setSearch(e.target.value)}
+          onChange={e => { setSearch(e.target.value); setPage(0); }}
         />
-        <select className="lmg-filter-select" value={filterProgram} onChange={e => { setFilterProgram(e.target.value); setFilterBatch('all'); }}>
+        <select className="lmg-filter-select" value={filterProgram} onChange={e => { setFilterProgram(e.target.value); setFilterBatch('all'); setPage(0); }}>
           <option value="all">All Programs</option>
-          {availablePrograms.map(p => <option key={p} value={p}>{p}</option>)}
+          {availablePrograms.map(p => <option key={p.programId} value={String(p.programId)}>{p.programName}</option>)}
         </select>
-        <select className="lmg-filter-select" value={filterBatch} onChange={e => setFilterBatch(e.target.value)}>
+        <select className="lmg-filter-select" value={filterBatch} onChange={e => { setFilterBatch(e.target.value); setPage(0); }}>
           <option value="all">All Batches</option>
           {availableBatches.map(b => <option key={b} value={String(b)}>Batch {b}</option>)}
         </select>
-        <select className="lmg-filter-select" value={filterStatus} onChange={e => setFilterStatus(e.target.value)}>
+        <select className="lmg-filter-select" value={filterStatus} onChange={e => { setFilterStatus(e.target.value); setPage(0); }}>
           <option value="ALL">All Status</option>
           <option value="PENDING">Pending</option>
           <option value="APPROVED">Approved</option>
           <option value="REJECTED">Rejected</option>
         </select>
-        <span className="lmg-count">{filtered.length} request{filtered.length !== 1 ? 's' : ''}</span>
+        <span className="lmg-count">{totalElements} request{totalElements !== 1 ? 's' : ''}</span>
       </div>
 
       {/* Table */}
       {loading ? (
         <div className="lmg-empty">Loading leave requests...</div>
-      ) : filtered.length === 0 ? (
+      ) : leaves.length === 0 ? (
         <div className="lmg-empty">No leave requests found.</div>
       ) : (
         <div className="lmg-table-wrap">
@@ -160,7 +198,7 @@ const LeaveManagementPanel = ({ context: _context }: { context: AcademyContextPr
               </tr>
             </thead>
             <tbody>
-              {filtered.map(l => {
+              {leaves.map(l => {
                 const st = statusLabel[l.status] ?? { label: l.status, cls: '' };
                 return (
                   <tr key={l.leaveId} className="lmg-row">
@@ -205,13 +243,22 @@ const LeaveManagementPanel = ({ context: _context }: { context: AcademyContextPr
         </div>
       )}
 
+      {/* Pagination */}
+      {!loading && totalElements > rowsPerPage && (
+        <div className="lmg-filters" style={{ justifyContent: 'flex-end', marginTop: 8 }}>
+          <button className="lmg-review-btn" disabled={page === 0} onClick={() => setPage(p => p - 1)}>← Prev</button>
+          <span className="lmg-count">Page {page + 1} of {Math.ceil(totalElements / rowsPerPage)}</span>
+          <button className="lmg-review-btn" disabled={(page + 1) * rowsPerPage >= totalElements} onClick={() => setPage(p => p + 1)}>Next →</button>
+        </div>
+      )}
+
       {/* Review dialog — TA only */}
       {reviewLeave && isTA && (
         <div className="lmg-overlay" onClick={() => setReviewLeave(null)}>
           <div className="lmg-dialog" onClick={e => e.stopPropagation()}>
             <div className="lmg-dialog-header">
               <p className="lmg-dialog-title">Review Leave — {reviewLeave.studentName}</p>
-              <button className="lmg-dialog-close" onClick={() => setReviewLeave(null)}>✕</button>
+              <button className="lmg-dialog-close" onClick={() => setReviewLeave(null)}><CloseIcon style={{ fontSize: '1.25rem' }} /></button>
             </div>
             <div className="lmg-dialog-body">
               <div className="lmg-dialog-info">
@@ -233,7 +280,9 @@ const LeaveManagementPanel = ({ context: _context }: { context: AcademyContextPr
                 <label className="lmg-label">Remarks (optional)</label>
                 <textarea className="lmg-textarea" rows={2} value={remarks}
                   onChange={e => setRemarks(e.target.value)}
+                  maxLength={500}
                   placeholder="Add a note for the intern..." />
+                <span style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>{remarks.length}/500</span>
               </div>
               <div className="lmg-dialog-actions">
                 <button className="lmg-cancel-btn" onClick={() => setReviewLeave(null)}>Cancel</button>

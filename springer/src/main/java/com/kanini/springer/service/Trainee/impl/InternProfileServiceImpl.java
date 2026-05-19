@@ -17,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -31,20 +32,15 @@ public class InternProfileServiceImpl implements IInternProfileService {
     @Override
     @Transactional(readOnly = true)
     public InternProfileResponse getProfileByStudentId(Long studentId) {
-        // Find candidate linked to this student allocation
         return allocationRepository.findByStudentId(studentId)
-                .map(allocation -> {
-                    Long candidateId = allocation.getCandidate().getCandidateId();
-                    // Find user linked to this candidate
-                    return profileRepository.findAll().stream()
-                            .filter(p -> p.getUser() != null &&
-                                    p.getUser().getEmail() != null &&
-                                    allocation.getCandidate().getEmail() != null &&
-                                    p.getUser().getEmail().equalsIgnoreCase(allocation.getCandidate().getEmail()))
-                            .findFirst()
-                            .map(this::toResponse)
-                            .orElse(new InternProfileResponse(null, null, null, Collections.emptyList(), null));
+                .flatMap(allocation -> {
+                    String candidateEmail = allocation.getCandidate().getEmail();
+                    if (candidateEmail == null) {
+                        return Optional.empty();
+                    }
+                    return profileRepository.findByUser_Email(candidateEmail);
                 })
+                .map(this::toResponse)
                 .orElse(new InternProfileResponse(null, null, null, Collections.emptyList(), null));
     }
 

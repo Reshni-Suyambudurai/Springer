@@ -11,6 +11,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.format.annotation.DateTimeFormat;
 
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -34,6 +35,7 @@ public class DocumentLinkController {
      * Send document submission link to candidate
      * Initiates document collection process via secure link
      */
+    @PreAuthorize("hasAnyRole('TA_MANAGER','TA_HEAD')")
     @PostMapping("/send-submission-link")
     public ResponseEntity<ApiResponse<DocumentLinkResponse>> sendSubmissionLink(
             @Valid @RequestBody DocumentLinkRequest request) {
@@ -62,6 +64,7 @@ public class DocumentLinkController {
      * Used when candidate needs the link again or wants to submit additional documents
      * @param documentTypeIds optional comma-separated list of document type IDs to resend
      */
+    @PreAuthorize("hasAnyRole('TA_MANAGER','TA_HEAD')")
     @PostMapping("/resend-submission-link")
     public ResponseEntity<ApiResponse<String>> resendSubmissionLink(
             @RequestParam @NotNull(message = "Candidate ID required") Long candidateId,
@@ -97,6 +100,7 @@ public class DocumentLinkController {
      * Efficiently distribute document collection links to multiple candidates
      * All candidates receive the same document type list and deadline
      */
+    @PreAuthorize("hasAnyRole('TA_MANAGER','TA_HEAD')")
     @PostMapping("/send-submission-link/bulk")
     public ResponseEntity<ApiResponse<Map<String, String>>> sendBulkSubmissionLinks(
             @Valid @RequestBody BulkDocumentLinkRequest request) {

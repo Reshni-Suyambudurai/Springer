@@ -1,6 +1,6 @@
 .inp-page {
-  display: flex; flex-direction: column; gap: 20px;
-  padding: 20px 24px; background: var(--color-bg-primary);
+  display: flex; flex-direction: column; gap: 24px;
+  padding: 24px 32px; background: var(--color-surface);
 }
 
 .inp-header { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 12px; }
@@ -14,7 +14,7 @@
   gap: 6px;
   padding: 8px 18px;
   background: var(--color-primary);
-  color: #fff;
+  color: var(--color-white);
   border: none;
   border-radius: 8px;
   font-size: var(--text-sm);
@@ -27,7 +27,7 @@
 .inp-download-btn:active { transform: translateY(0); }
 
 .inp-status-badge {
-  padding: 4px 14px; border-radius: 14px;
+  padding: 4px 14px; border-radius: 8px;
   font-size: var(--text-xs); font-weight: 600;
   text-transform: uppercase; letter-spacing: 0.4px;
   border: 1.5px solid transparent;
@@ -36,30 +36,30 @@
 .inp-status--training { color: var(--color-primary);      border-color: var(--color-primary);        background: var(--color-primary-light); }
 .inp-status--ready    { color: var(--color-success-dark);  border-color: var(--color-success-border); background: var(--color-success-light); }
 .inp-status--risk     { color: var(--color-error-dark);    border-color: var(--color-error-border);   background: var(--color-error-light); }
-.inp-status--dropped  { color: var(--color-text-secondary);border-color: var(--color-border);         background: var(--color-bg-primary); }
+.inp-status--dropped  { color: var(--color-text-secondary);border-color: var(--color-border);         background: var(--color-surface); }
 
 /* Stats */
-.inp-stats-row { display: flex; gap: 12px; flex-wrap: wrap; }
+.inp-stats-row { display: flex; gap: 16px; flex-wrap: wrap; }
 
 .inp-stat-card {
   flex: 1; min-width: 120px;
   display: flex; flex-direction: column; gap: 4px;
-  padding: 14px 16px;
+  padding: 24px;
   background: var(--color-surface);
-  border: 1px solid var(--color-border-card);
+  border: 0.8px solid var(--color-inactive-border);
   border-radius: 10px;
-  box-shadow: 0 1px 4px var(--opacity-shadow-very-light);
+  box-shadow: none;
 }
 
-.inp-stat-label { font-size: var(--text-xs); font-weight: 600; color: var(--color-text-secondary); text-transform: uppercase; letter-spacing: 0.4px; }
-.inp-stat-val   { font-size: 1.4rem; font-weight: 700; color: var(--color-text-primary); line-height: 1.2; }
+.inp-stat-label { font-size: var(--text-sm-14); font-weight: 600; color: var(--color-text-secondary); text-transform: uppercase; letter-spacing: 0.4px; }
+.inp-stat-val   { font-size: var(--text-stat); font-weight: 700; color: var(--color-text-primary); line-height: 1.2; }
 
 /* Readiness */
 .inp-readiness-section {
   background: var(--color-surface);
-  border: 1px solid var(--color-border-card);
-  border-radius: 10px; padding: 16px 20px;
-  box-shadow: 0 1px 4px var(--opacity-shadow-very-light);
+  border: 0.8px solid var(--color-inactive-border);
+  border-radius: 10px; padding: 18px 20px;
+  box-shadow: none;
 }
 
 .inp-readiness-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
@@ -79,14 +79,14 @@
 
 .inp-step {
   display: flex; align-items: center; gap: 14px;
-  padding: 14px 18px; border-radius: 10px;
+  padding: 16px 20px; border-radius: 10px;
   border: 1px solid var(--color-border);
   background: var(--color-surface);
   transition: box-shadow 0.15s;
 }
 
 .inp-step--done    { border-color: var(--color-success-border); background: var(--color-success-light); }
-.inp-step--active  { border-color: var(--color-primary); background: var(--color-primary-light); box-shadow: 0 0 0 2px rgba(15,76,129,0.12); }
+.inp-step--active  { border-color: var(--color-primary); background: var(--color-primary-light); box-shadow: 0 0 0 2px var(--opacity-primary-light); }
 .inp-step--pending { opacity: 0.5; }
 
 .inp-step-num {
@@ -97,8 +97,8 @@
   flex-shrink: 0;
 }
 
-.inp-step--done  .inp-step-num { background: var(--color-success-dark); color: #fff; }
-.inp-step--active .inp-step-num { background: var(--color-primary); color: #fff; }
+.inp-step--done  .inp-step-num { background: var(--color-success-dark); color: var(--color-white); }
+.inp-step--active .inp-step-num { background: var(--color-primary); color: var(--color-white); }
 
 .inp-step-label { font-size: var(--text-sm); font-weight: 600; color: var(--color-text-primary); display: block; }
 .inp-step-desc  { font-size: var(--text-xs); color: var(--color-text-secondary); display: block; margin-top: 2px; }
@@ -111,7 +111,7 @@
 .inp-perf-label { font-size: var(--text-sm); color: var(--color-text-secondary); font-weight: 500; }
 
 .inp-perf-badge {
-  padding: 3px 12px; border-radius: 12px;
+  padding: 3px 12px; border-radius: 8px;
   font-size: var(--text-xs); font-weight: 600;
   border: 1px solid transparent;
 }
@@ -124,8 +124,8 @@
 /* Dates */
 .inp-dates-row {
   display: flex; align-items: center; gap: 20px; flex-wrap: wrap;
-  background: var(--color-surface); border: 1px solid var(--color-border-card);
-  border-radius: 10px; padding: 14px 20px;
+  background: var(--color-surface); border: 0.8px solid var(--color-inactive-border);
+  border-radius: 10px; padding: 16px 20px;
 }
 
 .inp-date-item { display: flex; flex-direction: column; gap: 3px; }

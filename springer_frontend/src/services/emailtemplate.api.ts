@@ -1,50 +1,9 @@
-import {http} from "./api/https";
-import { handleAxiosError } from "./api.error";
+import { http } from './api/https';
+import { handleAxiosError } from './api.error';
+import type { ApiResponse } from '../types/api.response';
+import type { EmailTemplateRequest, EmailTemplateResponse, EmailTemplateUpdateRequest } from '../types/Common/emailTemplate.types';
 
-// Common type imports
-import type { ApiResponse } from "../types/api.response";
-
-// Email Template type imports
-import type { 
-  EmailTemplateRequest, 
-  EmailTemplateResponse, 
-  EmailTemplateUpdateRequest,
-  BulkEmailResult,
-  SharedEmailContext,
-} from "../types/Common/emailTemplate.types";
-
-// ==================== EMAIL TEMPLATE APIs ====================
 export const emailTemplateApi = {
-  /**
-   * Create a new email template
-   * POST /api/email-templates
-   */
-  async createEmailTemplate(data: EmailTemplateRequest): Promise<ApiResponse<EmailTemplateResponse>> {
-    try {
-      const response = await http.post('/email-templates', data);
-      return response.data;
-    } catch (error) {
-      throw handleAxiosError(error);
-    }
-  },
-
-  /**
-   * Get email template by ID
-   * GET /api/email-templates/{templateId}
-   */
-  async getEmailTemplateById(templateId: number): Promise<ApiResponse<EmailTemplateResponse>> {
-    try {
-      const response = await http.get(`/email-templates/${templateId}`);
-      return response.data;
-    } catch (error) {
-      throw handleAxiosError(error);
-    }
-  },
-
-  /**
-   * Get all email templates
-   * GET /api/email-templates
-   */
   async getAllEmailTemplates(): Promise<ApiResponse<EmailTemplateResponse[]>> {
     try {
       const response = await http.get('/email-templates');
@@ -54,23 +13,24 @@ export const emailTemplateApi = {
     }
   },
 
-  /**
-   * Get email templates by list of IDs
-   * POST /api/email-templates/by-ids
-   */
-  async getEmailTemplatesByIds(templateIds: number[]): Promise<ApiResponse<EmailTemplateResponse[]>> {
+  async getEmailTemplateById(templateId: number): Promise<ApiResponse<EmailTemplateResponse>> {
     try {
-      const response = await http.post('/email-templates/by-ids', templateIds);
+      const response = await http.get(`/email-templates/${templateId}`);
       return response.data;
     } catch (error) {
       throw handleAxiosError(error);
     }
   },
 
-  /**
-   * Update email template
-   * PATCH /api/email-templates/{templateId}
-   */
+  async createEmailTemplate(data: EmailTemplateRequest): Promise<ApiResponse<EmailTemplateResponse>> {
+    try {
+      const response = await http.post('/email-templates', data);
+      return response.data;
+    } catch (error) {
+      throw handleAxiosError(error);
+    }
+  },
+
   async updateEmailTemplate(templateId: number, data: EmailTemplateUpdateRequest): Promise<ApiResponse<EmailTemplateResponse>> {
     try {
       const response = await http.patch(`/email-templates/${templateId}`, data);
@@ -80,10 +40,6 @@ export const emailTemplateApi = {
     }
   },
 
-  /**
-   * Delete email template
-   * DELETE /api/email-templates/{templateId}
-   */
   async deleteEmailTemplate(templateId: number): Promise<ApiResponse<void>> {
     try {
       const response = await http.delete(`/email-templates/${templateId}`);
@@ -93,30 +49,20 @@ export const emailTemplateApi = {
     }
   },
 
-  /**
-   * Send an email template to multiple recipients.
-   * Accepts a FormData with a 'request' JSON part and optional 'attachments' file parts.
-   * POST /api/email-templates/send-bulk  (multipart/form-data)
-   */
-  async sendBulkEmail(form: FormData): Promise<ApiResponse<BulkEmailResult>> {
+  async getEmailTemplatesByIds(ids: number[]): Promise<ApiResponse<EmailTemplateResponse[]>> {
     try {
-      const response = await http.post('/email-templates/send-bulk', form, {
-        headers: { 'Content-Type': undefined }, // let browser set multipart boundary
-      });
+      const response = await http.post('/email-templates/by-ids', ids);
       return response.data;
     } catch (error) {
       throw handleAxiosError(error);
     }
   },
 
-  /**
-   * Send personalized emails using a template.
-   * Loads the template from DB by templateId, substitutes only non-null tokens.
-   * POST /api/email-templates/send-personalized
-   */
-  async sendPersonalizedEmail(context: SharedEmailContext): Promise<ApiResponse<void>> {
+  async sendBulkEmail(formData: FormData): Promise<ApiResponse<{ successCount: number; skippedCount: number }>> {
     try {
-      const response = await http.post('/email-templates/send-personalized', context);
+      const response = await http.post('/email-templates/send-bulk', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
       return response.data;
     } catch (error) {
       throw handleAxiosError(error);

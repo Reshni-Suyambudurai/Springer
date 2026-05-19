@@ -1,14 +1,15 @@
 import { useState, useEffect } from 'react';
 import {
   Box, Card, Typography, Table, TableBody, TableCell,
-  TableContainer, TableHead, TableRow, TablePagination,
+  TableContainer, TableHead, TableRow,
   CircularProgress, Chip, TextField, InputAdornment, IconButton, MenuItem,
 } from '@mui/material';
-import { Person as PersonIcon, Search as SearchIcon, Close as CloseIcon } from '@mui/icons-material';
+import { Person as PersonIcon } from '@mui/icons-material';
+import { FigmaCloseIcon as CloseIcon } from '../../Common/FigmaIcons';
+import { FigmaSearchIcon as SearchIcon } from '../../Common/FigmaIcons';
 import {
   batchAllocationApi, trainingScoreApi, batchCourseApi,
   trainingCourseApi, attendanceApi, batchScheduleApi,
-  trainingProgramApi,
 } from '../../../services/academy.api';
 import { internApi } from '../../../services/intern.api';
 import { leaveApi } from '../../../services/leave.api';
@@ -85,8 +86,6 @@ const CandidateProgress = ({ context }: { context: AcademyContextProps }) => {
   const [filterProgram, setFilterProgram] = useState('all');
   const [filterBatch, setFilterBatch]     = useState('all');
   const [filterStatus, setFilterStatus]   = useState('all');
-  const [page, setPage]                   = useState(0);
-  const [rowsPerPage, setRowsPerPage]     = useState(10);
   const [selected, setSelected]           = useState<BatchAllocationResponse | null>(null);
 
   // ── Panel-specific state (fetched fresh on click) ──
@@ -106,11 +105,13 @@ const CandidateProgress = ({ context }: { context: AcademyContextProps }) => {
   const [warnSeverity, setWarnSeverity]     = useState('MINOR');
   const [warnMessage, setWarnMessage]       = useState('');
   const [issuingWarn, setIssuingWarn]       = useState(false);
+  // Cached master data — fetched once, reused across candidate clicks
+  const [cachedCourses, setCachedCourses] = useState<TrainingCourseResponse[] | null>(null);
 
   useEffect(() => {
     fetchData();
     setFilterProgram('all'); setFilterBatch('all');
-    setFilterStatus('all'); setSearch(''); setPage(0); setSelected(null);
+    setFilterStatus('all'); setSearch(''); setSelected(null);
   }, [programYear, yearPrograms.length]);
 
   const fetchData = async () => {
@@ -120,7 +121,7 @@ const CandidateProgress = ({ context }: { context: AcademyContextProps }) => {
       const progIds = yearPrograms.map(p => p.programId);
       if (progIds.length === 0) { setAllocations([]); return; }
       const results = await Promise.allSettled(
-        progIds.map(id => batchAllocationApi.getAllocationsByProgram(id))
+        progIds.map(id => batchAllocationApi.getAllocationsByProgram(id, true))
       );
       const allocs: BatchAllocationResponse[] = [];
       results.forEach(r => {
@@ -159,7 +160,7 @@ const CandidateProgress = ({ context }: { context: AcademyContextProps }) => {
     return matchSearch && matchProgram && matchBatch && matchStatus;
   });
 
-  const paginated = filtered.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
+
 
   // Stat counts
   const countAll     = scopedAllocations.length;
@@ -185,30 +186,38 @@ const CandidateProgress = ({ context }: { context: AcademyContextProps }) => {
     setPanelCertificates([]); setPanelProfile(null); setPanelApprovedLeaveDays(0);
     setPanelWarnings([]); setShowWarnForm(false); setWarnMessage('');
     try {
-      const [scoreRes, bcRes, crsRes, schedRes, statsRes, progRes, certRes, profRes, leaveRes, warnRes] = await Promise.all([
+      // Use parent-provided programs instead of fetching by ID
+      const prog = yearPrograms.find(p => p.programId === a.programId) ?? null;
+      
+      // Build fetch list — skip courses if already cached
+      const fetches: Promise<any>[] = [
         trainingScoreApi.getScoresByStudent(a.studentId),
         batchCourseApi.getCoursesByBatch(a.programId, a.batchNumber),
-        trainingCourseApi.getAllCourses(),
+        cachedCourses ? Promise.resolve({ success: true, data: cachedCourses }) : trainingCourseApi.getAllCourses(),
         batchScheduleApi.getByProgramAndBatch(a.programId, a.batchNumber),
         attendanceApi.getAttendanceSummary(a.studentId),
-        trainingProgramApi.getProgramById(a.programId),
         internApi.getCertificates(a.studentId).catch(() => ({ success: false, data: [] })),
         internApi.getProfileByStudent(a.studentId).catch(() => ({ success: false, data: null })),
         leaveApi.getLeavesByStudent(a.studentId).catch(() => ({ success: false, data: [] })),
         warningApi.getWarningsByStudent(a.studentId).catch(() => ({ success: false, data: [] })),
-      ]);
+      ];
+      
+      const [scoreRes, bcRes, crsRes, schedRes, statsRes, certRes, profRes, leaveRes, warnRes] = await Promise.all(fetches);
       if (scoreRes.success && scoreRes.data) setPanelScores(scoreRes.data);
       if (bcRes.success && bcRes.data)       setPanelBatchCourses(bcRes.data);
-      if (crsRes.success && crsRes.data)     setPanelAllCourses(crsRes.data);
+      if (crsRes.success && crsRes.data) {
+        setPanelAllCourses(crsRes.data);
+        if (!cachedCourses) setCachedCourses(crsRes.data);
+      }
       if (schedRes.success && schedRes.data) setPanelSchedule(schedRes.data);
       if (statsRes.success && statsRes.data) setPanelStats(statsRes.data);
-      if (progRes.success && progRes.data)   setPanelProgram(progRes.data);
+      setPanelProgram(prog);
       if (certRes.success && certRes.data)   setPanelCertificates(certRes.data as InternCertificateResponse[]);
       if (profRes.success && profRes.data)   setPanelProfile(profRes.data as InternProfileResponse);
       if (leaveRes.success && leaveRes.data) {
-        const approvedDays = leaveRes.data
-          .filter(l => l.status === 'APPROVED')
-          .reduce((sum, l) => sum + (l.totalDays ?? 0), 0);
+        const approvedDays = (leaveRes.data as Array<{ status: string; totalDays?: number }>)
+          .filter((l: { status: string }) => l.status === 'APPROVED')
+          .reduce((sum: number, l: { totalDays?: number }) => sum + (l.totalDays ?? 0), 0);
         setPanelApprovedLeaveDays(approvedDays);
       }
       if (warnRes.success && warnRes.data) setPanelWarnings(warnRes.data as InternWarningResponse[]);
@@ -255,7 +264,7 @@ const CandidateProgress = ({ context }: { context: AcademyContextProps }) => {
           ].map(s => (
             <Box key={s.key}
               className={`cp-stat-card ${s.cls} ${filterStatus === s.key || (s.key === 'all' && filterStatus === 'all') ? 'cp-stat-card--active' : ''}`}
-              onClick={() => { setFilterStatus(s.key === 'all' ? 'all' : s.key); setPage(0); }}>
+              onClick={() => { setFilterStatus(s.key === 'all' ? 'all' : s.key); }}>
               <Typography className="cp-stat-label">{s.label}</Typography>
               <Typography className="cp-stat-value">{s.count}</Typography>
             </Box>
@@ -266,19 +275,19 @@ const CandidateProgress = ({ context }: { context: AcademyContextProps }) => {
         <Box className="cp-filter-section">
           <Box className="cp-filter-row">
             <TextField size="small" placeholder="Search by name or email..."
-              value={search} onChange={e => { setSearch(e.target.value); setPage(0); }}
+              value={search} onChange={e => { setSearch(e.target.value); }}
               className="cp-search-field"
               InputProps={{ startAdornment: <InputAdornment position="start"><SearchIcon fontSize="small" className="cp-search-icon" /></InputAdornment> }}
             />
             <FilterSelect label="Program" value={filterProgram}
-              onChange={v => { setFilterProgram(v); setFilterBatch('all'); setPage(0); }}>
+              onChange={v => { setFilterProgram(v); setFilterBatch('all'); }}>
               <MenuItem value="all">All Programs</MenuItem>
               {yearPrograms.map(p => (
                 <MenuItem key={p.programId} value={String(p.programId)}>{p.programName}</MenuItem>
               ))}
             </FilterSelect>
             <FilterSelect label="Batch" value={filterBatch}
-              onChange={v => { setFilterBatch(v); setPage(0); }}>
+              onChange={v => { setFilterBatch(v); }}>
               <MenuItem value="all">All Batches</MenuItem>
               {batchesInData.map(b => (
                 <MenuItem key={b} value={String(b)}>Batch {b}</MenuItem>
@@ -365,14 +374,14 @@ const CandidateProgress = ({ context }: { context: AcademyContextProps }) => {
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {paginated.length === 0 ? (
+                    {filtered.length === 0 ? (
                       <TableRow>
                         <TableCell colSpan={7} className="cp-empty-cell">
                           <PersonIcon className="cp-empty-icon" />
                           <Typography className="cp-empty-text">No candidates match the filter</Typography>
                         </TableCell>
                       </TableRow>
-                    ) : paginated.map((a, idx) => {
+                    ) : filtered.map((a, idx) => {
                       const pct    = Number(a.attendancePercentage ?? 0);
                       const weighted = getWeightedScore(a);
                       const status = getStatus(a);
@@ -429,10 +438,6 @@ const CandidateProgress = ({ context }: { context: AcademyContextProps }) => {
                   </TableBody>
                 </Table>
               </TableContainer>
-              <TablePagination component="div" count={filtered.length} page={page}
-                onPageChange={(_, p) => setPage(p)} rowsPerPage={rowsPerPage}
-                onRowsPerPageChange={e => { setRowsPerPage(parseInt(e.target.value, 10)); setPage(0); }}
-                rowsPerPageOptions={[10, 25, 50]} className="cp-pagination" />
             </>
           )}
         </Box>
@@ -479,12 +484,11 @@ const CandidateProgress = ({ context }: { context: AcademyContextProps }) => {
                     downloadIndividualReport(reportData);
                   }}
                   disabled={panelLoading}
-                  className="cp-action-btn"
                   style={{ opacity: panelLoading ? 0.5 : 1, cursor: panelLoading ? 'not-allowed' : 'pointer' }}>
                   ⬇ Report
                 </button>
                 <IconButton size="small" onClick={() => setSelected(null)}>
-                  <CloseIcon fontSize="small" />
+                  <CloseIcon style={{ fontSize: '1.25rem' }} />
                 </IconButton>
               </Box>
             </Box>
@@ -760,7 +764,9 @@ const CandidateProgress = ({ context }: { context: AcademyContextProps }) => {
                           fontSize: 'var(--text-xs)', resize: 'vertical', fontFamily: 'inherit',
                           background: 'var(--color-surface)', color: 'var(--color-text-primary)' }}
                         placeholder="Describe the reason for this warning..."
+                        maxLength={1000}
                         value={warnMessage} onChange={e => setWarnMessage(e.target.value)} />
+                      <span style={{ fontSize: '0.7rem', color: 'var(--color-text-secondary)', textAlign: 'right' }}>{warnMessage.length}/1000</span>
                     </Box>
                     <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
                       <button className="cp-action-btn"
@@ -768,6 +774,7 @@ const CandidateProgress = ({ context }: { context: AcademyContextProps }) => {
                         style={{ opacity: issuingWarn ? 0.6 : 1, cursor: issuingWarn || !warnMessage.trim() ? 'not-allowed' : 'pointer' }}
                         onClick={async () => {
                           if (!selected || !warnMessage.trim()) return;
+                          if (warnSeverity === 'SEVERE' && !window.confirm('Are you sure you want to issue a SEVERE warning? This action is significant.')) return;
                           try {
                             setIssuingWarn(true);
                             const res = await warningApi.issueWarning({

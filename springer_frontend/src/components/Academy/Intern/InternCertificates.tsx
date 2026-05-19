@@ -7,9 +7,9 @@ import {
 import {
   Upload as UploadIcon,
   Visibility as ViewIcon,
-  Delete as DeleteIcon,
   WorkspacePremium as CertIcon,
 } from '@mui/icons-material';
+import { FigmaDeleteIcon as DeleteIcon, FigmaCloseIcon as CloseIcon } from '../../Common/FigmaIcons';
 import { internApi } from '../../../services/intern.api';
 import { handleAxiosError } from '../../../services/api.error';
 import { showToast } from '../../../utils/toast';
@@ -62,6 +62,9 @@ const InternCertificates = ({ data }: { data: InternDashboardData }) => {
     if (!certName.trim()) { showToast('Certificate name is required', 'error'); return; }
     if (!issuer.trim()) { showToast('Issuer is required', 'error'); return; }
     if (!selectedFile) { showToast('Please select a file', 'error'); return; }
+    if (issueDate && issueDate > new Date().toISOString().split('T')[0]) {
+      showToast('Issue date cannot be in the future', 'error'); return;
+    }
     try {
       setUploading(true);
       const res = await internApi.uploadCertificate(
@@ -173,18 +176,26 @@ const InternCertificates = ({ data }: { data: InternDashboardData }) => {
 
       {/* Upload Dialog */}
       <Dialog open={uploadDialog} onClose={() => setUploadDialog(false)} maxWidth="sm" fullWidth>
-        <DialogTitle className="inc-dialog-title">Upload Certificate</DialogTitle>
+        <DialogTitle className="inc-dialog-title" sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          Upload Certificate
+          <IconButton size="small" onClick={() => setUploadDialog(false)}><CloseIcon style={{ fontSize: '1.25rem' }} /></IconButton>
+        </DialogTitle>
         <DialogContent>
           <Stack spacing={2} sx={{ mt: 1 }}>
             <TextField label="Certificate Name *" size="small" fullWidth
               value={certName} onChange={e => setCertName(e.target.value)}
-              placeholder="e.g. AWS Cloud Practitioner" />
+              placeholder="e.g. AWS Cloud Practitioner"
+              inputProps={{ maxLength: 200 }}
+              helperText={`${certName.length}/200`} />
             <TextField label="Issuer *" size="small" fullWidth
               value={issuer} onChange={e => setIssuer(e.target.value)}
-              placeholder="e.g. Amazon Web Services" />
+              placeholder="e.g. Amazon Web Services"
+              inputProps={{ maxLength: 200 }}
+              helperText={`${issuer.length}/200`} />
             <TextField label="Issue Date" type="date" size="small" fullWidth
               value={issueDate} onChange={e => setIssueDate(e.target.value)}
-              InputLabelProps={{ shrink: true }} />
+              InputLabelProps={{ shrink: true }}
+              inputProps={{ max: new Date().toISOString().split('T')[0] }} />
             <Box>
               <Button variant="outlined" size="small" startIcon={<UploadIcon />}
                 onClick={() => fileInputRef.current?.click()}>
@@ -206,7 +217,10 @@ const InternCertificates = ({ data }: { data: InternDashboardData }) => {
       <Dialog open={deleteDialog.open}
         onClose={() => setDeleteDialog({ open: false, certId: null, certName: '' })}
         maxWidth="xs" fullWidth>
-        <DialogTitle className="inc-dialog-title">Delete Certificate</DialogTitle>
+        <DialogTitle className="inc-dialog-title" sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          Delete Certificate
+          <IconButton size="small" onClick={() => setDeleteDialog({ open: false, certId: null, certName: '' })}><CloseIcon style={{ fontSize: '1.25rem' }} /></IconButton>
+        </DialogTitle>
         <DialogContent>
           <Typography sx={{ mt: 1, fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>
             Are you sure you want to delete <strong>{deleteDialog.certName}</strong>?

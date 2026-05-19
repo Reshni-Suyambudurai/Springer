@@ -1,6 +1,6 @@
-/* ===== DOCUMENT SUBMIT PAGE — prefix: dsub- ===== */
+﻿/* ===== DOCUMENT SUBMIT PAGE ΓÇö prefix: dsub- ===== */
 
-/* ── Full Page Layout ── */
+/* ΓöÇΓöÇ Full Page Layout ΓöÇΓöÇ */
 .dsub-page {
   min-height: 100vh;
   background-color: var(--color-bg-secondary);
@@ -26,7 +26,7 @@
   max-width: 400px;
 }
 
-/* ── Header ── */
+/* ΓöÇΓöÇ Header ΓöÇΓöÇ */
 .dsub-header {
   background-color: var(--color-primary);
   padding: 16px 24px;
@@ -52,7 +52,7 @@
   color: rgba(255,255,255,0.7) !important;
 }
 
-/* ── Content ── */
+/* ΓöÇΓöÇ Content ΓöÇΓöÇ */
 .dsub-content {
   flex: 1;
   display: flex;
@@ -73,7 +73,7 @@
   box-shadow: 0 4px 16px var(--opacity-shadow-medium);
 }
 
-/* ── Loading / Error ── */
+/* ΓöÇΓöÇ Loading / Error ΓöÇΓöÇ */
 .dsub-spinner { color: var(--color-primary) !important; }
 
 .dsub-loading-text {
@@ -103,7 +103,7 @@
   color: var(--color-text-muted) !important;
 }
 
-/* ── Welcome ── */
+/* ΓöÇΓöÇ Welcome ΓöÇΓöÇ */
 .dsub-welcome {
   display: flex;
   align-items: center;
@@ -137,7 +137,7 @@
   line-height: 1.5 !important;
 }
 
-/* ── Progress ── */
+/* ΓöÇΓöÇ Progress ΓöÇΓöÇ */
 .dsub-progress-section {
   display: flex;
   flex-direction: column;
@@ -177,7 +177,7 @@
   background-color: var(--color-success) !important;
 }
 
-/* ── Done Banner ── */
+/* ΓöÇΓöÇ Done Banner ΓöÇΓöÇ */
 .dsub-done-banner {
   display: flex;
   align-items: center;
@@ -206,7 +206,7 @@
   color: var(--color-success-dark) !important;
 }
 
-/* ── Document List ── */
+/* ΓöÇΓöÇ Document List ΓöÇΓöÇ */
 .dsub-doc-list {
   display: flex;
   flex-direction: column;
@@ -292,7 +292,7 @@
   flex-shrink: 0;
 }
 
-/* ── Status Chips ── */
+/* ΓöÇΓöÇ Status Chips ΓöÇΓöÇ */
 .dsub-chip {
   font-size: var(--text-xs) !important;
   font-weight: 600 !important;
@@ -323,7 +323,7 @@
   border-color: var(--color-blue-100) !important;
 }
 
-/* ── Upload Button ── */
+/* ΓöÇΓöÇ Upload Button ΓöÇΓöÇ */
 .dsub-upload-btn {
   background-color: var(--color-primary) !important;
   color: var(--color-white) !important;
@@ -347,7 +347,7 @@
 
 .dsub-upload-spinner { color: var(--color-white) !important; }
 
-/* ── Expiry ── */
+/* ΓöÇΓöÇ Expiry ΓöÇΓöÇ */
 .dsub-expiry {
   padding: 10px 14px;
   background-color: var(--color-warning-bg);
@@ -360,7 +360,7 @@
   color: var(--color-warning-text) !important;
 }
 
-/* ── Instructions ── */
+/* ΓöÇΓöÇ Instructions ΓöÇΓöÇ */
 .dsub-instructions {
   padding: 16px;
   background-color: var(--color-bg-secondary);

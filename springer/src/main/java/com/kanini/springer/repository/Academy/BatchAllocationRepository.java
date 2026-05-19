@@ -17,6 +17,11 @@ public interface BatchAllocationRepository extends JpaRepository<BatchAllocation
     Optional<BatchAllocation> findByStudentId(Long studentId);
     
     List<BatchAllocation> findByProgram_ProgramId(Integer programId);
+
+    @Query("SELECT ba FROM BatchAllocation ba WHERE ba.program.programId = :programId AND (:isActive IS NULL OR ba.isActive = :isActive)")
+    List<BatchAllocation> findByProgram_ProgramIdAndIsActive(
+            @Param("programId") Integer programId,
+            @Param("isActive") Boolean isActive);
     
     List<BatchAllocation> findByProgram_ProgramIdAndBatchNumber(Integer programId, Integer batchNumber);
     

@@ -3,14 +3,13 @@ import { useSearchParams } from 'react-router-dom';
 import { Box, Typography, CircularProgress, Button, LinearProgress, Chip } from '@mui/material';
 import {
   CloudUpload as UploadIcon,
-  CheckCircle as CheckIcon,
-  Cancel as RejectIcon,
   HourglassEmpty as PendingIcon,
   Description as DocIcon,
   ErrorOutline as ErrorIcon,
   Visibility as ViewIcon,
   SwapHoriz as ChangeIcon,
 } from '@mui/icons-material';
+import { FigmaApproveIcon as CheckIcon, FigmaRejectIcon as RejectIcon } from '../components/Common/FigmaIcons';
 import { documentSubmissionApi, documentSubmissionPageApi } from '../services/document.api';
 import { showToast } from '../utils/toast';
 import type { DocumentStatusDTO, DocumentSubmissionStatusResponse } from '../types/DocumentCollection/document.types';

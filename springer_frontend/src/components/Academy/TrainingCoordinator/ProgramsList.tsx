@@ -1,14 +1,17 @@
 import { useState, useEffect } from 'react';
+import { useDebounce } from '../../../hooks/useDebounce';
+import { TableSkeleton } from '../../Common/TableSkeleton';
 import {
   Box, Card, TextField, InputAdornment, Button, Typography, Stack,
   IconButton, Table, TableBody, TableCell, TableContainer, TableHead,
-  TableRow, TablePagination, CircularProgress, Chip,
-  Dialog, DialogTitle, DialogContent, DialogActions, MenuItem,
+  TableRow, Chip,
+  Dialog, DialogTitle, DialogContent, DialogActions, MenuItem, Tooltip,
 } from '@mui/material';
 import {
-  Add as AddIcon, Search as SearchIcon,
-  School as SchoolIcon, Edit as EditIcon, Delete as DeleteIcon,
+  School as SchoolIcon,
+  HelpOutline as HelpIcon,
 } from '@mui/icons-material';
+import { FigmaEditIcon as EditIcon, FigmaDeleteIcon as DeleteIcon, FigmaAddIcon as AddIcon, FigmaSearchIcon as SearchIcon, FigmaCloseIcon as CloseIcon } from '../../Common/FigmaIcons';
 import { trainingProgramApi } from '../../../services/academy.api';
 import { showToast } from '../../../utils/toast';
 import type { TrainingProgramResponse, TrainingProgramRequest, AcademyContextProps, TrainingLocation } from '../../../types/Academy/academy.types';
@@ -16,7 +19,7 @@ import FilterSelect from '../../Common/FilterSelect';
 import '../../../css/Academy/TrainingCoordinator/ProgramsList.css';
 
 const ProgramsList = ({ context }: { context: AcademyContextProps }) => {
-  const { programYear, onProgramsChanged, cycles = [] } = context;
+  const { programYear, programs: ctxPrograms, onProgramsChanged, cycles = [] } = context;
   
   // Form template - now inside component where programYear is available
   const EMPTY_FORM: TrainingProgramRequest = {
@@ -39,54 +42,44 @@ const ProgramsList = ({ context }: { context: AcademyContextProps }) => {
     { value: 'REMOTE',     label: 'Remote' },
   ];
 
-  const [programs, setPrograms] = useState<TrainingProgramResponse[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [programs, setPrograms] = useState<TrainingProgramResponse[]>(ctxPrograms);
+  const [loading] = useState(false);
   const [search, setSearch] = useState('');
+  const debouncedSearch = useDebounce(search, 300);
   const [filterStatus, setFilterStatus] = useState('all');
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
 
   // Dialog state
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editProgram, setEditProgram] = useState<TrainingProgramResponse | null>(null);
   const [form, setForm] = useState<TrainingProgramRequest>(EMPTY_FORM);
   const [submitting, setSubmitting] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   // Delete confirmation
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleteProgram, setDeleteProgram] = useState<TrainingProgramResponse | null>(null);
 
-  useEffect(() => {
-    fetchData();
-  }, [programYear]);
+  // Inline editing state
+  const [editingCell, setEditingCell] = useState<{ programId: number | null; field: 'capacity' | 'numberOfBatches' | null }>({ programId: null, field: null });
+  const [editValue, setEditValue] = useState<string>('');
 
-  const fetchData = async () => {
-    try {
-      setLoading(true);
-      const progRes = await trainingProgramApi.getAllPrograms();
-      if (progRes.success && progRes.data) setPrograms(progRes.data);
-    } catch (err: any) {
-      showToast(err.message || 'Failed to load programs', 'error');
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Sync from context whenever parent re-fetches
+  useEffect(() => { setPrograms(ctxPrograms); }, [ctxPrograms]);
 
   const filtered = programs.filter((p) => {
     const name = (p.programName ?? '').toLowerCase();
     const loc  = (p.location ?? '').toLowerCase();
     const matchYear   = programYear === 0 || p.programYear === programYear;
-    const matchSearch = name.includes(search.toLowerCase()) || loc.includes(search.toLowerCase());
+    const matchSearch = name.includes(debouncedSearch.toLowerCase()) || loc.includes(debouncedSearch.toLowerCase());
     const matchStatus = filterStatus === 'all' ||
       (filterStatus === 'active' ? p.status : !p.status);
     return matchYear && matchSearch && matchStatus;
   });
 
-  const paginated = filtered.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
-
   const openCreate = () => {
     setEditProgram(null);
     setForm({ ...EMPTY_FORM, programYear });
+    setErrors({});
     setDialogOpen(true);
   };
 
@@ -101,24 +94,65 @@ const ProgramsList = ({ context }: { context: AcademyContextProps }) => {
       location: (program.location as TrainingLocation) || '',
       cycleId: program.cycleId,
     });
+    setErrors({});
     setDialogOpen(true);
   };
 
+  const validateProgramName = () => {
+    const name = form.programName.trim();
+    if (!name) {
+      setErrors(prev => ({ ...prev, programName: 'Program name is required' }));
+      return false;
+    }
+    if (name.length < 3) {
+      setErrors(prev => ({ ...prev, programName: 'Must be at least 3 characters' }));
+      return false;
+    }
+    setErrors(prev => ({ ...prev, programName: '' }));
+    return true;
+  };
+
+  const validateProgramYear = () => {
+    if (!form.programYear || form.programYear < 2020) {
+      setErrors(prev => ({ ...prev, programYear: 'Must be 2020 or later' }));
+      return false;
+    }
+    setErrors(prev => ({ ...prev, programYear: '' }));
+    return true;
+  };
+
+  const validateCapacity = () => {
+    if (!form.capacity || form.capacity < 1) {
+      setErrors(prev => ({ ...prev, capacity: 'Must be at least 1' }));
+      return false;
+    }
+    setErrors(prev => ({ ...prev, capacity: '' }));
+    return true;
+  };
+
+  const validateBatches = () => {
+    if (!form.numberOfBatches || form.numberOfBatches < 1) {
+      setErrors(prev => ({ ...prev, numberOfBatches: 'Must be at least 1' }));
+      return false;
+    }
+    setErrors(prev => ({ ...prev, numberOfBatches: '' }));
+    return true;
+  };
+
   const handleSubmit = async () => {
-    if (!form.programName.trim() || !form.cycleId || !form.location) {
+    // Validate all fields
+    const isNameValid = validateProgramName();
+    const isYearValid = validateProgramYear();
+    const isCapacityValid = validateCapacity();
+    const isBatchesValid = validateBatches();
+
+    if (!form.location || !form.cycleId) {
       showToast('Please fill all required fields', 'error');
       return;
     }
-    if (!form.programYear || form.programYear < 2020) {
-      showToast('Please enter a valid program year (2020 or later)', 'error');
-      return;
-    }
-    if (!form.capacity || form.capacity < 1) {
-      showToast('Capacity must be at least 1', 'error');
-      return;
-    }
-    if (!form.numberOfBatches || form.numberOfBatches < 1) {
-      showToast('Number of batches must be at least 1', 'error');
+
+    if (!isNameValid || !isYearValid || !isCapacityValid || !isBatchesValid) {
+      showToast('Please fix validation errors', 'error');
       return;
     }
     try {
@@ -128,7 +162,6 @@ const ProgramsList = ({ context }: { context: AcademyContextProps }) => {
         if (res.success) {
           showToast('Program updated successfully', 'success');
           setDialogOpen(false);
-          fetchData();
           onProgramsChanged?.();
         }
       } else {
@@ -136,7 +169,6 @@ const ProgramsList = ({ context }: { context: AcademyContextProps }) => {
         if (res.success) {
           showToast('Program created successfully', 'success');
           setDialogOpen(false);
-          fetchData();
           onProgramsChanged?.();
         }
       }
@@ -160,12 +192,53 @@ const ProgramsList = ({ context }: { context: AcademyContextProps }) => {
       if (res.success) {
         showToast('Program deactivated successfully', 'success');
         setDeleteDialogOpen(false);
-        fetchData();
         onProgramsChanged?.();
       }
     } catch (err: any) {
       showToast(err.message || 'Failed to deactivate program', 'error');
     }
+  };
+
+  const handleInlineEdit = (program: TrainingProgramResponse, field: 'capacity' | 'numberOfBatches') => {
+    setEditingCell({ programId: program.programId, field });
+    setEditValue(String(field === 'capacity' ? program.capacity : program.numberOfBatches));
+  };
+
+  const handleInlineSave = async () => {
+    if (!editingCell.programId || !editingCell.field) return;
+    const program = programs.find(p => p.programId === editingCell.programId);
+    if (!program) return;
+
+    const val = Number(editValue.trim());
+    if (isNaN(val) || val < 1) {
+      showToast(`${editingCell.field === 'capacity' ? 'Capacity' : 'Number of batches'} must be at least 1`, 'error');
+      return;
+    }
+
+    try {
+      const payload: TrainingProgramRequest = {
+        programName: program.programName,
+        programYear: program.programYear,
+        capacity: editingCell.field === 'capacity' ? val : program.capacity,
+        numberOfBatches: editingCell.field === 'numberOfBatches' ? val : program.numberOfBatches,
+        location: program.location as TrainingLocation,
+        cycleId: program.cycleId,
+      };
+      const res = await trainingProgramApi.updateProgram(program.programId, payload);
+      if (res.success) {
+        showToast('Updated successfully', 'success');
+        onProgramsChanged?.();
+      }
+    } catch (err: any) {
+      showToast(err.message || 'Failed to update', 'error');
+    } finally {
+      setEditingCell({ programId: null, field: null });
+    }
+  };
+
+  const handleInlineCancel = () => {
+    setEditingCell({ programId: null, field: null });
+    setEditValue('');
   };
 
   return (
@@ -179,7 +252,7 @@ const ProgramsList = ({ context }: { context: AcademyContextProps }) => {
               placeholder="Search by name or location..."
               size="small"
               value={search}
-              onChange={(e) => { setSearch(e.target.value); setPage(0); }}
+              onChange={(e) => { setSearch(e.target.value); }}
               className="prog-search-field"
               InputProps={{
                 startAdornment: (
@@ -193,7 +266,7 @@ const ProgramsList = ({ context }: { context: AcademyContextProps }) => {
             <FilterSelect
               label="Status"
               value={filterStatus}
-              onChange={(v) => { setFilterStatus(v); setPage(0); }}
+              onChange={(v) => setFilterStatus(v)}
             >
               <MenuItem value="all">All Status</MenuItem>
               <MenuItem value="active">Active</MenuItem>
@@ -217,10 +290,7 @@ const ProgramsList = ({ context }: { context: AcademyContextProps }) => {
         {/* Table */}
         <Box className="prog-table-section">
           {loading ? (
-            <Box className="prog-loading-state">
-              <CircularProgress size={32} sx={{ color: 'var(--color-primary)' }} />
-              <Typography className="prog-empty-text">Loading programs...</Typography>
-            </Box>
+            <TableSkeleton rows={5} columns={7} />
           ) : (
             <>
               <TableContainer className="prog-table-container">
@@ -238,7 +308,7 @@ const ProgramsList = ({ context }: { context: AcademyContextProps }) => {
                   </TableHead>
 
                   <TableBody>
-                    {paginated.length === 0 ? (
+                    {filtered.length === 0 ? (
                       <TableRow>
                         <TableCell colSpan={7} className="prog-empty-cell">
                           <SchoolIcon className="prog-empty-icon" />
@@ -246,7 +316,7 @@ const ProgramsList = ({ context }: { context: AcademyContextProps }) => {
                         </TableCell>
                       </TableRow>
                     ) : (
-                      paginated.map((prog, idx) => (
+                      filtered.map((prog, idx) => (
                         <TableRow
                           key={prog.programId}
                           hover
@@ -274,12 +344,56 @@ const ProgramsList = ({ context }: { context: AcademyContextProps }) => {
                             <Typography className="prog-row-secondary">{prog.location}</Typography>
                           </TableCell>
 
-                          <TableCell className="prog-table-cell">
-                            <Typography className="prog-row-secondary">{prog.numberOfBatches}</Typography>
+                          <TableCell className="prog-table-cell" onDoubleClick={() => handleInlineEdit(prog, 'numberOfBatches')}>
+                            {editingCell.programId === prog.programId && editingCell.field === 'numberOfBatches' ? (
+                              <TextField
+                                value={editValue}
+                                onChange={(e) => {
+                                  const val = e.target.value.replace(/[^0-9]/g, '');
+                                  setEditValue(val);
+                                }}
+                                onBlur={handleInlineSave}
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') handleInlineSave();
+                                  if (e.key === 'Escape') handleInlineCancel();
+                                }}
+                                autoFocus
+                                size="small"
+                                inputProps={{ inputMode: 'numeric', pattern: '[0-9]*' }}
+                                sx={{ width: 80, '& .MuiInputBase-root': { fontSize: 'var(--text-sm)' } }}
+                              />
+                            ) : (
+                              <Box sx={{ display: 'flex', alignItems: 'center', cursor: 'pointer', '&:hover .edit-hint': { opacity: 0.5 } }}>
+                                <Typography className="prog-row-secondary">{prog.numberOfBatches}</Typography>
+                                <EditIcon className="edit-hint" style={{ fontSize: 14, marginLeft: 4, opacity: 0, transition: 'opacity 0.2s' }} />
+                              </Box>
+                            )}
                           </TableCell>
 
-                          <TableCell className="prog-table-cell">
-                            <Typography className="prog-row-secondary">{prog.capacity}</Typography>
+                          <TableCell className="prog-table-cell" onDoubleClick={() => handleInlineEdit(prog, 'capacity')}>
+                            {editingCell.programId === prog.programId && editingCell.field === 'capacity' ? (
+                              <TextField
+                                value={editValue}
+                                onChange={(e) => {
+                                  const val = e.target.value.replace(/[^0-9]/g, '');
+                                  setEditValue(val);
+                                }}
+                                onBlur={handleInlineSave}
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') handleInlineSave();
+                                  if (e.key === 'Escape') handleInlineCancel();
+                                }}
+                                autoFocus
+                                size="small"
+                                inputProps={{ inputMode: 'numeric', pattern: '[0-9]*' }}
+                                sx={{ width: 80, '& .MuiInputBase-root': { fontSize: 'var(--text-sm)' } }}
+                              />
+                            ) : (
+                              <Box sx={{ display: 'flex', alignItems: 'center', cursor: 'pointer', '&:hover .edit-hint': { opacity: 0.5 } }}>
+                                <Typography className="prog-row-secondary">{prog.capacity}</Typography>
+                                <EditIcon className="edit-hint" style={{ fontSize: 14, marginLeft: 4, opacity: 0, transition: 'opacity 0.2s' }} />
+                              </Box>
+                            )}
                           </TableCell>
 
                           <TableCell className="prog-table-cell">
@@ -317,17 +431,6 @@ const ProgramsList = ({ context }: { context: AcademyContextProps }) => {
                   </TableBody>
                 </Table>
               </TableContainer>
-
-              <TablePagination
-                component="div"
-                count={filtered.length}
-                page={page}
-                onPageChange={(_, newPage) => setPage(newPage)}
-                rowsPerPage={rowsPerPage}
-                onRowsPerPageChange={(e) => { setRowsPerPage(parseInt(e.target.value, 10)); setPage(0); }}
-                rowsPerPageOptions={[10, 25, 50]}
-                className="prog-pagination"
-              />
             </>
           )}
         </Box>
@@ -335,8 +438,9 @@ const ProgramsList = ({ context }: { context: AcademyContextProps }) => {
 
       {/* Create / Edit Dialog */}
       <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} maxWidth="sm" fullWidth>
-        <DialogTitle className="prog-dialog-title">
+        <DialogTitle className="prog-dialog-title" sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           {editProgram ? 'Edit Program' : 'Create Training Program'}
+          <IconButton size="small" onClick={() => setDialogOpen(false)}><CloseIcon style={{ fontSize: '1.25rem' }} /></IconButton>
         </DialogTitle>
         <DialogContent>
           <Stack spacing={2} sx={{ mt: 1 }}>
@@ -346,6 +450,10 @@ const ProgramsList = ({ context }: { context: AcademyContextProps }) => {
               fullWidth
               value={form.programName}
               onChange={(e) => setForm({ ...form, programName: e.target.value })}
+              onBlur={validateProgramName}
+              error={!!errors.programName}
+              helperText={errors.programName || 'Enter a descriptive program name'}
+              inputProps={{ maxLength: 100 }}
               className="prog-dialog-field"
             />
             <TextField
@@ -358,12 +466,26 @@ const ProgramsList = ({ context }: { context: AcademyContextProps }) => {
                 const val = e.target.value.replace(/[^0-9]/g, '');
                 setForm({ ...form, programYear: val ? Number(val) : 0 });
               }}
+              onBlur={validateProgramYear}
+              error={!!errors.programYear}
+              helperText={errors.programYear || 'Year when the program starts (e.g., 2024)'}
               inputProps={{ inputMode: 'numeric', pattern: '[0-9]*' }}
               className="prog-dialog-field"
             />
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.5 }}>
+              <Typography component="label" sx={{ fontSize: 'var(--text-sm)', fontWeight: 500 }}>
+                Location *
+              </Typography>
+              <Tooltip 
+                title="Physical location where the training program will be conducted. Select 'Remote' for online programs."
+                arrow
+                placement="top"
+              >
+                <HelpIcon sx={{ fontSize: 16, color: 'var(--color-text-secondary)', cursor: 'help' }} />
+              </Tooltip>
+            </Box>
             <TextField
               select
-              label="Location *"
               size="small"
               fullWidth
               value={form.location}
@@ -374,8 +496,19 @@ const ProgramsList = ({ context }: { context: AcademyContextProps }) => {
                 <MenuItem key={opt.value} value={opt.value}>{opt.label}</MenuItem>
               ))}
             </TextField>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.5 }}>
+              <Typography component="label" sx={{ fontSize: 'var(--text-sm)', fontWeight: 500 }}>
+                Capacity *
+              </Typography>
+              <Tooltip 
+                title="Total number of interns that can be accommodated in this program across all batches."
+                arrow
+                placement="top"
+              >
+                <HelpIcon sx={{ fontSize: 16, color: 'var(--color-text-secondary)', cursor: 'help' }} />
+              </Tooltip>
+            </Box>
             <TextField
-              label="Capacity *"
               size="small"
               fullWidth
               value={form.capacity === 0 ? '' : String(form.capacity)}
@@ -383,11 +516,25 @@ const ProgramsList = ({ context }: { context: AcademyContextProps }) => {
                 const val = e.target.value.replace(/[^0-9]/g, '');
                 setForm({ ...form, capacity: val ? Number(val) : 0 });
               }}
+              onBlur={validateCapacity}
+              error={!!errors.capacity}
+              helperText={errors.capacity || 'Total number of interns in this program'}
               inputProps={{ inputMode: 'numeric', pattern: '[0-9]*' }}
               className="prog-dialog-field"
             />
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.5 }}>
+              <Typography component="label" sx={{ fontSize: 'var(--text-sm)', fontWeight: 500 }}>
+                Number of Batches *
+              </Typography>
+              <Tooltip 
+                title="Interns will be divided into this many batches. Each batch will have separate schedules and courses."
+                arrow
+                placement="top"
+              >
+                <HelpIcon sx={{ fontSize: 16, color: 'var(--color-text-secondary)', cursor: 'help' }} />
+              </Tooltip>
+            </Box>
             <TextField
-              label="Number of Batches *"
               size="small"
               fullWidth
               value={form.numberOfBatches === 0 ? '' : String(form.numberOfBatches)}
@@ -395,6 +542,9 @@ const ProgramsList = ({ context }: { context: AcademyContextProps }) => {
                 const val = e.target.value.replace(/[^0-9]/g, '');
                 setForm({ ...form, numberOfBatches: val ? Number(val) : 0 });
               }}
+              onBlur={validateBatches}
+              error={!!errors.numberOfBatches}
+              helperText={errors.numberOfBatches || 'How many batches to divide interns into'}
               inputProps={{ inputMode: 'numeric', pattern: '[0-9]*' }}
               className="prog-dialog-field"
             />
@@ -431,7 +581,10 @@ const ProgramsList = ({ context }: { context: AcademyContextProps }) => {
       </Dialog>
       {/* Delete Confirmation Dialog */}
       <Dialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)} maxWidth="xs" fullWidth>
-        <DialogTitle className="prog-dialog-title">Deactivate Program</DialogTitle>
+        <DialogTitle className="prog-dialog-title" sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          Deactivate Program
+          <IconButton size="small" onClick={() => setDeleteDialogOpen(false)}><CloseIcon style={{ fontSize: '1.25rem' }} /></IconButton>
+        </DialogTitle>
         <DialogContent>
           <Typography sx={{ mt: 1, fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>
             Are you sure you want to deactivate <strong>{deleteProgram?.programName}</strong>? This will mark it as inactive.

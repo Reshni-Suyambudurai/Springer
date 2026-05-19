@@ -1,39 +1,87 @@
 
 .rt-filter-section {
   flex-shrink: 0;
-  padding: 10px 20px;
+  padding: 16px 24px;
   background-color: var(--color-surface);
-  border-bottom: 1px solid var(--color-grey-200);
+  border-bottom: 1px solid var(--color-border-light);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.rt-filter-section .t-search-field {
+  flex: 1;
+}
+
+.rt-search-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 0.8px solid var(--color-border-light);
+  border-radius: 8px;
+  padding: 4px 12px 4px 12px;
+  background: var(--color-filter-bg);
+  width: 448px;
+  max-width: 100%;
+  height: 40px;
+  box-sizing: border-box;
+}
+
+.rt-search-icon {
+  color: var(--color-text-secondary);
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.rt-search-input {
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: var(--text-sm);
+  color: var(--color-text-primary);
+  width: 100%;
+  font-family: inherit;
+}
+
+.rt-search-input::placeholder {
+  color: var(--color-text-secondary);
 }
 
 .rt-body-content {
-  max-width: 800px;
   width: 100%;
-  margin: 0;
   display: flex;
   flex-direction: column;
   gap: 16px;
 }
 
+/* ── Card ── */
 .rt-item-card {
+  width: 1214.4px;
+  max-width: 100%;
+  height: auto;
+  min-height: 183.175px;
   border-radius: 10px !important;
-  border: 1px solid var(--color-border-card) !important;
-  box-shadow: 0 1px 4px var(--opacity-shadow-card) !important;
+  border: 0.8px solid var(--color-border-card) !important;
+  box-shadow: none !important;
   background-color: var(--color-surface) !important;
-  transition: all 0.2s ease !important;
-}
-.rt-item-card:hover {
-  border-color: var(--color-primary) !important;
-  box-shadow: 0 4px 12px var(--color-primary-shadow-8) !important;
+  box-sizing: border-box;
+  opacity: 1;
 }
 
-.rt-item-content { padding: 16px 20px !important; }
+.rt-item-content {
+  padding: 24.8px 24.8px 0.8px 24.8px !important;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
 
+/* ── Top row: title + edit icon ── */
 .rt-item-top {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 12px;
+  margin-bottom: 16px;
 }
 
 .rt-item-title {
@@ -42,12 +90,21 @@
   color: var(--color-text-primary) !important;
 }
 
+/* ── Meta grid: 4 equal columns ── */
+.rt-meta-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0;
+  margin-bottom: 16px;
+}
+
 .rt-meta-label {
   font-size: var(--text-xs) !important;
   color: var(--color-text-secondary) !important;
   text-transform: uppercase !important;
   letter-spacing: 0.5px !important;
   font-weight: 600 !important;
+  margin-bottom: 4px !important;
 }
 
 .rt-meta-value {
@@ -56,9 +113,223 @@
   color: var(--color-text-primary) !important;
 }
 
+/* ── Section chips ── */
+.rt-sections-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding-bottom: 16px;
+}
+
+.rt-section-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  width: auto;
+  min-width: 84.425px;
+  height: 21.587px;
+  padding: 2px 8px;
+  border-radius: 8px;
+  border: 0.8px solid var(--color-rt-chip-border);
+  background: var(--color-rt-chip-bg);
+  font-size: var(--text-xs) !important;
+  font-weight: 500 !important;
+  color: var(--color-rt-chip-text) !important;
+  box-sizing: border-box;
+  opacity: 1;
+}
+
+/* ── Edit icon button ── */
+.rt-edit-btn {
+  color: var(--color-text-secondary) !important;
+  padding: 4px !important;
+}
+
+/* ── Section row in dialog ── */
 .rt-section-row {
   display: flex;
   align-items: center;
   gap: 8px;
   margin-bottom: 8px;
 }
+
+/* ── Dialog ── */
+.rt-dialog-paper {
+  width: 512px !important;
+  max-width: 512px !important;
+  min-height: 640px !important;
+  border-radius: 10px !important;
+  border: 0.8px solid var(--color-border-card) !important;
+  background: var(--color-surface) !important;
+  box-shadow: 0 4px 24px var(--opacity-shadow-dark) !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+.rt-dialog-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24px 24px 16px;
+}
+
+.rt-dialog-title-text {
+  font-size: var(--text-lg) !important;
+  font-weight: 700 !important;
+  color: var(--color-text-primary) !important;
+}
+
+.rt-dialog-close-btn { color: var(--color-text-secondary) !important; padding: 4px !important; }
+.rt-dialog-close-icon { font-size: 18px !important; }
+
+.rt-dialog-content {
+  flex: 1;
+  padding: 0 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  overflow-y: auto;
+}
+
+.rt-dialog-row-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.rt-dialog-row-3 {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 16px;
+}
+
+.rt-dialog-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.rt-dialog-label {
+  font-size: var(--text-sm-14) !important;
+  font-weight: 500 !important;
+  color: var(--color-grey-550) !important;
+}
+
+.rt-dialog-sections-label { font-size: var(--text-sm) !important; font-weight: 600 !important; color: var(--color-grey-550) !important; }
+
+.rt-dialog-input {
+  height: 40px;
+  padding: 0 12px;
+  border-radius: 8px;
+  border: 0.8px solid var(--color-border);
+  background: var(--color-grey-100);
+  font-size: var(--text-sm-14);
+  font-family: inherit;
+  color: var(--color-text-primary);
+  outline: none;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.rt-dialog-input::placeholder { color: var(--color-text-disabled); }
+.rt-dialog-input:focus { border-color: var(--color-primary); background: var(--color-surface); }
+
+.rt-dialog-sections-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.rt-dialog-add-section-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 14px;
+  border-radius: 8px;
+  border: 0.8px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+  font-size: var(--text-sm-14);
+  font-family: inherit;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.rt-dialog-section-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.rt-dialog-section-name { flex: 1; }
+.rt-dialog-section-score { width: 80px !important; }
+
+.rt-dialog-remove-btn { color: var(--color-error-dark) !important; padding: 4px !important; }
+.rt-dialog-remove-icon { font-size: 16px !important; }
+
+.rt-dialog-total {
+  font-size: var(--text-sm-14) !important;
+  font-weight: 600 !important;
+  color: var(--color-link) !important;
+}
+
+.rt-dialog-footer {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 24px 24px;
+}
+
+.rt-dialog-cancel-btn {
+  padding: 8px 24px;
+  border-radius: 8px;
+  border: 0.8px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+  font-size: var(--text-sm-14);
+  font-family: inherit;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.rt-dialog-submit-btn {
+  padding: 8px 24px;
+  border-radius: 8px;
+  border: none;
+  background: var(--color-sidebar-bg);
+  color: var(--color-white);
+  font-size: var(--text-sm-14);
+  font-family: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.rt-dialog-submit-btn:disabled,
+.rt-dialog-cancel-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.rt-status-select { width: 160px !important; }
+
+.rt-status-select .MuiOutlinedInput-root {
+  width: 160px !important;
+  height: 36px !important;
+  border-radius: 8px !important;
+  background-color: var(--color-filter-bg) !important;
+}
+
+.rt-status-select .MuiOutlinedInput-notchedOutline {
+  border: 0.8px solid var(--color-border-light) !important;
+  border-radius: 8px !important;
+}
+
+.rt-status-select .MuiSelect-select {
+  padding: 8px 12px !important;
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  font-size: var(--text-sm) !important;
+  color: var(--color-text-primary) !important;
+}
+
+.rt-spinner { color: var(--color-primary) !important; }
+.rt-navbar-icon { font-size: 16px !important; }

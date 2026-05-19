@@ -2,25 +2,24 @@ import { useState, useEffect } from 'react';
 import {
   Box, Card, Button, Typography, Stack, IconButton,
   Table, TableBody, TableCell, TableContainer, TableHead,
-  TableRow, TablePagination, CircularProgress, Chip,
+  TableRow, CircularProgress, Chip,
   Dialog, DialogTitle, DialogContent, DialogActions,
   MenuItem, TextField, Checkbox,
 } from '@mui/material';
 import {
   Person as PersonIcon,
-  Delete as DeleteIcon,
   CheckCircle as CheckCircleIcon,
-  Edit as EditIcon,
   GroupAdd as GroupAddIcon,
   CalendarMonth as CalendarIcon,
   SwapHoriz as TransferIcon,
 } from '@mui/icons-material';
-import { batchAllocationApi, trainingProgramApi, batchScheduleApi } from '../../../services/academy.api';
+import { FigmaEditIcon as EditIcon, FigmaDeleteIcon as DeleteIcon, FigmaCloseIcon as CloseIcon } from '../../Common/FigmaIcons';
+import { batchAllocationApi, batchScheduleApi } from '../../../services/academy.api';
 import { candidateApi } from '../../../services/drive.api';
 import { showToast } from '../../../utils/toast';
 import type {
   BatchAllocationResponse, BatchAllocationRequest, BatchTransferRequest,
-  TrainingProgramResponse, AcademyContextProps,
+  AcademyContextProps,
   BatchScheduleResponse, BatchCandidateResponse,
 } from '../../../types/Academy/academy.types';
 import FilterSelect from '../../Common/FilterSelect';
@@ -38,15 +37,12 @@ const BatchAllocationsList = ({ context }: { context: AcademyContextProps }) => 
   const { programYear, programs: yearPrograms } = context;
 
   const [allocations, setAllocations] = useState<BatchAllocationResponse[]>([]);
-  const [allPrograms, setAllPrograms] = useState<TrainingProgramResponse[]>([]);
   const [batchSchedules, setBatchSchedules] = useState<BatchScheduleResponse[]>([]);
   const [loading, setLoading] = useState(true);
 
   const [filterProgram, setFilterProgram] = useState('all');
   const [filterBatch, setFilterBatch] = useState('all');
   const [filterStatus, setFilterStatus] = useState('all');
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
 
   // Bulk allocation dialog
   const [bulkDialogOpen, setBulkDialogOpen] = useState(false);
@@ -92,33 +88,30 @@ const BatchAllocationsList = ({ context }: { context: AcademyContextProps }) => 
   const fetchData = async () => {
     try {
       setLoading(true);
-      const progRes = await trainingProgramApi.getAllPrograms();
-      if (progRes.success && progRes.data) {
-        setAllPrograms(progRes.data);
-        // Fetch allocations only for year-scoped programs — not all allocations
-        const scopedIds = programYear === 0
-          ? progRes.data.map(p => p.programId)
-          : progRes.data.filter(p => p.programYear === programYear).map(p => p.programId);
-        const allocResults = await Promise.allSettled(
-          scopedIds.map(id => batchAllocationApi.getAllocationsByProgram(id))
-        );
-        const allAllocs: BatchAllocationResponse[] = [];
-        allocResults.forEach(r => {
-          if (r.status === 'fulfilled' && r.value.success && r.value.data)
-            allAllocs.push(...r.value.data);
-        });
-        setAllocations(allAllocs);
-        // Fetch batch schedules for scoped programs only
-        const scheduleResults = await Promise.allSettled(
-          scopedIds.map(id => batchScheduleApi.getByProgram(id))
-        );
-        const allSchedules: BatchScheduleResponse[] = [];
-        scheduleResults.forEach(r => {
-          if (r.status === 'fulfilled' && r.value.success && r.value.data)
-            allSchedules.push(...r.value.data);
-        });
-        setBatchSchedules(allSchedules);
-      }
+      // Use programs from parent context — no need to fetch again
+      const scopedIds = programYear === 0
+        ? yearPrograms.map(p => p.programId)
+        : yearPrograms.filter(p => p.programYear === programYear).map(p => p.programId);
+
+      // Fetch allocations and schedules in parallel
+      const [allocResults, scheduleResults] = await Promise.all([
+        Promise.allSettled(scopedIds.map(id => batchAllocationApi.getAllocationsByProgram(id, true))),
+        Promise.allSettled(scopedIds.map(id => batchScheduleApi.getByProgram(id))),
+      ]);
+
+      const allAllocs: BatchAllocationResponse[] = [];
+      allocResults.forEach(r => {
+        if (r.status === 'fulfilled' && r.value.success && r.value.data)
+          allAllocs.push(...r.value.data);
+      });
+      setAllocations(allAllocs);
+
+      const allSchedules: BatchScheduleResponse[] = [];
+      scheduleResults.forEach(r => {
+        if (r.status === 'fulfilled' && r.value.success && r.value.data)
+          allSchedules.push(...r.value.data);
+      });
+      setBatchSchedules(allSchedules);
     } catch (err: any) {
       showToast(err.message || 'Failed to load data', 'error');
     } finally {
@@ -135,7 +128,7 @@ const BatchAllocationsList = ({ context }: { context: AcademyContextProps }) => 
     setCandidateSearch('');
     if (!programId) return;
 
-    const prog = allPrograms.find(p => p.programId === programId);
+    const prog = yearPrograms.find(p => p.programId === programId);
     if (!prog?.cycleId) {
       showToast('This program has no linked hiring cycle', 'error');
       return;
@@ -163,7 +156,7 @@ const BatchAllocationsList = ({ context }: { context: AcademyContextProps }) => 
   };
 
   const getBatchOptions = (programId: number): number[] => {
-    const prog = allPrograms.find(p => p.programId === programId);
+    const prog = yearPrograms.find(p => p.programId === programId);
     return prog ? Array.from({ length: prog.numberOfBatches }, (_, i) => i + 1) : [1];
   };
 
@@ -263,11 +256,16 @@ const BatchAllocationsList = ({ context }: { context: AcademyContextProps }) => 
     const matchStatus  = filterStatus === 'all' || (filterStatus === 'active' ? a.isActive : !a.isActive);
     return matchYear && matchProgram && matchBatch && matchStatus;
   });
-  const paginated = filtered.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
+
+  const hasRecords = (alloc: BatchAllocationResponse) =>
+    Number(alloc.attendancePercentage) > 0 || (alloc.overallWeightedScore != null && Number(alloc.overallWeightedScore) > 0);
+
+  const meetsReadyCriteria = (alloc: BatchAllocationResponse) =>
+    Number(alloc.attendancePercentage) >= 75 && alloc.overallWeightedScore != null && Number(alloc.overallWeightedScore) >= 70;
 
   const openEditAlloc = (alloc: BatchAllocationResponse, e: React.MouseEvent) => {
     e.stopPropagation();
-    const prog = allPrograms.find(p => p.programId === alloc.programId);
+    const prog = yearPrograms.find(p => p.programId === alloc.programId);
     setEditBatchOptions(prog ? Array.from({ length: prog.numberOfBatches }, (_, i) => i + 1) : []);
     setEditAlloc(alloc);
     setEditBatchNumber(alloc.batchNumber);
@@ -361,7 +359,7 @@ const BatchAllocationsList = ({ context }: { context: AcademyContextProps }) => 
   };
 
   const getProgramName = (id: number) =>
-    allPrograms.find(p => p.programId === id)?.programName ?? `Program ${id}`;
+    yearPrograms.find(p => p.programId === id)?.programName ?? `Program ${id}`;
 
   const getBatchSchedule = (programId: number, batchNumber: number) =>
     batchSchedules.find(s => s.programId === programId && s.batchNumber === batchNumber);
@@ -419,7 +417,7 @@ const BatchAllocationsList = ({ context }: { context: AcademyContextProps }) => 
     return 'ba-attendance-bar-fill';
   };
 
-  const selectedProgram = allPrograms.find(p => p.programId === selectedProgramId);
+  const selectedProgram = yearPrograms.find(p => p.programId === selectedProgramId);
   const batchOptions = getBatchOptions(selectedProgramId);
   const scheduleBatchOptions = getBatchOptions(scheduleProgramId);
 
@@ -430,21 +428,21 @@ const BatchAllocationsList = ({ context }: { context: AcademyContextProps }) => 
         <Box className="ba-filter-section">
           <Box className="ba-filter-row">
             <FilterSelect label="Program" value={filterProgram}
-              onChange={v => { setFilterProgram(v); setFilterBatch('all'); setPage(0); }}>
+              onChange={v => { setFilterProgram(v); setFilterBatch('all'); }}>
               <MenuItem value="all">All Programs</MenuItem>
               {yearPrograms.map(p => (
                 <MenuItem key={p.programId} value={String(p.programId)}>{p.programName}</MenuItem>
               ))}
             </FilterSelect>
             <FilterSelect label="Batch" value={filterBatch}
-              onChange={v => { setFilterBatch(v); setPage(0); }}>
+              onChange={v => setFilterBatch(v)}>
               <MenuItem value="all">All Batches</MenuItem>
               {batchNumbersForFilter.map(b => (
                 <MenuItem key={b} value={String(b)}>Batch {b}</MenuItem>
               ))}
             </FilterSelect>
             <FilterSelect label="Status" value={filterStatus}
-              onChange={v => { setFilterStatus(v); setPage(0); }}>
+              onChange={v => setFilterStatus(v)}>
               <MenuItem value="all">All Status</MenuItem>
               <MenuItem value="active">Active</MenuItem>
               <MenuItem value="inactive">Inactive</MenuItem>
@@ -489,19 +487,18 @@ const BatchAllocationsList = ({ context }: { context: AcademyContextProps }) => 
                       <TableCell className="ba-table-head-cell">Batch Dates</TableCell>
                       <TableCell className="ba-table-head-cell">Attendance</TableCell>
                       <TableCell className="ba-table-head-cell">Performance</TableCell>
-                      <TableCell className="ba-table-head-cell">Status</TableCell>
                       <TableCell className="ba-table-head-cell ba-table-head-cell--actions">Actions</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {paginated.length === 0 ? (
+                    {filtered.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={8} className="ba-empty-cell">
+                        <TableCell colSpan={7} className="ba-empty-cell">
                           <PersonIcon className="ba-empty-icon" />
                           <Typography className="ba-empty-text">No allocations found</Typography>
                         </TableCell>
                       </TableRow>
-                    ) : paginated.map((alloc, idx) => (
+                    ) : filtered.map((alloc, idx) => (
                       <TableRow
                         key={alloc.studentId}
                         hover
@@ -578,14 +575,6 @@ const BatchAllocationsList = ({ context }: { context: AcademyContextProps }) => 
                             <Typography className="ba-row-secondary">—</Typography>
                           )}
                         </TableCell>
-                        <TableCell className="ba-table-cell">
-                          <Chip
-                            label={alloc.isActive ? 'Active' : 'Inactive'}
-                            size="small"
-                            variant="outlined"
-                            className={alloc.isActive ? 'ba-status-chip--active' : 'ba-status-chip--inactive'}
-                          />
-                        </TableCell>
                         <TableCell className="ba-table-cell ba-table-cell--actions">
                           <Stack direction="row" spacing={0.5} justifyContent="flex-end">
                             <IconButton size="small" className="ba-action-button" title="Edit Allocation"
@@ -598,14 +587,23 @@ const BatchAllocationsList = ({ context }: { context: AcademyContextProps }) => 
                                 <TransferIcon className="ba-action-icon" />
                               </IconButton>
                             )}
-                            <IconButton size="small" className="ba-action-button" title="Mark Project Ready"
-                              onClick={e => handleMarkReady(alloc.studentId, e)}>
-                              <CheckCircleIcon className="ba-action-icon" />
-                            </IconButton>
-                            <IconButton size="small" className="ba-action-button" title="Deactivate"
-                              onClick={e => handleDeactivate(alloc.studentId, e)}>
-                              <DeleteIcon className="ba-action-icon" />
-                            </IconButton>
+                            {alloc.isActive && alloc.performance !== 'PROJECT_READY' && (
+                              <IconButton size="small" className="ba-action-button" title={
+                                !meetsReadyCriteria(alloc)
+                                  ? 'Requires attendance ≥ 75% and weighted score ≥ 70'
+                                  : 'Mark Project Ready'
+                              }
+                                onClick={e => handleMarkReady(alloc.studentId, e)}
+                                disabled={!meetsReadyCriteria(alloc)}>
+                                <CheckCircleIcon className="ba-action-icon" />
+                              </IconButton>
+                            )}
+                            {alloc.isActive && (
+                              <IconButton size="small" className="ba-action-button" title="Deactivate"
+                                onClick={e => handleDeactivate(alloc.studentId, e)}>
+                                <DeleteIcon className="ba-action-icon" />
+                              </IconButton>
+                            )}
                           </Stack>
                         </TableCell>
                       </TableRow>
@@ -613,16 +611,6 @@ const BatchAllocationsList = ({ context }: { context: AcademyContextProps }) => 
                   </TableBody>
                 </Table>
               </TableContainer>
-              <TablePagination
-                component="div"
-                count={filtered.length}
-                page={page}
-                onPageChange={(_, p) => setPage(p)}
-                rowsPerPage={rowsPerPage}
-                onRowsPerPageChange={e => { setRowsPerPage(parseInt(e.target.value, 10)); setPage(0); }}
-                rowsPerPageOptions={[10, 25, 50]}
-                className="ba-pagination"
-              />
             </>
           )}
         </Box>
@@ -630,8 +618,9 @@ const BatchAllocationsList = ({ context }: { context: AcademyContextProps }) => 
 
       {/* ── Allocate Candidates Dialog ── */}
       <Dialog open={bulkDialogOpen} onClose={() => setBulkDialogOpen(false)} maxWidth="md" fullWidth>
-        <DialogTitle className="ba-dialog-title">
+        <DialogTitle className="ba-dialog-title" sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           Allocate Candidates to Batch
+          <IconButton size="small" onClick={() => setBulkDialogOpen(false)}><CloseIcon style={{ fontSize: '1.25rem' }} /></IconButton>
         </DialogTitle>
         <DialogContent>
           <Stack spacing={2} sx={{ mt: 1 }}>
@@ -799,7 +788,10 @@ const BatchAllocationsList = ({ context }: { context: AcademyContextProps }) => 
 
       {/* Edit Allocation Dialog */}
       <Dialog open={editDialogOpen} onClose={() => setEditDialogOpen(false)} maxWidth="sm" fullWidth>
-        <DialogTitle className="ba-dialog-title">Edit Allocation</DialogTitle>
+        <DialogTitle className="ba-dialog-title" sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          Edit Allocation
+          <IconButton size="small" onClick={() => setEditDialogOpen(false)}><CloseIcon style={{ fontSize: '1.25rem' }} /></IconButton>
+        </DialogTitle>
         <DialogContent>
           <Stack spacing={2} sx={{ mt: 1 }}>
             <Typography sx={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-secondary)' }}>
@@ -810,7 +802,8 @@ const BatchAllocationsList = ({ context }: { context: AcademyContextProps }) => 
               value={editBatchNumber}
               onChange={e => setEditBatchNumber(Number(e.target.value))}
               className="ba-dialog-field"
-              disabled={editBatchOptions.length === 0}
+              disabled={editBatchOptions.length === 0 || (editAlloc != null && hasRecords(editAlloc))}
+              helperText={editAlloc && hasRecords(editAlloc) ? 'Batch change is locked — attendance or scores already recorded. Use Transfer instead.' : ''}
             >
               {editBatchOptions.map(b => (
                 <MenuItem key={b} value={b}>Batch {b}</MenuItem>
@@ -839,7 +832,10 @@ const BatchAllocationsList = ({ context }: { context: AcademyContextProps }) => 
       </Dialog>
       {/* Deactivate Confirmation Dialog */}
       <Dialog open={deactivateDialogOpen} onClose={() => setDeactivateDialogOpen(false)} maxWidth="xs" fullWidth>
-        <DialogTitle className="ba-dialog-title">Deactivate Allocation</DialogTitle>
+        <DialogTitle className="ba-dialog-title" sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          Deactivate Allocation
+          <IconButton size="small" onClick={() => setDeactivateDialogOpen(false)}><CloseIcon style={{ fontSize: '1.25rem' }} /></IconButton>
+        </DialogTitle>
         <DialogContent>
           <Typography sx={{ mt: 1, fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>
             Are you sure you want to deactivate this student's allocation? They will no longer appear in attendance and scores.
@@ -855,8 +851,9 @@ const BatchAllocationsList = ({ context }: { context: AcademyContextProps }) => 
       </Dialog>
       {/* Batch Schedule Dialog */}
       <Dialog open={scheduleDialogOpen} onClose={() => setScheduleDialogOpen(false)} maxWidth="xs" fullWidth>
-        <DialogTitle className="ba-dialog-title">
+        <DialogTitle className="ba-dialog-title" sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           Manage Batch Dates
+          <IconButton size="small" onClick={() => setScheduleDialogOpen(false)}><CloseIcon style={{ fontSize: '1.25rem' }} /></IconButton>
         </DialogTitle>
         <DialogContent>
           <Stack spacing={2} sx={{ mt: 1 }}>
@@ -914,8 +911,9 @@ const BatchAllocationsList = ({ context }: { context: AcademyContextProps }) => 
       </Dialog>
       {/* Transfer Dialog */}
       <Dialog open={transferDialogOpen} onClose={() => setTransferDialogOpen(false)} maxWidth="sm" fullWidth>
-        <DialogTitle className="ba-dialog-title">
+        <DialogTitle className="ba-dialog-title" sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           Transfer Candidate — {transferAlloc?.candidateName}
+          <IconButton size="small" onClick={() => setTransferDialogOpen(false)}><CloseIcon style={{ fontSize: '1.25rem' }} /></IconButton>
         </DialogTitle>
         <DialogContent>
           <Stack spacing={2} sx={{ mt: 1 }}>
@@ -938,7 +936,7 @@ const BatchAllocationsList = ({ context }: { context: AcademyContextProps }) => 
             </Box>
 
             <Typography sx={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-secondary)' }}>
-              Current: <strong>{allPrograms.find(p => p.programId === transferAlloc?.programId)?.programName}</strong> · Batch {transferAlloc?.batchNumber}
+              Current: <strong>{yearPrograms.find(p => p.programId === transferAlloc?.programId)?.programName}</strong> · Batch {transferAlloc?.batchNumber}
             </Typography>
 
             <TextField
@@ -947,7 +945,7 @@ const BatchAllocationsList = ({ context }: { context: AcademyContextProps }) => 
               onChange={e => { setTransferProgramId(Number(e.target.value)); setTransferBatchNumber(1); }}
               className="ba-dialog-field"
             >
-              {allPrograms.filter(p => p.status === true).map(p => (
+              {yearPrograms.filter(p => p.status === true).map(p => (
                 <MenuItem key={p.programId} value={p.programId}>{p.programName} ({p.programYear})</MenuItem>
               ))}
             </TextField>

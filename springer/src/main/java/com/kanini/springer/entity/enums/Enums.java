@@ -94,7 +94,7 @@ public class Enums {
         NOT_JOINED,
         OFFER_REJECTED,
         REJECTED,
-        ACCEPTED,
+        OFFER_ACCEPTED,
         DROPPED
     }
 
@@ -178,8 +178,8 @@ public class Enums {
 
     // Offer letter response
     public enum OfferResponse {
-        ACCEPTED,
-        DECLINED,
+        OFFER_ACCEPTED,
+        OFFER_DECLINED,
         PENDING,
         EXPIRED
     }

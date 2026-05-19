@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { useParams,  useLocation } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { candidateApi } from "../../../services/drive.api";
 import { overrideApi } from "../../../services/override.api";
 import type { CandidateResponse, CandidateUpdateRequest } from "../../../types/TA_Recruiter/Drive/candidate.types";
@@ -23,36 +23,36 @@ import {
   InputLabel,
   Select,
   MenuItem,
+  IconButton,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
 } from "@mui/material";
-import EditIcon from "@mui/icons-material/Edit";
-import PersonIcon from "@mui/icons-material/Person";
-import SchoolIcon from "@mui/icons-material/School";
-import CategoryIcon from "@mui/icons-material/Category";
-import AssignmentIndIcon from "@mui/icons-material/AssignmentInd";
-import TimelineIcon from "@mui/icons-material/Timeline";
-import WorkIcon from "@mui/icons-material/Work";
-import RocketLaunchIcon from "@mui/icons-material/RocketLaunch";
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
+import SchoolOutlinedIcon from "@mui/icons-material/SchoolOutlined";
+import AssignmentIndOutlinedIcon from "@mui/icons-material/AssignmentIndOutlined";
+import TimelineOutlinedIcon from "@mui/icons-material/TimelineOutlined";
+import SwapHorizOutlinedIcon from "@mui/icons-material/SwapHorizOutlined";
+import WorkOutlineIcon from "@mui/icons-material/WorkOutline";
+import RocketLaunchOutlinedIcon from "@mui/icons-material/RocketLaunchOutlined";
+import EmailOutlinedIcon from "@mui/icons-material/EmailOutlined";
+import CalendarTodayOutlinedIcon from "@mui/icons-material/CalendarTodayOutlined";
+import LocalPhoneOutlinedIcon from "@mui/icons-material/LocalPhoneOutlined";
+import CreditCardOutlinedIcon from "@mui/icons-material/CreditCardOutlined";
+import CloseIcon from "@mui/icons-material/Close";
 import { internApi } from "../../../services/intern.api";
-import ApplicationHistory from "../DriveProcess/ApplicationHistory";
 import "../../../css/TA_Recruiter/Candidates/CandidateDetails.css";
+import "../../../css/TA_Recruiter/Institutes/AddInstitute.css";
 
 const CandidateDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  
-  const location = useLocation();
+  const navigate = useNavigate();
   const [candidate, setCandidate] = useState<CandidateResponse | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [editDialogOpen, setEditDialogOpen] = useState<boolean>(false);
   const [saving, setSaving] = useState<boolean>(false);
-  const [statusUpdateMode, setStatusUpdateMode] = useState<boolean>(false);
+  const [statusDialogOpen, setStatusDialogOpen] = useState<boolean>(false);
   const [selectedStatus, setSelectedStatus] = useState<string>("");
   const [updatingStatus, setUpdatingStatus] = useState<boolean>(false);
   const [overrides, setOverrides] = useState<ManualOverrideResponse[]>([]);
@@ -67,7 +67,19 @@ const CandidateDetails: React.FC = () => {
   const [activateDialogOpen, setActivateDialogOpen] = useState(false);
   const [outlookEmail, setOutlookEmail] = useState("");
   const [activating, setActivating] = useState(false);
-  const [driveDetailsExpanded, setDriveDetailsExpanded] = useState(false);
+
+  const formatIndianMobile = (mobile: string | number | null | undefined): string => {
+    if (mobile === null || mobile === undefined || String(mobile).trim() === "") {
+      return "N/A";
+    }
+    const rawMobile = String(mobile).trim();
+    const digits = rawMobile.replace(/\D/g, "");
+    const tenDigitMobile = digits.length >= 10 ? digits.slice(-10) : digits;
+    if (tenDigitMobile.length !== 10) {
+      return rawMobile;
+    }
+    return `+91 ${tenDigitMobile.slice(0, 5)} ${tenDigitMobile.slice(5)}`;
+  };
 
   const fetchCandidateDetails = useCallback(async (candidateId: number) => {
     setLoading(true);
@@ -179,6 +191,9 @@ const CandidateDetails: React.FC = () => {
     }
   };
 
+  const handleBack = () => {
+    navigate("/ta-recruiter/candidates");
+  };
 
   const handleActivateIntern = async () => {
     if (!outlookEmail.trim()) {
@@ -225,7 +240,7 @@ const CandidateDetails: React.FC = () => {
         updatedBy: user.userId,
       });
       showToast("Candidate status updated successfully", "success");
-      setStatusUpdateMode(false);
+      setStatusDialogOpen(false);
       setSelectedStatus("");
       // Refresh candidate data
       await fetchCandidateDetails(Number(id));
@@ -241,22 +256,6 @@ const CandidateDetails: React.FC = () => {
     }
   };
 
-  const handleStatusModeToggle = () => {
-    if (statusUpdateMode) {
-      setSelectedStatus("");
-    }
-    setStatusUpdateMode(!statusUpdateMode);
-  };
-
-  const locationState = location.state as { driveId?: number } | null;
-  const candidateWithDrive = candidate as (CandidateResponse & { driveId?: number }) | null;
-  const driveIdForHistory = locationState?.driveId ?? candidateWithDrive?.driveId;
-  const showApplicationHistory = Boolean(
-    candidate &&
-    driveIdForHistory &&
-    !["APPLIED", "SHORTLISTED"].includes(candidate.applicationStage)
-  );
-
   if (loading) {
     return (
       <Box className="t-loading">
@@ -270,42 +269,109 @@ const CandidateDetails: React.FC = () => {
     return (
       <Box className="candidate-details-error">
         <Typography variant="h6">Candidate not found</Typography>
-        <BackButton variant="header" />
+        <BackButton onClick={handleBack} inline={true} />
       </Box>
     );
   }
 
   return (
     <Box className="candidate-details-container">
+      <Box className="candidate-details-navbar">
+        <Box className="candidate-details-navbar-left">
+          <BackButton onClick={handleBack} variant="header" className="candidate-details-back-btn" />
+          <Typography className="candidate-details-navbar-title">Candidate Profile</Typography>
+        </Box>
+      </Box>
+
       {/* Header with Candidate Name */}
       <Card className="candidate-details-header-card">
         <CardContent className="header-card-content-compact">
           <Box className="header-layout-inline">
             <Box className="header-left">
-              <BackButton variant="header" />
-            </Box>
-            
-            <Box className="header-center">
-              <Typography variant="h5" className="candidate-name-inline">
-                {candidate.firstName} {candidate.lastName}
-              </Typography>
-              <Typography className="candidate-info-inline">
-                <span className="degree-department-inline">{candidate.degree}</span>
-                <span className="separator-inline"> - </span>
-                <span className="degree-department-inline">{candidate.department}</span>
-              </Typography>
+              <Box className="candidate-avatar-box">
+                {(candidate.firstName?.charAt(0) || "").toUpperCase()}
+                {(candidate.lastName?.charAt(0) || "").toUpperCase()}
+              </Box>
+
+              <Box className="candidate-main-info">
+                <Box className="candidate-name-row">
+                  <Typography className="candidate-name-inline">
+                    {candidate.firstName} {candidate.lastName}
+                  </Typography>
+                  <Chip
+                    label={candidate.isEligible ? "Eligible" : "Ineligible"}
+                    size="small"
+                    className={`candidate-top-chip-eligibility ${candidate.isEligible ? "candidate-top-chip-eligibility-yes" : "candidate-top-chip-eligibility-no"}`}
+                  />
+                  <Box className="candidate-header-actions">
+                    <Button
+                      variant="outlined"
+                      size="small"
+                      startIcon={<EditOutlinedIcon />}
+                      onClick={handleEditToggle}
+                      className="btn-status-action candidate-header-btn"
+                    >
+                      Edit
+                    </Button>
+                    <Button
+                      variant="outlined"
+                      size="small"
+                      startIcon={<SwapHorizOutlinedIcon />}
+                      onClick={() => { setSelectedStatus(""); setStatusDialogOpen(true); }}
+                      className="btn-status-action candidate-header-btn"
+                    >
+                      Change Status
+                    </Button>
+                  </Box>
+                </Box>
+
+                <Box className="candidate-top-meta-grid">
+                  <Box className="candidate-top-meta-column">
+                    <Box className="candidate-top-meta-row">
+                      <EmailOutlinedIcon className="candidate-top-meta-icon" />
+                      <Typography className="candidate-top-meta">
+                        <span className="candidate-top-meta-label">Email:</span>{" "}
+                        <span className="candidate-top-meta-value">{candidate.email || "N/A"}</span>
+                      </Typography>
+                    </Box>
+                    <Box className="candidate-top-meta-row">
+                      <CalendarTodayOutlinedIcon className="candidate-top-meta-icon" />
+                      <Typography className="candidate-top-meta">
+                        <span className="candidate-top-meta-label">Date of Birth:</span>{" "}
+                        <span className="candidate-top-meta-value">{candidate.dateOfBirth || "N/A"}</span>
+                      </Typography>
+                    </Box>
+                  </Box>
+                  <Box className="candidate-top-meta-column">
+                    <Box className="candidate-top-meta-row">
+                      <LocalPhoneOutlinedIcon className="candidate-top-meta-icon candidate-top-meta-icon-phone" />
+                      <Typography className="candidate-top-meta">
+                        <span className="candidate-top-meta-label">Phone No:</span>{" "}
+                        <span className="candidate-top-meta-value">{formatIndianMobile(candidate.mobile)}</span>
+                      </Typography>
+                    </Box>
+                    <Box className="candidate-top-meta-row">
+                      <CreditCardOutlinedIcon className="candidate-top-meta-icon candidate-top-meta-icon-aadhaar" />
+                      <Typography className="candidate-top-meta">
+                        <span className="candidate-top-meta-label">Aadhaar No:</span>{" "}
+                        <span className="candidate-top-meta-value">{candidate.aadhaarNumber || "N/A"}</span>
+                      </Typography>
+                    </Box>
+                  </Box>
+                </Box>
+              </Box>
             </Box>
             
             <Box className="header-right">
               <Chip
-                label={candidate.isEligible ? "Eligible" : "Not Eligible"}
-                className={candidate.isEligible ? "chip-eligible" : "chip-not-eligible"}
+                label={candidate.applicationStage || "SHORTLISTED"}
                 size="small"
+                className="candidate-top-chip-stage"
               />
               <Chip
-                label={candidate.applicationStage}
-                className="chip-status-primary"
+                label={candidate.applicationType || "STANDARD"}
                 size="small"
+                className="candidate-top-chip-type"
               />
             </Box>
           </Box>
@@ -313,223 +379,61 @@ const CandidateDetails: React.FC = () => {
       </Card>
 
       {/* Candidate Info Cards */}
-      <Grid className="candidate-info-cards" container spacing={3}>
-        {/* Personal Information */}
-        <Grid size={{ xs: 12, md: 6 }}>
-          <Card className="details-info-card">
-            <CardContent>
-              <Typography variant="h6" className="card-section-title">
-                <PersonIcon className="card-section-icon" />
-                Personal Information
-              </Typography>
-              
-              <Box className="info-list-simple">
-                <Box className="info-line-item">
-                  <Typography className="info-line-label">Email:</Typography>
-                  <Typography className="info-line-value">{candidate.email}</Typography>
-                </Box>
-
-                <Box className="info-line-item">
-                  <Typography className="info-line-label">Mobile:</Typography>
-                  <Typography className="info-line-value">{candidate.mobile}</Typography>
-                </Box>
-
-                <Box className="info-line-item">
-                  <Typography className="info-line-label">Date of Birth:</Typography>
-                  <Typography className="info-line-value">{candidate.dateOfBirth || "N/A"}</Typography>
-                </Box>
-
-                <Box className="info-line-item">
-                  <Typography className="info-line-label">Aadhaar Number:</Typography>
-                  <Typography className="info-line-value">{candidate.aadhaarNumber || "Not Provided"}</Typography>
-                </Box>
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-
+      <Grid className="candidate-info-cards" container rowSpacing={0.5} columnSpacing={0}>
         {/* Academic Information */}
         <Grid size={{ xs: 12, md: 6 }}>
           <Card className="details-info-card">
             <CardContent>
-              <Typography variant="h6" className="card-section-title">
-                <SchoolIcon className="card-section-icon" />
+              <Typography variant="h6" className="card-section-title academic-section-title">
+                <SchoolOutlinedIcon className="card-section-icon academic-section-icon" />
                 Academic Information
               </Typography>
               
-              <Box className="info-list-simple">
-                <Box className="info-line-item">
-                  <Typography className="info-line-label">Institute Name:</Typography>
-                  <Typography className="info-line-value">{candidate.instituteName || "N/A"}</Typography>
-                </Box>
-
-                <Box className="info-line-item">
-                  <Typography className="info-line-label">Location:</Typography>
-                  <Typography className="info-line-value">
-                    {candidate.city && candidate.state ? `${candidate.city}, ${candidate.state}` : "N/A"}
-                  </Typography>
-                </Box>
-
-                <Box className="info-line-item">
-                  <Typography className="info-line-label">Degree:</Typography>
-                  <Typography className="info-line-value">{candidate.degree || "N/A"}</Typography>
-                </Box>
-
-                <Box className="info-line-item">
-                  <Typography className="info-line-label">Department:</Typography>
-                  <Typography className="info-line-value">{candidate.department || "N/A"}</Typography>
-                </Box>
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        {/* Academic Performance */}
-        <Grid size={{ xs: 12, md: 6 }}>
-          <Card className="details-info-card">
-            <CardContent>
-              <Typography variant="h6" className="card-section-title">
-                <AssignmentIndIcon className="card-section-icon" />
-                Academic Performance
-              </Typography>
-              
-              <Box className="performance-grid">
-                <Box className="performance-item">
-                  <Typography className="performance-key">CGPA</Typography>
-                  <Typography className="performance-value">{candidate.cgpa?.toFixed(2) || "N/A"}</Typography>
-                </Box>
-
-                <Box className="performance-item">
-                  <Typography className="performance-key">History of Arrears</Typography>
-                  <Typography className="performance-value">{candidate.historyOfArrears || 0}</Typography>
-                </Box>
-
-                <Box className="performance-item">
-                  <Typography className="performance-key">Passout Year</Typography>
-                  <Typography className="performance-value">{candidate.passoutYear || "N/A"}</Typography>
-                </Box>
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        {/* Application Details */}
-        <Grid size={{ xs: 12, md: 6 }}>
-          <Card className="details-info-card">
-            <CardContent>
-              <Typography variant="h6" className="card-section-title">
-                <CategoryIcon className="card-section-icon" />
-                Application Details
-              </Typography>
-              
-              <Box className="info-list-simple">
-                <Box className="info-line-item">
-                  <Typography className="info-line-label">Application Type:</Typography>
-                  <Chip 
-                    label={candidate.applicationType || "STANDARD"} 
-                    className="chip-compact"
-                  />
-                </Box>
-
-                <Box className="info-line-item">
-                  <Typography className="info-line-label">Application Stage:</Typography>
-                  <Chip 
-                    label={candidate.applicationStage} 
-                    className="chip-compact"
-                  />
-                </Box>
-
-                <Box className="info-line-item">
-                  <Typography className="info-line-label">Lifecycle Status:</Typography>
-                  <Typography className="info-line-value">{candidate.lifecycleStatus || "N/A"}</Typography>
-                </Box>
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        {/* Status Management Card */}
-        <Grid size={{ xs: 12, md: 6 }}>
-          <Card className="details-info-card card-compact">
-            <CardContent>
-              <Typography variant="h6" className="card-section-title">
-                <EditIcon className="card-section-icon" />
-                Status Management
-              </Typography>
-              
-              <Box className="status-grid-horizontal">
-                <Box className="status-column">
-                  <Typography className="status-column-title">Eligibility</Typography>
-                  <Box className="status-content">
-                    <Chip
-                      label={candidate.isEligible ? "Eligible" : "Not Eligible"}
-                      className={candidate.isEligible ? "chip-status-active" : "chip-status-inactive"}
-                    />
-                    <Button
-                      variant="outlined"
-                      size="small"
-                      startIcon={<EditIcon />}
-                      onClick={handleEditToggle}
-                      className="btn-status-action"
-                    >
-                      Edit
-                    </Button>
+              {/* Academic Details Grid with institute inside */}
+              <Box className="academic-details-grid">
+                {/* Institute Header inside the box */}
+                <Box className="academic-institute-header">
+                  <Box className="academic-institute-avatar">
+                    {(candidate.instituteName?.charAt(0) || "").toUpperCase()}
+                    {(candidate.instituteName?.split(' ')[1]?.charAt(0) || "").toUpperCase()}
+                  </Box>
+                  <Box>
+                    <Typography className="academic-institute-label">Institute</Typography>
+                    <Typography className="academic-institute-name">
+                      {candidate.instituteName || "N/A"}
+                    </Typography>
                   </Box>
                 </Box>
 
-                <Box className="status-column">
-                  <Typography className="status-column-title">Application Status</Typography>
-                  <Box className="status-content">
-                    {statusUpdateMode ? (
-                      <Box className="status-update-compact">
-                        <FormControl fullWidth size="small">
-                          <InputLabel>Select Status</InputLabel>
-                          <Select
-                            value={selectedStatus}
-                            label="Select Status"
-                            onChange={(e) => setSelectedStatus(e.target.value)}
-                          >
-                            <MenuItem value="APPLIED">APPLIED</MenuItem>
-                            <MenuItem value="SHORTLISTED">SHORTLISTED</MenuItem>
-              
-                          </Select>
-                        </FormControl>
-                        <Box className="status-btn-group">
-                          <Button
-                            variant="contained"
-                            size="small"
-                            onClick={handleStatusUpdate}
-                            disabled={!selectedStatus || updatingStatus}
-                            className="btn-status-save"
-                          >
-                            {updatingStatus ? "Updating..." : "Update"}
-                          </Button>
-                          <Button
-                            variant="outlined"
-                            size="small"
-                            onClick={handleStatusModeToggle}
-                            className="btn-status-cancel"
-                          >
-                            Cancel
-                          </Button>
-                        </Box>
-                      </Box>
-                    ) : (
-                      <>
-                        <Chip
-                          label={candidate.applicationStage}
-                          className="chip-status-primary"
-                        />
-                        <Button
-                          variant="outlined"
-                          size="small"
-                          onClick={handleStatusModeToggle}
-                          className="btn-status-action"
-                        >
-                          Change
-                        </Button>
-                      </>
-                    )}
+                <Box className="academic-column">
+                  <Box className="academic-field">
+                    <Typography className="academic-field-label">Degree</Typography>
+                    <Typography className="academic-field-value">{candidate.degree || "N/A"}</Typography>
+                  </Box>
+                  <Box className="academic-field">
+                    <Typography className="academic-field-label">CGPA</Typography>
+                    <Typography className="academic-field-value academic-cgpa">{candidate.cgpa?.toFixed(2) || "N/A"}</Typography>
+                  </Box>
+                  <Box className="academic-field">
+                    <Typography className="academic-field-label">Passout Year</Typography>
+                    <Typography className="academic-field-value">{candidate.passoutYear || "N/A"}</Typography>
+                  </Box>
+                </Box>
+
+                <Box className="academic-column">
+                  <Box className="academic-field">
+                    <Typography className="academic-field-label">Department</Typography>
+                    <Typography className="academic-field-value">{candidate.department || "N/A"}</Typography>
+                  </Box>
+                  <Box className="academic-field">
+                    <Typography className="academic-field-label">Arrears</Typography>
+                    <Typography className="academic-field-value">{candidate.historyOfArrears || 0}</Typography>
+                  </Box>
+                  <Box className="academic-field">
+                    <Typography className="academic-field-label">Location</Typography>
+                    <Typography className="academic-field-value">
+                      {candidate.city && candidate.state ? `${candidate.city}, ${candidate.state}` : "N/A"}
+                    </Typography>
                   </Box>
                 </Box>
               </Box>
@@ -541,12 +445,12 @@ const CandidateDetails: React.FC = () => {
         <Grid size={{ xs: 12, md: 6 }}>
           <Card className="details-info-card card-compact">
             <CardContent>
-              <Typography variant="h6" className="card-section-title">
-                <AssignmentIndIcon className="card-section-icon" />
+              <Typography variant="h6" className="card-section-title reason-history-section-title">
+                <AssignmentIndOutlinedIcon className="card-section-icon reason-history-section-icon" />
                 Reason and History
               </Typography>
               
-              <Box className="reason-history-container">
+              <Box className="reason-history-container reason-history-details-grid">
                 {candidate.reason && (
                   <Box className="reason-section">
                     <Typography className="reason-section-label">Reason:</Typography>
@@ -573,12 +477,12 @@ const CandidateDetails: React.FC = () => {
         <Grid size={{ xs: 12, md: 6 }}>
           <Card className="details-info-card">
             <CardContent>
-              <Typography variant="h6" className="card-section-title">
-                <WorkIcon className="card-section-icon" />
+              <Typography variant="h6" className="card-section-title skills-section-title">
+                <WorkOutlineIcon className="card-section-icon skills-section-icon" />
                 Skills
               </Typography>
               
-              <Box className="skills-chip-container">
+              <Box className="skills-chip-container skills-details-grid">
                 {candidate.skillNames && candidate.skillNames.length > 0 ? (
                   candidate.skillNames.map((skill, index) => (
                     <Chip key={index} label={skill} className="chip-skill" />
@@ -595,12 +499,12 @@ const CandidateDetails: React.FC = () => {
         <Grid size={{ xs: 12, md: 6 }}>
           <Card className="details-info-card">
             <CardContent>
-              <Typography variant="h6" className="card-section-title">
-                <TimelineIcon className="card-section-icon" />
+              <Typography variant="h6" className="card-section-title timeline-section-title">
+                <TimelineOutlinedIcon className="card-section-icon timeline-section-icon" />
                 Timeline
               </Typography>
               
-              <Box className="timeline-list">
+              <Box className="timeline-list timeline-details-grid">
                 <Box className="timeline-item">
                   <Typography className="timeline-label">Created At:</Typography>
                   <Typography className="timeline-date">
@@ -641,7 +545,7 @@ const CandidateDetails: React.FC = () => {
             <Card className="details-info-card">
               <CardContent>
                 <Typography variant="h6" className="card-section-title">
-                  <RocketLaunchIcon className="card-section-icon" />
+                  <RocketLaunchOutlinedIcon className="card-section-icon" />
                   Intern Activation
                 </Typography>
                 <Typography sx={{ fontSize: '14px', color: 'var(--color-text-secondary)', mb: 2 }}>
@@ -649,7 +553,7 @@ const CandidateDetails: React.FC = () => {
                 </Typography>
                 <Button
                   variant="contained"
-                  startIcon={<RocketLaunchIcon />}
+                    startIcon={<RocketLaunchOutlinedIcon />}
                   onClick={() => { setOutlookEmail(""); setActivateDialogOpen(true); }}
                   className="btn-status-action"
                 >
@@ -664,7 +568,7 @@ const CandidateDetails: React.FC = () => {
             <Card className="details-info-card override-card-compact">
               <CardContent>
                 <Typography variant="h6" className="card-section-title">
-                  <EditIcon className="card-section-icon" />
+                  <EditOutlinedIcon className="card-section-icon" />
                   Manual Override History
                 </Typography>
                 
@@ -722,32 +626,6 @@ const CandidateDetails: React.FC = () => {
             </Card>
           </Grid>
         )}
-
-        {showApplicationHistory && (
-          <Grid size={{ xs: 12 }}>
-            <Accordion 
-              expanded={driveDetailsExpanded} 
-              onChange={(_, isExpanded) => setDriveDetailsExpanded(isExpanded)}
-              className="drive-details-accordion"
-            >
-              <AccordionSummary 
-                expandIcon={<ExpandMoreIcon />}
-                className="drive-details-accordion-summary"
-              >
-                <Typography variant="h6">Drive Details</Typography>
-              </AccordionSummary>
-              <AccordionDetails className="drive-details-accordion-details">
-                {driveDetailsExpanded && (
-                  <ApplicationHistory
-                    driveId={Number(driveIdForHistory)}
-                    candidateId={candidate.candidateId}
-                    embeddedInCandidateDetails={true}
-                  />
-                )}
-              </AccordionDetails>
-            </Accordion>
-          </Grid>
-        )}
       </Grid>
 
       {/* Activate Intern Dialog */}
@@ -793,13 +671,23 @@ const CandidateDetails: React.FC = () => {
       <Dialog 
         open={editDialogOpen} 
         onClose={handleDialogClose}
-        maxWidth="sm"
-        fullWidth
+        maxWidth={false}
         className="eligibility-dialog"
+        PaperProps={{ className: "ai-dialog-paper", sx: { width: "400px", maxWidth: "400px", minHeight: "auto", maxHeight: "350px" } }}
       >
-        <DialogTitle className="dialog-title">Update Candidate Eligibility</DialogTitle>
-        <DialogContent className="dialog-content">
-          <Box className="dialog-form-container">
+        <DialogTitle sx={{ p: "16px 24px 12px", borderBottom: "1px solid var(--color-border)" }} className="eligibility-dialog-title-wrap">
+          <Box className="eligibility-dialog-header-row">
+            <Box>
+              <Typography className="eligibility-dialog-title">Update Candidate Eligibility</Typography>
+              <Typography className="eligibility-dialog-subtitle">Change eligibility status with a reason for audit tracking.</Typography>
+            </Box>
+            <IconButton size="small" onClick={handleDialogClose}>
+              <CloseIcon fontSize="small" />
+            </IconButton>
+          </Box>
+        </DialogTitle>
+        <DialogContent sx={{ p: "16px 24px 20px" }} className="eligibility-dialog-content">
+          <Box className="eligibility-dialog-form">
             <FormControlLabel
               control={
                 <Switch
@@ -810,7 +698,7 @@ const CandidateDetails: React.FC = () => {
                 />
               }
               label={editForm.isEligible ? "Eligible" : "Not Eligible"}
-              className="dialog-switch-label"
+              className="eligibility-dialog-switch-label"
             />
             <TextField
               fullWidth
@@ -824,27 +712,69 @@ const CandidateDetails: React.FC = () => {
               placeholder="Please provide a detailed reason for changing the eligibility status"
               required
               helperText="This reason will be logged in the audit trail"
-              className="dialog-text-field"
+              className="eligibility-dialog-text-field"
             />
           </Box>
         </DialogContent>
-        <DialogActions className="dialog-actions">
-          <Button 
-            onClick={handleDialogClose} 
-            disabled={saving}
-            variant="outlined"
-            className="t-dialog-cancel-btn"
-          >
-            Cancel
-          </Button>
-          <Button 
-            onClick={handleSave} 
-            variant="contained"
+        <DialogActions sx={{ p: "16px 24px", borderTop: "1px solid var(--color-border)", justifyContent: "flex-end", gap: 1 }} className="eligibility-dialog-actions">
+          <button
+            onClick={handleSave}
             disabled={saving || !editForm.reason.trim()}
-            className="t-dialog-confirm-btn"
+            className="ai-save-btn"
           >
             {saving ? "Saving..." : "Update Eligibility"}
-          </Button>
+          </button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Status Change Dialog */}
+      <Dialog 
+        open={statusDialogOpen} 
+        onClose={() => setStatusDialogOpen(false)}
+        maxWidth={false}
+        className="eligibility-dialog"
+        PaperProps={{ className: "ai-dialog-paper", sx: { width: "400px", maxWidth: "400px", minHeight: "auto", maxHeight: "350px" } }}
+      >
+        <DialogTitle sx={{ p: "16px 24px 12px", borderBottom: "1px solid var(--color-border)" }} className="eligibility-dialog-title-wrap">
+          <Box className="eligibility-dialog-header-row">
+            <Box>
+              <Typography className="eligibility-dialog-title">Change Candidate Status</Typography>
+              <Typography className="eligibility-dialog-subtitle">Update application status</Typography>
+            </Box>
+            <IconButton size="small" onClick={() => setStatusDialogOpen(false)}>
+              <CloseIcon fontSize="small" />
+            </IconButton>
+          </Box>
+        </DialogTitle>
+        <DialogContent sx={{ p: "16px 24px 20px" }} className="eligibility-dialog-content">
+          <FormControl fullWidth className="eligibility-dialog-select">
+            <InputLabel>Select New Status</InputLabel>
+            <Select
+              value={selectedStatus}
+              label="Select New Status"
+              onChange={(e) => setSelectedStatus(e.target.value)}
+            >
+              <MenuItem value="APPLIED">APPLIED</MenuItem>
+              <MenuItem value="SHORTLISTED">SHORTLISTED</MenuItem>
+              <MenuItem value="SELECTED">SELECTED</MenuItem>
+              <MenuItem value="REJECTED">REJECTED</MenuItem>
+              <MenuItem value="OFFERED">OFFERED</MenuItem>
+              <MenuItem value="ACCEPTED">ACCEPTED</MenuItem>
+              <MenuItem value="JOINED">JOINED</MenuItem>
+              <MenuItem value="NOT_JOINED">NOT_JOINED</MenuItem>
+              <MenuItem value="OFFER_REJECTED">OFFER_REJECTED</MenuItem>
+              <MenuItem value="DROPPED">DROPPED</MenuItem>
+            </Select>
+          </FormControl>
+        </DialogContent>
+        <DialogActions sx={{ p: "16px 24px", borderTop: "1px solid var(--color-border)", justifyContent: "flex-end", gap: 1 }} className="eligibility-dialog-actions">
+          <button
+            onClick={handleStatusUpdate}
+            disabled={!selectedStatus || updatingStatus}
+            className="ai-save-btn"
+          >
+            {updatingStatus ? "Updating..." : "Update Status"}
+          </button>
         </DialogActions>
       </Dialog>
     </Box>

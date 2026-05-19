@@ -1,6 +1,6 @@
 import { http } from './api/https';
 import { handleAxiosError } from './api.error';
-import type { ApiResponse } from '../types/api.response';
+import type { ApiResponse, Page } from '../types/api.response';
 
 export interface InternWarningRequest {
   studentId: number;
@@ -33,6 +33,22 @@ export const warningApi = {
   async getAllWarnings(): Promise<ApiResponse<InternWarningResponse[]>> {
     try {
       const res = await http.get('/academy/warnings');
+      return res.data;
+    } catch (e) { throw handleAxiosError(e); }
+  },
+
+  async getWarningsFiltered(params: {
+    programId?: number;
+    programIds?: number[];
+    batchNumber?: number;
+    status?: string;
+    warningType?: string;
+    search?: string;
+    page: number;
+    size: number;
+  }): Promise<ApiResponse<Page<InternWarningResponse>>> {
+    try {
+      const res = await http.get('/academy/warnings/filtered', { params });
       return res.data;
     } catch (e) { throw handleAxiosError(e); }
   },

@@ -44,4 +44,14 @@ public interface TrainingScoreRepository extends JpaRepository<TrainingScore, In
             @Param("programId") Integer programId,
             @Param("batchNumber") Integer batchNumber,
             @Param("courseId") Integer courseId);
+
+    // Check if any scores exist for a course in a given program/batch
+    @Query("SELECT COUNT(ts) > 0 FROM TrainingScore ts " +
+           "WHERE ts.student.program.programId = :programId " +
+           "AND ts.student.batchNumber = :batchNumber " +
+           "AND ts.course.courseId = :courseId")
+    boolean existsByBatchAndCourse(
+            @Param("programId") Integer programId,
+            @Param("batchNumber") Integer batchNumber,
+            @Param("courseId") Integer courseId);
 }

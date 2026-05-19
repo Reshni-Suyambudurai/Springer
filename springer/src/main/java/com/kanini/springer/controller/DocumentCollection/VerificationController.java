@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -26,6 +27,7 @@ public class VerificationController {
     private final IVerificationService verificationService;
     private final IDocumentLinkService documentLinkService;
     
+    @PreAuthorize("hasAnyRole('TA_MANAGER','TA_HEAD')")
     @PatchMapping("/{documentId}/approve")
     public ResponseEntity<ApiResponse<VerificationResponse>> approveDocument(
             @PathVariable Long documentId,
@@ -35,6 +37,7 @@ public class VerificationController {
                 .body(ApiResponse.success("Document approved successfully", response));
     }
     
+    @PreAuthorize("hasAnyRole('TA_MANAGER','TA_HEAD')")
     @PatchMapping("/{documentId}/reject")
     public ResponseEntity<ApiResponse<VerificationResponse>> rejectDocument(
             @PathVariable Long documentId,
@@ -51,6 +54,7 @@ public class VerificationController {
                 .body(ApiResponse.success("Document rejected successfully. Candidate has been notified with resubmit link.", response));
     }
     
+    @PreAuthorize("hasAnyRole('TA_MANAGER','TA_HEAD')")
     @GetMapping("/pending")
     public ResponseEntity<ApiResponse<List<VerificationResponse>>> getPendingVerifications(
             @RequestParam(required = false) Long cycleId,
@@ -61,6 +65,7 @@ public class VerificationController {
                 .body(ApiResponse.success("Pending documents retrieved successfully", response));
     }
     
+    @PreAuthorize("hasAnyRole('TA_MANAGER','TA_HEAD')")
     @GetMapping("/{documentId}/history")
     public ResponseEntity<ApiResponse<List<VerificationResponse>>> getVerificationHistory(
             @PathVariable Long documentId) {
@@ -69,6 +74,7 @@ public class VerificationController {
                 .body(ApiResponse.success("Verification history retrieved successfully", response));
     }
     
+    @PreAuthorize("hasAnyRole('TA_MANAGER','TA_HEAD')")
     @GetMapping("/candidate/{candidateId}/completion")
     public ResponseEntity<ApiResponse<DocumentCompletionResponse>> checkDocumentCompletion(
             @PathVariable Long candidateId,

@@ -3,6 +3,7 @@ import { BrowserRouter } from 'react-router-dom'
 import { SnackbarProvider, closeSnackbar } from 'notistack'
 import { ThemeProvider as MuiThemeProvider, CssBaseline, createTheme, StyledEngineProvider } from '@mui/material'
 import { FilterOptionsProvider } from './contexts/FilterOptionsContext'
+import { NavbarActionProvider } from './contexts/NavbarActionContext'
 
 import './index.css'
 import './css/template.css'
@@ -42,7 +43,9 @@ createRoot(document.getElementById('root')!).render(
             )}
           >
             <FilterOptionsProvider>
-              <App />
+              <NavbarActionProvider>
+                <App />
+              </NavbarActionProvider>
             </FilterOptionsProvider>
           </SnackbarProvider>
         </MuiThemeProvider>

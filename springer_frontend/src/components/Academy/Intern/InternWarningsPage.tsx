@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { FigmaCloseIcon as CloseIcon } from '../../Common/FigmaIcons';
 import { useInternData } from './useInternData';
 import { warningApi } from '../../../services/warning.api';
 import type { InternWarningResponse } from '../../../services/warning.api';
@@ -149,7 +150,7 @@ const InternWarningsPage = () => {
           <div className="iwarn-ack-dialog" onClick={e => e.stopPropagation()}>
             <div className="iwarn-ack-dialog-header">
               <p className="iwarn-ack-dialog-title">Acknowledge Notice</p>
-              <button className="iwarn-form-close" onClick={() => setAckWarning(null)}>✕</button>
+              <button className="iwarn-form-close" onClick={() => setAckWarning(null)}><CloseIcon style={{ fontSize: '1.25rem' }} /></button>
             </div>
             <div className="iwarn-ack-dialog-body">
               <div className="iwarn-ack-warning-info">
@@ -166,10 +167,12 @@ const InternWarningsPage = () => {
               <textarea
                 className="iwarn-ack-textarea"
                 rows={4}
+                maxLength={1000}
                 placeholder="e.g. I acknowledge this warning and I understand the concern. I will ensure this does not happen again."
                 value={ackComment}
                 onChange={e => setAckComment(e.target.value)}
               />
+              <span style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>{ackComment.length}/1000</span>
               <div className="iwarn-ack-actions">
                 <button className="iwarn-cancel-btn" onClick={() => setAckWarning(null)}>Cancel</button>
                 <button

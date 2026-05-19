@@ -5,7 +5,9 @@ import com.kanini.springer.dto.Academy.LeaveRequestResponse;
 import com.kanini.springer.dto.Academy.LeaveReviewRequest;
 import com.kanini.springer.dto.Authentication.ApiResponse;
 import com.kanini.springer.service.Academy.ILeaveRequestService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -19,21 +21,35 @@ public class LeaveRequestController {
 
     private final ILeaveRequestService leaveService;
 
-    // Intern applies leave
+    @PreAuthorize("hasAnyRole('INTERN')")
     @PostMapping
     public ResponseEntity<ApiResponse<LeaveRequestResponse>> applyLeave(
-            @RequestBody LeaveRequestRequest request) {
+            @Valid @RequestBody LeaveRequestRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success("Leave request submitted", leaveService.applyLeave(request)));
     }
 
-    // Get all leaves — TC views, TA views and reviews
+    @PreAuthorize("hasAnyRole('TRAINING_COORDINATOR','TA_MANAGER','TA_HEAD')")
     @GetMapping
     public ResponseEntity<ApiResponse<List<LeaveRequestResponse>>> getAllLeaves() {
         return ResponseEntity.ok(ApiResponse.success("All leaves retrieved", leaveService.getAllLeaves()));
     }
 
-    // Get leaves by batch — useful for TC to see their batch
+    @PreAuthorize("hasAnyRole('TRAINING_COORDINATOR','TA_MANAGER','TA_HEAD','MEMBERS')")
+    @GetMapping("/filtered")
+    public ResponseEntity<ApiResponse<org.springframework.data.domain.Page<LeaveRequestResponse>>> getLeavesFiltered(
+            @RequestParam(required = false) Integer programId,
+            @RequestParam(required = false) List<Integer> programIds,
+            @RequestParam(required = false) Integer batchNumber,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String search,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        var result = leaveService.getLeavesFiltered(programId, programIds, batchNumber, status, search, page, size);
+        return ResponseEntity.ok(ApiResponse.success("Leaves retrieved", result));
+    }
+
+    @PreAuthorize("hasAnyRole('TRAINING_COORDINATOR','TA_MANAGER','TA_HEAD')")
     @GetMapping("/batch")
     public ResponseEntity<ApiResponse<List<LeaveRequestResponse>>> getByBatch(
             @RequestParam Integer programId,
@@ -42,25 +58,25 @@ public class LeaveRequestController {
                 leaveService.getLeavesByBatch(programId, batchNumber)));
     }
 
-    // Get leaves for a specific student — intern views own leaves
+    @PreAuthorize("hasAnyRole('INTERN','TRAINING_COORDINATOR','TA_MANAGER','TA_HEAD','MEMBERS')")
     @GetMapping("/student/{studentId}")
     public ResponseEntity<ApiResponse<List<LeaveRequestResponse>>> getByStudent(
             @PathVariable Long studentId) {
         return ResponseEntity.ok(ApiResponse.success("Leaves retrieved", leaveService.getLeavesByStudent(studentId)));
     }
 
-    // Get single leave
+    @PreAuthorize("hasAnyRole('INTERN','TRAINING_COORDINATOR','TA_MANAGER','TA_HEAD')")
     @GetMapping("/{leaveId}")
     public ResponseEntity<ApiResponse<LeaveRequestResponse>> getById(
             @PathVariable Long leaveId) {
         return ResponseEntity.ok(ApiResponse.success("Leave retrieved", leaveService.getLeaveById(leaveId)));
     }
 
-    // TA Recruiter approves or rejects — TC cannot use this endpoint
+    @PreAuthorize("hasAnyRole('TRAINING_COORDINATOR','TA_MANAGER','TA_HEAD')")
     @PatchMapping("/{leaveId}/review")
     public ResponseEntity<ApiResponse<LeaveRequestResponse>> reviewLeave(
             @PathVariable Long leaveId,
-            @RequestBody LeaveReviewRequest request) {
+            @Valid @RequestBody LeaveReviewRequest request) {
         return ResponseEntity.ok(ApiResponse.success("Leave reviewed", leaveService.reviewLeave(leaveId, request)));
     }
 }

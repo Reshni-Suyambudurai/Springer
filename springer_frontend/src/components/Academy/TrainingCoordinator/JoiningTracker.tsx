@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
 import {
   Box, Card, Typography, Table, TableBody, TableCell,
-  TableContainer, TableHead, TableRow, TablePagination,
-  CircularProgress, Chip, MenuItem, TextField, Button, Stack,
+  TableContainer, TableHead, TableRow,
+  CircularProgress, MenuItem, TextField, Button, Stack, IconButton,
   Dialog, DialogTitle, DialogContent, DialogActions, InputAdornment,
 } from '@mui/material';
-import { Person as PersonIcon, Search as SearchIcon } from '@mui/icons-material';
+import { Person as PersonIcon } from '@mui/icons-material';
+import { FigmaSearchIcon as SearchIcon, FigmaCloseIcon as CloseIcon } from '../../Common/FigmaIcons';
 import { joiningTrackerApi } from '../../../services/academy.api';
 import { internApi } from '../../../services/intern.api';
 import { showToast } from '../../../utils/toast';
@@ -16,7 +17,7 @@ import type { HiringCycleResponse } from '../../../types/TA_Recruiter/Hiring/hir
 import '../../../css/Academy/TrainingCoordinator/JoiningTracker.css';
 
 const JoiningTracker = ({ context }: { context: AcademyContextProps }) => {
-  const { programYear, cycles: ctxCycles = [] } = context;
+  const { programYear, programs: yearPrograms, cycles: ctxCycles = [] } = context;
   const user = tokenstore.getUser();
   const userId = user?.userId ?? 0;
 
@@ -27,7 +28,7 @@ const JoiningTracker = ({ context }: { context: AcademyContextProps }) => {
   const [instituteFilter, setInstituteFilter] = useState('ALL');
   const [departmentFilter, setDepartmentFilter] = useState('ALL');
   const [degreeFilter, setDegreeFilter] = useState('ALL');
-  const [stageFilter, setStageFilter] = useState('ACCEPTED');
+  const [stageFilter, setStageFilter] = useState('OFFER_ACCEPTED');
   const [loading, setLoading] = useState(false);
   const [updatingId, setUpdatingId] = useState<number | null>(null);
   const [statusConfirm, setStatusConfirm] = useState<{
@@ -36,8 +37,6 @@ const JoiningTracker = ({ context }: { context: AcademyContextProps }) => {
     candidateName: string;
   }>({ open: false, candidateId: null, candidateName: '' });
   const [statusReason, setStatusReason] = useState('');
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
 
   // Intern activation
   const [activateDialog, setActivateDialog] = useState<{ open: boolean; candidateId: number | null; candidateName: string; candidateEmail: string }>({
@@ -49,6 +48,7 @@ const JoiningTracker = ({ context }: { context: AcademyContextProps }) => {
   const handleActivateIntern = async () => {
     if (!activateDialog.candidateId) return;
     if (!outlookEmail.trim()) { showToast('Outlook email is required', 'error'); return; }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(outlookEmail.trim())) { showToast('Please enter a valid email address', 'error'); return; }
     setActivating(true);
     try {
       const res = await internApi.activateIntern(activateDialog.candidateId, { outlookEmail: outlookEmail.trim() });
@@ -75,12 +75,24 @@ const JoiningTracker = ({ context }: { context: AcademyContextProps }) => {
   };
 
   // Auto-select cycle when programYear or cycles change
+  // Derive cycle from programs (program.cycleId) — NOT from cycleYear matching
+  // because programYear may differ from cycleYear (e.g., cycle 2024, program 2025)
   useEffect(() => {
     if (programYear === 0 || cycles.length === 0) return;
+    const scopedPrograms = yearPrograms.filter(p => p.programYear === programYear);
+    if (scopedPrograms.length > 0) {
+      // Use the cycleId from the first program in this year
+      const cycleId = scopedPrograms[0].cycleId;
+      if (cycles.some(c => c.cycleId === cycleId)) {
+        setSelectedCycleId(cycleId);
+        return;
+      }
+    }
+    // Fallback: try direct year match
     const matched = cycles.find(c => c.cycleYear === programYear);
     if (matched) setSelectedCycleId(matched.cycleId);
     else setSelectedCycleId(0);
-  }, [programYear, cycles]);
+  }, [programYear, cycles, yearPrograms]);
 
   useEffect(() => {
     if (!selectedCycleId) {
@@ -90,7 +102,7 @@ const JoiningTracker = ({ context }: { context: AcademyContextProps }) => {
     setLoading(true);
     joiningTrackerApi.getCandidatesByCycleAndStages({
       cycleId: selectedCycleId,
-      applicationStages: ['ACCEPTED', 'JOINED', 'DROPPED'],
+      applicationStages: ['OFFER_ACCEPTED', 'JOINED', 'NOT_JOINED'],
     })
       .then(res => {
         const all = (res.success && res.data) ? res.data : [];
@@ -172,14 +184,14 @@ const JoiningTracker = ({ context }: { context: AcademyContextProps }) => {
   const departments = Array.from(new Set(allCycleCandidates.map(c => c.department).filter(Boolean))).sort();
   const degrees = Array.from(new Set(allCycleCandidates.map(c => c.degree).filter(Boolean))).sort();
 
-  const acceptedCount  = allCycleCandidates.filter(c => c.applicationStage === 'ACCEPTED').length;
+  const acceptedCount  = allCycleCandidates.filter(c => c.applicationStage === 'OFFER_ACCEPTED').length;
   const joinedCount    = allCycleCandidates.filter(c => c.applicationStage === 'JOINED').length;
   const notJoinedCount = allCycleCandidates.filter(c => c.applicationStage === 'NOT_JOINED').length;
 
-  const paginated = filteredCandidates.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
+
 
   const renderActionCell = (candidate: JoiningTrackerCandidate) => {
-    if (candidate.applicationStage === 'ACCEPTED') {
+    if (candidate.applicationStage === 'OFFER_ACCEPTED') {
       return (
         <Stack direction="row" spacing={1}>
           <Button
@@ -248,8 +260,8 @@ const JoiningTracker = ({ context }: { context: AcademyContextProps }) => {
       <Card className="jt-card">
         <Box className="jt-stats-row">
           <Box
-            className={`jt-stat-card jt-stat-card--accepted ${stageFilter === 'ACCEPTED' ? 'jt-stat-card--active' : ''}`}
-            onClick={() => { setStageFilter('ACCEPTED'); setPage(0); }}
+            className={`jt-stat-card jt-stat-card--accepted ${stageFilter === 'OFFER_ACCEPTED' ? 'jt-stat-card--active' : ''}`}
+            onClick={() => { setStageFilter('OFFER_ACCEPTED'); }}
             style={{ cursor: 'pointer' }}
           >
             <Typography className="jt-stat-label">Offer Accepted</Typography>
@@ -257,7 +269,7 @@ const JoiningTracker = ({ context }: { context: AcademyContextProps }) => {
           </Box>
           <Box
             className={`jt-stat-card jt-stat-card--joined ${stageFilter === 'JOINED' ? 'jt-stat-card--active' : ''}`}
-            onClick={() => { setStageFilter('JOINED'); setPage(0); }}
+            onClick={() => { setStageFilter('JOINED'); }}
             style={{ cursor: 'pointer' }}
           >
             <Typography className="jt-stat-label">Joined</Typography>
@@ -265,7 +277,7 @@ const JoiningTracker = ({ context }: { context: AcademyContextProps }) => {
           </Box>
           <Box
             className={`jt-stat-card jt-stat-card--dropped ${stageFilter === 'NOT_JOINED' ? 'jt-stat-card--active' : ''}`}
-            onClick={() => { setStageFilter('NOT_JOINED'); setPage(0); }}
+            onClick={() => { setStageFilter('NOT_JOINED'); }}
             style={{ cursor: 'pointer' }}
           >
             <Typography className="jt-stat-label">Not Joined</Typography>
@@ -279,7 +291,7 @@ const JoiningTracker = ({ context }: { context: AcademyContextProps }) => {
             size="small"
             placeholder="Search name or email"
             value={searchText}
-            onChange={(e) => { setSearchText(e.target.value); setPage(0); }}
+            onChange={(e) => { setSearchText(e.target.value); }}
             className="jt-search-input"
             InputProps={{
               startAdornment: (
@@ -289,15 +301,15 @@ const JoiningTracker = ({ context }: { context: AcademyContextProps }) => {
               ),
             }}
           />
-          <TextField select size="small" label="Institute" value={instituteFilter} onChange={(e) => { setInstituteFilter(e.target.value); setPage(0); }} className="jt-filter-select">
+          <TextField select size="small" label="Institute" value={instituteFilter} onChange={(e) => { setInstituteFilter(e.target.value); }} className="jt-filter-select">
             <MenuItem value="ALL">All Institutes</MenuItem>
             {institutes.map(v => <MenuItem key={v} value={v}>{v}</MenuItem>)}
           </TextField>
-          <TextField select size="small" label="Department" value={departmentFilter} onChange={(e) => { setDepartmentFilter(e.target.value); setPage(0); }} className="jt-filter-select">
+          <TextField select size="small" label="Department" value={departmentFilter} onChange={(e) => { setDepartmentFilter(e.target.value); }} className="jt-filter-select">
             <MenuItem value="ALL">All Departments</MenuItem>
             {departments.map(v => <MenuItem key={v} value={v}>{v}</MenuItem>)}
           </TextField>
-          <TextField select size="small" label="Degree" value={degreeFilter} onChange={(e) => { setDegreeFilter(e.target.value); setPage(0); }} className="jt-filter-select">
+          <TextField select size="small" label="Degree" value={degreeFilter} onChange={(e) => { setDegreeFilter(e.target.value); }} className="jt-filter-select">
             <MenuItem value="ALL">All Degrees</MenuItem>
             {degrees.map(v => <MenuItem key={v} value={v}>{v}</MenuItem>)}
           </TextField>
@@ -328,19 +340,18 @@ const JoiningTracker = ({ context }: { context: AcademyContextProps }) => {
                       <TableCell className="jt-table-head-cell">Institute</TableCell>
                       <TableCell className="jt-table-head-cell">Department</TableCell>
                       <TableCell className="jt-table-head-cell">Degree</TableCell>
-                      <TableCell className="jt-table-head-cell">Stage</TableCell>
                       <TableCell className="jt-table-head-cell jt-table-head-cell--actions">Actions</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {paginated.length === 0 ? (
+                    {filteredCandidates.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={6} className="jt-empty-cell">
+                        <TableCell colSpan={5} className="jt-empty-cell">
                           <PersonIcon className="jt-empty-icon" />
                           <Typography className="jt-empty-text">No candidates found for the selected status and filters</Typography>
                         </TableCell>
                       </TableRow>
-                    ) : paginated.map((c, idx) => (
+                    ) : filteredCandidates.map((c, idx) => (
                       <TableRow
                         key={c.candidateId}
                         className={`jt-table-row ${idx % 2 === 0 ? 'jt-table-row--even' : 'jt-table-row--odd'}`}
@@ -365,9 +376,6 @@ const JoiningTracker = ({ context }: { context: AcademyContextProps }) => {
                         <TableCell className="jt-table-cell">
                           <Typography className="jt-row-secondary">{c.degree || '—'}</Typography>
                         </TableCell>
-                        <TableCell className="jt-table-cell">
-                          <Chip label={c.applicationStage} size="small" className="jt-stage-chip" />
-                        </TableCell>
                         <TableCell className="jt-table-cell jt-table-cell--actions">
                           {renderActionCell(c)}
                         </TableCell>
@@ -376,23 +384,16 @@ const JoiningTracker = ({ context }: { context: AcademyContextProps }) => {
                   </TableBody>
                 </Table>
               </TableContainer>
-              <TablePagination
-                component="div"
-                count={filteredCandidates.length}
-                page={page}
-                onPageChange={(_, p) => setPage(p)}
-                rowsPerPage={rowsPerPage}
-                onRowsPerPageChange={e => { setRowsPerPage(parseInt(e.target.value, 10)); setPage(0); }}
-                rowsPerPageOptions={[10, 25, 50]}
-                className="jt-pagination"
-              />
             </>
           )}
         </Box>
       </Card>
       {/* Activate Intern Dialog */}
       <Dialog open={activateDialog.open} onClose={() => setActivateDialog({ open: false, candidateId: null, candidateName: '', candidateEmail: '' })} maxWidth="sm" fullWidth>
-        <DialogTitle className="jt-dialog-title">Activate Intern Account — {activateDialog.candidateName}</DialogTitle>
+        <DialogTitle className="jt-dialog-title" sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          Activate Intern Account — {activateDialog.candidateName}
+          <IconButton size="small" onClick={() => setActivateDialog({ open: false, candidateId: null, candidateName: '', candidateEmail: '' })}><CloseIcon style={{ fontSize: '1.25rem' }} /></IconButton>
+        </DialogTitle>
         <DialogContent>
           <Typography sx={{ mt: 1, mb: 2, fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>
             Enter the Outlook/company email for this intern's login account. A temporary password will be sent to this email.
@@ -425,8 +426,9 @@ const JoiningTracker = ({ context }: { context: AcademyContextProps }) => {
         maxWidth="sm"
         fullWidth
       >
-        <DialogTitle className="jt-dialog-title">
+        <DialogTitle className="jt-dialog-title" sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           Confirm — Mark as Not Joined
+          <IconButton size="small" onClick={() => setStatusConfirm({ open: false, candidateId: null, candidateName: '' })}><CloseIcon style={{ fontSize: '1.25rem' }} /></IconButton>
         </DialogTitle>
         <DialogContent>
           <Typography sx={{ mt: 1, fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>
@@ -440,6 +442,8 @@ const JoiningTracker = ({ context }: { context: AcademyContextProps }) => {
             placeholder="Enter reason"
             value={statusReason}
             onChange={(e) => setStatusReason(e.target.value)}
+            inputProps={{ maxLength: 500 }}
+            helperText={`${statusReason.length}/500`}
             sx={{ mt: 2 }}
           />
         </DialogContent>

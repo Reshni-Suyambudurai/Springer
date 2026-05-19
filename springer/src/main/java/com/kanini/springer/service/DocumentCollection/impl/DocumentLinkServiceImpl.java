@@ -88,7 +88,7 @@ public class DocumentLinkServiceImpl implements IDocumentLinkService {
                     documentSubmissionRepository.save(pending);
                 }
 
-                return new RequiredDocumentDTO(docTypeId, docType.getDocumentType().name(), true, "PENDING");
+                return new RequiredDocumentDTO(docTypeId, docType.getDocumentType(), true, "PENDING");
             })
             .toList();
 
@@ -156,7 +156,7 @@ public class DocumentLinkServiceImpl implements IDocumentLinkService {
         List<DocumentStatusDTO> documentStatuses = submissions.stream()
             .map(submission -> new DocumentStatusDTO(
                 submission.getDocumentType().getDocumentTypeId(),
-                submission.getDocumentType().getDocumentType().name(),
+                submission.getDocumentType().getDocumentType(),
                 true,
                 submission.getVerificationStatus().name(),
                 submission.getCreatedAt(),
@@ -209,7 +209,7 @@ public class DocumentLinkServiceImpl implements IDocumentLinkService {
             return emailService.sendRejectionEmail(
                 candidate.getEmail(),
                 candidate.getFirstName() + " " + candidate.getLastName(),
-                docType.getDocumentType().name(), rejectionReason, resubmitLink);
+                docType.getDocumentType(), rejectionReason, resubmitLink);
         } catch (Exception e) {
             log.error("Failed to send document rejection link: {}", e.getMessage(), e);
             return false;

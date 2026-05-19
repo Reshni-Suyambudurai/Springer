@@ -31,15 +31,15 @@
 /* Header variant — compact inline style */
 .back-button-header {
   color: var(--color-text-secondary) !important;
-  border: 1px solid var(--color-border-table) !important;
-  border-radius: 8px !important;
-  padding: 6px !important;
+  border: none !important;
+  border-radius: 0 !important;
+  padding: 6px 8px !important;
   transition: all 0.2s ease !important;
 }
 .back-button-header:hover {
   color: var(--color-primary) !important;
-  background-color: var(--color-icon-bg) !important;
-  border-color: var(--color-blue-100) !important;
+  background-color: transparent !important;
+  border-color: transparent !important;
 }
 
 .back-button:active {

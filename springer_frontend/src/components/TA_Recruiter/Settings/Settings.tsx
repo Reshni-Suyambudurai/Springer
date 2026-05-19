@@ -1,9 +1,9 @@
 import { useNavigate } from 'react-router-dom';
 import { Box, Card, Typography } from '@mui/material';
-import SchoolIcon from '@mui/icons-material/School';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import ViewListIcon from '@mui/icons-material/ViewList';
-import DescriptionIcon from '@mui/icons-material/Description';
+import SchoolOutlinedIcon from '@mui/icons-material/SchoolOutlined';
+import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
+import AssignmentOutlinedIcon from '@mui/icons-material/AssignmentOutlined';
+import MailOutlineIcon from '@mui/icons-material/MailOutline';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import '../../../css/TA_Recruiter/Settings/Settings.css';
 
@@ -11,25 +11,25 @@ const CARDS = [
   {
     title: 'Skills Management',
     desc: 'Manage technical and soft skills for candidate assessment',
-    icon: <SchoolIcon sx={{ fontSize: 22 }} />,
+    icon: <SchoolOutlinedIcon sx={{ fontSize: 22 }} />,
     path: '/ta-recruiter/settings/skills',
   },
   {
     title: 'Eligibility Management',
     desc: 'Define and configure candidate eligibility criteria',
-    icon: <CheckCircleIcon sx={{ fontSize: 22 }} />,
+    icon: <CheckCircleOutlineIcon sx={{ fontSize: 22 }} />,
     path: '/ta-recruiter/settings/eligibility',
   },
   {
     title: 'Round Template Management',
     desc: 'Create and manage interview round templates',
-    icon: <ViewListIcon sx={{ fontSize: 22 }} />,
+    icon: <AssignmentOutlinedIcon sx={{ fontSize: 22 }} />,
     path: '/ta-recruiter/settings/round-templates',
   },
   {
     title: 'Email Template Management',
-    desc: 'Create and manage email templates for candidate communication',
-    icon: <DescriptionIcon sx={{ fontSize: 22 }} />,
+    desc: 'Manage email templates for notifications and communications',
+    icon: <MailOutlineIcon sx={{ fontSize: 22 }} />,
     path: '/ta-recruiter/settings/email-templates',
   },
 ];
@@ -38,17 +38,10 @@ const Settings = () => {
   const navigate = useNavigate();
 
   return (
-    <Box className="t-page">
-      <Card className="t-card">
+    <Box className="t-page settings-page-override">
+      <Card className="t-card settings-card-override">
 
-        <Box className="t-header">
-          <Typography className="t-page-title">Manage</Typography>
-          <Typography className="t-page-subtitle">Configure system settings and preferences</Typography>
-        </Box>
-
-        <Box className="t-separator" />
-
-        <Box className="t-body">
+        <Box className="t-body settings-body-override">
           <Box className="settings-grid">
             {CARDS.map((card) => (
               <Card

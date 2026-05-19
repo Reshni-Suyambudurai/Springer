@@ -1,72 +1,70 @@
-/* ===== ACADEMY DASHBOARD SHELL — prefix: acd- ===== */
+/* ===== ACADEMY DASHBOARD SHELL â€” prefix: acd- ===== */
 
 .acd-page {
   display: flex;
   flex-direction: column;
-  height: calc(100vh - 50px);
-  background-color: var(--color-bg-secondary);
+  height: calc(100vh - 89px);
+  background-color: var(--color-surface);
   overflow: hidden;
 }
 
-/* ── Header shell ── */
+/* â”€â”€ Header shell â”€â”€ */
 .acd-header {
   flex-shrink: 0;
   background-color: var(--color-surface);
-  border-bottom: 1px solid var(--color-border);
-  box-shadow: 0 1px 4px var(--opacity-shadow-light);
+
 }
 
-/* ── Top row: group pills left, year filter right ── */
+/* ââ Top row: group tabs left, year filter right ââ */
 .acd-top-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 10px 24px 8px 24px;
+  padding: 0 32px;
   gap: 16px;
+  border-bottom: 1px solid var(--color-inactive-border);
 }
 
-/* ── Group pill bar ── */
+/* ââ Group tab bar ââ */
 .acd-group-bar {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 0;
 }
 
 .acd-group-btn {
-  padding: 6px 16px;
-  border-radius: 20px;
-  border: 1.5px solid var(--color-border);
+  padding: 12px 18px 10px 18px;
+  border-radius: 0;
+  border: none;
+  border-bottom: 1.6px solid transparent;
   background: transparent;
   cursor: pointer;
-  font-family: inherit;
+  font-family: 'Inter', sans-serif;
   font-size: var(--text-sm);
-  font-weight: 600;
+  font-weight: 500;
   color: var(--color-text-secondary);
   white-space: nowrap;
-  transition: all 0.18s ease;
+  transition: color 0.15s ease, border-color 0.15s ease;
   line-height: 1.4;
+  margin-bottom: -1px;
 }
 
 .acd-group-btn:hover {
-  border-color: var(--color-primary);
-  color: var(--color-primary);
-  background-color: var(--color-primary-light);
+  color: var(--color-sidebar-bg);
 }
 
 .acd-group-btn--active {
-  background-color: var(--color-primary);
-  border-color: var(--color-primary);
-  color: #ffffff;
-  box-shadow: 0 2px 8px var(--color-primary-shadow-18);
+  color: var(--color-sidebar-bg);
+  border-bottom-color: var(--color-sidebar-bg);
+  font-weight: 600;
 }
 
 .acd-group-btn--active:hover {
-  background-color: var(--color-primary-dark);
-  border-color: var(--color-primary-dark);
-  color: #ffffff;
+  color: var(--color-sidebar-bg);
+  border-bottom-color: var(--color-sidebar-bg);
 }
 
-/* ── Year filter ── */
+/* â”€â”€ Year filter â”€â”€ */
 .acd-year-filter-group {
   display: flex;
   align-items: center;
@@ -81,8 +79,26 @@
   white-space: nowrap;
 }
 
-.acd-year-select { min-width: 110px; }
-.acd-year-select .MuiOutlinedInput-root.Mui-focused fieldset { border-color: var(--color-primary); }
+.acd-year-select { min-width: 100px; }
+
+.acd-year-select .MuiOutlinedInput-root {
+  border-radius: 8px;
+  background-color: var(--color-filter-bg);
+  height: 36px;
+  font-size: 13px;
+}
+
+.acd-year-select .MuiOutlinedInput-root fieldset {
+  border: 0.8px solid transparent;
+}
+
+.acd-year-select .MuiOutlinedInput-root:hover fieldset {
+  border-color: var(--color-border);
+}
+
+.acd-year-select .MuiOutlinedInput-root.Mui-focused fieldset {
+  border-color: var(--color-primary);
+}
 
 .acd-program-badge {
   font-size: var(--text-xs);
@@ -91,50 +107,51 @@
   background-color: var(--color-primary-light);
   border: 1px solid var(--color-blue-100);
   padding: 2px 10px;
-  border-radius: 12px;
+  border-radius: 8px;
   white-space: nowrap;
 }
 
-/* ── Tab bar (tabs inside active group) ── */
+/* â”€â”€ Tab bar (tabs inside active group) â”€â”€ */
 .acd-tab-bar {
   display: flex;
   align-items: flex-end;
   gap: 0;
-  padding: 0 24px;
+  padding: 0 32px;
   overflow-x: auto;
   scrollbar-width: none;
-  border-top: 1px solid var(--color-grey-100);
+  background-color: var(--color-grey-50);
+  border-bottom: 0.8px solid var(--color-inactive-border);
 }
 
 .acd-tab-bar::-webkit-scrollbar { display: none; }
 
 .acd-tab-btn {
-  padding: 9px 18px;
+  padding: 12px 18px 10px 18px;
   border: none;
-  border-bottom: 2px solid transparent;
+  border-bottom: 1.6px solid transparent;
   background: transparent;
   cursor: pointer;
-  font-family: inherit;
+  font-family: 'Inter', sans-serif;
   font-size: var(--text-sm);
   font-weight: 500;
   color: var(--color-text-secondary);
   white-space: nowrap;
-  transition: color 0.15s ease, border-color 0.15s ease;
-  position: relative;
-  bottom: -1px;
+  transition: color 0.15s ease, border-color 0.15s ease, background-color 0.15s ease;
+  margin-bottom: -0.8px;
 }
 
 .acd-tab-btn:hover {
-  color: var(--color-primary);
+  color: var(--color-link);
 }
 
 .acd-tab-btn--active {
-  color: var(--color-primary);
-  border-bottom-color: var(--color-primary);
-  font-weight: 700;
+  color: var(--color-link);
+  border-bottom-color: var(--color-link);
+  font-weight: 600;
+  background-color: var(--color-white);
 }
 
-/* ── Content area ── */
+/* â”€â”€ Content area â”€â”€ */
 .acd-content {
   flex: 1;
   overflow: hidden;

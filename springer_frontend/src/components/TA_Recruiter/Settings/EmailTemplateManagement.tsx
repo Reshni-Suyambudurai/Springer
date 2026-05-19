@@ -4,13 +4,10 @@ import {
   CircularProgress, Alert, Dialog, DialogTitle,
   DialogContent, DialogActions, FormControl, InputLabel, Select, MenuItem,
 } from '@mui/material';
-import EmailIcon from '@mui/icons-material/Email';
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import CloseIcon from '@mui/icons-material/Close';
-import BackButton from '../../Common/BackButton';
-import { useNavigate } from 'react-router-dom';
 import Quill from 'quill';
 import 'quill/dist/quill.snow.css';
 import { emailTemplateApi } from '../../../services/emailtemplate.api';
@@ -57,7 +54,6 @@ const QUILL_TOOLBAR = [
 ];
 
 const EmailTemplateManagement = () => {
-  const navigate = useNavigate();
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -286,21 +282,10 @@ const EmailTemplateManagement = () => {
   };
 
   return (
-    <Box className="t-page">
-      <Card className="t-card">
-        {/* Header */}
+    <Box className="t-page settings-page-override">
+      <Card className="t-card settings-card-override">
+        {/* Action Buttons */}
         <Box className="t-header">
-          <Stack direction="row" alignItems="center" className="et-header-icon-stack">
-            <BackButton onClick={() => navigate('/ta-recruiter/settings')} variant="header" />
-            <Box className="t-icon-box">
-              <EmailIcon className="email-template-header-icon" />
-            </Box>
-            <Stack className="et-title-stack">
-              <Typography className="t-page-title">Email Template Management</Typography>
-              <Typography className="t-page-subtitle">Manage email templates for candidate communication</Typography>
-            </Stack>
-          </Stack>
-
           <Button
             variant="contained"
             startIcon={<AddIcon />}

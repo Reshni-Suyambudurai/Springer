@@ -1,4 +1,4 @@
-import { http } from "./api/https";
+﻿import { http } from "./api/https";
 import { handleAxiosError } from "./api.error";
 import type { ApiResponse } from "../types/api.response";
 import type {
@@ -263,8 +263,8 @@ export const applicationApi = {
    * Bulk update application statuses
    * Updates the status of multiple applications and corresponding candidate statuses.
    * Rules:
-   * - If application status = SELECTED → candidate status = SELECTED
-   * - If application status = FAILED or DROPPED → candidate status = REJECTED
+   * - If application status = SELECTED â†’ candidate status = SELECTED
+   * - If application status = FAILED or DROPPED â†’ candidate status = REJECTED
    * @param request - Bulk status update request
    * @returns Bulk update response with success/failure counts
    */
@@ -319,7 +319,7 @@ export const applicationApi = {
 
   /**
    * Get batch-wise application IDs for a drive
-   * Returns a map of batchTime → list of application IDs for that batch.
+   * Returns a map of batchTime â†’ list of application IDs for that batch.
    * Applications with no batchTime are grouped under 'UNSCHEDULED'.
    * @param driveId - The drive schedule ID
    * @returns Map of batch time to application ID list

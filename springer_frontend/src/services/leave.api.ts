@@ -1,6 +1,6 @@
 import { http } from './api/https';
 import { handleAxiosError } from './api.error';
-import type { ApiResponse } from '../types/api.response';
+import type { ApiResponse, Page } from '../types/api.response';
 
 export interface LeaveRequestRequest {
   studentId: number;
@@ -53,6 +53,21 @@ export const leaveApi = {
   async getAllLeaves(): Promise<ApiResponse<LeaveRequestResponse[]>> {
     try {
       const res = await http.get('/academy/leaves');
+      return res.data;
+    } catch (e) { throw handleAxiosError(e); }
+  },
+
+  async getLeavesFiltered(params: {
+    programId?: number;
+    programIds?: number[];
+    batchNumber?: number;
+    status?: string;
+    search?: string;
+    page: number;
+    size: number;
+  }): Promise<ApiResponse<Page<LeaveRequestResponse>>> {
+    try {
+      const res = await http.get('/academy/leaves/filtered', { params });
       return res.data;
     } catch (e) { throw handleAxiosError(e); }
   },

@@ -1,31 +1,97 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import { tokenstore } from '../../auth/tokenstore';
 import { notificationApi } from '../../services/notification.api';
-import { internApi } from '../../services/intern.api';
-import { showToast } from '../../utils/toast';
+import { useNavbarAction } from '../../contexts/NavbarActionContext';
 import type { NotificationResponse } from '../../types/notification.types';
 import '../../css/Common/Navbar.css';
 
-function Navbar() {
-    const [showProfile, setShowProfile] = useState(false);
-    const [theme, setTheme] = useState<'light' | 'dark'>(tokenstore.getTheme());
+const PAGE_TITLES: Record<string, { title: string; subtitle: string }> = {
+  '/dashboard': { title: 'Dashboard', subtitle: 'Welcome back' },
+  '/ta-recruiter/dashboard': { title: 'Dashboard', subtitle: 'Welcome back' },
+  '/ta-recruiter/institutes': { title: 'Institutes Management', subtitle: 'Manage and view all registered institutes' },
+  '/ta-recruiter/candidates': { title: 'Candidates', subtitle: 'Manage and view all candidates' },
+  '/ta-recruiter/hiring-cycles': { title: 'Hiring Cycle', subtitle: 'Manage hiring cycles' },
+  '/ta-recruiter/drive-calendar': { title: 'Hiring Calendar', subtitle: 'View and manage hiring calendar' },
+  '/ta-recruiter/documents': { title: 'Document Processing', subtitle: 'Manage candidate documents and offers' },
+  '/ta-recruiter/academy': { title: 'Academy', subtitle: 'Manage training programs, courses, and intern progress' },
+  '/ta-recruiter/settings': { title: 'Manage', subtitle: 'Settings and configurations' },
+  '/ta-recruiter/settings/skills': { title: 'Skills Management', subtitle: 'Manage technical and soft skills' },
+  '/ta-recruiter/settings/eligibility': { title: 'Eligibility Management', subtitle: 'Define and configure candidate eligibility criteria' },
+  '/ta-recruiter/settings/round-templates': { title: 'Round Template Management', subtitle: 'Create and manage interview round templates' },
+  '/ta-recruiter/settings/email-templates': { title: 'Email Template Management', subtitle: 'Manage email templates for candidate communication' },
+  '/ta-head/settings/skills': { title: 'Skills Management', subtitle: 'Manage technical and soft skills' },
+  '/ta-head/settings/eligibility': { title: 'Eligibility Management', subtitle: 'Define and configure candidate eligibility criteria' },
+  '/ta-head/settings/round-templates': { title: 'Round Template Management', subtitle: 'Create and manage interview round templates' },
+  '/ta-head/settings/email-templates': { title: 'Email Template Management', subtitle: 'Manage email templates for candidate communication' },
+  '/drive-process/drive-cycle': { title: 'Drive Dashboard', subtitle: 'Manage drive cycles' },
+  '/ta-head/dashboard': { title: 'Dashboard', subtitle: 'Welcome back' },
+  '/ta-head/hiring-cycles': { title: 'Hiring Cycle', subtitle: 'Manage hiring cycles' },
+  '/ta-head/academy': { title: 'Academy Dashboard', subtitle: 'Academy management' },
+  '/ta-head/settings': { title: 'Requests', subtitle: 'Manage pending requests' },
+  '/hiring-manager/dashboard': { title: 'Dashboard', subtitle: 'Welcome back' },
+  '/hiring-manager/hiring-cycles': { title: 'Hiring Cycle', subtitle: 'Manage hiring cycles' },
+  '/hiring-manager/requests': { title: 'Requests', subtitle: 'Manage hiring requests' },
+  '/admin/dashboard': { title: 'Dashboard', subtitle: 'System administration' },
+  '/admin/users': { title: 'Users', subtitle: 'Manage system users' },
+  '/admin/manage': { title: 'Manage Users', subtitle: 'View and manage all users' },
+  '/admin/settings': { title: 'Settings', subtitle: 'System settings' },
+  // Training Coordinator
+  '/training-coordinator/dashboard': { title: 'Dashboard', subtitle: 'Training overview and quick actions' },
+  '/training-coordinator/academy': { title: 'Academy', subtitle: 'Manage attendance, scores, and interns' },
+  // Intern
+  '/intern/dashboard': { title: 'Dashboard', subtitle: 'Your training overview' },
+  '/intern/scores': { title: 'My Scores', subtitle: 'View your course scores and leaderboard' },
+  '/intern/progress': { title: 'My Progress', subtitle: 'Track your training journey' },
+  '/intern/calendar': { title: 'Calendar', subtitle: 'View schedule and events' },
+  '/intern/certificates': { title: 'Certificates', subtitle: 'Upload and manage your certificates' },
+  '/intern/profile': { title: 'My Profile', subtitle: 'Update your profile and links' },
+  '/intern/leaves': { title: 'Leave Requests', subtitle: 'Apply and track your leave requests' },
+  '/intern/warnings': { title: 'Notices', subtitle: 'View and acknowledge notices' },
+};
+
+interface NavbarProps {
+    onMobileMenuToggle?: () => void;
+}
+
+function Navbar({ onMobileMenuToggle }: NavbarProps) {
     const [notifications, setNotifications] = useState<NotificationResponse[]>([]);
     const [showNotifications, setShowNotifications] = useState(false);
-    const [showChangePwd, setShowChangePwd] = useState(false);
-    const [oldPwd, setOldPwd] = useState('');
-    const [newPwd, setNewPwd] = useState('');
-    const [confirmPwd, setConfirmPwd] = useState('');
-    const [changingPwd, setChangingPwd] = useState(false);
-    const profileRef = useRef<HTMLDivElement>(null);
     const notifRef = useRef<HTMLDivElement>(null);
     const wsRef = useRef<WebSocket | null>(null);
-    const navigate = useNavigate();
+    const location = useLocation();
     const user = tokenstore.getUser();
+    const { action } = useNavbarAction();
+    const [theme, setTheme] = useState<'light' | 'dark'>(tokenstore.getTheme());
+
+    const isSettingsSubPage = [
+        '/ta-recruiter/settings/skills',
+        '/ta-recruiter/settings/eligibility',
+        '/ta-recruiter/settings/round-templates',
+        '/ta-recruiter/settings/email-templates',
+        '/ta-head/settings/skills',
+        '/ta-head/settings/eligibility',
+        '/ta-head/settings/round-templates',
+        '/ta-head/settings/email-templates',
+    ].includes(location.pathname);
+    const showBackBtn = location.pathname.startsWith('/ta-recruiter/institutes/') || isSettingsSubPage;
 
     const unreadCount = notifications.filter(n => !n.isRead).length;
 
-    // Load existing notifications from REST API
+    const getPageInfo = () => {
+        const path = location.pathname;
+        if (PAGE_TITLES[path]) return PAGE_TITLES[path];
+        // Check for 3-segment paths like /ta-recruiter/settings/skills
+        const base3 = '/' + path.split('/').slice(1, 4).join('/');
+        if (PAGE_TITLES[base3]) return PAGE_TITLES[base3];
+        // Check for 2-segment paths like /ta-recruiter/institutes/:id
+        const base2 = '/' + path.split('/').slice(1, 3).join('/');
+        if (PAGE_TITLES[base2]) return PAGE_TITLES[base2];
+        return { title: 'Springer', subtitle: '' };
+    };
+
+    const { title, subtitle } = getPageInfo();
+
     const loadNotifications = useCallback(async () => {
         if (!user?.userId) return;
         try {
@@ -34,28 +100,22 @@ function Navbar() {
         } catch { /* silent */ }
     }, [user?.userId]);
 
-    // Connect WebSocket on mount
     useEffect(() => {
         if (!user?.userId) return;
         loadNotifications();
-
-        const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
-        const wsBase = apiBase.replace(/^http/, 'ws').replace(/\/api$/, '');
-        const ws = new WebSocket(`${wsBase}/ws/notifications?userId=${user.userId}`);
+        // Use correct WebSocket port (8080, same as API)
+        const wsUrl = `ws://localhost:8080/ws/notifications?userId=${user.userId}`;
+        const ws = new WebSocket(wsUrl);
         wsRef.current = ws;
-
         ws.onmessage = (event) => {
             try {
                 const newNotif: NotificationResponse = JSON.parse(event.data);
                 setNotifications(prev => [newNotif, ...prev]);
-            } catch { /* ignore parse errors */ }
+            } catch { /* ignore */ }
         };
-
-        ws.onerror = () => { /* silent — user still gets notifications via REST */ };
-        ws.onclose = () => { /* silent */ };
-
+        ws.onerror = () => { /* silent */ };
         return () => { ws.close(); };
-    }, [user?.userId]);
+    }, [user?.userId, loadNotifications]);
 
     const handleMarkAsRead = async (notificationId: number) => {
         try {
@@ -83,14 +143,7 @@ function Navbar() {
     };
 
     useEffect(() => {
-        document.documentElement.setAttribute('data-theme', theme);
-    }, [theme]);
-
-    useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
-            if (profileRef.current && !profileRef.current.contains(event.target as Node)) {
-                setShowProfile(false);
-            }
             if (notifRef.current && !notifRef.current.contains(event.target as Node)) {
                 setShowNotifications(false);
             }
@@ -103,95 +156,52 @@ function Navbar() {
         const newTheme = theme === 'light' ? 'dark' : 'light';
         setTheme(newTheme);
         tokenstore.setTheme(newTheme);
-    };
-
-    const handleLogout = () => {
-        tokenstore.clear();
-        navigate('/login');
-    };
-
-    const handleChangePassword = async () => {
-        if (!newPwd || !oldPwd) { showToast('All fields are required', 'error'); return; }
-        if (newPwd !== confirmPwd) { showToast('New passwords do not match', 'error'); return; }
-        if (newPwd.length < 6) { showToast('Password must be at least 6 characters', 'error'); return; }
-        if (!user?.userId) return;
-        setChangingPwd(true);
-        try {
-            const res = await internApi.changePassword(user.userId, oldPwd, newPwd);
-            if (res.success) {
-                showToast('Password changed successfully!', 'success');
-                setShowChangePwd(false);
-                setOldPwd(''); setNewPwd(''); setConfirmPwd('');
-            }
-        } catch (err: any) {
-            showToast(err.message || 'Failed to change password', 'error');
-        } finally {
-            setChangingPwd(false);
-        }
+        document.documentElement.setAttribute('data-theme', newTheme);
     };
 
     return (
-        <>
         <nav className="navbar">
             <div className="navbar-content">
                 <div className="navbar-left">
-                    <div className="navbar-logo">
-                        <img src="/kanini.png" alt="Kanini" className="logo-img" />
+                    {onMobileMenuToggle && (
+                        <button className="navbar-hamburger" onClick={onMobileMenuToggle} aria-label="Open menu">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                                <line x1="3" y1="6" x2="21" y2="6" />
+                                <line x1="3" y1="12" x2="21" y2="12" />
+                                <line x1="3" y1="18" x2="21" y2="18" />
+                            </svg>
+                        </button>
+                    )}
+                    {showBackBtn && (
+                        <button className="navbar-back-btn" onClick={() => window.history.back()} aria-label="Go back">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                <polyline points="15 18 9 12 15 6" />
+                            </svg>
+                        </button>
+                    )}
+                    <div className="navbar-page-info">
+                        <p className="navbar-page-title">{title}</p>
+                        {subtitle && <p className="navbar-page-subtitle">{subtitle}</p>}
                     </div>
-                    <span className="navbar-title">Springer</span>
                 </div>
 
+                {/* Right: Page Actions + Notification */}
                 <div className="navbar-right">
-                    <button
-                        className="navbar-icon-btn"
-                        onClick={toggleTheme}
-                        aria-label="Toggle theme"
-                        title={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
-                    >
-                        {theme === 'light' ? (
-                            <svg
-                                width="20"
-                                height="20"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="2"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                            >
-                                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
-                            </svg>
-                        ) : (
-                            <svg
-                                width="20"
-                                height="20"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="2"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                            >
-                                <circle cx="12" cy="12" r="5" />
-                                <line x1="12" y1="1" x2="12" y2="3" />
-                                <line x1="12" y1="21" x2="12" y2="23" />
-                                <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
-                                <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
-                                <line x1="1" y1="12" x2="3" y2="12" />
-                                <line x1="21" y1="12" x2="23" y2="12" />
-                                <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
-                                <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
-                            </svg>
-                        )}
-                    </button>
 
+                    {/* Page Action Button (from NavbarActionContext) */}
+                    {action && (
+                        <button className="navbar-action-btn" onClick={action.onClick}>
+                            {action.icon && <span className="navbar-action-btn-icon">{action.icon}</span>}
+                            {action.label}
+                        </button>
+                    )}
+
+                    {/* Portal target for page-level actions (e.g. cycle selector) */}
+                    <div id="navbar-actions-slot" />
+
+                    {/* Notification Bell */}
                     <div className="navbar-notif" ref={notifRef}>
-                        <button
-                            className="navbar-icon-btn"
-                            aria-label="Notifications"
-                            title="Notifications"
-                            onClick={() => setShowNotifications(!showNotifications)}
-                        >
+                        <button className="navbar-icon-btn" aria-label="Notifications" onClick={() => setShowNotifications(!showNotifications)}>
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                 <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 7h18s-3 0-3-7" />
                                 <path d="M13.73 21a2 2 0 0 1-3.46 0" />
@@ -235,89 +245,33 @@ function Navbar() {
                         )}
                     </div>
 
-                    <div className="navbar-profile" ref={profileRef}>
-                        <button
-                            className="navbar-profile-avatar-btn"
-                            onClick={() => setShowProfile(!showProfile)}
-                            aria-label="Profile menu"
-                            title="Profile"
-                        >
-                            {user?.username.charAt(0).toUpperCase()}
-                        </button>
-
-                        {showProfile && user && (
-                            <div className="profile-overlay">
-                                <div className="profile-header">
-                                    <div className="profile-avatar">
-                                        {user.username.charAt(0).toUpperCase()}
-                                    </div>
-                                    <div className="profile-info">
-                                        <h3 className="profile-name">{user.username}</h3>
-                                        <p className="profile-role">{user.roleName}</p>
-                                    </div>
-                                </div>
-                                <div className="profile-details">
-                                    <div className="profile-detail-item">
-                                        <svg
-                                            width="16"
-                                            height="16"
-                                            viewBox="0 0 24 24"
-                                            fill="none"
-                                            stroke="currentColor"
-                                            strokeWidth="2"
-                                            strokeLinecap="round"
-                                            strokeLinejoin="round"
-                                        >
-                                            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
-                                            <polyline points="22,6 12,13 2,6" />
-                                        </svg>
-                                        <span>{user.email}</span>
-                                    </div>
-                                </div>
-                                <button className="profile-change-pwd-btn" onClick={() => { setShowProfile(false); setShowChangePwd(true); }}>
-                                    🔐 Change Password
-                                </button>
-                                <button className="profile-logout-btn" onClick={handleLogout}>
-                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-                                        <polyline points="16 17 21 12 16 7" />
-                                        <line x1="21" y1="12" x2="9" y2="12" />
-                                    </svg>
-                                    Logout
-                                </button>
-                            </div>
+                    <button
+                        className="navbar-icon-btn navbar-theme-btn"
+                        onClick={toggleTheme}
+                        aria-label="Toggle theme"
+                        title={theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}
+                    >
+                        {theme === 'light' ? (
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+                            </svg>
+                        ) : (
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <circle cx="12" cy="12" r="5" />
+                                <line x1="12" y1="1" x2="12" y2="3" />
+                                <line x1="12" y1="21" x2="12" y2="23" />
+                                <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
+                                <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+                                <line x1="1" y1="12" x2="3" y2="12" />
+                                <line x1="21" y1="12" x2="23" y2="12" />
+                                <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
+                                <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+                            </svg>
                         )}
-                    </div>
+                    </button>
                 </div>
             </div>
         </nav>
-
-        {/* Change Password Dialog */}
-        {showChangePwd && (
-            <div className="pwd-dialog-overlay" onClick={() => setShowChangePwd(false)}>
-                <div className="pwd-dialog" onClick={e => e.stopPropagation()}>
-                    <div className="pwd-dialog-header">
-                        <span>🔐 Change Password</span>
-                        <button className="pwd-dialog-close" onClick={() => setShowChangePwd(false)}>✕</button>
-                    </div>
-                    <div className="pwd-dialog-body">
-                        <input className="pwd-input" type="password" placeholder="Current Password"
-                            value={oldPwd} onChange={e => setOldPwd(e.target.value)} />
-                        <input className="pwd-input" type="password" placeholder="New Password (min 6 chars)"
-                            value={newPwd} onChange={e => setNewPwd(e.target.value)} />
-                        <input className="pwd-input" type="password" placeholder="Confirm New Password"
-                            value={confirmPwd} onChange={e => setConfirmPwd(e.target.value)} />
-                    </div>
-                    <div className="pwd-dialog-footer">
-                        <button className="pwd-cancel-btn" onClick={() => setShowChangePwd(false)}>Cancel</button>
-                        <button className="pwd-submit-btn" onClick={handleChangePassword} disabled={changingPwd}>
-                            {changingPwd ? 'Saving...' : 'Change Password'}
-                        </button>
-                    </div>
-                </div>
-            </div>
-        )}
-        </>
     );
 }
 

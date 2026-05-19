@@ -1,18 +1,18 @@
-/* ===== TRAINING SCORES PANEL — prefix: sc- ===== */
+/* ===== TRAINING SCORES PANEL ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â prefix: sc- ===== */
 
 .sc-page {
   display: flex;
   flex-direction: column;
   height: 100%;
-  gap: 4px;
-  background-color: var(--color-bg-secondary);
-  padding: 4px;
+  gap: 0;
+  background-color: var(--color-surface);
+  padding: 0;
 }
 
 .sc-card {
-  border-radius: 12px !important;
-  border: 1px solid var(--color-card-border) !important;
-  box-shadow: 0 1px 3px 0 var(--opacity-shadow-light), 0 6px 16px -2px var(--opacity-shadow-dark) !important;
+  border-radius: 0 !important;
+  border: none !important;
+  box-shadow: none !important;
   background-color: var(--color-surface) !important;
   flex: 1;
   display: flex;
@@ -21,7 +21,7 @@
   min-height: 0;
 }
 
-/* ── Loading ── */
+/* ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ Loading ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ */
 .sc-loading-wrap {
   display: flex;
   justify-content: center;
@@ -30,10 +30,10 @@
   padding: 80px 0;
 }
 
-/* ── Header ── */
+/* ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ Header ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ */
 .sc-header {
   flex-shrink: 0;
-  padding: 20px 24px 12px 24px;
+  padding: 16px 32px 12px 32px;
   background-color: var(--color-surface);
 }
 
@@ -79,10 +79,10 @@
   box-shadow: 0 4px 12px var(--color-primary-shadow-28) !important;
 }
 
-/* ── Separator ── */
+/* ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ Separator ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ */
 .sc-separator { border-top: 1px solid var(--color-grey-200); }
 
-/* ── Filter Section ── */
+/* ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ Filter Section ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ */
 .sc-filter-section {
   flex-shrink: 0;
   padding: 10px 24px;
@@ -110,7 +110,7 @@
   white-space: nowrap;
 }
 
-/* ── Table Section ── */
+/* ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ Table Section ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ */
 .sc-table-section {
   flex: 1;
   display: flex;
@@ -124,6 +124,8 @@
   flex: 1;
   overflow: auto !important;
   min-height: 0;
+  border: 0.8px solid var(--color-inactive-border);
+  border-radius: 10px;
   scrollbar-width: thin;
   scrollbar-color: var(--color-grey-350) var(--color-grey-150);
 }
@@ -132,36 +134,39 @@
 .sc-table-container::-webkit-scrollbar-thumb { background: var(--color-grey-350); border-radius: 4px; }
 .sc-table-container::-webkit-scrollbar-thumb:hover { background: var(--color-grey-500); }
 
-.sc-table-head-row { background-color: var(--color-bg-table-header); height: 48px; }
+.sc-table-head-row { background-color: var(--color-inactive-bg); height: 48px; }
 
 .sc-table-head-cell {
-  font-size: var(--text-xs) !important;
-  font-weight: 700 !important;
-  color: var(--color-grey-600) !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  color: var(--color-chip-count-text) !important;
   text-transform: uppercase !important;
-  letter-spacing: 0.75px !important;
-  background-color: var(--color-bg-table-header) !important;
+  letter-spacing: 0.6px !important;
+  background-color: var(--color-inactive-bg) !important;
   padding: 8px 16px !important;
-  border-bottom-color: var(--color-border-table) !important;
+  border-bottom: 0.8px solid var(--color-inactive-border) !important;
+  font-family: 'Inter', sans-serif !important;
 }
 
-.sc-table-row { height: 64px; transition: all 0.15s ease; }
+.sc-table-row { height: 64px; transition: background-color 0.15s ease; }
 .sc-table-row--even { background-color: var(--color-surface); }
-.sc-table-row--odd  { background-color: var(--color-surface-alt); }
-.sc-table-row td { border-bottom: 1px solid var(--color-border-table); }
-.sc-table-row:hover { background-color: var(--color-hover-bg) !important; }
+.sc-table-row--odd  { background-color: var(--color-surface); }
+.sc-table-row td { border-bottom: 0.8px solid var(--color-border-subtle); }
+.sc-table-row:hover { background-color: var(--color-inactive-bg) !important; }
 
 .sc-table-cell { padding: 12px 16px !important; vertical-align: middle !important; }
 
 .sc-row-primary {
-  font-size: var(--text-sm) !important;
-  font-weight: 700 !important;
+  font-size: 16px !important;
+  font-weight: 500 !important;
   color: var(--color-text-primary) !important;
-  line-height: 1.4 !important;
+  line-height: 24px !important;
+  font-family: 'Inter', sans-serif !important;
 }
 
 .sc-row-secondary {
-  font-size: var(--text-xs) !important;
+  font-size: var(--text-sm) !important;
+  font-weight: 400 !important;
   color: var(--color-text-secondary) !important;
 }
 
@@ -181,21 +186,21 @@
   color: var(--color-text-secondary) !important;
 }
 
-/* ── Status chips ── */
+/* ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ Status chips ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ */
 .sc-status-chip { font-size: var(--text-xs) !important; font-weight: 600 !important; border-radius: 6px !important; }
 .sc-status-chip--excellent { color: var(--color-success-dark) !important; border-color: var(--color-success-border) !important; background-color: var(--color-success-light) !important; }
-.sc-status-chip--good      { color: var(--color-primary) !important; border-color: var(--color-blue-100) !important; background-color: var(--color-primary-light) !important; }
+.sc-status-chip--good      { color: var(--color-success-dark) !important; border-color: var(--color-success-border) !important; background-color: var(--color-success-light) !important; }
 .sc-status-chip--average   { color: var(--color-warning) !important; border-color: var(--color-warning-border) !important; background-color: var(--color-warning-bg) !important; }
 .sc-status-chip--below     { color: var(--color-error-dark) !important; border-color: var(--color-error-border) !important; background-color: var(--color-error-light) !important; }
 
-/* ── Pagination ── */
+/* ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ Pagination ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ */
 .sc-pagination .MuiTablePagination-selectLabel,
 .sc-pagination .MuiTablePagination-input { display: none !important; }
 .sc-pagination .MuiIconButton-root { padding: 4px !important; color: var(--color-text-secondary) !important; }
 .sc-pagination .MuiIconButton-root:hover { background-color: var(--opacity-shadow-very-light) !important; }
 .sc-pagination .MuiIconButton-root.Mui-disabled { color: var(--color-grey-350) !important; }
 
-/* ── Empty State ── */
+/* ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ Empty State ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ */
 .sc-empty-state {
   display: flex;
   flex-direction: column;
@@ -208,7 +213,7 @@
 .sc-empty-icon { font-size: 40px !important; color: var(--color-empty-icon) !important; margin-bottom: 8px !important; }
 .sc-empty-text { font-size: var(--text-sm) !important; font-weight: 500 !important; color: var(--color-empty-text) !important; }
 
-/* ── Dialog ── */
+/* ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ Dialog ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ */
 .sc-dialog-title {
   font-size: var(--text-lg) !important;
   font-weight: 700 !important;
@@ -229,10 +234,10 @@
 
 .sc-dialog-submit-btn:hover { background-color: var(--color-primary-dark) !important; }
 
-/* ── Dialog student table ── */
+/* ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ Dialog student table ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ */
 .sc-dlg-table-wrap {
   border: 1px solid var(--color-border);
-  border-radius: 10px;
+  border-radius: 8px;
   overflow: hidden;
 }
 
@@ -268,7 +273,7 @@
 .sc-dlg-col--review  { min-width: 0; padding-top: 4px; }
 .sc-dlg-col--status  { display: flex; align-items: flex-start; padding-top: 6px; }
 
-/* ── Score input in dialog ── */
+/* ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ Score input in dialog ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ */
 .sc-score-input { width: 90px !important; }
 .sc-score-input .MuiOutlinedInput-root.Mui-focused fieldset { border-color: var(--color-primary) !important; }
 .sc-score-input input { text-align: center; font-weight: 700 !important; padding: 6px 8px !important; }

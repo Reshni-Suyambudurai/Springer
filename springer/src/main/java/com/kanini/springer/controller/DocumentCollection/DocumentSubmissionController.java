@@ -14,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -70,6 +71,7 @@ public class DocumentSubmissionController {
                 .body(ApiResponse.success("Document uploaded successfully", response));
     }
     
+    @PreAuthorize("hasAnyRole('TA_MANAGER','TA_HEAD')")
     @GetMapping("/candidate/{candidateId}")
     public ResponseEntity<ApiResponse<List<DocumentSubmissionResponse>>> getSubmissionsByCandidate(
             @PathVariable Long candidateId) {
@@ -78,17 +80,20 @@ public class DocumentSubmissionController {
                 .body(ApiResponse.success("Candidate documents retrieved successfully", response));
     }
     
+    @PreAuthorize("hasAnyRole('TA_MANAGER','TA_HEAD')")
     @GetMapping
     public ResponseEntity<ApiResponse<List<DocumentSubmissionResponse>>> getAllSubmissions(
             @RequestParam(required = false) String status,
             @RequestParam(required = false) Long cycleId,
+            @RequestParam(required = false) String applicationStage,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-        List<DocumentSubmissionResponse> response = submissionService.getAllSubmissions(status, cycleId, page, size);
+        List<DocumentSubmissionResponse> response = submissionService.getAllSubmissions(status, cycleId, applicationStage, page, size);
         return ResponseEntity.status(HttpStatus.OK)
                 .body(ApiResponse.success("All submissions retrieved successfully", response));
     }
     
+    @PreAuthorize("hasAnyRole('TA_MANAGER','TA_HEAD')")
     @GetMapping("/{documentId}")
     public ResponseEntity<ApiResponse<DocumentSubmissionResponse>> getSubmissionById(
             @PathVariable Long documentId) {
@@ -97,6 +102,7 @@ public class DocumentSubmissionController {
                 .body(ApiResponse.success("Document retrieved successfully", response));
     }
     
+    @PreAuthorize("hasAnyRole('TA_MANAGER','TA_HEAD')")
     @GetMapping("/{documentId}/file")
     public ResponseEntity<byte[]> downloadDocument(
             @PathVariable Long documentId) {
@@ -124,6 +130,7 @@ public class DocumentSubmissionController {
                 .body(fileContent);
     }
     
+    @PreAuthorize("hasAnyRole('TA_MANAGER','TA_HEAD')")
     @DeleteMapping("/{documentId}")
     public ResponseEntity<ApiResponse<Void>> deleteSubmission(
             @PathVariable Long documentId) {

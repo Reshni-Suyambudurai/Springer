@@ -24,11 +24,14 @@ const statusMeta: Record<string, { cls: string }> = {
 const fmt = (s: string) =>
   new Date(s).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
 
-const WarningsPanel = ({ context: _context }: { context: AcademyContextProps }) => {
+const WarningsPanel = ({ context }: { context: AcademyContextProps }) => {
+  const { programs: yearPrograms } = context;
   const user = tokenstore.getUser();
 
   const [warnings, setWarnings]       = useState<InternWarningResponse[]>([]);
+  const [totalElements, setTotalElements] = useState(0);
   const [allocations, setAllocations] = useState<BatchAllocationResponse[]>([]);
+  const [loadingAllocs, setLoadingAllocs] = useState(false);
   const [loading, setLoading]         = useState(true);
 
   const [filterStatus, setFilterStatus] = useState('ALL');
@@ -36,6 +39,11 @@ const WarningsPanel = ({ context: _context }: { context: AcademyContextProps }) 
   const [filterProgram, setFilterProgram] = useState('all');
   const [filterBatch, setFilterBatch]   = useState('all');
   const [search, setSearch]             = useState('');
+  const [page, setPage]                 = useState(0);
+  const [rowsPerPage]                   = useState(20);
+
+  // Stats
+  const [stats, setStats] = useState({ total: 0, active: 0, acknowledged: 0 });
 
   const [showForm, setShowForm]         = useState(false);
   const [formStudent, setFormStudent]   = useState('');
@@ -44,26 +52,52 @@ const WarningsPanel = ({ context: _context }: { context: AcademyContextProps }) 
   const [formMessage, setFormMessage]   = useState('');
   const [submitting, setSubmitting]     = useState(false);
 
-  useEffect(() => { fetchAll(); }, []);
+  // Fetch paginated warnings when filters change
+  useEffect(() => { fetchWarnings(); }, [filterStatus, filterType, filterProgram, filterBatch, search, page, rowsPerPage, yearPrograms]);
 
-  const fetchAll = async () => {
+  const fetchWarnings = async () => {
     try {
       setLoading(true);
-      const [warnRes, allocRes] = await Promise.all([
-        warningApi.getAllWarnings(),
-        batchAllocationApi.getAllAllocations().catch(() => ({ success: false, data: [] })),
-      ]);
-      if (warnRes.success && warnRes.data) {
-        const sorted = [...warnRes.data].sort((a, b) =>
-          (b.issuedAt ?? '').localeCompare(a.issuedAt ?? '')
-        );
-        setWarnings(sorted);
+      const yearProgramIdsList = yearPrograms.map(p => p.programId);
+      const res = await warningApi.getWarningsFiltered({
+        programId: filterProgram !== 'all' ? Number(filterProgram) : undefined,
+        programIds: filterProgram === 'all' && yearProgramIdsList.length > 0 ? yearProgramIdsList : undefined,
+        batchNumber: filterBatch !== 'all' ? Number(filterBatch) : undefined,
+        status: filterStatus !== 'ALL' ? filterStatus : undefined,
+        warningType: filterType !== 'ALL' ? filterType : undefined,
+        search: search.trim() || undefined,
+        page,
+        size: rowsPerPage,
+      });
+      if (res.success && res.data) {
+        setWarnings(res.data.content);
+        setTotalElements(res.data.totalElements);
+        if (!filterStatus || filterStatus === 'ALL') {
+          setStats(prev => ({ ...prev, total: res.data!.totalElements }));
+        }
       }
-      if (allocRes.success && allocRes.data) setAllocations(allocRes.data as BatchAllocationResponse[]);
     } catch (error) {
       const err = handleAxiosError(error);
       showToast(err.message || 'Failed to load warnings', 'error');
     } finally { setLoading(false); }
+  };
+
+  // Load active allocations lazily — only when "Issue Notice" form is opened
+  const handleToggleForm = async () => {
+    const opening = !showForm;
+    setShowForm(opening);
+    if (opening && allocations.length === 0) {
+      setLoadingAllocs(true);
+      try {
+        // OPTIMIZED: Fetch all allocations in one call, then filter by year-scoped programs
+        const allocRes = await batchAllocationApi.getAllAllocations();
+        const allAllocs = (allocRes.success && allocRes.data) ? allocRes.data : [];
+        const yearProgramIds = new Set(yearPrograms.map(p => p.programId));
+        const filteredAllocs = allAllocs.filter(a => a.isActive && yearProgramIds.has(a.programId));
+        setAllocations(filteredAllocs);
+      } catch { /* silent */ }
+      finally { setLoadingAllocs(false); }
+    }
   };
 
   const handleIssueWarning = async () => {
@@ -81,10 +115,12 @@ const WarningsPanel = ({ context: _context }: { context: AcademyContextProps }) 
         message: formMessage.trim(),
       });
       if (res.success && res.data) {
-        setWarnings(prev => [res.data!, ...prev]);
         setShowForm(false);
         setFormStudent(''); setFormMessage(''); setFormType('BEHAVIOUR'); setFormSeverity('MINOR');
         showToast('Warning issued successfully', 'success');
+        fetchWarnings();
+        // Update stats optimistically
+        setStats(prev => ({ ...prev, total: prev.total + 1, active: prev.active + 1 }));
       }
     } catch (error) {
       const err = handleAxiosError(error);
@@ -92,24 +128,11 @@ const WarningsPanel = ({ context: _context }: { context: AcademyContextProps }) 
     } finally { setSubmitting(false); }
   };
 
-  const filtered = warnings.filter(w => {
-    const matchStatus  = filterStatus === 'ALL'  || w.status === filterStatus;
-    const matchType    = filterType === 'ALL'    || w.warningType === filterType;
-    const matchProgram = filterProgram === 'all' || w.programName === filterProgram;
-    const matchBatch   = filterBatch === 'all'   || String(w.batchNumber) === filterBatch;
-    const matchSearch  = search.trim() === ''    || w.studentName.toLowerCase().includes(search.toLowerCase());
-    return matchStatus && matchType && matchProgram && matchBatch && matchSearch;
-  });
-
-  const activeCount  = warnings.filter(w => w.status === 'ACTIVE').length;
-  const ackCount     = warnings.filter(w => w.status === 'ACKNOWLEDGED').length;
-  const activeAllocs = allocations.filter(a => a.isActive);
-  const availablePrograms = Array.from(new Set(warnings.map(w => w.programName))).sort();
-  const availableBatches  = Array.from(new Set(
-    warnings
-      .filter(w => filterProgram === 'all' || w.programName === filterProgram)
-      .map(w => w.batchNumber)
-  )).sort((a, b) => a - b);
+  const availablePrograms = yearPrograms;
+  const availableBatches: number[] = filterProgram !== 'all'
+    ? Array.from({ length: yearPrograms.find(p => p.programId === Number(filterProgram))?.numberOfBatches ?? 0 }, (_, i) => i + 1)
+    : [];
+  const activeAllocs = allocations;
 
   return (
     <div className="iwarn-page">
@@ -118,21 +141,21 @@ const WarningsPanel = ({ context: _context }: { context: AcademyContextProps }) 
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
         <div className="iwarn-stats" style={{ flex: 1 }}>
           <div className="iwarn-stat">
-            <span className="iwarn-stat-val">{warnings.length}</span>
+            <span className="iwarn-stat-val">{stats.total}</span>
             <span className="iwarn-stat-label">Total</span>
           </div>
           <div className="iwarn-stat">
-            <span className="iwarn-stat-val iwarn-stat-val--active">{activeCount}</span>
+            <span className="iwarn-stat-val iwarn-stat-val--active">{stats.active}</span>
             <span className="iwarn-stat-label">Active</span>
           </div>
           <div className="iwarn-stat">
-            <span className="iwarn-stat-val iwarn-stat-val--ack">{ackCount}</span>
+            <span className="iwarn-stat-val iwarn-stat-val--ack">{stats.acknowledged}</span>
             <span className="iwarn-stat-label">Acknowledged</span>
           </div>
         </div>
         <button className="lmg-review-btn"
           style={{ padding: '8px 18px', fontWeight: 700, fontSize: 'var(--text-sm)' }}
-          onClick={() => setShowForm(v => !v)}>
+          onClick={handleToggleForm}>
           {showForm ? 'Cancel' : '+ Issue Notice'}
         </button>
       </div>
@@ -146,8 +169,9 @@ const WarningsPanel = ({ context: _context }: { context: AcademyContextProps }) 
               <div style={{ flex: 2, minWidth: 200, display: 'flex', flexDirection: 'column', gap: 4 }}>
                 <label className="lmg-label">Intern *</label>
                 <select className="lmg-filter-select" style={{ width: '100%' }}
-                  value={formStudent} onChange={e => setFormStudent(e.target.value)}>
-                  <option value="">Select intern...</option>
+                  value={formStudent} onChange={e => setFormStudent(e.target.value)}
+                  disabled={loadingAllocs}>
+                  <option value="">{loadingAllocs ? 'Loading interns...' : 'Select intern...'}</option>
                   {activeAllocs.map(a => (
                     <option key={a.studentId} value={String(a.studentId)}>
                       {a.candidateName} — Batch {a.batchNumber}
@@ -176,7 +200,9 @@ const WarningsPanel = ({ context: _context }: { context: AcademyContextProps }) 
               <label className="lmg-label">Message *</label>
               <textarea className="lmg-textarea" rows={3}
                 placeholder="Describe the reason for this warning..."
+                maxLength={1000}
                 value={formMessage} onChange={e => setFormMessage(e.target.value)} />
+              <span style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)', textAlign: 'right' }}>{formMessage.length}/1000</span>
             </div>
             <div className="lmg-dialog-actions">
               <button className="lmg-cancel-btn" onClick={() => setShowForm(false)}>Cancel</button>
@@ -197,33 +223,33 @@ const WarningsPanel = ({ context: _context }: { context: AcademyContextProps }) 
           style={{ minWidth: 180 }}
           placeholder="Search student..."
           value={search}
-          onChange={e => setSearch(e.target.value)}
+          onChange={e => { setSearch(e.target.value); setPage(0); }}
         />
-        <select className="lmg-filter-select" value={filterProgram} onChange={e => { setFilterProgram(e.target.value); setFilterBatch('all'); }}>
+        <select className="lmg-filter-select" value={filterProgram} onChange={e => { setFilterProgram(e.target.value); setFilterBatch('all'); setPage(0); }}>
           <option value="all">All Programs</option>
-          {availablePrograms.map(p => <option key={p} value={p}>{p}</option>)}
+          {availablePrograms.map(p => <option key={p.programId} value={String(p.programId)}>{p.programName}</option>)}
         </select>
-        <select className="lmg-filter-select" value={filterBatch} onChange={e => setFilterBatch(e.target.value)}>
+        <select className="lmg-filter-select" value={filterBatch} onChange={e => { setFilterBatch(e.target.value); setPage(0); }}>
           <option value="all">All Batches</option>
           {availableBatches.map(b => <option key={b} value={String(b)}>Batch {b}</option>)}
         </select>
-        <select className="lmg-filter-select" value={filterStatus} onChange={e => setFilterStatus(e.target.value)}>
+        <select className="lmg-filter-select" value={filterStatus} onChange={e => { setFilterStatus(e.target.value); setPage(0); }}>
           <option value="ALL">All Status</option>
           <option value="ACTIVE">Active</option>
           <option value="ACKNOWLEDGED">Acknowledged</option>
         </select>
-        <select className="lmg-filter-select" value={filterType} onChange={e => setFilterType(e.target.value)}>
+        <select className="lmg-filter-select" value={filterType} onChange={e => { setFilterType(e.target.value); setPage(0); }}>
           <option value="ALL">All Types</option>
           {['ATTENDANCE','PERFORMANCE','BEHAVIOUR','PUNCTUALITY','OTHER'].map(t =>
             <option key={t} value={t}>{t.charAt(0) + t.slice(1).toLowerCase()}</option>)}
         </select>
-        <span className="lmg-count">{filtered.length} notice{filtered.length !== 1 ? 's' : ''}</span>
+        <span className="lmg-count">{totalElements} notice{totalElements !== 1 ? 's' : ''}</span>
       </div>
 
       {/* Table */}
       {loading ? (
         <div className="lmg-empty">Loading notices...</div>
-      ) : filtered.length === 0 ? (
+      ) : warnings.length === 0 ? (
         <div className="lmg-empty">No notices found.</div>
       ) : (
         <div className="lmg-table-wrap">
@@ -242,7 +268,7 @@ const WarningsPanel = ({ context: _context }: { context: AcademyContextProps }) 
               </tr>
             </thead>
             <tbody>
-              {filtered.map(w => (
+              {warnings.map(w => (
                 <tr key={w.warningId} className="lmg-row">
                   <td className="lmg-td">
                     <p className="lmg-name">{w.studentName}</p>
@@ -270,6 +296,15 @@ const WarningsPanel = ({ context: _context }: { context: AcademyContextProps }) 
               ))}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {/* Pagination */}
+      {!loading && totalElements > rowsPerPage && (
+        <div className="lmg-filters" style={{ justifyContent: 'flex-end', marginTop: 8 }}>
+          <button className="lmg-review-btn" disabled={page === 0} onClick={() => setPage(p => p - 1)}>← Prev</button>
+          <span className="lmg-count">Page {page + 1} of {Math.ceil(totalElements / rowsPerPage)}</span>
+          <button className="lmg-review-btn" disabled={(page + 1) * rowsPerPage >= totalElements} onClick={() => setPage(p => p + 1)}>Next →</button>
         </div>
       )}
     </div>

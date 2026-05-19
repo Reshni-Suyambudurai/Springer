@@ -18,6 +18,8 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 
 import java.util.Arrays;
 
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
+
 /**
  * Security configuration with JWT authentication
  */
@@ -43,6 +45,8 @@ public class SecurityConfig {
                 // Candidate-facing document endpoints — authenticated by JWT token in URL, not session login
                 .requestMatchers("/api/documents/submission-status").permitAll()
                 .requestMatchers("/api/documents/submissions").permitAll()
+                // WebSocket — userId passed as query param, no Bearer header on upgrade
+                .requestMatchers("/ws/**").permitAll()
                 // Public candidate registration endpoints - specific methods only
                 .requestMatchers(HttpMethod.POST, "/api/candidate-registrations/drive/*/register").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/forms/*").permitAll()
@@ -57,12 +61,13 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(Arrays.asList(
-            "http://localhost:8080",  // Swagger UI
+        configuration.setAllowedOriginPatterns(Arrays.asList(
+             "http://localhost:8080",  // Swagger UI
             "http://localhost:5173",  // Vite React
             "http://localhost:5174",  // Vite React (fallback port)
-            "http://localhost:3000",  // React
-            "http://localhost:4200"   // Angular
+        
+            "https://*.vercel.app",
+            "https://*.up.railway.app"
         ));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("*"));

@@ -1,18 +1,18 @@
-/* ===== BATCH ALLOCATIONS — prefix: ba- ===== */
+/* ===== BATCH ALLOCATIONS ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â prefix: ba- ===== */
 
 .ba-page {
   display: flex;
   flex-direction: column;
   height: 100%;
-  gap: 4px;
-  background-color: var(--color-bg-secondary);
-  padding: 4px;
+  gap: 0;
+  background-color: var(--color-surface);
+  padding: 0;
 }
 
 .ba-card {
-  border-radius: 12px !important;
-  border: 1px solid var(--color-card-border) !important;
-  box-shadow: 0 1px 3px 0 var(--opacity-shadow-light), 0 6px 16px -2px var(--opacity-shadow-dark) !important;
+  border-radius: 0 !important;
+  border: none !important;
+  box-shadow: none !important;
   background-color: var(--color-surface) !important;
   flex: 1;
   display: flex;
@@ -21,10 +21,10 @@
   min-height: 0;
 }
 
-/* ── Header ── */
+/* ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ Header ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ */
 .ba-header {
   flex-shrink: 0;
-  padding: 20px 24px 12px 24px;
+  padding: 16px 32px 12px 32px;
   background-color: var(--color-surface);
 }
 
@@ -86,12 +86,12 @@
   background-color: var(--color-primary-light) !important;
 }
 
-/* ── Separator ── */
+/* ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ Separator ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ */
 .ba-separator {
   border-top: 1px solid var(--color-grey-200);
 }
 
-/* ── Filter Section ── */
+/* ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ Filter Section ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ */
 .ba-filter-section {
   flex-shrink: 0;
   padding: 10px 24px;
@@ -110,7 +110,7 @@
   flex-grow: 1;
 }
 
-/* ── Table Section ── */
+/* ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ Table Section ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ */
 .ba-table-section {
   flex: 1;
   display: flex;
@@ -133,6 +133,8 @@
   flex: 1;
   overflow: auto !important;
   min-height: 0;
+  border: 0.8px solid var(--color-inactive-border);
+  border-radius: 10px;
   scrollbar-width: thin;
   scrollbar-color: var(--color-grey-350) var(--color-grey-150);
 }
@@ -141,43 +143,43 @@
 .ba-table-container::-webkit-scrollbar-thumb { background: var(--color-grey-350); border-radius: 4px; }
 .ba-table-container::-webkit-scrollbar-thumb:hover { background: var(--color-grey-500); }
 
-/* ── Table Head ── */
+/* ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ Table Head ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ */
 .ba-table-head-row {
-  background-color: var(--color-bg-table-header);
+  background-color: var(--color-inactive-bg);
   height: 48px;
 }
 
 .ba-table-head-cell {
-  font-size: var(--text-xs) !important;
-  font-weight: 700 !important;
-  color: var(--color-grey-600) !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  color: var(--color-chip-count-text) !important;
   text-transform: uppercase !important;
-  letter-spacing: 0.75px !important;
-  background-color: var(--color-bg-table-header) !important;
+  letter-spacing: 0.6px !important;
+  background-color: var(--color-inactive-bg) !important;
   padding: 8px 16px !important;
-  border-bottom-color: var(--color-border-table) !important;
+  border-bottom: 0.8px solid var(--color-inactive-border) !important;
+  font-family: 'Inter', sans-serif !important;
 }
 
 .ba-table-head-cell--actions {
   text-align: right !important;
 }
 
-/* ── Table Rows ── */
+/* ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ Table Rows ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ */
 .ba-table-row {
   height: 68px;
   transition: all 0.2s ease;
 }
 
 .ba-table-row--even { background-color: var(--color-surface); }
-.ba-table-row--odd  { background-color: var(--color-surface-alt); }
+.ba-table-row--odd  { background-color: var(--color-surface); }
 
 .ba-table-row td {
-  border-bottom: 1px solid var(--color-border-table);
+  border-bottom: 0.8px solid var(--color-border-subtle);
 }
 
 .ba-table-row:hover {
-  background-color: var(--color-hover-bg) !important;
-  box-shadow: inset 0 2px 4px var(--color-primary-shadow-8);
+  background-color: var(--color-inactive-bg) !important;
 }
 
 .ba-table-cell {
@@ -189,7 +191,7 @@
   text-align: right !important;
 }
 
-/* ── Name Cell ── */
+/* ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ Name Cell ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ */
 .ba-name-cell {
   display: flex;
   align-items: center;
@@ -197,10 +199,10 @@
 }
 
 .ba-name-icon-box {
-  width: 36px;
-  height: 36px;
-  border-radius: 8px;
-  background-color: var(--color-icon-bg);
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: var(--color-sidebar-bg);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -209,30 +211,31 @@
 
 .ba-name-icon {
   font-size: 18px !important;
-  color: var(--color-primary) !important;
+  color: white !important;
 }
 
 .ba-row-primary {
-  font-size: var(--text-sm) !important;
-  font-weight: 700 !important;
+  font-size: 16px !important;
+  font-weight: 500 !important;
   color: var(--color-text-primary) !important;
-  line-height: 1.4 !important;
+  line-height: 24px !important;
+  font-family: 'Inter', sans-serif !important;
   margin: 0 !important;
 }
 
 .ba-row-secondary {
-  font-size: var(--text-xs) !important;
-  font-weight: 500 !important;
+  font-size: var(--text-sm) !important;
+  font-weight: 400 !important;
   color: var(--color-text-secondary) !important;
-  line-height: 1.4 !important;
+  line-height: 20px !important;
   margin: 0 !important;
 }
 
-/* ── Chips ── */
+/* ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ Chips ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ */
 .ba-batch-chip {
-  background-color: var(--color-primary-light) !important;
-  color: var(--color-primary) !important;
-  border-color: var(--color-blue-100) !important;
+  background-color: var(--color-success-light) !important;
+  color: var(--color-success-dark) !important;
+  border-color: var(--color-success-border) !important;
   font-weight: 600 !important;
   font-size: var(--text-xs) !important;
   height: 24px !important;
@@ -286,7 +289,7 @@
   border-color: var(--color-green-100) !important;
 }
 
-/* ── Attendance Bar ── */
+/* ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ Attendance Bar ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ */
 .ba-attendance-wrap {
   display: flex;
   align-items: center;
@@ -316,7 +319,7 @@
   background-color: var(--color-warning);
 }
 
-/* ── Action Buttons ── */
+/* ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ Action Buttons ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ */
 .ba-action-button {
   color: var(--color-action-btn) !important;
   padding: 5px !important;
@@ -333,7 +336,7 @@
   color: var(--color-primary) !important;
 }
 
-/* ── Empty State ── */
+/* ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ Empty State ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ */
 .ba-empty-cell {
   padding-top: 48px !important;
   padding-bottom: 48px !important;
@@ -352,7 +355,7 @@
   color: var(--color-empty-text) !important;
 }
 
-/* ── Pagination ── */
+/* ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ Pagination ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ */
 .ba-pagination {
   border-top: 1px solid var(--color-border-dark) !important;
   background-color: var(--color-surface) !important;
@@ -374,7 +377,7 @@
 .ba-pagination .MuiIconButton-root:hover { background-color: var(--opacity-shadow-very-light) !important; color: var(--color-grey-550) !important; }
 .ba-pagination .MuiIconButton-root.Mui-disabled { color: var(--color-grey-350) !important; }
 
-/* ── Dialog ── */
+/* ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ Dialog ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ */
 .ba-dialog-title {
   font-size: var(--text-lg) !important;
   font-weight: 700 !important;
@@ -409,18 +412,18 @@
   background-color: var(--color-primary-dark) !important;
 }
 
-/* ── Count Badge ── */
+/* ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ Count Badge ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ */
 .ba-count-badge {
   font-size: var(--text-xs) !important;
   font-weight: 600 !important;
   color: var(--color-primary) !important;
   background-color: var(--color-primary-light) !important;
   padding: 4px 10px;
-  border-radius: 12px;
+  border-radius: 8px;
   white-space: nowrap;
 }
 
-/* ── Candidate Section in Dialog ── */
+/* ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ Candidate Section in Dialog ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ */
 .ba-candidate-section {
   border: 1px solid var(--color-border);
   border-radius: 8px;
@@ -537,7 +540,7 @@
   text-overflow: ellipsis;
 }
 
-/* ── Candidate Table in Dialog ── */
+/* ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ Candidate Table in Dialog ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ */
 .ba-loading-candidates {
   display: flex;
   align-items: center;
@@ -601,7 +604,7 @@
   border-radius: 8px;
   cursor: pointer;
   transition: all 0.15s ease;
-  background-color: var(--color-bg-primary);
+  background-color: var(--color-surface);
 }
 
 .ba-candidate-row:hover {

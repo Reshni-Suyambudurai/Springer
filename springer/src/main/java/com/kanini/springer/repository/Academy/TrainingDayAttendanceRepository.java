@@ -34,4 +34,15 @@ public interface TrainingDayAttendanceRepository extends JpaRepository<TrainingD
     List<Object[]> findAttendanceStatsByBatch(
             @org.springframework.data.repository.query.Param("programId") Integer programId,
             @org.springframework.data.repository.query.Param("batchNumber") Integer batchNumber);
+
+    // Check if attendance already exists for any student in a batch on a given date
+    @Query("SELECT COUNT(t) FROM TrainingDayAttendance t " +
+           "WHERE t.student.program.programId = :programId " +
+           "AND t.student.batchNumber = :batchNumber " +
+           "AND t.student.isActive = true " +
+           "AND t.attendanceDate = :date")
+    long countByBatchAndDate(
+            @org.springframework.data.repository.query.Param("programId") Integer programId,
+            @org.springframework.data.repository.query.Param("batchNumber") Integer batchNumber,
+            @org.springframework.data.repository.query.Param("date") LocalDate date);
 }

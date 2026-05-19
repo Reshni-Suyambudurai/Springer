@@ -143,7 +143,7 @@ class InternProfileServiceImplTest {
             alloc.setCandidate(candidate);
 
             when(allocationRepository.findByStudentId(101L)).thenReturn(Optional.of(alloc));
-            when(profileRepository.findAll()).thenReturn(Collections.emptyList());
+            when(profileRepository.findByUser_Email("intern@kanini.com")).thenReturn(Optional.empty());
 
             InternProfileResponse result = service.getProfileByStudentId(101L);
 

@@ -180,7 +180,13 @@ public class TrainingProgramServiceImpl implements ITrainingProgramService {
                 c.getEmail(),
                 c.getDepartment(),
                 c.getCgpa(),
-                c.getApplicationStage() != null ? c.getApplicationStage().toString() : null
+                c.getApplicationStage() != null ? c.getApplicationStage().toString() : null,
+                c.getInstitute() != null ? c.getInstitute().getInstituteName() : null,
+                c.getMobile(),
+                c.getDegree(),
+                c.getCycle() != null ? c.getCycle().getCycleId() : null,
+                c.getUpdatedAt() != null ? c.getUpdatedAt().toString() : null,
+                c.getUser() != null ? c.getUser().getUserId() : null
         )).collect(Collectors.toList());
     }
 }

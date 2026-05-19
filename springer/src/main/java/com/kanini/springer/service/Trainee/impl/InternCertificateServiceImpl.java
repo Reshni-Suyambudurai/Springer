@@ -33,6 +33,19 @@ public class InternCertificateServiceImpl implements IInternCertificateService {
         BatchAllocation student = allocationRepository.findByStudentId(studentId)
                 .orElseThrow(() -> new ResourceNotFoundException("Student not found: " + studentId));
 
+        if (certificateName == null || certificateName.isBlank()) {
+            throw new ValidationException("Certificate name is required");
+        }
+        if (certificateName.trim().length() > 200) {
+            throw new ValidationException("Certificate name cannot exceed 200 characters");
+        }
+        if (issuer == null || issuer.isBlank()) {
+            throw new ValidationException("Issuer is required");
+        }
+        if (issuer.trim().length() > 200) {
+            throw new ValidationException("Issuer cannot exceed 200 characters");
+        }
+
         if (file == null || file.isEmpty()) {
             throw new ValidationException("Certificate file is required");
         }

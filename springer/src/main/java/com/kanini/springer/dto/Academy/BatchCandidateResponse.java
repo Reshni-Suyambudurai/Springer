@@ -21,4 +21,10 @@ public class BatchCandidateResponse {
     private String department;
     private BigDecimal cgpa;
     private String applicationStage;
+    private String instituteName;
+    private String mobile;
+    private String degree;
+    private Long cycleId;
+    private String updatedAt;
+    private Long userId;
 }

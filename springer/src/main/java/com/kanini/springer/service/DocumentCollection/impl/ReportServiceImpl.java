@@ -48,8 +48,8 @@ public class ReportServiceImpl implements IReportService {
     @Override
     public Map<String, Object> getOfferStatusReport(Long cycleId) {
         // Fix: Use count queries instead of loading all records into memory for performance
-        long acceptedCount = offerRepository.countByCycleIdAndResponse(cycleId, Enums.OfferResponse.ACCEPTED);
-        long declinedCount = offerRepository.countByCycleIdAndResponse(cycleId, Enums.OfferResponse.DECLINED);
+        long acceptedCount = offerRepository.countByCycleIdAndResponse(cycleId, Enums.OfferResponse.OFFER_ACCEPTED);
+        long declinedCount = offerRepository.countByCycleIdAndResponse(cycleId, Enums.OfferResponse.OFFER_DECLINED);
         long pendingCount = offerRepository.countByCycleIdAndResponse(cycleId, Enums.OfferResponse.PENDING);
         
         long totalOffersIssued = acceptedCount + declinedCount + pendingCount;
@@ -74,13 +74,13 @@ public class ReportServiceImpl implements IReportService {
                 cycleId, Enums.VerificationStatus.APPROVED);
         long collectedCount = submissionRepository.countByCycleIdAndVerificationStatus(
                 cycleId, Enums.VerificationStatus.COLLECTED);
-        long acceptedCount = offerRepository.countByCycleIdAndResponse(cycleId, Enums.OfferResponse.ACCEPTED);
+        long acceptedCount = offerRepository.countByCycleIdAndResponse(cycleId, Enums.OfferResponse.OFFER_ACCEPTED);
         
         // Fix: Use COUNT(DISTINCT) query instead of loading all records into memory
         Long candidateCountLong = submissionRepository.countDistinctCandidateIdByCycleId(cycleId);
         int candidatesSelected = candidateCountLong != null ? candidateCountLong.intValue() : 0;
-        long offersAccepted = offerRepository.countByCycleIdAndResponse(cycleId, Enums.OfferResponse.ACCEPTED);
-        long offersDeclined = offerRepository.countByCycleIdAndResponse(cycleId, Enums.OfferResponse.DECLINED);
+        long offersAccepted = offerRepository.countByCycleIdAndResponse(cycleId, Enums.OfferResponse.OFFER_ACCEPTED);
+        long offersDeclined = offerRepository.countByCycleIdAndResponse(cycleId, Enums.OfferResponse.OFFER_DECLINED);
         long offersPending = offerRepository.countByCycleIdAndResponse(cycleId, Enums.OfferResponse.PENDING);
         int totalOffersIssued = (int) (offersAccepted + offersDeclined + offersPending);
         

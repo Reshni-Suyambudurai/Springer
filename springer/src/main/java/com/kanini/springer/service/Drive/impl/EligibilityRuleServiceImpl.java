@@ -8,11 +8,15 @@ import com.kanini.springer.exception.ResourceNotFoundException;
 import com.kanini.springer.exception.ValidationException;
 import com.kanini.springer.service.Drive.IEligibilityRuleService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.math.BigDecimal;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 
 @Service
 @RequiredArgsConstructor
@@ -101,13 +105,21 @@ public class EligibilityRuleServiceImpl implements IEligibilityRuleService {
     }
     
     /**
-     * Load rules from JSON file
+     * Load rules from JSON file (filesystem first, then classpath fallback)
      */
     private EligibilityRuleUpdateRequest loadRulesFromFile() throws IOException {
         File file = new File(RULES_FILE_PATH);
         
         if (!file.exists()) {
-            throw new ResourceNotFoundException("EligibilityRule.json", "file", RULES_FILE_PATH);
+            // Try loading from classpath and copy to filesystem
+            ClassPathResource resource = new ClassPathResource(RULES_FILE_PATH);
+            if (resource.exists()) {
+                try (InputStream is = resource.getInputStream()) {
+                    Files.copy(is, file.toPath(), StandardCopyOption.REPLACE_EXISTING);
+                }
+            } else {
+                throw new ResourceNotFoundException("EligibilityRule.json", "file", RULES_FILE_PATH);
+            }
         }
         
         return objectMapper.readValue(file, EligibilityRuleUpdateRequest.class);

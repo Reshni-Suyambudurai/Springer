@@ -1,7 +1,15 @@
+.vite/
 backend.log
 springer/compile_output.txt
+springer/run_output.txt
+springer/test_out.txt
+springer/test_output.txt
+springer/sonar_run_output.txt
+springer/err.txt
 springer/fresh_seed.sql
 springer/seed_test_fresh.sql
+fix_users.sql
+springer/db/mysql/fix_duplicate_users.sql
 CLIENT_DEMO_BRIEFING.md
 springer/src/main/java/com/kanini/springer/entity/enums/brd
 

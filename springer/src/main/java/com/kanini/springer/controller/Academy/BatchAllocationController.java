@@ -7,6 +7,7 @@ import com.kanini.springer.dto.Authentication.ApiResponse;
 import com.kanini.springer.service.Academy.IBatchAllocationService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
@@ -24,6 +25,7 @@ public class BatchAllocationController {
 
     private final IBatchAllocationService allocationService;
     
+    @PreAuthorize("hasAnyRole('TRAINING_COORDINATOR','TA_HEAD','TA_MANAGER')")
     @PostMapping
     public ResponseEntity<ApiResponse<BatchAllocationResponse>> createAllocation(
             @Valid @RequestBody BatchAllocationRequest request) {
@@ -32,6 +34,7 @@ public class BatchAllocationController {
                 .body(ApiResponse.success("Batch allocation created successfully", response));
     }
     
+    @PreAuthorize("hasAnyRole('TRAINING_COORDINATOR','TA_HEAD','TA_MANAGER','MEMBERS')")
     @GetMapping
     public ResponseEntity<ApiResponse<List<BatchAllocationResponse>>> getAllAllocations() {
         List<BatchAllocationResponse> response = allocationService.getAllAllocations();
@@ -39,6 +42,7 @@ public class BatchAllocationController {
                 .body(ApiResponse.success("All allocations retrieved successfully", response));
     }
     
+    @PreAuthorize("hasAnyRole('TRAINING_COORDINATOR','TA_HEAD','TA_MANAGER','INTERN','MEMBERS')")
     @GetMapping("/{studentId}")
     public ResponseEntity<ApiResponse<BatchAllocationResponse>> getAllocationById(
             @PathVariable Long studentId) {
@@ -47,6 +51,7 @@ public class BatchAllocationController {
                 .body(ApiResponse.success("Allocation retrieved successfully", response));
     }
     
+    @PreAuthorize("hasAnyRole('TRAINING_COORDINATOR','TA_HEAD','TA_MANAGER','MEMBERS')")
     @GetMapping("/program/{programId}/filtered")
     public ResponseEntity<ApiResponse<org.springframework.data.domain.Page<BatchAllocationResponse>>> getAllocationsByProgramFiltered(
             @PathVariable Integer programId,
@@ -59,14 +64,19 @@ public class BatchAllocationController {
         return ResponseEntity.ok(ApiResponse.success("Allocations retrieved", result));
     }
 
+    @PreAuthorize("hasAnyRole('TRAINING_COORDINATOR','TA_HEAD','TA_MANAGER','INTERN','MEMBERS')")
     @GetMapping("/program/{programId}")
     public ResponseEntity<ApiResponse<List<BatchAllocationResponse>>> getAllocationsByProgram(
-            @PathVariable Integer programId) {
-        List<BatchAllocationResponse> response = allocationService.getAllocationsByProgram(programId);
+            @PathVariable Integer programId,
+            @RequestParam(required = false) Boolean isActive) {
+        List<BatchAllocationResponse> response = isActive != null
+                ? allocationService.getAllocationsByProgram(programId, isActive)
+                : allocationService.getAllocationsByProgram(programId);
         return ResponseEntity.status(HttpStatus.OK)
                 .body(ApiResponse.success("Allocations for program " + programId + RETRIEVED_SUCCESSFULLY, response));
     }
     
+    @PreAuthorize("hasAnyRole('TRAINING_COORDINATOR','TA_HEAD','TA_MANAGER','MEMBERS')")
     @GetMapping("/program/{programId}/batch/{batchNumber}")
     public ResponseEntity<ApiResponse<List<BatchAllocationResponse>>> getAllocationsByBatch(
             @PathVariable Integer programId,
@@ -76,6 +86,7 @@ public class BatchAllocationController {
                 .body(ApiResponse.success("Allocations for batch " + batchNumber + RETRIEVED_SUCCESSFULLY, response));
     }
     
+    @PreAuthorize("hasAnyRole('TRAINING_COORDINATOR','TA_HEAD','TA_MANAGER')")
     @PatchMapping("/{studentId}")
     public ResponseEntity<ApiResponse<BatchAllocationResponse>> updateAllocation(
             @PathVariable Long studentId,
@@ -85,6 +96,7 @@ public class BatchAllocationController {
                 .body(ApiResponse.success("Batch allocation updated successfully", response));
     }
     
+    @PreAuthorize("hasAnyRole('TRAINING_COORDINATOR','TA_HEAD','TA_MANAGER')")
     @DeleteMapping("/{studentId}")
     public ResponseEntity<ApiResponse<String>> deleteAllocation(@PathVariable Long studentId) {
         allocationService.deleteAllocation(studentId);
@@ -92,6 +104,7 @@ public class BatchAllocationController {
                 .body(ApiResponse.success("Batch allocation deleted successfully", null));
     }
     
+    @PreAuthorize("hasAnyRole('TRAINING_COORDINATOR','TA_HEAD','TA_MANAGER')")
     @PatchMapping("/{studentId}/mark-ready")
     public ResponseEntity<ApiResponse<BatchAllocationResponse>> markProjectReady(
             @PathVariable Long studentId) {
@@ -106,10 +119,11 @@ public class BatchAllocationController {
      * Overall score is recalculated using best-score-per-course across all allocations.
      * Attendance starts fresh from zero in the new batch.
      */
+    @PreAuthorize("hasAnyRole('TRAINING_COORDINATOR','TA_HEAD','TA_MANAGER')")
     @PatchMapping("/{studentId}/transfer")
     public ResponseEntity<ApiResponse<BatchAllocationResponse>> transferStudent(
-            @PathVariable Long studentId,
-            @RequestBody BatchTransferRequest request) {
+        @PathVariable Long studentId,
+        @Valid @RequestBody BatchTransferRequest request) {
         BatchAllocationResponse response = allocationService.transferStudent(studentId, request);
         return ResponseEntity.status(HttpStatus.OK)
                 .body(ApiResponse.success("Student transferred successfully", response));

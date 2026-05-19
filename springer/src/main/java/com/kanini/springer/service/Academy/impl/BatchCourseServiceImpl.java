@@ -8,10 +8,12 @@ import com.kanini.springer.entity.Academy.TrainingProgram;
 import com.kanini.springer.entity.HiringReq.User;
 import com.kanini.springer.entity.enums.Enums.CourseStatus;
 import com.kanini.springer.exception.ResourceNotFoundException;
+import com.kanini.springer.exception.ValidationException;
 import com.kanini.springer.mapper.Academy.BatchCourseMapper;
 import com.kanini.springer.repository.Academy.BatchCourseRepository;
 import com.kanini.springer.repository.Academy.TrainingCourseRepository;
 import com.kanini.springer.repository.Academy.TrainingProgramRepository;
+import com.kanini.springer.repository.Academy.TrainingScoreRepository;
 import com.kanini.springer.repository.Hiring.UserRepository;
 import com.kanini.springer.service.Common.INotificationService;
 import com.kanini.springer.service.Academy.IBatchCourseService;
@@ -31,6 +33,7 @@ public class BatchCourseServiceImpl implements IBatchCourseService {
     private final BatchCourseRepository batchCourseRepository;
     private final TrainingProgramRepository programRepository;
     private final TrainingCourseRepository courseRepository;
+    private final TrainingScoreRepository scoreRepository;
     private final UserRepository userRepository;
     private final BatchCourseMapper mapper;
     private final INotificationService notificationService;
@@ -89,7 +92,7 @@ public class BatchCourseServiceImpl implements IBatchCourseService {
     @Override
     @Transactional
     public BatchCourseResponse updateBatchCourseStatus(Integer batchCourseId, String status) {
-        BatchCourse batchCourse = batchCourseRepository.findByBatchCourseId(batchCourseId)
+        BatchCourse batchCourse = batchCourseRepository.findById(batchCourseId)
                 .orElseThrow(() -> new ResourceNotFoundException(BATCH_COURSE_NOT_FOUND + batchCourseId));
 
         CourseStatus newStatus = CourseStatus.valueOf(status);
@@ -120,7 +123,7 @@ public class BatchCourseServiceImpl implements IBatchCourseService {
     @Override
     @Transactional(readOnly = true)
     public BatchCourseResponse getBatchCourseById(Integer batchCourseId) {
-        return mapper.toResponse(batchCourseRepository.findByBatchCourseId(batchCourseId)
+        return mapper.toResponse(batchCourseRepository.findById(batchCourseId)
                 .orElseThrow(() -> new ResourceNotFoundException(BATCH_COURSE_NOT_FOUND + batchCourseId)));
     }
 
@@ -168,8 +171,69 @@ public class BatchCourseServiceImpl implements IBatchCourseService {
     @Override
     @Transactional
     public void removeCourseFromBatch(Integer batchCourseId) {
-        batchCourseRepository.findByBatchCourseId(batchCourseId)
+        BatchCourse batchCourse = batchCourseRepository.findById(batchCourseId)
                 .orElseThrow(() -> new ResourceNotFoundException(BATCH_COURSE_NOT_FOUND + batchCourseId));
+
+        // Cannot unlink if course is currently ACTIVE or COMPLETED
+        if (batchCourse.getStatus() == CourseStatus.ACTIVE) {
+            throw new ValidationException("Cannot unlink a course that is currently ACTIVE. Change its status to PLANNED first.");
+        }
+        if (batchCourse.getStatus() == CourseStatus.COMPLETED) {
+            throw new ValidationException("Cannot unlink a COMPLETED course. Scores and records depend on it.");
+        }
+
+        // Cannot unlink if scores already exist for this course in this batch
+        boolean scoresExist = scoreRepository.existsByBatchAndCourse(
+                batchCourse.getProgram().getProgramId(),
+                batchCourse.getBatchNo(),
+                batchCourse.getCourse().getCourseId());
+        if (scoresExist) {
+            throw new ValidationException("Cannot unlink this course — students already have scores recorded for it. Remove the scores first if you must unlink.");
+        }
+
         batchCourseRepository.deleteById(batchCourseId);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<BatchCourseResponse> getCoursesByConductor(Long userId) {
+        userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with ID: " + userId));
+        return batchCourseRepository.findByConductedBy_UserId(userId).stream()
+                .map(mapper::toResponse)
+                .toList();
+    }
+
+    @Override
+    @Transactional
+    public BatchCourseResponse rescheduleBatchCourse(Integer batchCourseId, java.time.LocalDate startDate, java.time.LocalDate endDate) {
+        BatchCourse batchCourse = batchCourseRepository.findById(batchCourseId)
+                .orElseThrow(() -> new ResourceNotFoundException(BATCH_COURSE_NOT_FOUND + batchCourseId));
+
+        if (batchCourse.getStatus() == CourseStatus.COMPLETED) {
+            throw new ValidationException("Cannot reschedule a COMPLETED course.");
+        }
+        if (startDate != null && endDate != null && endDate.isBefore(startDate)) {
+            throw new ValidationException("End date cannot be before start date.");
+        }
+
+        if (startDate != null) batchCourse.setStartDate(startDate.atStartOfDay());
+        if (endDate != null)   batchCourse.setEndDate(endDate.atStartOfDay());
+
+        BatchCourse saved = batchCourseRepository.save(batchCourse);
+
+        // Notify the trainer about date change
+        if (batchCourse.getConductedBy() != null) {
+            String courseName = batchCourse.getCourse() != null ? batchCourse.getCourse().getCourseName() : "Unknown";
+            String newStart = startDate != null ? startDate.toString() : "unchanged";
+            String newEnd = endDate != null ? endDate.toString() : "unchanged";
+            String message = String.format(
+                "Course '%s' (Batch %d) has been rescheduled — New dates: %s to %s",
+                courseName, batchCourse.getBatchNo(), newStart, newEnd
+            );
+            notificationService.createAndSend(batchCourse.getConductedBy().getUserId(), message, "COURSE_RESCHEDULE");
+        }
+
+        return mapper.toResponse(saved);
     }
 }

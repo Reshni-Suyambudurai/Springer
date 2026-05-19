@@ -2,14 +2,14 @@ import { useState, useEffect } from 'react';
 import {
   Box, Card, Typography, Button, CircularProgress, Chip,
   Table, TableBody, TableCell, TableContainer, TableHead,
-  TableRow, TablePagination, Stack, IconButton, Checkbox,
+  TableRow, Stack, IconButton, Checkbox,
   Dialog, DialogTitle, DialogContent, DialogActions,
   TextField, MenuItem,
 } from '@mui/material';
 import {
   Refresh as RefreshIcon, EmojiEvents as OfferIcon,
-  Person as PersonIcon, Add as AddIcon,
 } from '@mui/icons-material';
+import { FigmaAddIcon as AddIcon, FigmaCloseIcon as CloseIcon } from '../../Common/FigmaIcons';
 import { offerApi } from '../../../services/document.api';
 import { showToast } from '../../../utils/toast';
 import FilterSelect from '../../Common/FilterSelect';
@@ -26,27 +26,24 @@ interface CandidateOfferRow {
   candidateName: string;
   selected: boolean;
   issueDate: string;
-  response: 'PENDING' | 'ACCEPTED' | 'DECLINED';
+  response: 'PENDING' | 'OFFER_ACCEPTED' | 'OFFER_DECLINED';
   respondedDate: string;
   declineReason: string;
 }
 
 const today = () => new Date().toISOString().split('T')[0];
-const OFFER_PAGE_SIZE = 200;
-const OFFER_MAX_PAGES = 10; // max 2000 offers per cycle — safe upper bound
 
 const OffersTab = ({ context }: { context: DocProcessingContextProps }) => {
   const { cycleId } = context;
 
   const [eligible, setEligible] = useState<OfferLetterResponse[]>([]);
   const [offers, setOffers] = useState<OfferLetterResponse[]>([]);
-  const [loadingEligible, setLoadingEligible] = useState(true);
-  const [loadingOffers, setLoadingOffers] = useState(true);
+  const [loadingEligible, setLoadingEligible] = useState(false);
+  const [loadingOffers, setLoadingOffers] = useState(false);
+  const [loadingCycleData, setLoadingCycleData] = useState(false);
 
   const [viewMode, setViewMode] = useState<ViewMode>('eligible');
   const [filterResponse, setFilterResponse] = useState('all');
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
 
   // Generate Offer dialog
   const [offerDialog, setOfferDialog] = useState(false);
@@ -56,42 +53,25 @@ const OffersTab = ({ context }: { context: DocProcessingContextProps }) => {
 
   // Single edit dialog (recorded offers)
   const [singleDialog, setSingleDialog] = useState<{ open: boolean; offer: OfferLetterResponse | null }>({ open: false, offer: null });
-  const [singleResponse, setSingleResponse] = useState<'ACCEPTED' | 'DECLINED'>('ACCEPTED');
+  const [singleResponse, setSingleResponse] = useState<'OFFER_ACCEPTED' | 'OFFER_DECLINED'>('OFFER_ACCEPTED');
   const [singleDate, setSingleDate] = useState(today());
   const [singleReason, setSingleReason] = useState('');
   const [singleSubmitting, setSingleSubmitting] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
 
   useEffect(() => {
-    if (cycleId) { fetchEligible(); fetchOffers(); }
-    setPage(0);
+    if (!cycleId) return;
+    setLoadingCycleData(true);
+    Promise.all([fetchEligible(), fetchOffers()]).finally(() => setLoadingCycleData(false));
   }, [cycleId]);
 
   const fetchAllOffersByCycle = async () => {
-    const all: OfferLetterResponse[] = [];
-    const seen = new Set<number>();
-
-    for (let pageNo = 0; pageNo < OFFER_MAX_PAGES; pageNo += 1) {
-      const res = await offerApi.getAllOffers({ cycleId, page: pageNo, size: OFFER_PAGE_SIZE });
-      const rows = (res.success && res.data) ? res.data : [];
-      if (rows.length === 0) break;
-
-      let newCount = 0;
-      rows.forEach((row) => {
-        if (!seen.has(row.offerId)) {
-          seen.add(row.offerId);
-          all.push(row);
-          newCount += 1;
-        }
-      });
-
-      if (rows.length < OFFER_PAGE_SIZE || newCount === 0) break;
-    }
-
-    return all;
+    const res = await offerApi.getAllOffers({ cycleId, size: 1000 });
+    return (res.success && res.data) ? res.data : [];
   };
 
   const fetchEligible = async () => {
+    if (!cycleId) return;
     try {
       setLoadingEligible(true);
       const res = await offerApi.getOfferReadyCandidates(cycleId);
@@ -101,6 +81,7 @@ const OffersTab = ({ context }: { context: DocProcessingContextProps }) => {
   };
 
   const fetchOffers = async () => {
+    if (!cycleId) return;
     try {
       setLoadingOffers(true);
       const all = await fetchAllOffersByCycle();
@@ -110,7 +91,10 @@ const OffersTab = ({ context }: { context: DocProcessingContextProps }) => {
     } finally { setLoadingOffers(false); }
   };
 
-  const refresh = () => { fetchEligible(); fetchOffers(); };
+  const refresh = () => {
+    setLoadingCycleData(true);
+    Promise.all([fetchEligible(), fetchOffers()]).finally(() => setLoadingCycleData(false));
+  };
 
   // Open generate offer dialog — init rows from eligible list
   const openOfferDialog = () => {
@@ -151,7 +135,7 @@ const OffersTab = ({ context }: { context: DocProcessingContextProps }) => {
     const invalid = selected.find(r => !r.issueDate);
     if (invalid) { showToast(`Set issue date for ${invalid.candidateName}`, 'error'); return; }
 
-    const declinedMissingReason = selected.find(r => r.response === 'DECLINED' && !r.declineReason.trim());
+    const declinedMissingReason = selected.find(r => r.response === 'OFFER_DECLINED' && !r.declineReason.trim());
     if (declinedMissingReason) { showToast(`Enter decline reason for ${declinedMissingReason.candidateName}`, 'error'); return; }
 
     const respondedMissingDate = selected.find(r => r.response !== 'PENDING' && !r.respondedDate);
@@ -179,7 +163,7 @@ const OffersTab = ({ context }: { context: DocProcessingContextProps }) => {
             offerId: offer?.offerId ?? 0,
             response: r.response,
             respondedDate: r.respondedDate,
-            declineReason: r.response === 'DECLINED' ? r.declineReason : undefined,
+            declineReason: r.response === 'OFFER_DECLINED' ? r.declineReason : undefined,
           };
         }).filter(r => r.offerId !== 0);
 
@@ -200,14 +184,14 @@ const OffersTab = ({ context }: { context: DocProcessingContextProps }) => {
   const handleSingleSave = async () => {
     if (!singleDialog.offer) return;
     if (!singleDate) { showToast('Enter response date', 'error'); return; }
-    if (singleResponse === 'DECLINED' && !singleReason.trim()) { showToast('Enter decline reason', 'error'); return; }
+    if (singleResponse === 'OFFER_DECLINED' && !singleReason.trim()) { showToast('Enter decline reason', 'error'); return; }
     try {
       setSingleSubmitting(true);
       const apiCall = isEditing ? offerApi.updateOfferResponse : offerApi.recordOfferResponse;
       const res = await apiCall(singleDialog.offer.offerId, {
         response: singleResponse,
         respondedDate: singleDate,
-        declineReason: singleResponse === 'DECLINED' ? singleReason.trim() : undefined,
+        declineReason: singleResponse === 'OFFER_DECLINED' ? singleReason.trim() : undefined,
       });
       if (res.success) {
         showToast(isEditing ? 'Response updated' : 'Response recorded', 'success');
@@ -220,22 +204,21 @@ const OffersTab = ({ context }: { context: DocProcessingContextProps }) => {
   };
 
   const filteredOffers = offers.filter(o => filterResponse === 'all' || o.response === filterResponse);
-  const paginatedOffers = filteredOffers.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 
-  const accepted = offers.filter(o => o.response === 'ACCEPTED').length;
-  const declined = offers.filter(o => o.response === 'DECLINED').length;
+  const accepted = offers.filter(o => o.response === 'OFFER_ACCEPTED').length;
+  const declined = offers.filter(o => o.response === 'OFFER_DECLINED').length;
   const pending  = offers.filter(o => o.response === 'PENDING').length;
 
   const formatDate = (d: string | null) =>
     d ? new Date(d).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : '—';
 
   const RESPONSE_CLASS: Record<string, string> = {
-    PENDING:  'oft-chip oft-chip--pending',
-    ACCEPTED: 'oft-chip oft-chip--accepted',
-    DECLINED: 'oft-chip oft-chip--declined',
+    PENDING:        'oft-chip oft-chip--pending',
+    OFFER_ACCEPTED: 'oft-chip oft-chip--accepted',
+    OFFER_DECLINED: 'oft-chip oft-chip--declined',
   };
 
-  const loading = loadingEligible || loadingOffers;
+  const loading = loadingEligible || loadingOffers || loadingCycleData;
   const selectedRows = rows.filter(r => r.selected);
 
   return (
@@ -248,14 +231,14 @@ const OffersTab = ({ context }: { context: DocProcessingContextProps }) => {
             <Box className="oft-toggle">
               <button
                 className={`oft-toggle-btn ${viewMode === 'eligible' ? 'oft-toggle-btn--active' : ''}`}
-                onClick={() => { setViewMode('eligible'); setPage(0); }}
+                onClick={() => setViewMode('eligible')}
               >
                 Eligible to Offer
                 <span className="oft-toggle-badge">{eligible.length}</span>
               </button>
               <button
                 className={`oft-toggle-btn ${viewMode === 'recorded' ? 'oft-toggle-btn--active' : ''}`}
-                onClick={() => { setViewMode('recorded'); setPage(0); }}
+                onClick={() => setViewMode('recorded')}
               >
                 Recorded Offers
                 <span className="oft-toggle-badge">{offers.length}</span>
@@ -280,11 +263,11 @@ const OffersTab = ({ context }: { context: DocProcessingContextProps }) => {
 
             {viewMode === 'recorded' && (
               <>
-                <FilterSelect label="Status" value={filterResponse} onChange={v => { setFilterResponse(v); setPage(0); }}>
+                <FilterSelect label="Status" value={filterResponse} onChange={v => setFilterResponse(v)}>
                   <MenuItem value="all">All</MenuItem>
                   <MenuItem value="PENDING">Awaiting Response</MenuItem>
-                  <MenuItem value="ACCEPTED">Accepted</MenuItem>
-                  <MenuItem value="DECLINED">Declined</MenuItem>
+                  <MenuItem value="OFFER_ACCEPTED">Accepted</MenuItem>
+                  <MenuItem value="OFFER_DECLINED">Declined</MenuItem>
                 </FilterSelect>
                 <Box className="oft-stats-inline">
                   <Typography className="oft-stat-inline oft-stat-inline--pending">{pending} pending</Typography>
@@ -331,13 +314,16 @@ const OffersTab = ({ context }: { context: DocProcessingContextProps }) => {
                       </TableCell>
                     </TableRow>
                   ) : (
-                    eligible.map((c, idx) => (
+                    eligible.map((c, idx) => {
+                      const name = c.candidateName || `Candidate #${c.candidateId}`;
+                      const initials = name.split(' ').filter(Boolean).map(w => w[0]).join('').slice(0, 2).toUpperCase();
+                      return (
                       <TableRow key={c.candidateId} hover className={`oft-table-row ${idx % 2 === 0 ? 'oft-table-row--even' : 'oft-table-row--odd'}`}>
                         <TableCell className="oft-table-cell">
                           <Box className="oft-name-cell">
-                            <Box className="oft-name-icon-box"><PersonIcon className="oft-name-icon" /></Box>
+                            <Box className="oft-name-avatar">{initials}</Box>
                             <Box>
-                              <Typography className="oft-row-primary">{c.candidateName || `Candidate #${c.candidateId}`}</Typography>
+                              <Typography className="oft-row-primary">{name}</Typography>
                             </Box>
                           </Box>
                         </TableCell>
@@ -345,7 +331,7 @@ const OffersTab = ({ context }: { context: DocProcessingContextProps }) => {
                           <Chip label="All Docs Approved ✓" size="small" className="oft-chip oft-chip--accepted" />
                         </TableCell>
                       </TableRow>
-                    ))
+                    );})
                   )}
                 </TableBody>
               </Table>
@@ -368,7 +354,7 @@ const OffersTab = ({ context }: { context: DocProcessingContextProps }) => {
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {paginatedOffers.length === 0 ? (
+                    {filteredOffers.length === 0 ? (
                       <TableRow>
                         <TableCell colSpan={6} className="oft-empty-cell">
                           <OfferIcon className="oft-empty-icon" />
@@ -376,13 +362,16 @@ const OffersTab = ({ context }: { context: DocProcessingContextProps }) => {
                         </TableCell>
                       </TableRow>
                     ) : (
-                      paginatedOffers.map((offer, idx) => (
+                      filteredOffers.map((offer, idx) => {
+                        const oName = offer.candidateName || `Candidate #${offer.candidateId}`;
+                        const oInitials = oName.split(' ').filter(Boolean).map(w => w[0]).join('').slice(0, 2).toUpperCase();
+                        return (
                         <TableRow key={offer.offerId} hover className={`oft-table-row ${idx % 2 === 0 ? 'oft-table-row--even' : 'oft-table-row--odd'}`}>
                           <TableCell className="oft-table-cell">
                             <Box className="oft-name-cell">
-                              <Box className="oft-name-icon-box"><PersonIcon className="oft-name-icon" /></Box>
+                              <Box className="oft-name-avatar">{oInitials}</Box>
                               <Box>
-                                <Typography className="oft-row-primary">{offer.candidateName || `Candidate #${offer.candidateId}`}</Typography>
+                                <Typography className="oft-row-primary">{oName}</Typography>
                               </Box>
                             </Box>
                           </TableCell>
@@ -391,7 +380,7 @@ const OffersTab = ({ context }: { context: DocProcessingContextProps }) => {
                           </TableCell>
                           <TableCell className="oft-table-cell">
                             <Chip
-                              label={offer.response === 'PENDING' ? 'Awaiting Response' : offer.response === 'ACCEPTED' ? 'Accepted' : 'Declined'}
+                              label={offer.response === 'PENDING' ? 'Awaiting Response' : offer.response === 'OFFER_ACCEPTED' ? 'Accepted' : 'Declined'}
                               size="small"
                               variant="outlined"
                               className={RESPONSE_CLASS[offer.response] ?? 'oft-chip'}
@@ -410,7 +399,7 @@ const OffersTab = ({ context }: { context: DocProcessingContextProps }) => {
                                 variant="outlined"
                                 className="oft-record-btn"
                                 onClick={() => {
-                                  setSingleResponse('ACCEPTED');
+                                  setSingleResponse('OFFER_ACCEPTED');
                                   setSingleDate(today());
                                   setSingleReason('');
                                   setIsEditing(false);
@@ -420,13 +409,13 @@ const OffersTab = ({ context }: { context: DocProcessingContextProps }) => {
                                 Record Response
                               </Button>
                             )}
-                            {offer.response === 'ACCEPTED' && offer.applicationStage === 'ACCEPTED' && (
+                            {offer.response === 'OFFER_ACCEPTED' && offer.applicationStage === 'OFFER_ACCEPTED' && (
                               <Button
                                 size="small"
                                 variant="outlined"
                                 className="oft-record-btn"
                                 onClick={() => {
-                                  setSingleResponse(offer.response as 'ACCEPTED' | 'DECLINED');
+                                  setSingleResponse(offer.response as 'OFFER_ACCEPTED' | 'OFFER_DECLINED');
                                   setSingleDate(offer.respondedDate ?? today());
                                   setSingleReason(offer.declineReason ?? '');
                                   setIsEditing(true);
@@ -438,21 +427,11 @@ const OffersTab = ({ context }: { context: DocProcessingContextProps }) => {
                             )}
                           </TableCell>
                         </TableRow>
-                      ))
+                      );})
                     )}
                   </TableBody>
                 </Table>
               </TableContainer>
-              <TablePagination
-                component="div"
-                count={filteredOffers.length}
-                page={page}
-                onPageChange={(_, p) => setPage(p)}
-                rowsPerPage={rowsPerPage}
-                onRowsPerPageChange={e => { setRowsPerPage(parseInt(e.target.value, 10)); setPage(0); }}
-                rowsPerPageOptions={[10, 25, 50]}
-                className="oft-pagination"
-              />
             </>
           )}
         </Box>
@@ -460,8 +439,9 @@ const OffersTab = ({ context }: { context: DocProcessingContextProps }) => {
 
       {/* ── Generate Offer Dialog ── */}
       <Dialog open={offerDialog} onClose={() => setOfferDialog(false)} maxWidth="md" fullWidth>
-        <DialogTitle className="oft-dialog-title">
+        <DialogTitle className="oft-dialog-title" sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           Generate Offers — {eligible.length} Eligible Candidate(s)
+          <IconButton size="small" onClick={() => setOfferDialog(false)}><CloseIcon style={{ fontSize: '1.25rem' }} /></IconButton>
         </DialogTitle>
         <DialogContent>
           <Stack spacing={2} sx={{ mt: 1 }}>
@@ -539,8 +519,8 @@ const OffersTab = ({ context }: { context: DocProcessingContextProps }) => {
                           sx={{ width: 140 }}
                         >
                           <MenuItem value="PENDING" sx={{ display: 'none' }}>Pending</MenuItem>
-                          <MenuItem value="ACCEPTED">Accepted</MenuItem>
-                          <MenuItem value="DECLINED">Declined</MenuItem>
+                          <MenuItem value="OFFER_ACCEPTED">Accepted</MenuItem>
+                          <MenuItem value="OFFER_DECLINED">Declined</MenuItem>
                         </TextField>
                       </TableCell>
                       <TableCell className="oft-table-cell">
@@ -560,7 +540,7 @@ const OffersTab = ({ context }: { context: DocProcessingContextProps }) => {
                           placeholder="Reason..."
                           value={row.declineReason}
                           onChange={e => updateRow(row.candidateId, 'declineReason', e.target.value)}
-                          disabled={!row.selected || row.response !== 'DECLINED'}
+                          disabled={!row.selected || row.response !== 'OFFER_DECLINED'}
                           sx={{ width: 180 }}
                         />
                       </TableCell>
@@ -590,8 +570,9 @@ const OffersTab = ({ context }: { context: DocProcessingContextProps }) => {
 
       {/* ── Single Record Response Dialog ── */}
       <Dialog open={singleDialog.open} onClose={() => setSingleDialog({ open: false, offer: null })} maxWidth="xs" fullWidth>
-        <DialogTitle className="oft-dialog-title">
+        <DialogTitle className="oft-dialog-title" sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           {isEditing ? 'Edit Response' : 'Record Response'} — {singleDialog.offer?.candidateName}
+          <IconButton size="small" onClick={() => setSingleDialog({ open: false, offer: null })}><CloseIcon style={{ fontSize: '1.25rem' }} /></IconButton>
         </DialogTitle>
         <DialogContent>
           <Stack spacing={2} sx={{ mt: 1 }}>
@@ -601,11 +582,11 @@ const OffersTab = ({ context }: { context: DocProcessingContextProps }) => {
               size="small"
               fullWidth
               value={singleResponse}
-              onChange={e => setSingleResponse(e.target.value as 'ACCEPTED' | 'DECLINED')}
+              onChange={e => setSingleResponse(e.target.value as 'OFFER_ACCEPTED' | 'OFFER_DECLINED')}
               className="oft-dialog-field"
             >
-              <MenuItem value="ACCEPTED">Accepted</MenuItem>
-              <MenuItem value="DECLINED">Declined</MenuItem>
+              <MenuItem value="OFFER_ACCEPTED">Accepted</MenuItem>
+              <MenuItem value="OFFER_DECLINED">Declined</MenuItem>
             </TextField>
             <TextField
               label="Response Date *"
@@ -617,7 +598,7 @@ const OffersTab = ({ context }: { context: DocProcessingContextProps }) => {
               InputLabelProps={{ shrink: true }}
               className="oft-dialog-field"
             />
-            {singleResponse === 'DECLINED' && (
+            {singleResponse === 'OFFER_DECLINED' && (
               <TextField
                 label="Decline Reason *"
                 size="small"
@@ -637,7 +618,7 @@ const OffersTab = ({ context }: { context: DocProcessingContextProps }) => {
             variant="contained"
             onClick={handleSingleSave}
             disabled={singleSubmitting}
-            className={singleResponse === 'ACCEPTED' ? 'oft-dialog-accept-btn' : 'oft-dialog-decline-btn'}
+            className={singleResponse === 'OFFER_ACCEPTED' ? 'oft-dialog-accept-btn' : 'oft-dialog-decline-btn'}
           >
             {singleSubmitting ? 'Saving...' : 'Confirm'}
           </Button>

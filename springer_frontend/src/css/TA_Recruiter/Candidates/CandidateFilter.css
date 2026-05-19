@@ -1,13 +1,19 @@
 /* ── Sidebar ── */
 .candidate-filter-sidebar {
+  position: absolute;
+  left: 0;
+  top: 89px;
+  bottom: 0;
   width: 300px;
-  min-width: 300px;
+  height: auto;
+  padding-top: 0;
   border-right: 1px solid var(--color-border-table);
   background-color: var(--color-surface);
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  height: 100%;
+  z-index: 100;
+  box-sizing: border-box;
 }
 
 /* ── Header ── */
@@ -16,7 +22,6 @@
   justify-content: space-between;
   align-items: center;
   padding: 12px 16px;
-  border-bottom: 1px solid var(--color-border-table);
   flex-shrink: 0;
 }
 

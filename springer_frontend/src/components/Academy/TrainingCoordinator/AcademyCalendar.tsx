@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Box, Card, Typography, CircularProgress, IconButton,
   Button, MenuItem, FormControl, Select,
@@ -6,10 +6,12 @@ import {
 } from '@mui/material';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
-import CloseIcon from '@mui/icons-material/Close';
+import { FigmaCloseIcon as CloseIcon } from '../../Common/FigmaIcons';
+import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import {
-  batchScheduleApi, batchCourseApi, trainingCourseApi,
+  batchScheduleApi, batchCourseApi,
   batchAllocationApi, attendanceApi,
+  trainingProgramApi,
 } from '../../../services/academy.api';
 import { academyEventApi } from '../../../services/academyEvent.api';
 import type { AcademyEventResponse } from '../../../services/academyEvent.api';
@@ -18,7 +20,7 @@ import { handleAxiosError } from '../../../services/api.error';
 import { showToast } from '../../../utils/toast';
 import type {
   AcademyContextProps, BatchScheduleResponse,
-  BatchCourseResponse, TrainingCourseResponse,
+  BatchCourseResponse,
   BatchAllocationResponse, AttendanceResponse,
 } from '../../../types/Academy/academy.types';
 import '../../../css/Academy/TrainingCoordinator/AcademyCalendar.css';
@@ -53,21 +55,31 @@ interface MultiDayBar {
 interface DayAtt { present: number; absent: number; }
 
 // ── Component ─────────────────────────────────────────────────────────────────
-const AcademyCalendar: React.FC<{ context: AcademyContextProps }> = ({ context }) => {
-  const { programYear, programs: yearPrograms } = context;
-
+const AcademyCalendar: React.FC<{ context?: AcademyContextProps }> = ({ context }) => {
   const currentYear = new Date().getFullYear();
-  const yearOptions = Array.from({ length: 4 }, (_, i) => currentYear - i);
+  const [standalonePrograms, setStandalonePrograms] = useState<import('../../../types/Academy/academy.types').TrainingProgramResponse[]>([]);
+
+  useEffect(() => {
+    if (!context) {
+      trainingProgramApi.getAllPrograms(true)
+        .then(res => { if (res.success && res.data) setStandalonePrograms(res.data); })
+        .catch(() => {});
+    }
+  }, [context]);
+
+  const programYear = context?.programYear ?? currentYear;
+  const yearPrograms = context?.programs ?? standalonePrograms.filter(p => p.programYear === programYear);
+  // const yearOptions = Array.from({ length: 4 }, (_, i) => currentYear - i);
 
   const [loading, setLoading]             = useState(true);
   const [currentDate, setCurrentDate]     = useState(new Date());
-  const [selectedYear, setSelectedYear]   = useState(currentYear);
+  // const [selectedYear, setSelectedYear] = useState(currentYear);
   const [schedules, setSchedules]         = useState<BatchScheduleResponse[]>([]);
   const [batchCourses, setBatchCourses]   = useState<BatchCourseResponse[]>([]);
-  const [allCourses, setAllCourses]       = useState<TrainingCourseResponse[]>([]);
   const [attMap, setAttMap]               = useState<Record<string, DayAtt>>({});
   const [filterProgram, setFilterProgram] = useState('all');
   const [filterBatch, setFilterBatch]     = useState('all');
+  const [viewMode, setViewMode]           = useState<'month' | 'week'>('month');
   const [selectedDay, setSelectedDay]     = useState<Date | null>(null);
   const [events, setEvents]               = useState<AcademyEventResponse[]>([]);
   const user = tokenstore.getUser();
@@ -132,18 +144,28 @@ const AcademyCalendar: React.FC<{ context: AcademyContextProps }> = ({ context }
   const fetchData = async () => {
     try {
       setLoading(true);
-      const [bcRes, crsRes, allocRes] = await Promise.all([
-        batchCourseApi.getAllBatchCourses(),
-        trainingCourseApi.getAllCourses(),
-        batchAllocationApi.getAllAllocations(),
-      ]);
-      if (bcRes.success && bcRes.data)   setBatchCourses(bcRes.data);
-      if (crsRes.success && crsRes.data) setAllCourses(crsRes.data);
-
-      const allocs: BatchAllocationResponse[] = (allocRes.success && allocRes.data) ? allocRes.data : [];
-
       const progIds = yearPrograms.map(p => p.programId);
-      const schedResults = await Promise.allSettled(progIds.map(id => batchScheduleApi.getByProgram(id)));
+
+      // Fetch batch courses, allocations, and schedules per year-scoped program in parallel
+      const [bcResults, allocResults, schedResults] = await Promise.all([
+        Promise.allSettled(progIds.map(id => batchCourseApi.getCoursesByProgram(id))),
+        Promise.allSettled(progIds.map(id => batchAllocationApi.getAllocationsByProgram(id, true))),
+        Promise.allSettled(progIds.map(id => batchScheduleApi.getByProgram(id))),
+      ]);
+
+      const allBCs: BatchCourseResponse[] = [];
+      bcResults.forEach(r => {
+        if (r.status === 'fulfilled' && r.value.success && r.value.data)
+          allBCs.push(...r.value.data);
+      });
+      setBatchCourses(allBCs);
+
+      const allocs: BatchAllocationResponse[] = [];
+      allocResults.forEach(r => {
+        if (r.status === 'fulfilled' && r.value.success && r.value.data)
+          allocs.push(...r.value.data);
+      });
+
       const allScheds: BatchScheduleResponse[] = [];
       schedResults.forEach(r => {
         if (r.status === 'fulfilled' && r.value.success && r.value.data)
@@ -175,7 +197,7 @@ const AcademyCalendar: React.FC<{ context: AcademyContextProps }> = ({ context }
   const prevMonth = () => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1));
   const nextMonth = () => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1));
   const goToday   = () => setCurrentDate(new Date());
-  const changeYear = (year: number) => { setSelectedYear(year); setCurrentDate(new Date(year, currentDate.getMonth(), 1)); };
+  // const changeYear = (year: number) => { setSelectedYear(year); setCurrentDate(new Date(year, currentDate.getMonth(), 1)); };
 
   // ── Scoped data ───────────────────────────────────────────────────────────
   const scopedPrograms = yearPrograms.filter(p =>
@@ -218,7 +240,6 @@ const AcademyCalendar: React.FC<{ context: AcademyContextProps }> = ({ context }
 
   // Course duration bars
   scopedBatchCourses.forEach(bc => {
-    const course = allCourses.find(c => c.courseId === bc.courseId);
     const status = bc.status?.toLowerCase() ?? 'planned';
     const type = status === 'active' ? 'course-active'
       : status === 'completed' ? 'course-completed'
@@ -226,7 +247,7 @@ const AcademyCalendar: React.FC<{ context: AcademyContextProps }> = ({ context }
       : 'course-planned';
     multiDayBars.push({
       id: `course-${bc.batchCourseId}`,
-      label: `${course?.courseName ?? 'Course'} (B${bc.batchNo})`,
+      label: `${bc.courseName ?? 'Course'} (B${bc.batchNo})`,
       type,
       startDate: parseDate(bc.startDate!),
       endDate: parseDate(bc.endDate!),
@@ -234,8 +255,11 @@ const AcademyCalendar: React.FC<{ context: AcademyContextProps }> = ({ context }
     });
   });
 
-  // Academy events (meetings, reviews etc.)
-  events.forEach(ev => {
+  // Academy events — scoped to selected programs (null programId = global event)
+  const scopedEvents = events.filter(ev =>
+    ev.programId == null || scopedProgramIds.has(ev.programId)
+  );
+  scopedEvents.forEach(ev => {
     const evDate = parseDate(ev.eventDate);
     multiDayBars.push({
       id: `event-${ev.eventId}`,
@@ -304,79 +328,103 @@ const AcademyCalendar: React.FC<{ context: AcademyContextProps }> = ({ context }
     'event':            'acal-bar--event',
   };
 
+  // ── Week view helpers ──
+  const WEEK_HOURS = Array.from({ length: 13 }, (_, i) => i + 7); // 07:00 – 19:00
+
+  const getWeekDays = (): Date[] => {
+    const d = new Date(currentDate);
+    const day = d.getDay(); // 0=Sun
+    const start = new Date(d);
+    start.setDate(d.getDate() - day);
+    return Array.from({ length: 7 }, (_, i) => {
+      const dt = new Date(start);
+      dt.setDate(start.getDate() + i);
+      dt.setHours(0, 0, 0, 0);
+      return dt;
+    });
+  };
+
+  const weekDays = useMemo(() => getWeekDays(), [currentDate]);
+
+  const getWeekBarsForDay = (date: Date) => {
+    return multiDayBars
+      .filter(bar => isBetween(date, bar.startDate, bar.endDate))
+      .map(bar => {
+        const evt = events.find(e => bar.id === `event-${e.eventId}`);
+        const timeStr = evt?.eventTime || '09:00';
+        const [h, m] = timeStr.split(':').map(Number);
+        return { bar, hour: h || 9, minute: m || 0, type: bar.type, evt };
+      });
+  };
+
   return (
     <Box className="acal-container">
 
-      {/* ── Header ── */}
-      <Card className="acal-header">
-
-        {/* Left — year + nav */}
-        <Box className="acal-header-left">
-          <FormControl className="acal-year-select">
-            <Select value={selectedYear} onChange={e => changeYear(e.target.value as number)} className="acal-year-dropdown">
-              {yearOptions.map(y => <MenuItem key={y} value={y}>{y}</MenuItem>)}
-            </Select>
-          </FormControl>
-          <Box className="acal-nav-controls">
-            <Box className="acal-nav-buttons">
-              <IconButton onClick={prevMonth} className="acal-nav-btn"><ChevronLeftIcon /></IconButton>
-              <IconButton onClick={nextMonth} className="acal-nav-btn"><ChevronRightIcon /></IconButton>
-            </Box>
-            <Button variant="outlined" onClick={goToday} className="acal-today-btn">Today</Button>
-            <Typography variant="h6" className="acal-month-year">
-              {MONTHS[currentDate.getMonth()]} {currentDate.getFullYear()}
-            </Typography>
-          </Box>
-        </Box>
-
-        {/* Center — title */}
-        <Box className="acal-header-center">
-          <Typography variant="h5" className="acal-title">Academy Calendar</Typography>
-        </Box>
-
-        {/* Right — filters + legend */}
-        <Box className="acal-header-right">
-          {/* Program filter */}
+      {/* ── Toolbar row 1: Filters left, Navigation right ── */}
+      <Box className="acal-toolbar">
+        <Box className="acal-toolbar-left">
           <FormControl size="small" className="acal-program-select">
             <Select value={filterProgram} onChange={e => { setFilterProgram(e.target.value); setFilterBatch('all'); }} displayEmpty>
               <MenuItem value="all">All Programs</MenuItem>
               {yearPrograms.map(p => <MenuItem key={p.programId} value={String(p.programId)}>{p.programName}</MenuItem>)}
             </Select>
           </FormControl>
-
-          {/* Batch filter */}
           <FormControl size="small" className="acal-batch-select">
             <Select value={filterBatch} onChange={e => setFilterBatch(e.target.value)} displayEmpty>
               <MenuItem value="all">All Batches</MenuItem>
               {availableBatches.map(b => <MenuItem key={b} value={String(b)}>Batch {b}</MenuItem>)}
             </Select>
           </FormControl>
-
-          {/* Add Event button */}
           <Button variant="contained" size="small" onClick={() => setAddEventOpen(true)}
-            sx={{ background: 'var(--color-primary)', textTransform: 'none', fontWeight: 600, borderRadius: '6px', whiteSpace: 'nowrap' }}>
+            sx={{ background: 'var(--color-primary)', textTransform: 'none', fontWeight: 600, borderRadius: '6px', whiteSpace: 'nowrap', px: 2 }}>
             + Add Event
           </Button>
-
-          {/* Legend */}
-          <Box className="acal-legend">
-            {[
-              { cls: 'acal-legend-batch',     label: 'Batch Period' },
-              { cls: 'acal-legend-active',    label: 'Course Active' },
-              { cls: 'acal-legend-planned',   label: 'Course Planned' },
-              { cls: 'acal-legend-completed', label: 'Completed' },
-              { cls: 'acal-legend-event',     label: 'Event' },
-              { cls: 'acal-legend-present',   label: 'Present' },
-              { cls: 'acal-legend-absent',    label: 'Absent' },
-            ].map(l => (
-              <Box key={l.label} className="acal-legend-item">
-                <span className={`acal-legend-color ${l.cls}`} />
-                <Typography variant="body2">{l.label}</Typography>
-              </Box>
-            ))}
-          </Box>
         </Box>
-      </Card>
+
+        <Box className="acal-toolbar-right">
+          <Button variant="outlined" onClick={goToday} className="acal-today-btn">Today</Button>
+          <Box className="acal-nav-buttons">
+            <IconButton onClick={prevMonth} className="acal-nav-btn"><ChevronLeftIcon /></IconButton>
+            <IconButton onClick={nextMonth} className="acal-nav-btn"><ChevronRightIcon /></IconButton>
+          </Box>
+          <Typography variant="h6" className="acal-month-year">
+            {MONTHS[currentDate.getMonth()]} {currentDate.getFullYear()}
+          </Typography>
+        </Box>
+      </Box>
+
+      {/* ── Toolbar row 2: Legend left, View toggle right ── */}
+      <Box className="acal-toolbar acal-toolbar--secondary">
+        <Box className="acal-legend">
+          {[
+            { cls: 'acal-legend-batch',     label: 'Batch Period' },
+            { cls: 'acal-legend-active',    label: 'Course Active' },
+            { cls: 'acal-legend-planned',   label: 'Course Planned' },
+            { cls: 'acal-legend-completed', label: 'Completed' },
+            { cls: 'acal-legend-event',     label: 'Event' },
+            { cls: 'acal-legend-present',   label: 'Present' },
+            { cls: 'acal-legend-absent',    label: 'Absent' },
+          ].map(l => (
+            <Box key={l.label} className="acal-legend-item">
+              <span className={`acal-legend-color ${l.cls}`} />
+              <Typography variant="body2">{l.label}</Typography>
+            </Box>
+          ))}
+        </Box>
+        <Box className="acal-view-toggle">
+          <CalendarTodayIcon sx={{ fontSize: 18, color: 'var(--color-text-secondary)' }} />
+          <FormControl size="small">
+            <Select
+              value={viewMode}
+              onChange={e => setViewMode(e.target.value as 'month' | 'week')}
+              className="acal-view-select"
+            >
+              <MenuItem value="month">Month</MenuItem>
+              <MenuItem value="week">Week</MenuItem>
+            </Select>
+          </FormControl>
+        </Box>
+      </Box>
 
       {/* ── Calendar Grid ── */}
       {loading ? (
@@ -384,7 +432,7 @@ const AcademyCalendar: React.FC<{ context: AcademyContextProps }> = ({ context }
           <CircularProgress />
           <Typography>Loading academy schedule...</Typography>
         </Box>
-      ) : (
+      ) : viewMode === 'month' ? (
         <Card className="acal-grid-container">
 
           {/* Weekday headers */}
@@ -472,6 +520,51 @@ const AcademyCalendar: React.FC<{ context: AcademyContextProps }> = ({ context }
             })}
           </Box>
         </Card>
+      ) : (
+        /* ── Week View ── */
+        <Card className="acal-week-container">
+          {/* Week header with day names + dates */}
+          <Box className="acal-week-header">
+            <Box className="acal-week-time-gutter" />
+            {weekDays.map((d, i) => {
+              const dayIsToday = isToday(d);
+              return (
+                <Box key={i} className={`acal-week-day-col-header ${dayIsToday ? 'acal-week-day-col-header--today' : ''}`}>
+                  <Typography className="acal-week-day-name">{DAYS_OF_WEEK[d.getDay()]}</Typography>
+                  <Typography className={`acal-week-day-num ${dayIsToday ? 'acal-week-day-num--today' : ''}`}>{d.getDate()}</Typography>
+                </Box>
+              );
+            })}
+          </Box>
+
+          {/* Time grid */}
+          <Box className="acal-week-body">
+            {WEEK_HOURS.map(hour => (
+              <Box key={hour} className="acal-week-row">
+                <Box className="acal-week-time-gutter">
+                  <Typography className="acal-week-time-label">{String(hour).padStart(2, '0')}:00</Typography>
+                </Box>
+                {weekDays.map((d, di) => {
+                  const dayBars = getWeekBarsForDay(d);
+                  const barsAtHour = dayBars.filter(b => b.hour === hour);
+                  return (
+                    <Box key={di} className={`acal-week-cell ${isToday(d) ? 'acal-week-cell--today' : ''}`}
+                      onClick={() => { const details = getBarsForDay(d); if (details.length > 0) setSelectedDay(d); }}>
+                      {barsAtHour.map(({ bar }, bi) => (
+                        <Box key={bi} className={`acal-week-event ${barTypeClass[bar.type] || 'acal-bar--active'}`}>
+                          <Typography className="acal-week-event-title">{bar.label}</Typography>
+                          {bar.venue && (
+                            <Typography className="acal-week-event-sub">{bar.venue}</Typography>
+                          )}
+                        </Box>
+                      ))}
+                    </Box>
+                  );
+                })}
+              </Box>
+            ))}
+          </Box>
+        </Card>
       )}
 
       {/* ── Day Detail Dialog ── */}
@@ -487,7 +580,7 @@ const AcademyCalendar: React.FC<{ context: AcademyContextProps }> = ({ context }
                 <Typography sx={{ fontWeight: 700, fontSize: 'var(--text-md)', color: 'var(--color-text-primary)' }}>
                   {dateLabel}
                 </Typography>
-                <IconButton size="small" onClick={() => setSelectedDay(null)}><CloseIcon fontSize="small" /></IconButton>
+                <IconButton size="small" onClick={() => setSelectedDay(null)}><CloseIcon style={{ fontSize: '1.25rem' }} /></IconButton>
               </DialogTitle>
               <DialogContent sx={{ pt: 0 }}>
 
@@ -583,7 +676,7 @@ const AcademyCalendar: React.FC<{ context: AcademyContextProps }> = ({ context }
       <Dialog open={addEventOpen} onClose={() => setAddEventOpen(false)} maxWidth="sm" fullWidth>
         <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', pb: 1 }}>
           <Typography sx={{ fontWeight: 700, fontSize: 'var(--text-md)' }}>Add Event</Typography>
-          <IconButton size="small" onClick={() => setAddEventOpen(false)}><CloseIcon fontSize="small" /></IconButton>
+          <IconButton size="small" onClick={() => setAddEventOpen(false)}><CloseIcon style={{ fontSize: '1.25rem' }} /></IconButton>
         </DialogTitle>
         <DialogContent sx={{ pt: 1 }}>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
