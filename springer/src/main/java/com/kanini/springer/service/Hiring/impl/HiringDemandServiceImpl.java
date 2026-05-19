@@ -111,7 +111,7 @@ public class HiringDemandServiceImpl implements IHiringDemandService {
     public List<HiringDemandResponse> getAllDemands() {
         return demandRepository.findAll().stream()
                 .map(mapper::toResponse)
-                .collect(Collectors.toList());
+                .toList();
     }
     
     @Override
@@ -124,7 +124,7 @@ public class HiringDemandServiceImpl implements IHiringDemandService {
         
         return demandRepository.findByCycleCycleId(cycleId).stream()
                 .map(mapper::toResponse)
-                .collect(Collectors.toList());
+                .toList();
     }
     
     @Override
@@ -134,7 +134,7 @@ public class HiringDemandServiceImpl implements IHiringDemandService {
             ApprovalStatus approvalStatus = ApprovalStatus.valueOf(status.toUpperCase());
             return demandRepository.findByApprovalStatus(approvalStatus).stream()
                     .map(mapper::toResponse)
-                    .collect(Collectors.toList());
+                    .toList();
         } catch (IllegalArgumentException e) {
             throw new ValidationException("Invalid approval status: " + status + 
                     ". Valid values are: DRAFT, SUBMITTED, APPROVED, REJECTED");

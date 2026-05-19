@@ -71,7 +71,7 @@ public class FormServiceImpl implements IFormService {
         List<Form> forms = formRepository.findByDriveDriveId(driveId);
         return forms.stream()
                 .map(mapper::toResponse)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Override
@@ -87,7 +87,7 @@ public class FormServiceImpl implements IFormService {
         List<Form> forms = formRepository.findByDriveDriveIdAndStatusTrue(driveId);
         return forms.stream()
                 .map(mapper::toResponse)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Override

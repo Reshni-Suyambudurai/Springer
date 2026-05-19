@@ -71,7 +71,7 @@ public class HiringCycleServiceImpl implements IHiringCycleService {
     public List<HiringCycleResponse> getAllCycles() {
         return cycleRepository.findAll().stream()
                 .map(mapper::toResponse)
-                .collect(Collectors.toList());
+                .toList();
     }
     
     @Override
@@ -83,7 +83,7 @@ public class HiringCycleServiceImpl implements IHiringCycleService {
                     cycle.getCycleName(),
                     cycle.getStatus().toString()
                 ))
-                .collect(Collectors.toList());
+                .toList();
     }
     
     @Override
@@ -92,7 +92,7 @@ public class HiringCycleServiceImpl implements IHiringCycleService {
             CycleStatus cycleStatus = CycleStatus.valueOf(status.toUpperCase());
             return cycleRepository.findByStatus(cycleStatus).stream()
                     .map(mapper::toResponse)
-                    .collect(Collectors.toList());
+                    .toList();
         } catch (IllegalArgumentException e) {
             throw new ValidationException("Invalid cycle status: " + status + ". Valid values are: OPEN, CLOSED");
         }
@@ -198,6 +198,6 @@ public class HiringCycleServiceImpl implements IHiringCycleService {
         List<HiringCycle> cycles = cycleRepository.findAllWithDrivesAndInstitutes();
         return cycles.stream()
                 .map(mapper::toCycleWithDrivesResponse)
-                .collect(Collectors.toList());
+                .toList();
     }
 }

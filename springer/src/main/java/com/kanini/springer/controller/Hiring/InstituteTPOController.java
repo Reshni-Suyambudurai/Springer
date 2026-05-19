@@ -11,13 +11,16 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
 import java.util.List;
+
+
+import org.springframework.security.access.prepost.PreAuthorize;
 
 @RestController
 @RequestMapping("/api/institutes/contacts")
 @RequiredArgsConstructor
 @Tag(name = "Institute Contact (TPO) Management", description = "APIs for managing institute contacts and placement officers")
+@PreAuthorize("hasAnyRole('SYSTEM_ADMIN','TA_HEAD','TA_MANAGER')")
 public class InstituteTPOController {
     
     private final IInstituteTPOService tpoService;
@@ -116,3 +119,4 @@ public class InstituteTPOController {
         return ResponseEntity.ok(new ApiResponse<>(true, "Contact status toggled successfully", null));
     }
 }
+

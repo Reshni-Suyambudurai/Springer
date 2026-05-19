@@ -15,13 +15,16 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-
 import java.util.List;
+
+
+import org.springframework.security.access.prepost.PreAuthorize;
 
 @RestController
 @RequestMapping("/api/hiring/cycles")
 @RequiredArgsConstructor
 @Validated
+@PreAuthorize("hasAnyRole('SYSTEM_ADMIN','TA_HEAD','TA_MANAGER','HIRING_MANAGER','TRAINING_COORDINATOR')")
 public class HiringCycleController {
     
     private final IHiringCycleService cycleService;
@@ -68,6 +71,7 @@ public class HiringCycleController {
     }
     
     @GetMapping("/with-drives")
+    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN','TA_HEAD','TA_MANAGER','HIRING_MANAGER','TRAINING_COORDINATOR','MEMBERS')")
     public ResponseEntity<ApiResponse<List<CycleWithDrivesResponse>>> getAllCyclesWithDrives() {
         List<CycleWithDrivesResponse> responses = cycleService.getAllCyclesWithDrives();
         return ResponseEntity.ok(ApiResponse.success("All cycles with drives retrieved successfully", responses));
@@ -117,3 +121,4 @@ public class HiringCycleController {
                 .body(jd);
     }
 }
+

@@ -22,7 +22,7 @@
 - View academy dashboard and analytics
 - Configure system settings (eligibility rules, round templates, skills)
 
-### TA Recruiter
+### TA Manager
 - Manage partner institutes and TPO contacts
 - Add candidates individually or via bulk Excel upload
 - Schedule campus drives (on-campus / off-campus) with calendar view
@@ -56,6 +56,15 @@
 
 ### System Admin
 - Admin dashboard for system management
+- Create users, toggle status, manage roles *(Recent)*
+
+### Recent Updates
+- **Admin User Management** — Create users, toggle status, manage roles
+- **Hiring Cycle Edit** — Edit cycle info (name, year, budget, total intake, JD) via dialog
+- **Multi-Template Email Support** — SendEmail component now supports multiple template selection
+- **Email Templates** — 5 templates seeded (document submission, rejection, on-campus drive, off-campus drive, shortlist invite, round selection)
+- **Automated Deployment Scripts** — `.bat` files for one-click setup and teardown
+- **Enhanced .gitignore** — Proper exclusion of logs, node_modules, build artifacts
 
 ---
 
@@ -113,3 +122,122 @@ springer_frontend/                 # React + TypeScript frontend
 ```
 
 ---
+
+## Installation Steps
+
+| Software | Version | Download |
+|----------|---------|----------|
+| **Java JDK** | 21+ | [Oracle JDK](https://www.oracle.com/java/technologies/downloads/) / [Adoptium](https://adoptium.net/) |
+| **Node.js** | 18+ | [nodejs.org](https://nodejs.org/) |
+| **MySQL** | 8.0+ | [MySQL Community](https://dev.mysql.com/downloads/mysql/) |
+
+Ensure `java`, `node`, and `mysql` are available in your system PATH after installation.
+
+---
+
+## Running the Application
+
+### Using `.bat` files (Windows — Recommended)
+
+1. Edit `config.bat` with your MySQL credentials:
+   ```batch
+   set DB_USER=root
+   set DB_PASS=your_mysql_password
+   set MYSQL_SERVICE=MySQL80
+   ```
+2. Double-click **`start-springer.bat`** to start backend + frontend.
+3. Double-click **`stop-springer.bat`** to stop all services.
+
+App opens at **http://localhost:5173**
+
+### Manual Setup
+
+**Backend:**
+```bash
+cd springer
+mvn clean install -DskipTests
+mvn spring-boot:run
+```
+Runs on **http://localhost:8080** | Swagger: **http://localhost:8080/swagger-ui.html**
+
+**Frontend:**
+```bash
+cd springer_frontend
+npm install
+npm run dev
+```
+Runs on **http://localhost:5173**
+
+**Database:** If MySQL CLI is not in PATH, manually create the DB first:
+```sql
+CREATE DATABASE Springer;
+```
+Tables and seed data are created automatically on first backend startup.
+
+---
+
+## Default Login Credentials
+
+| Role | Email | Password | Description |
+|------|-------|----------|-------------|
+| **TA Head** | sudha@kanini.com | password123 | Approve demands, manage cycles |
+| **TA Recruiter** | mozhi@kanini.com | password123 | Manage institutes, drives, candidates |
+| **Hiring Manager** | parthiban@kanini.com | password123 | Raise hiring demands |
+| **Panel Member** | ramesh@kanini.com | password123 | Score candidates in rounds |
+| **Training Coordinator** | lavanya@kanini.com | password123 | Manage academy training programs |
+| **System Admin** | admin@kanini.com | admin@123 | Admin dashboard and user management |
+
+---
+
+## Environment Profiles
+
+| Profile | Active By | Purpose | Config File |
+|---------|-----------|---------|-------------|
+| **prod** | Default (`application.properties`) | Production deployment | `application-prod.properties` |
+| **test** | Maven test / IDE | H2 in-memory DB for unit tests | `application-test.properties` |
+| **dev** | Override via `-Dspring.profiles.active=dev` | Development (if needed) | N/A (uses base config) |
+
+**To switch profiles:**
+```bash
+java -jar springer.jar --spring.profiles.active=prod
+```
+
+---
+
+## Port Configuration
+
+| Service | Port | Override In |
+|---------|------|-------------|
+| Backend | 8080 | `config.bat` / `application.properties` |
+| Frontend | 5173 | `config.bat` / `vite.config.ts` |
+| MySQL | 3306 | `config.bat` |
+
+---
+
+## Troubleshooting
+
+**Backend won't start:**
+- Ensure MySQL is running: `services.msc` → check `MySQL80` status
+- Verify DB credentials in `config.bat` or `application.properties`
+- Check port 8080 is not in use: `netstat -ano | findstr :8080`
+
+**Frontend won't start:**
+- Delete `node_modules` and run `npm install` again
+- Check port 5173 is not in use
+- Clear npm cache: `npm cache clean --force`
+
+**Database not created:**
+- If mysql CLI not in PATH, manually create: `CREATE DATABASE Springer;`
+- Verify MySQL credentials are correct
+
+**"Hibernate ddl-auto update failed":**
+- Ensure MySQL user has `CREATE`, `ALTER`, `INSERT` privileges
+- Run: `GRANT ALL PRIVILEGES ON Springer.* TO 'root'@'localhost';`
+
+---
+
+## License
+
+Proprietary — Internal project for Kanini Software Solutions
+
+Kanini Team - Talent Enblement Module Development (2026)

@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
   Box, Card, Typography, Chip, CircularProgress, IconButton, Tooltip,
@@ -99,6 +99,13 @@ const formatHistoryLine = (line: string) => {
   });
 };
 
+const getLatestEvaluation = (evaluations: CandidateHistoryEvaluation[]): CandidateHistoryEvaluation | null => {
+  if (!evaluations.length) return null;
+  return evaluations.reduce((latest, ev) =>
+    new Date(ev.reviewedAt) > new Date(latest.reviewedAt) ? ev : latest
+  );
+};
+
 const STATUS_DOT_CLASS: Record<string, string> = {
   PASS: "ah-dot-pass", FAIL: "ah-dot-fail", HOLD: "ah-dot-hold",
   ABSENT: "ah-dot-absent", SKIP: "ah-dot-skip",
@@ -113,8 +120,8 @@ const ApplicationHistory = ({ driveId, candidateId, embeddedInCandidateDetails =
   const navigate = useNavigate();
   const location = useLocation();
   const state = location.state as LocationState | null;
-  const resolvedDriveId = driveId ?? state?.driveId;
-  const resolvedCandidateId = candidateId ?? state?.candidateId;
+  const resolvedDriveId = useMemo(() => driveId ?? state?.driveId, [driveId, state?.driveId]);
+  const resolvedCandidateId = useMemo(() => candidateId ?? state?.candidateId, [candidateId, state?.candidateId]);
 
   const [data, setData] = useState<CandidateHistoryResponse | null>(null);
   const [loading, setLoading] = useState(true);
@@ -127,7 +134,7 @@ const ApplicationHistory = ({ driveId, candidateId, embeddedInCandidateDetails =
   const [selectedBatchTime, setSelectedBatchTime] = useState<string>("");
   const [updatingBatchTime, setUpdatingBatchTime] = useState(false);
 
-  const handleBatchTimeUpdate = async () => {
+  const handleBatchTimeUpdate = useCallback(async () => {
     if (!selectedBatchTime || !data) {
       showToast("Please select a batch time.", "error");
       return;
@@ -161,9 +168,9 @@ const ApplicationHistory = ({ driveId, candidateId, embeddedInCandidateDetails =
     } finally {
       setUpdatingBatchTime(false);
     }
-  };
+  }, [data, selectedBatchTime]);
 
-  const handleOverrideSubmit = async () => {
+  const handleOverrideSubmit = useCallback(async () => {
     if (!data || !overrideStatus || !overrideReason.trim()) return;
     try {
       setOverrideSubmitting(true);
@@ -187,7 +194,7 @@ const ApplicationHistory = ({ driveId, candidateId, embeddedInCandidateDetails =
     } finally {
       setOverrideSubmitting(false);
     }
-  };
+  }, [data, overrideStatus, overrideReason]);
 
   useEffect(() => {
     if (!resolvedDriveId || !resolvedCandidateId) {
@@ -214,45 +221,26 @@ const ApplicationHistory = ({ driveId, candidateId, embeddedInCandidateDetails =
   }, [resolvedDriveId, resolvedCandidateId, navigate, driveId, candidateId]);
 
   useEffect(() => {
-    console.log('=== Batch Time Fetch Effect Triggered ===');
-    console.log('resolvedDriveId:', resolvedDriveId);
-    console.log('data:', data);
-    
-    if (!resolvedDriveId || !data) {
-      console.log('Early return: missing resolvedDriveId or data');
-      return;
-    }
-    
+    if (!resolvedDriveId) return;
+
     const fetchBatchOptions = async () => {
-      console.log('Starting fetchBatchOptions...');
       try {
-        console.log('Calling API with driveId:', resolvedDriveId);
         const res = await applicationApi.getDistinctBatchTimes(resolvedDriveId);
-        console.log('Full API Response:', res);
-        console.log('Response data field:', res.data);
-        console.log('Response success field:', res.success);
-        
         if (res.success && res.data) {
-          console.log('Fetched batch times from API:', res.data);
-          console.log('Current candidate batch time (raw):', data.batchTime);
-          const currentBatchTimeNormalized = data.batchTime ? data.batchTime.substring(0, 16) : null;
-          console.log('Normalized current batch time:', currentBatchTimeNormalized);
-          const filteredOptions = res.data.filter(
-            (batch) => batch !== currentBatchTimeNormalized
-          );
-          console.log('Available batch times after filtering:', filteredOptions);
-          setBatchOptions(filteredOptions);
-        } else {
-          console.log('API call unsuccessful or no data');
-          console.log('res.success:', res.success);
-          console.log('res.data:', res.data);
+          setBatchOptions(res.data);
         }
-      } catch (err) {
-        console.error('Error fetching batch times:', err);
+      } catch {
+        // silently ignore — batch time options are non-critical
       }
     };
     fetchBatchOptions();
-  }, [resolvedDriveId, data]);
+  }, [resolvedDriveId]);
+
+  // Filter out the candidate's current batch time from the dropdown options
+  const availableBatchOptions = useMemo(() => {
+    const currentNormalized = data?.batchTime ? data.batchTime.substring(0, 16) : null;
+    return batchOptions.filter((batch) => batch !== currentNormalized);
+  }, [batchOptions, data?.batchTime]);
 
   // Group assignments + evaluations by round for a timeline view
   const rounds: RoundSummary[] = useMemo(() => {
@@ -272,7 +260,14 @@ const ApplicationHistory = ({ driveId, candidateId, embeddedInCandidateDetails =
       roundMap.get(e.roundNo)!.evaluations.push(e);
     }
 
-    return [...roundMap.values()].sort((a, b) => a.roundNo - b.roundNo);
+    return [...roundMap.values()]
+      .sort((a, b) => a.roundNo - b.roundNo)
+      .map((round) => ({
+        ...round,
+        evaluations: [...round.evaluations].sort(
+          (a, b) => new Date(a.reviewedAt).getTime() - new Date(b.reviewedAt).getTime()
+        ),
+      }));
   }, [data]);
 
   if (loading) {
@@ -344,10 +339,10 @@ const ApplicationHistory = ({ driveId, candidateId, embeddedInCandidateDetails =
                   className="ah-override-select"
                 >
                   <MenuItem value="">Select Batch Time</MenuItem>
-                  {batchOptions.length === 0 && (
+                  {availableBatchOptions.length === 0 && (
                     <MenuItem value="" disabled>No other batch times available</MenuItem>
                   )}
-                  {batchOptions.map((batch) => {
+                  {availableBatchOptions.map((batch) => {
                     const batchDate = new Date(batch);
                     const timeStr = batchDate.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: true });
                     const dateStr = batchDate.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
@@ -406,7 +401,7 @@ const ApplicationHistory = ({ driveId, candidateId, embeddedInCandidateDetails =
           
           <Box className="ah-level-bar-center">
             {rounds.map((round, rIdx) => {
-              const latestEval = round.evaluations.length > 0 ? round.evaluations[round.evaluations.length - 1] : null;
+              const latestEval = getLatestEvaluation(round.evaluations);
               const status = latestEval?.evaluationStatus || "PENDING";
               const dotCls = STATUS_DOT_CLASS[status] || "ah-dot-pending";
               const lineCls = STATUS_LINE_CLASS[status] || "ah-line-pending";
@@ -444,7 +439,7 @@ const ApplicationHistory = ({ driveId, candidateId, embeddedInCandidateDetails =
         ) : (
           <Box className="ah-timeline">
             {rounds.map((round, rIdx) => {
-              const latestEval = round.evaluations.length > 0 ? round.evaluations[round.evaluations.length - 1] : null;
+              const latestEval = getLatestEvaluation(round.evaluations);
               return (
                 <Box key={round.roundNo} className="ah-tl-item">
                   {/* Timeline connector */}
@@ -505,6 +500,7 @@ const ApplicationHistory = ({ driveId, candidateId, embeddedInCandidateDetails =
                         ) : (
                           round.evaluations.map((ev, evIdx) => {
                             const initials = ev.reviewedByName.split(' ').map(n => n[0]).join('').toUpperCase();
+                            const isLatest = evIdx === round.evaluations.length - 1;
                             
                             return (
                               <Box 
@@ -523,7 +519,11 @@ const ApplicationHistory = ({ driveId, candidateId, embeddedInCandidateDetails =
                                   
                                   <Box className="ah-panel-eval-status-time">
                                     {round.evaluations.length > 1 && (
-                                      <Chip label={`#${evIdx + 1}`} size="small" className="ah-panel-eval-index" />
+                                      <Chip
+                                        label={isLatest ? "Latest" : "Earlier"}
+                                        size="small"
+                                        className={isLatest ? "ah-panel-eval-badge-latest" : "ah-panel-eval-badge-earlier"}
+                                      />
                                     )}
                                     <Chip 
                                       label={ev.evaluationStatus} 

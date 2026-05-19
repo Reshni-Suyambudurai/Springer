@@ -19,11 +19,13 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 @RestController
 @RequestMapping("/api/drive-schedules")
 @RequiredArgsConstructor
 @Tag(name = "Drive Schedule Management", description = "APIs for managing drive schedules and rounds")
+@PreAuthorize("hasAnyRole('SYSTEM_ADMIN','TA_HEAD','TA_MANAGER')")
 public class DriveScheduleController {
     
     private final IDriveScheduleService driveScheduleService;
@@ -108,4 +110,5 @@ public class DriveScheduleController {
         return ResponseEntity.ok(new ApiResponse<>(true, "Drive analytics retrieved successfully", response));
     }
 }
+
 

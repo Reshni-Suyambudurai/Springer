@@ -76,3 +76,14 @@ export interface CandidateRegistrationStats {
 export interface BulkDeleteRegistrationRequest {
   registrationIds: number[];
 }
+
+/**
+ * Request DTO for partially updating a candidate registration.
+ * All fields except registrationId are optional — only provided fields are updated.
+ */
+export interface CandidateRegistrationUpdateRequest {
+  registrationId: number;
+  collegeName?: string;
+  email?: string;
+  mobile?: string;
+}

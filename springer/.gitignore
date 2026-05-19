@@ -9,7 +9,7 @@ logs/
 *.log
 *.log.*
 *.gz
-
+*.md
 ### Node (should not be in backend folder) ###
 node_modules/
 package.json

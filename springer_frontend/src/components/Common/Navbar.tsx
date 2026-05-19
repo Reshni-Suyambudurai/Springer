@@ -39,7 +39,9 @@ function Navbar() {
         if (!user?.userId) return;
         loadNotifications();
 
-        const ws = new WebSocket(`ws://localhost:8080/ws/notifications?userId=${user.userId}`);
+        const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
+        const wsBase = apiBase.replace(/^http/, 'ws').replace(/\/api$/, '');
+        const ws = new WebSocket(`${wsBase}/ws/notifications?userId=${user.userId}`);
         wsRef.current = ws;
 
         ws.onmessage = (event) => {

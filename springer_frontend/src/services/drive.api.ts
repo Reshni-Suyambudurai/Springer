@@ -33,6 +33,7 @@ import type { DriveDashboardResponse, DriveDetailsAnalysisResponse, CollegeAnaly
 import type {
   CandidateRegistrationRequest,
   CandidateRegistrationResponse,
+  CandidateRegistrationUpdateRequest,
   BulkDeleteRegistrationRequest
 } from "../types/TA_Recruiter/Drive/candidateRegistration.types";
 import type {
@@ -467,6 +468,22 @@ export const candidateRegistrationApi = {
   async getRegistrationById(registrationId: number): Promise<ApiResponse<CandidateRegistrationResponse>> {
     try {
       const response = await http.get(`/candidate-registrations/${registrationId}`);
+      return response.data;
+    } catch (error) {
+      throw handleAxiosError(error);
+    }
+  },
+
+  /**
+   * Partially update a registration (collegeName, email, mobile)
+   * PATCH /api/candidate-registrations/{registrationId}
+   */
+  async updateRegistration(
+    registrationId: number,
+    data: CandidateRegistrationUpdateRequest
+  ): Promise<ApiResponse<CandidateRegistrationResponse>> {
+    try {
+      const response = await http.patch(`/candidate-registrations/${registrationId}`, data);
       return response.data;
     } catch (error) {
       throw handleAxiosError(error);

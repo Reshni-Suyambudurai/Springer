@@ -593,7 +593,7 @@ class ApplicationServiceImplTest {
         @Test
         @DisplayName("success - returns empty map when no applications found")
         void getBatchCandidates_noApplications_returnsEmptyMap() {
-            when(applicationRepository.findByDriveDriveId(1L)).thenReturn(Collections.emptyList());
+            when(applicationRepository.findApplicationIdAndBatchTimeByDriveId(1L)).thenReturn(Collections.emptyList());
 
             var result = service.getBatchCandidatesByDriveId(1L);
 

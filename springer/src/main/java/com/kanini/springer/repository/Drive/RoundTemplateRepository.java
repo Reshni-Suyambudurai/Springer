@@ -11,4 +11,5 @@ import java.util.Optional;
 public interface RoundTemplateRepository extends JpaRepository<RoundTemplate, Long> {
     List<RoundTemplate> findByIsActive(Boolean isActive);
     Optional<RoundTemplate> findByRoundNo(Integer roundNo);
+    List<RoundTemplate> findByRoundNoOrderByRoundConfigIdAsc(Integer roundNo);
 }

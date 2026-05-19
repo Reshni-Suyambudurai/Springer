@@ -17,6 +17,7 @@ import com.kanini.springer.repository.Common.EmailTemplateRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -27,10 +28,22 @@ import java.util.List;
 
 /**
  * Data loader to seed initial/demo data into the database
+ * 
+ * IMPORTANT: This DataLoader is DISABLED in production environments.
+ * In production, use Flyway migrations (V2__Seed_Data.sql) for data seeding.
+ * 
+ * Enable/Disable via property: app.data-loader.enabled
+ * - Set to 'false' in production (application-prod.properties)
+ * - Set to 'true' in dev/test (application-dev.properties, application-test.properties)
  */
 @Configuration
 @RequiredArgsConstructor
 @Slf4j
+@ConditionalOnProperty(
+    name = "app.data-loader.enabled",
+    havingValue = "true",
+    matchIfMissing = false  // Defaults to disabled if property not set
+)
 public class DataLoader {
 
     private final RoleRepository roleRepository;
@@ -691,6 +704,76 @@ public class DataLoader {
             "<p><img src=\"/siganture.png\"></p>"
         );
         saveOrUpdateTemplate(roundSelectedTemplate);
+
+        // ── Round Hold ─────────────────────────────────────────────────────────
+        EmailTemplate roundHoldTemplate = new EmailTemplate();
+        roundHoldTemplate.setTemplateName("ROUND HOLD");
+        roundHoldTemplate.setSubject("KANINI DRIVE UPDATE");
+        roundHoldTemplate.setBody(
+            "<p>Dear {{NAME}},</p>" +
+            "<p><br></p>" +
+            "<p>Greetings from Kanini Software Solutions.</p>" +
+            "<p><br></p>" +
+            "<p>Thank you for participating in Round {{ROUND_NO}} of our recruitment process.</p>" +
+            "<p><br></p>" +
+            "<p>We would like to inform you that your profile is currently on hold for further evaluation. Our team is reviewing the next steps, and any updates regarding your candidature will be communicated to you shortly.</p>" +
+            "<p><br></p>" +
+            "<p>We appreciate your patience and continued interest in Kanini Software Solutions.</p>" +
+            "<p><br></p>" +
+            "<p>Warm regards,</p>" +
+            "<p>Kanini Talent Acquisition Team</p>" +
+            "<p>Kanini Software Solutions</p>" +
+            "<p><img src=\"/siganture.png\"></p>"
+        );
+        saveOrUpdateTemplate(roundHoldTemplate);
+
+        // ── Round Rejected ─────────────────────────────────────────────────────
+        EmailTemplate roundRejectedTemplate = new EmailTemplate();
+        roundRejectedTemplate.setTemplateName("ROUND REJECTED");
+        roundRejectedTemplate.setSubject("KANINI DRIVE UPDATE");
+        roundRejectedTemplate.setBody(
+            "<p>Dear {{NAME}},</p>" +
+            "<p><br></p>" +
+            "<p>Greetings from Kanini Software Solutions.</p>" +
+            "<p><br></p>" +
+            "<p>Thank you for participating in Round {{ROUND_NO}} of our recruitment process.</p>" +
+            "<p><br></p>" +
+            "<p>After careful evaluation, we regret to inform you that you have not been shortlisted for the next round.</p>" +
+            "<p><br></p>" +
+            "<p>We appreciate your interest in Kanini Software Solutions and thank you for the time and effort invested in the process.</p>" +
+            "<p><br></p>" +
+            "<p>We wish you all the very best for your future opportunities.</p>" +
+            "<p><br></p>" +
+            "<p>Warm regards,</p>" +
+            "<p>Kanini Talent Acquisition Team</p>" +
+            "<p>Kanini Software Solutions</p>" +
+            "<p><img src=\"/siganture.png\"></p>"
+        );
+        saveOrUpdateTemplate(roundRejectedTemplate);
+
+        // ── Round Dropped ──────────────────────────────────────────────────────
+        EmailTemplate roundDroppedTemplate = new EmailTemplate();
+        roundDroppedTemplate.setTemplateName("ROUND DROPPED");
+        roundDroppedTemplate.setSubject("KANINI DRIVE UPDATE");
+        roundDroppedTemplate.setBody(
+            "<p>Dear {{NAME}},</p>" +
+            "<p><br></p>" +
+            "<p>Greetings from Kanini Software Solutions.</p>" +
+            "<p><br></p>" +
+            "<p>This is to inform you that your status for Round {{ROUND_NO}} of the recruitment process has been marked as {{STATUS}}.</p>" +
+            "<p><br></p>" +
+            "<p>As a result, your candidature will not be considered for further rounds of the current recruitment process.</p>" +
+            "<p><br></p>" +
+            "<p>We appreciate your interest in Kanini Software Solutions and thank you for your participation.</p>" +
+            "<p><br></p>" +
+            "<p>We wish you all the very best for your future opportunities.</p>" +
+            "<p><br></p>" +
+            "<p>Warm regards,</p>" +
+            "<p>Kanini Talent Acquisition Team</p>" +
+            "<p>Kanini Software Solutions</p>" +
+            "<p><img src=\"/siganture.png\"></p>"
+        );
+        saveOrUpdateTemplate(roundDroppedTemplate);
 
         log.info("Email templates are seeded/updated successfully");
     }

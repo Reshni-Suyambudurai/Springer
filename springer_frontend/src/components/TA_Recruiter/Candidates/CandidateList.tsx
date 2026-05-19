@@ -485,6 +485,8 @@ const CandidateList: React.FC = () => {
                     const cycle = cycles.find((c) => c.cycleId === cycleId);
                     setDrives(cycle?.drives || []);
                     setSelectedDrive("");
+                    setSelectedCandidates(new Set());
+                    setSelectMode(false);
                   }}
                 >
                   {cycles.map((cycle) => (
@@ -504,7 +506,11 @@ const CandidateList: React.FC = () => {
                 <Select
                   value={selectedDrive}
                   label="Drive"
-                  onChange={(e) => setSelectedDrive(e.target.value as number | "")}
+                  onChange={(e) => {
+                    setSelectedDrive(e.target.value as number | "");
+                    setSelectedCandidates(new Set());
+                    setSelectMode(false);
+                  }}
                 >
                   <MenuItem value="">All Drives</MenuItem>
                   {drives.map((drive) => {

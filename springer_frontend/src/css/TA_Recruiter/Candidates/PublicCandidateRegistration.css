@@ -9,6 +9,20 @@
   gap: 1.5rem;
 }
 
+/* Others college name input wrapper */
+.public-reg-others-college-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  width: 100%;
+  grid-column: 1 / -1;
+}
+
+.public-reg-others-college-wrapper .public-reg-full-width {
+  width: 100%;
+  grid-column: unset;
+}
+
 /* Header Card */
 .public-reg-header-card {
   width: 100%;
@@ -90,6 +104,14 @@
 
 .public-reg-submit-container button {
   min-width: 200px;
+}
+
+.public-reg-submit-btn {
+  min-width: 220px;
+  padding: 0.75rem 2rem !important;
+  font-size: 1rem !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.5px;
 }
 
 /* Success Card */

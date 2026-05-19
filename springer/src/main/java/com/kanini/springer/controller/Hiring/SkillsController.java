@@ -11,13 +11,16 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
 import java.util.List;
+
+
+import org.springframework.security.access.prepost.PreAuthorize;
 
 @RestController
 @RequestMapping("/api/skills")
 @RequiredArgsConstructor
 @Tag(name = "Skills Management", description = "APIs for managing technical and soft skills")
+@PreAuthorize("hasAnyRole('SYSTEM_ADMIN','TA_HEAD','TA_MANAGER','HIRING_MANAGER')")
 public class SkillsController {
     
     private final ISkills skillService;
@@ -50,6 +53,7 @@ public class SkillsController {
      * GET /api/skills
      */
     @GetMapping
+    @PreAuthorize("permitAll()")
     @Operation(summary = "Get all skills", description = "Retrieves all skills in the system")
     public ResponseEntity<ApiResponse<List<SkillResponse>>> getAllSkills() {
         List<SkillResponse> skills = skillService.getAllSkills();
@@ -93,3 +97,4 @@ public class SkillsController {
 
     
 }
+

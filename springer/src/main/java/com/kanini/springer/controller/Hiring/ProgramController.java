@@ -10,13 +10,16 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
 import java.util.List;
+
+
+import org.springframework.security.access.prepost.PreAuthorize;
 
 @RestController
 @RequestMapping("/api/programs")
 @RequiredArgsConstructor
 @Tag(name = "Program Management", description = "APIs for managing academic programs and institute-program mappings")
+@PreAuthorize("hasAnyRole('SYSTEM_ADMIN','TA_HEAD','TA_MANAGER','TRAINING_COORDINATOR')")
 public class ProgramController {
     
     private final IProgramService programService;
@@ -47,3 +50,4 @@ public class ProgramController {
         return ResponseEntity.ok(new ApiResponse<>(true, "Institute-program mapping deleted successfully", null));
     }
 }
+

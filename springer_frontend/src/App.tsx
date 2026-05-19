@@ -52,20 +52,17 @@ import InternCalendarPage from './components/Academy/Intern/InternCalendarPage'
 import InternLeavePage from './components/Academy/Intern/InternLeavePage'
 import InternWarningsPage from './components/Academy/Intern/InternWarningsPage'
 // TA Head
-import DashboardTAH from './components/TA_Head/DashboardTAH'
 import TAHiringCycleList from './components/TA_Head/HiringCycle/HiringCycleList'
 import TAHiringCycleDetails from './components/TA_Head/HiringCycle/HiringCycleDetails'
 import TAHiringDemandDetails from './components/TA_Head/HiringCycle/HiringDemandDetails'
 
 // Hiring Manager
-import DashboardHM from './components/HiringManager/DashboardHM'
 import HiringCycleList from './components/HiringManager/HiringCycle/HiringCycleList'
 import HiringCycleDetails from './components/HiringManager/HiringCycle/HiringCycleDetails'
 import AddHiringDemand from './components/HiringManager/HiringDemand/AddHiringDemand'
 import HiringDemandDetails from './components/HiringManager/HiringDemand/HiringDemandDetails'
 
 // Panel
-import DashboardPM from './components/Panel_Member/DashboardPM'
 import PanelAssignments from './components/Panel_Member/PanelAllocation'
 import PanelScoring from './components/Panel_Member/PanelScoring'
 import AllocationHistory from './components/Panel_Member/AllocationHistory'
@@ -111,7 +108,7 @@ function App() {
 
         {/* TA_HEAD */}
         <Route element={<ProtectedRoute allowedRoles={['TA_HEAD']} />}>
-          <Route path="/ta-head/dashboard" element={<DashboardTAH />} />
+          <Route path="/ta-head/dashboard" element={<DashboardTAR />} />
           <Route path="/ta-head/hiring-cycles" element={<TAHiringCycleList />} />
           <Route path="/ta-head/hiring-cycles/:cycleId" element={<TAHiringCycleDetails />} />
           <Route path="/ta-head/hiring-demands/:demandId" element={<TAHiringDemandDetails />} />
@@ -165,7 +162,6 @@ function App() {
 
         {/* HIRING_MANAGER */}
         <Route element={<ProtectedRoute allowedRoles={['HIRING_MANAGER']} />}>
-          <Route path="/hiring-manager/dashboard" element={<DashboardHM />} />
           <Route path="/hiring-manager/hiring-cycles" element={<HiringCycleList />} />
           <Route path="/hiring-manager/hiring-cycles/:cycleId" element={<HiringCycleDetails />} />
           <Route path="/hiring-manager/hiring-demands/add" element={<AddHiringDemand />} />
@@ -174,7 +170,7 @@ function App() {
 
         {/* MEMBERS */}
         <Route element={<ProtectedRoute allowedRoles={['MEMBERS']} />}>
-          <Route path="/members/dashboard" element={<DashboardPM />} />
+          <Route path="/members/dashboard" element={<DashboardTAR />} />
           <Route path="/members/panel-assignments" element={<PanelAssignments />} />
           <Route path="/members/panel-scoring" element={<PanelScoring />} />
           <Route path="/members/panel-history" element={<AllocationHistory />} />

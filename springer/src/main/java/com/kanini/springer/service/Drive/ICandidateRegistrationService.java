@@ -2,6 +2,7 @@ package com.kanini.springer.service.Drive;
 
 import com.kanini.springer.dto.Drive.CandidateRegistrationRequest;
 import com.kanini.springer.dto.Drive.CandidateRegistrationResponse;
+import com.kanini.springer.dto.Drive.CandidateRegistrationUpdateRequest;
 
 import java.util.List;
 
@@ -29,6 +30,11 @@ public interface ICandidateRegistrationService {
      * Get registration by ID
      */
     CandidateRegistrationResponse getRegistrationById(Long registrationId);
+
+    /**
+     * Partially update a registration (collegeName, email, mobile)
+     */
+    CandidateRegistrationResponse updateRegistration(Long registrationId, CandidateRegistrationUpdateRequest request);
 
     /**
      * Delete registration by ID

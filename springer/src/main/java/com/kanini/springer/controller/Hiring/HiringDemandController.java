@@ -8,12 +8,15 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
 import java.util.List;
+
+
+import org.springframework.security.access.prepost.PreAuthorize;
 
 @RestController
 @RequestMapping("/api/hiring/demands")
 @RequiredArgsConstructor
+@PreAuthorize("hasAnyRole('SYSTEM_ADMIN','TA_HEAD','TA_MANAGER','HIRING_MANAGER')")
 public class HiringDemandController {
     
     private final IHiringDemandService demandService;
@@ -91,3 +94,4 @@ public class HiringDemandController {
         return ResponseEntity.ok(ApiResponse.success("Hiring demand deleted successfully", null));
     }
 }
+

@@ -9,12 +9,14 @@ import com.kanini.springer.service.Dashboards.IDriveDashboardService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
 import java.util.List;
+
+import org.springframework.security.access.prepost.PreAuthorize;
 
 @RestController
 @RequestMapping("/api/dashboards/drive")
 @RequiredArgsConstructor
+@PreAuthorize("hasAnyRole('SYSTEM_ADMIN','TA_HEAD','TA_MANAGER')")
 public class DriveDashboardController {
 
     private final IDriveDashboardService driveDashboardService;

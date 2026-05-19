@@ -137,8 +137,8 @@ public class DriveAssignmentServiceImpl implements IDriveAssignmentService {
             .collect(Collectors.toSet());
         List<Long> applicationIds = request.getEntries().stream()
             .map(BulkDriveAssignmentRequest.AssignmentEntry::getApplicationId)
-            .collect(Collectors.toList());
-        
+            .toList();
+
         // 1 query — batch fetch all panel member users
         Map<Long, User> userMap = userRepository.findAllById(userIds)
             .stream().collect(Collectors.toMap(User::getUserId, u -> u));
@@ -153,8 +153,9 @@ public class DriveAssignmentServiceImpl implements IDriveAssignmentService {
             roundConfig = roundTemplateRepository.findById(request.getRoundConfigId())
                 .orElseThrow(() -> new ResourceNotFoundException("RoundTemplate", "ID", request.getRoundConfigId()));
         } else if (request.getRoundNo() != null) {
-            roundConfig = roundTemplateRepository.findByRoundNo(request.getRoundNo())
-                .orElseThrow(() -> new ResourceNotFoundException("RoundTemplate", "roundNo", request.getRoundNo()));
+            List<RoundTemplate> rts = roundTemplateRepository.findByRoundNoOrderByRoundConfigIdAsc(request.getRoundNo());
+            if (rts.isEmpty()) throw new ResourceNotFoundException("RoundTemplate", "roundNo", request.getRoundNo());
+            roundConfig = rts.stream().filter(rt -> Boolean.TRUE.equals(rt.getIsActive())).findFirst().orElse(rts.get(0));
         }
         
         // 1 query — fetch existing active assignments for upsert (keyed by applicationId + userId)
@@ -284,7 +285,7 @@ public class DriveAssignmentServiceImpl implements IDriveAssignmentService {
         
         return assignments.stream()
             .map(mapper::toResponse)
-            .collect(Collectors.toList());
+            .toList();
     }
     
     @Override
@@ -311,7 +312,7 @@ public class DriveAssignmentServiceImpl implements IDriveAssignmentService {
         
         return assignments.stream()
             .map(mapper::toResponse)
-            .collect(Collectors.toList());
+            .toList();
     }
     
     @Override
@@ -420,9 +421,15 @@ public class DriveAssignmentServiceImpl implements IDriveAssignmentService {
     @Override
     @Transactional(readOnly = true)
     public List<PanelAllocationStatusResponse> getAllocationStatus(Long driveId, Integer roundNo, List<Long> applicationIds) {
-        // 1 query — resolve roundNo → roundConfigId
-        RoundTemplate roundConfig = roundTemplateRepository.findByRoundNo(roundNo)
-            .orElseThrow(() -> new ResourceNotFoundException("RoundTemplate", "roundNo", roundNo));
+        // 1 query — resolve roundNo → roundConfigId (pick active first to handle seed duplicates)
+        List<RoundTemplate> roundTemplates = roundTemplateRepository.findByRoundNoOrderByRoundConfigIdAsc(roundNo);
+        if (roundTemplates.isEmpty()) {
+            throw new ResourceNotFoundException("RoundTemplate", "roundNo", roundNo);
+        }
+        RoundTemplate roundConfig = roundTemplates.stream()
+                .filter(rt -> Boolean.TRUE.equals(rt.getIsActive()))
+                .findFirst()
+                .orElse(roundTemplates.get(0));
         
         Long roundConfigId = roundConfig.getRoundConfigId();
         
@@ -465,7 +472,7 @@ public class DriveAssignmentServiceImpl implements IDriveAssignmentService {
             dto.setAdditionalPanels(panels);
             
             return dto;
-        }).collect(Collectors.toList());
+        }).toList();
     }
     
     @Override

@@ -480,7 +480,7 @@ const AddInstitute: React.FC = () => {
           
             <Autocomplete
               freeSolo
-              options={["Tamil Nadu", "Andhra Pradesh", "Kerala", "Karnataka"]}
+              options={["Tamil Nadu", "Andhra Pradesh", "Kerala", "Karnataka", "Puducherry","Telangana","Maharashtra","Others"]}
               value={singleForm.state}
               onChange={(_, newValue) => setSingleForm({ ...singleForm, state: newValue || "" })}
               onInputChange={(_, newValue) => setSingleForm({ ...singleForm, state: newValue })}

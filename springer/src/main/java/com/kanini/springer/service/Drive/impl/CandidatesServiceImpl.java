@@ -766,7 +766,7 @@ public class CandidatesServiceImpl implements ICandidatesService {
         List<Candidate> candidates = candidatesRepository.findByCycleCycleIdAndApplicationStageIn(cycleId, stageEnums);
         return candidates.stream()
                 .map(mapper::toDocResponse)
-                .collect(Collectors.toList());
+                .toList();
     }
     
     @Override
