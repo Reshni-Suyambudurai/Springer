@@ -55,5 +55,5 @@ springer_frontend/dist-ssr/
 !.env.example
 *.properties.local
 
-
+*.md
 
