@@ -693,7 +693,7 @@ const Form: React.FC<{ onAddFormClick?: () => void }> = ({ onAddFormClick }) => 
                         e.stopPropagation();
                         handleOpenForm(form);
                       }}
-                      className="form-action-btn"
+                      className="g-icon-btn form-action-btn"
                     >
                       <OpenInNewIcon />
                     </IconButton>
@@ -704,7 +704,7 @@ const Form: React.FC<{ onAddFormClick?: () => void }> = ({ onAddFormClick }) => 
                         e.stopPropagation();
                         handleCopyLink(form);
                       }}
-                      className="form-action-btn"
+                      className="g-icon-btn form-action-btn"
                     >
                       <ContentCopyIcon />
                     </IconButton>
@@ -715,7 +715,7 @@ const Form: React.FC<{ onAddFormClick?: () => void }> = ({ onAddFormClick }) => 
                         e.stopPropagation();
                         handleDownloadQR(form);
                       }}
-                      className="form-action-btn"
+                      className="g-icon-btn form-action-btn"
                     >
                       <QrCode2Icon />
                     </IconButton>
@@ -744,14 +744,14 @@ const Form: React.FC<{ onAddFormClick?: () => void }> = ({ onAddFormClick }) => 
                 )}
                 {isValidating && <span className="form-validating-text">- Validating...</span>}
               </Typography>            <Tooltip title="Refresh" arrow classes={{ tooltip: "g-tooltip", arrow: "g-tooltip-arrow" }}>
-              <IconButton onClick={fetchRegistrations} size="small" disabled={loading} className="form-action-btn">
+              <IconButton onClick={fetchRegistrations} size="small" disabled={loading} className="g-icon-btn form-action-btn">
                 <RefreshIcon fontSize="small" />
               </IconButton>
             </Tooltip>              {!showActionButtons ? (
                 <Button
                   variant="outlined"
                   onClick={handleValidateRegistrations}
-                  className="t-btn-secondary"
+                  className="g-btn g-btn-outline-primary"
                   disabled={isValidating || registrations.length === 0}
                 >
                   {isValidating ? "Validating..." : "Validate"}
@@ -762,7 +762,7 @@ const Form: React.FC<{ onAddFormClick?: () => void }> = ({ onAddFormClick }) => 
                     <Button
                       variant="outlined"
                       onClick={handleRemoveDuplicates}
-                      className="t-btn-outlined-primary"
+                      className="g-btn g-btn-outline-danger"
                       disabled={isValidating || loading}
                     >
                       Remove Duplicates
@@ -771,7 +771,7 @@ const Form: React.FC<{ onAddFormClick?: () => void }> = ({ onAddFormClick }) => 
                   <Button
                     variant="contained"
                     onClick={handleUploadRegistrations}
-                    className="t-btn-primary"
+                    className="g-btn g-btn-primary"
                     disabled={
                       Array.from(validationResults.values()).some((r) => r.status === ValidationStatus.DUPLICATE) ||
                       batchDuplicateIndices.size > 0 ||
@@ -902,7 +902,7 @@ const Form: React.FC<{ onAddFormClick?: () => void }> = ({ onAddFormClick }) => 
                           <Tooltip title="Delete Registration" arrow classes={{ tooltip: "g-tooltip", arrow: "g-tooltip-arrow" }}>
                             <IconButton
                               onClick={() => handleDeleteRegistration(reg)}
-                              className="t-action-btn"
+                              className="g-icon-btn t-action-btn"
                               size="small"
                               disabled={loading}
                             >
@@ -950,13 +950,13 @@ const Form: React.FC<{ onAddFormClick?: () => void }> = ({ onAddFormClick }) => 
           />
         </DialogContent>
         <DialogActions className="form-dialog-actions">
-          <Button onClick={() => setAddDialog(false)} className="t-btn-small">
+          <Button onClick={() => setAddDialog(false)} className="g-btn g-btn-outline-primary">
             Cancel
           </Button>
           <Button
             onClick={handleAddForm}
             variant="contained"
-            className="t-btn-primary"
+            className="g-btn g-btn-primary"
             disabled={loading}
           >
             {loading ? "Creating..." : "Create Form"}
@@ -997,7 +997,7 @@ const Form: React.FC<{ onAddFormClick?: () => void }> = ({ onAddFormClick }) => 
               setDeleteDialog(false);
               setRegistrationToDelete(null);
             }} 
-            className="t-btn-small"
+            className="g-btn g-btn-outline-primary"
             disabled={loading}
           >
             Cancel
@@ -1006,7 +1006,7 @@ const Form: React.FC<{ onAddFormClick?: () => void }> = ({ onAddFormClick }) => 
             onClick={confirmDeleteRegistration}
             variant="contained"
             color="primary"
-            className="t-btn-primary"
+            className="g-btn g-btn-primary"
             disabled={loading}
           >
             {loading ? "Deleting..." : "OK"}

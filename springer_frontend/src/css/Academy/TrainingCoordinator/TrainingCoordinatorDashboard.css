@@ -1,4 +1,4 @@
-/* ===== TRAINING COORDINATOR DASHBOARD Ã¢â‚¬â€ prefix: tcd- ===== */
+﻿/* ===== TRAINING COORDINATOR DASHBOARD Ã¢â‚¬â€ prefix: tcd- ===== */
 
 .tcd-page {
   display: flex;
@@ -22,7 +22,7 @@
 }
 
 .tcd-loading-text {
-  font-size: var(--text-sm) !important;
+  font-size: 16px !important;
   color: var(--color-text-secondary) !important;
 }
 
@@ -50,13 +50,13 @@
 }
 
 .tcd-date {
-  font-size: var(--text-sm) !important;
+  font-size: 16px !important;
   color: rgba(255,255,255,0.8) !important;
   font-weight: 500 !important;
 }
 
 .tcd-role-desc {
-  font-size: var(--text-xs) !important;
+  font-size: 12px !important;
   color: rgba(255,255,255,0.65) !important;
   font-weight: 600 !important;
   text-transform: uppercase;
@@ -66,7 +66,7 @@
 
 .tcd-goto-btn {
   text-transform: none !important;
-  font-size: var(--text-sm) !important;
+  font-size: 16px !important;
   font-weight: 600 !important;
   background-color: rgba(255,255,255,0.15) !important;
   color: var(--color-white) !important;
@@ -180,7 +180,7 @@
 }
 
 .tcd-metric-label {
-  font-size: var(--text-sm) !important;
+  font-size: 16px !important;
   font-weight: 600 !important;
   color: var(--color-text-primary) !important;
 }
@@ -189,7 +189,7 @@
 .tcd-actions-section { display: flex; flex-direction: column; gap: 12px; }
 
 .tcd-section-title {
-  font-size: var(--text-md) !important;
+  font-size: 18px !important;
   font-weight: 700 !important;
   color: var(--color-text-primary) !important;
 }
@@ -244,7 +244,7 @@
 .tcd-action-content { flex: 1; min-width: 0; }
 
 .tcd-action-label {
-  font-size: var(--text-sm) !important;
+  font-size: 16px !important;
   font-weight: 700 !important;
   color: var(--color-text-primary) !important;
   line-height: 1.3 !important;
@@ -252,7 +252,7 @@
 }
 
 .tcd-action-desc {
-  font-size: var(--text-xs) !important;
+  font-size: 12px !important;
   color: var(--color-text-secondary) !important;
   line-height: 1.4 !important;
 }

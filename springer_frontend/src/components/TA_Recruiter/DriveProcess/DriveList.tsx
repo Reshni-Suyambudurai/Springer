@@ -5,7 +5,6 @@ import type { DriveResponse } from "../../../types/TA_Recruiter/DriveSchedule/dr
 import { showToast } from "../../../utils/toast";
 import { handleAxiosError } from "../../../services/api.error";
 import { Box, Card, Typography, CircularProgress, Button } from "@mui/material";
-import BackButton from "../../Common/BackButton";
 import "../../../css/TA_Recruiter/DriveProcess/DriveList.css";
 
 const DriveList: React.FC = () => {
@@ -30,21 +29,19 @@ const DriveList: React.FC = () => {
         setDrives(response.data.data);
         if (response.data.data.length > 0) {
           setCycleName(response.data.data[0].cycleName);
+          console.log(cycleName);
         }
       } else {
         showToast(response.data.message || "Failed to fetch drives", "error");
       }
     } catch (error: unknown) {
       const appError = handleAxiosError(error);
-      showToast(appError.message, "error");
+      showToast(appError.message, "error"); 
     } finally {
       setLoading(false);
     }
   };
 
-  const handleBackClick = () => {
-    navigate("/drive-process/drive-cycle");
-  };
 
   const formatDateTime = (iso?: string) => {
     if (!iso) return null;
@@ -77,19 +74,7 @@ const DriveList: React.FC = () => {
   return (
     <Box className="drive-list-container">
       {/* Header - matches InstitutesList pattern */}
-      <Card className="drive-list-header">
-        <BackButton onClick={handleBackClick} variant="header" />
-
-        <Box className="drive-list-header-center">
-          <Typography variant="h4" className="drive-list-title">
-            {cycleName ? `${cycleName} — Drives` : "Drive Schedules"}
-          </Typography>
-        
-        </Box>
-
-        {/* Spacer to balance back button */}
-        <Box className="drive-list-header-spacer" />
-      </Card>
+     
 
       {/* Cards Grid */}
       {drives.length === 0 ? (

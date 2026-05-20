@@ -13,13 +13,11 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
 
-import java.util.List;
 import org.springframework.security.access.prepost.PreAuthorize;
 
 /**
@@ -100,7 +98,8 @@ public class EmailTemplateController {
                 new ApiResponse<>(true, "Email template deleted successfully", null));
     }
 
-    @PostMapping(value = "/send-bulk", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+   
+    @PostMapping("/send-bulk")
     @Operation(
         summary = "Send email template to multiple recipients",
         description = "Sends a stored email template to a list of email addresses. "
@@ -108,10 +107,11 @@ public class EmailTemplateController {
                     + "Invalid or unreachable addresses are skipped and logged; the rest still receive the email."
     )
     public ResponseEntity<ApiResponse<BulkEmailResult>> sendBulkEmail(
-            @RequestPart("request") @Valid BulkEmailRequest request,
-            @RequestPart(name = "attachments", required = false) List<MultipartFile> attachments) {
+            @RequestBody @Valid BulkEmailRequest request) {
 
-        BulkEmailResult result = emailTemplateService.sendBulkEmail(request, attachments);
+     
+
+        BulkEmailResult result = emailTemplateService.sendBulkEmail(request, null);
         String message = String.format("Bulk email complete — %d sent, %d skipped",
                 result.getSuccessCount(), result.getSkippedCount());
         return ResponseEntity.ok(new ApiResponse<>(true, message, result));

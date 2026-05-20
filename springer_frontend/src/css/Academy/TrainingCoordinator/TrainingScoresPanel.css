@@ -1,4 +1,4 @@
-/* ===== TRAINING SCORES PANEL ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â prefix: sc- ===== */
+﻿/* ===== TRAINING SCORES PANEL ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â prefix: sc- ===== */
 
 .sc-page {
   display: flex;
@@ -54,7 +54,7 @@
 }
 
 .sc-subtitle {
-  font-size: var(--text-sm) !important;
+  font-size: 16px !important;
   font-weight: 400 !important;
   color: var(--color-text-secondary) !important;
   line-height: 1.5 !important;
@@ -62,7 +62,7 @@
 
 .sc-add-button {
   text-transform: none !important;
-  font-size: var(--text-sm) !important;
+  font-size: 16px !important;
   font-weight: 600 !important;
   padding: 8px 20px !important;
   background-color: var(--color-primary) !important;
@@ -100,7 +100,7 @@
 .sc-filter-spacer { flex-grow: 1; }
 
 .sc-course-pill {
-  font-size: var(--text-xs) !important;
+  font-size: 12px !important;
   font-weight: 600 !important;
   color: var(--color-primary) !important;
   background-color: var(--color-primary-light);
@@ -165,29 +165,29 @@
 }
 
 .sc-row-secondary {
-  font-size: var(--text-sm) !important;
+  font-size: 16px !important;
   font-weight: 400 !important;
   color: var(--color-text-secondary) !important;
 }
 
 .sc-score-filled {
-  font-size: var(--text-md) !important;
+  font-size: 18px !important;
   font-weight: 700 !important;
   color: var(--color-text-primary) !important;
 }
 
 .sc-score-empty {
-  font-size: var(--text-sm) !important;
+  font-size: 16px !important;
   color: var(--color-text-disabled) !important;
 }
 
 .sc-review {
-  font-size: var(--text-sm) !important;
+  font-size: 16px !important;
   color: var(--color-text-secondary) !important;
 }
 
 /* ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ Status chips ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ */
-.sc-status-chip { font-size: var(--text-xs) !important; font-weight: 600 !important; border-radius: 6px !important; }
+.sc-status-chip { font-size: 12px !important; font-weight: 600 !important; border-radius: 6px !important; }
 .sc-status-chip--excellent { color: var(--color-success-dark) !important; border-color: var(--color-success-border) !important; background-color: var(--color-success-light) !important; }
 .sc-status-chip--good      { color: var(--color-success-dark) !important; border-color: var(--color-success-border) !important; background-color: var(--color-success-light) !important; }
 .sc-status-chip--average   { color: var(--color-warning) !important; border-color: var(--color-warning-border) !important; background-color: var(--color-warning-bg) !important; }
@@ -211,11 +211,11 @@
 }
 
 .sc-empty-icon { font-size: 40px !important; color: var(--color-empty-icon) !important; margin-bottom: 8px !important; }
-.sc-empty-text { font-size: var(--text-sm) !important; font-weight: 500 !important; color: var(--color-empty-text) !important; }
+.sc-empty-text { font-size: 16px !important; font-weight: 500 !important; color: var(--color-empty-text) !important; }
 
 /* ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ Dialog ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ */
 .sc-dialog-title {
-  font-size: var(--text-lg) !important;
+  font-size: 20px !important;
   font-weight: 700 !important;
   color: var(--color-text-primary) !important;
 }
@@ -261,7 +261,7 @@
 .sc-dlg-row:not(.sc-dlg-row--header):hover { background-color: var(--color-hover-bg); }
 
 .sc-dlg-col-label {
-  font-size: var(--text-xs) !important;
+  font-size: 12px !important;
   font-weight: 700 !important;
   color: var(--color-grey-600) !important;
   text-transform: uppercase;
@@ -279,4 +279,4 @@
 .sc-score-input input { text-align: center; font-weight: 700 !important; padding: 6px 8px !important; }
 
 .sc-review-input .MuiOutlinedInput-root.Mui-focused fieldset { border-color: var(--color-primary) !important; }
-.sc-review-input input { padding: 6px 10px !important; font-size: var(--text-sm) !important; }
+.sc-review-input input { padding: 6px 10px !important; font-size: 16px !important; }

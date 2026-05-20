@@ -196,17 +196,17 @@ const CandidatesHistory: React.FC = () => {
                 <ArrowBackIcon fontSize="small" />
               </button>
               <Box className="ch-page-title-wrap">
-                <Typography className="cl-page-title">
+                <Typography className="cl-page-title t-page-title">
                   History of {cycleName}
                 </Typography>
-                <Typography className="cl-page-subtitle">
+                <Typography className="cl-page-subtitle t-page-subtitle">
                   Closed candidates for the selected hiring cycle
                 </Typography>
               </Box>
             </Box>
             <Box className="cl-page-header-right">
               {!sidebarOpen && (
-                <Button className="cl-filters-btn" onClick={toggleSidebar}>
+                <Button className="g-btn g-btn-outline-primary cl-filters-btn" onClick={toggleSidebar}>
                   Filters <FilterListIcon style={{ fontSize: 18, marginLeft: 4, verticalAlign: 'middle' }} />
                 </Button>
               )}

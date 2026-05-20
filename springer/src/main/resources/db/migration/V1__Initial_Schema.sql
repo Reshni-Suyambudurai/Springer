@@ -276,7 +276,7 @@ CREATE TABLE IF NOT EXISTS `document_submissions` (
 CREATE TABLE IF NOT EXISTS `document_types` (
   `document_type_id` bigint NOT NULL AUTO_INCREMENT,
   `created_at` datetime(6) DEFAULT NULL,
-  `document_type` enum('DEGREE_CERT','EXPERIENCE_LETTER','ID_PROOF','MARKSHEET','PHOTO','PROVISIONAL_CERT','RELIEVING_LETTER','RESUME') DEFAULT NULL,
+  `document_type` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`document_type_id`),
   UNIQUE KEY `idx_doc_type_enum` (`document_type`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;

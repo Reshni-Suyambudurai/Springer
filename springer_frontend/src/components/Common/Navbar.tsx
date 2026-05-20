@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { tokenstore } from '../../auth/tokenstore';
 import { notificationApi } from '../../services/notification.api';
@@ -13,6 +13,8 @@ const PAGE_TITLES: Record<string, { title: string; subtitle: string }> = {
   '/ta-recruiter/candidates': { title: 'Candidates', subtitle: 'Manage and view all candidates' },
   '/ta-recruiter/hiring-cycles': { title: 'Hiring Cycle', subtitle: 'Manage hiring cycles' },
   '/ta-recruiter/drive-calendar': { title: 'Hiring Calendar', subtitle: 'View and manage hiring calendar' },
+  '/ta-recruiter/drive-schedules/add': { title: 'Schedule New Drive', subtitle: 'Create a new drive schedule' },
+  '/ta-recruiter/send-email': { title: 'Send Email', subtitle: 'Compose and send email to recipients' },
   '/ta-recruiter/documents': { title: 'Document Processing', subtitle: 'Manage candidate documents and offers' },
   '/ta-recruiter/academy': { title: 'Academy', subtitle: 'Manage training programs, courses, and intern progress' },
   '/ta-recruiter/settings': { title: 'Manage', subtitle: 'Settings and configurations' },
@@ -25,17 +27,28 @@ const PAGE_TITLES: Record<string, { title: string; subtitle: string }> = {
   '/ta-head/settings/round-templates': { title: 'Round Template Management', subtitle: 'Create and manage interview round templates' },
   '/ta-head/settings/email-templates': { title: 'Email Template Management', subtitle: 'Manage email templates for candidate communication' },
   '/drive-process/drive-cycle': { title: 'Drive Dashboard', subtitle: 'Manage drive cycles' },
+  '/drive-process/drive-list': { title: 'Drive List', subtitle: 'All drives for the selected cycle' },
+  '/drive-process/drive-details': { title: 'Drive Details', subtitle: 'Analytics and overview for this drive' },
+  '/drive-process/drive-candidates': { title: 'Drive Candidates', subtitle: 'Candidates assigned to this drive' },
+  '/drive-process/panel-allocation': { title: 'Panel Allocation', subtitle: 'Assign panel members to candidates' },
+  '/drive-process/application-history': { title: 'Application History', subtitle: 'Candidate drive and evaluation history' },
   '/ta-head/dashboard': { title: 'Dashboard', subtitle: 'Welcome back' },
   '/ta-head/hiring-cycles': { title: 'Hiring Cycle', subtitle: 'Manage hiring cycles' },
+  '/ta-head/hiring-demands': { title: 'Demand Details', subtitle: 'Review hiring demand' },
   '/ta-head/academy': { title: 'Academy Dashboard', subtitle: 'Academy management' },
   '/ta-head/settings': { title: 'Requests', subtitle: 'Manage pending requests' },
   '/hiring-manager/dashboard': { title: 'Dashboard', subtitle: 'Welcome back' },
   '/hiring-manager/hiring-cycles': { title: 'Hiring Cycle', subtitle: 'Manage hiring cycles' },
+  '/hiring-manager/hiring-demands': { title: 'Demand Details', subtitle: 'View and manage hiring demand' },
   '/hiring-manager/requests': { title: 'Requests', subtitle: 'Manage hiring requests' },
   '/admin/dashboard': { title: 'Dashboard', subtitle: 'System administration' },
   '/admin/users': { title: 'Users', subtitle: 'Manage system users' },
   '/admin/manage': { title: 'Manage Users', subtitle: 'View and manage all users' },
   '/admin/settings': { title: 'Settings', subtitle: 'System settings' },
+  '/members/dashboard': { title: 'Dashboard', subtitle: 'Welcome back' },
+  '/members/panel-assignments': { title: 'My Assignments', subtitle: 'Assignments waiting for your evaluation' },
+  '/members/panel-scoring': { title: 'Panel Scoring', subtitle: 'Evaluate candidate performance' },
+  '/members/panel-history': { title: 'Allocation History', subtitle: 'View your past panel assignments' },
   // Training Coordinator
   '/training-coordinator/dashboard': { title: 'Dashboard', subtitle: 'Training overview and quick actions' },
   '/training-coordinator/academy': { title: 'Academy', subtitle: 'Manage attendance, scores, and interns' },
@@ -52,6 +65,16 @@ const PAGE_TITLES: Record<string, { title: string; subtitle: string }> = {
 
 interface NavbarProps {
     onMobileMenuToggle?: () => void;
+}
+
+function formatTime(iso: string) {
+    const diff = Date.now() - new Date(iso).getTime();
+    const mins = Math.floor(diff / 60000);
+    if (mins < 1) return 'Just now';
+    if (mins < 60) return `${mins}m ago`;
+    const hrs = Math.floor(mins / 60);
+    if (hrs < 24) return `${hrs}h ago`;
+    return `${Math.floor(hrs / 24)}d ago`;
 }
 
 function Navbar({ onMobileMenuToggle }: NavbarProps) {
@@ -74,7 +97,21 @@ function Navbar({ onMobileMenuToggle }: NavbarProps) {
         '/ta-head/settings/round-templates',
         '/ta-head/settings/email-templates',
     ].includes(location.pathname);
-    const showBackBtn = location.pathname.startsWith('/ta-recruiter/institutes/') || isSettingsSubPage;
+    const showBackBtn = location.pathname.startsWith('/ta-recruiter/institutes/')
+        || isSettingsSubPage
+        || location.pathname === '/ta-recruiter/drive-schedules/add'
+        || location.pathname === '/ta-recruiter/send-email'
+        || location.pathname.startsWith('/drive-process/drive-list/')
+        || location.pathname.startsWith('/drive-process/drive-details/')
+        || location.pathname.startsWith('/drive-process/drive-candidates/')
+        || location.pathname.startsWith('/drive-process/panel-allocation/')
+        || location.pathname === '/drive-process/application-history'
+        || location.pathname === '/members/panel-scoring'
+        || location.pathname.startsWith('/ta-head/hiring-cycles/')
+        || location.pathname.startsWith('/ta-head/hiring-demands/')
+        || location.pathname.startsWith('/hiring-manager/hiring-cycles/')
+        || location.pathname.startsWith('/hiring-manager/hiring-demands/')
+        || location.pathname.startsWith('/ta-recruiter/hiring-cycles/');
 
     const unreadCount = notifications.filter(n => !n.isRead).length;
 
@@ -92,17 +129,14 @@ function Navbar({ onMobileMenuToggle }: NavbarProps) {
 
     const { title, subtitle } = getPageInfo();
 
-    const loadNotifications = useCallback(async () => {
-        if (!user?.userId) return;
-        try {
-            const res = await notificationApi.getNotifications(user.userId);
-            if (res.success && res.data) setNotifications(res.data);
-        } catch { /* silent */ }
-    }, [user?.userId]);
-
     useEffect(() => {
         if (!user?.userId) return;
-        loadNotifications();
+        (async () => {
+            try {
+                const res = await notificationApi.getNotifications(user.userId);
+                if (res.success && res.data) setNotifications(res.data);
+            } catch { /* silent */ }
+        })();
         // Use correct WebSocket port (8080, same as API)
         const wsUrl = `ws://localhost:8080/ws/notifications?userId=${user.userId}`;
         const ws = new WebSocket(wsUrl);
@@ -115,7 +149,7 @@ function Navbar({ onMobileMenuToggle }: NavbarProps) {
         };
         ws.onerror = () => { /* silent */ };
         return () => { ws.close(); };
-    }, [user?.userId, loadNotifications]);
+    }, [user?.userId]);
 
     const handleMarkAsRead = async (notificationId: number) => {
         try {
@@ -130,16 +164,6 @@ function Navbar({ onMobileMenuToggle }: NavbarProps) {
         const unread = notifications.filter(n => !n.isRead);
         await Promise.allSettled(unread.map(n => notificationApi.markAsRead(n.notificationId)));
         setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
-    };
-
-    const formatTime = (iso: string) => {
-        const diff = Date.now() - new Date(iso).getTime();
-        const mins = Math.floor(diff / 60000);
-        if (mins < 1) return 'Just now';
-        if (mins < 60) return `${mins}m ago`;
-        const hrs = Math.floor(mins / 60);
-        if (hrs < 24) return `${hrs}h ago`;
-        return `${Math.floor(hrs / 24)}d ago`;
     };
 
     useEffect(() => {

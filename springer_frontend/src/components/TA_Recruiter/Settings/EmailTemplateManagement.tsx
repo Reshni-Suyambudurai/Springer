@@ -11,6 +11,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import Quill from 'quill';
 import 'quill/dist/quill.snow.css';
 import { emailTemplateApi } from '../../../services/emailtemplate.api';
+import { useNavbarAction } from '../../../contexts/NavbarActionContext';
 import { showToast } from '../../../utils/toast';
 import type { EmailTemplateRequest, EmailTemplateResponse, EmailTemplateUpdateRequest } from '../../../types/Common/emailTemplate.types';
 import '../../../css/TA_Recruiter/Settings/EmailTemplateManagement.css';
@@ -54,6 +55,7 @@ const QUILL_TOOLBAR = [
 ];
 
 const EmailTemplateManagement = () => {
+  const { setAction } = useNavbarAction();
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -181,6 +183,15 @@ const EmailTemplateManagement = () => {
     setDialogOpen(true);
   };
 
+  useEffect(() => {
+    setAction({
+      label: 'Add Template',
+      onClick: openAddDialog,
+      icon: <AddIcon className="email-template-navbar-icon" />,
+    });
+    return () => setAction(null);
+  }, [setAction]);
+
   const openEditDialog = () => {
     if (!selectedTemplate) return;
     setEditMode(true);
@@ -284,17 +295,6 @@ const EmailTemplateManagement = () => {
   return (
     <Box className="t-page settings-page-override">
       <Card className="t-card settings-card-override">
-        {/* Action Buttons */}
-        <Box className="t-header">
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            className="t-btn-primary email-template-add-btn"
-            onClick={openAddDialog}
-          >
-            Add Template
-          </Button>
-        </Box>
 
         <Box className="t-separator" />
 

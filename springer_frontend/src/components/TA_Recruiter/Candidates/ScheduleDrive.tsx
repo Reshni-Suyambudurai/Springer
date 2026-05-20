@@ -179,12 +179,12 @@ const ScheduleDrive: React.FC<ScheduleDriveProps> = ({
 
   return (
     <>
-      <Tooltip title={!driveId ? "Select a drive first" : `Schedule ${selectMode ? selectedCount : totalElements} candidate(s) to drive`}>
+      <Tooltip title={!driveId ? "Select a drive first" : `Schedule ${selectMode ? selectedCount : totalElements} candidate(s) to drive`} arrow classes={{ tooltip: 'g-tooltip', arrow: 'g-tooltip-arrow' }}>
         <span>
           <IconButton
             onClick={handleScheduleClick}
             disabled={!driveId || (selectMode ? candidateIds.length === 0 : totalElements === 0) || loadingDrives || scheduling}
-            className="schedule-drive-btn"
+            className="g-icon-btn schedule-drive-btn"
           >
             <EventIcon />
           </IconButton>

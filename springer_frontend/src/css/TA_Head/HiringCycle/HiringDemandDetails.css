@@ -6,6 +6,47 @@
   background-color: var(--color-bg-secondary);
 }
 
+/* ── Shared dialog styles ────────────────────────────────── */
+
+.tah-dialog-title {
+  font-size: 1rem !important;
+  font-weight: 700 !important;
+  color: var(--color-text-primary) !important;
+  padding: 16px 24px 12px !important;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.tah-dialog-text {
+  font-size: 0.9rem !important;
+  color: var(--color-text-secondary) !important;
+}
+
+.tah-dialog-actions {
+  padding: 12px 24px 16px !important;
+  gap: 8px !important;
+  border-top: 1px solid var(--color-border);
+}
+
+/* ── Action bar (Approve / Reject) ───────────────────────── */
+
+.tah-hdd-action-bar {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border-bottom: 1px solid var(--color-border);
+  background-color: var(--color-surface);
+}
+
+.tah-hdd-action-icon {
+  font-size: 15px !important;
+  vertical-align: middle;
+  margin-right: 4px;
+}
+
+.tah-hdd-section--mt { margin-top: 24px; }
+
 .tah-hdd-card {
   flex: 1;
   display: flex;

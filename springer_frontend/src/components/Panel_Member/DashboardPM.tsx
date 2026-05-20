@@ -1,12 +1,7 @@
-import '../../css/Panel_Member/DashboardPM.css';
+import DashboardTAR from '../TA_Recruiter/DashboardTAR';
 
 function DashboardPM() {
-  return (
-    <div>
-      
-      <h1>Panel Member Dashboard</h1>
-    </div>
-  );
+  return <DashboardTAR />;
 }
 
 export default DashboardPM;

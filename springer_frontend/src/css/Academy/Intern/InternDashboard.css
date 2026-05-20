@@ -1,4 +1,4 @@
-.int-container {
+﻿.int-container {
   display: flex;
   flex-direction: column;
   gap: 24px;
@@ -13,7 +13,7 @@
   align-items: center;
   justify-content: center;
   padding: 60px 24px;
-  font-size: var(--text-md);
+  font-size: 18px;
   color: var(--color-text-secondary);
 }
 
@@ -36,7 +36,7 @@
 }
 
 .int-subtitle {
-  font-size: var(--text-sm);
+  font-size: 16px;
   color: var(--color-text-secondary);
   margin: 0;
 }
@@ -45,7 +45,7 @@
 .int-status-badge {
   padding: 4px 14px;
   border-radius: 8px;
-  font-size: var(--text-xs);
+  font-size: 12px;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.4px;
@@ -99,7 +99,7 @@
 .int-card--courses { border-color: var(--color-teal); } .int-card--courses::before { background: var(--color-teal); }
 
 .int-card-label {
-  font-size: var(--text-sm-14);
+  font-size: 0.8125rem;
   font-weight: 600;
   color: var(--color-text-secondary);
   text-transform: uppercase;
@@ -114,19 +114,19 @@
 }
 
 .int-card-sub {
-  font-size: var(--text-xs);
+  font-size: 12px;
   color: var(--color-text-secondary);
 }
 
 .int-card-warn {
-  font-size: var(--text-xs);
+  font-size: 12px;
   color: var(--color-error-dark);
   font-weight: 600;
 }
 
 /* Section title */
 .int-section-title {
-  font-size: var(--text-md);
+  font-size: 18px;
   font-weight: 600;
   color: var(--color-text-primary);
   margin: 0 0 10px 0;
@@ -159,13 +159,13 @@
 }
 
 .int-quick-label {
-  font-size: var(--text-sm);
+  font-size: 16px;
   font-weight: 600;
   color: var(--color-text-primary);
 }
 
 .int-quick-sub {
-  font-size: var(--text-xs);
+  font-size: 12px;
   color: var(--color-text-secondary);
 }
 
@@ -176,7 +176,7 @@
   border: 1px solid var(--color-error-border);
   border-left: 4px solid var(--color-error);
   border-radius: 10px;
-  font-size: var(--text-sm);
+  font-size: 16px;
   color: var(--color-error-dark);
   font-weight: 500;
 }

@@ -18,9 +18,9 @@ import {
   InputLabel,
   Tooltip,
 } from "@mui/material";
+import AddIcon from "@mui/icons-material/Add";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
-import { FigmaAddIcon as AddIcon } from '../../Common/FigmaIcons';
 import EditDriveModal from "./EditDriveModal";
 import "../../../css/TA_Recruiter/DriveSchedule/DriveCalendar.css";
 
@@ -235,7 +235,9 @@ const DriveCalendar: React.FC = () => {
                   key={cycle.cycleId}
                   value={cycle.cycleId}
                   className={
-                    cycle.status === "OPEN"
+                    cycle.cycleYear < new Date().getFullYear()
+                      ? "drive-cycle-status-past"
+                      : cycle.status === "OPEN"
                       ? "drive-cycle-status-open"
                       : "drive-cycle-status-closed"
                   }
@@ -256,29 +258,29 @@ const DriveCalendar: React.FC = () => {
               </IconButton>
             </Box>
 
-            <Button variant="outlined" onClick={handleToday} className="t-btn-small">
+            <Button variant="outlined" onClick={handleToday} className="g-btn g-btn-outline-primary">
               Today
             </Button>
 
-            <Typography variant="h6" className="drive-calendar-month-year">
+            <Typography variant="h6" className="drive-calendar-month-year t-page-subtitle">
               {MONTHS[currentDate.getMonth()]} {currentDate.getFullYear()}
             </Typography>
           </Box>
         </Box>
 
         <Box className="drive-calendar-header-right">
-          <Typography variant="body2" className="drive-calendar-count">
+          <Typography variant="body2" className="drive-calendar-count t-meta-text">
             Drives: {drives.length}
           </Typography>
 
           <Box className="drive-calendar-legend">
             <Box className="drive-calendar-legend-item">
               <span className="drive-calendar-legend-color drive-legend-oncampus" />
-              <Typography variant="body2">On-Campus</Typography>
+              <Typography variant="body2" className="t-meta-text">On-Campus</Typography>
             </Box>
             <Box className="drive-calendar-legend-item">
               <span className="drive-calendar-legend-color drive-legend-offcampus" />
-              <Typography variant="body2">Off-Campus</Typography>
+              <Typography variant="body2" className="t-meta-text">Off-Campus</Typography>
             </Box>
           </Box>
 
@@ -295,7 +297,7 @@ const DriveCalendar: React.FC = () => {
                 startIcon={<AddIcon />}
                 onClick={handleAddDrive}
                 disabled={addDriveDisabled}
-                className="t-btn-primary"
+                className="g-btn g-btn-primary"
               >
                 Add Drive
               </Button>
@@ -314,7 +316,7 @@ const DriveCalendar: React.FC = () => {
           <Box className="drive-calendar-weekday-header">
             {DAYS_OF_WEEK.map((day) => (
               <Box key={day} className="drive-calendar-weekday-cell">
-                <Typography variant="subtitle2">{day}</Typography>
+                <Typography variant="subtitle2" className="t-table-head">{day}</Typography>
               </Box>
             ))}
           </Box>
@@ -345,7 +347,7 @@ const DriveCalendar: React.FC = () => {
                             }`}
                             onClick={(e) => handleEventClick(drive.driveId, e)}
                           >
-                            <Typography variant="caption" className="drive-event-name">
+                            <Typography variant="caption" className="drive-event-name t-meta-text">
                               {drive.driveName}
                             </Typography>
                             {drivesForDay.length === 1 && (

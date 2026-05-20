@@ -169,6 +169,7 @@ const CandidateList: React.FC = () => {
   const {
     filters,
     handleFilterChange,
+    handleSortChange,
     handleCheckboxToggle,
     clearFilters: clearFiltersHook,
     setFilters,
@@ -291,7 +292,10 @@ const CandidateList: React.FC = () => {
     if (filters.skills.length > 0) params.set('skills', filters.skills.join(','));
     
     setSearchParams(params, { replace: true });
-  }, [filters, setSearchParams]);
+  }, [filters.candidateName, filters.instituteName, filters.state, filters.cities,
+      filters.degrees, filters.departments, filters.eligibility,
+      filters.applicationTypes, filters.applicationStages, filters.skills,
+      setSearchParams]);
 
   // Save filters to sessionStorage
   const saveFilters = () => {
@@ -596,9 +600,9 @@ const CandidateList: React.FC = () => {
                     <ArrowBackIcon fontSize="small" />
                   </button>
                 )}
-                <Typography className="cl-page-title">Candidates Management</Typography>
+                <Typography className="cl-page-title t-page-title">Candidates Management</Typography>
               </Box>
-              <Typography className="cl-page-subtitle">Manage and view all registered candidates</Typography>
+              <Typography className="cl-page-subtitle t-page-subtitle">Manage and view all registered candidates</Typography>
             </Box>
             <Box className="cl-page-header-right">
               <FormControl size="small" className="cl-cycle-select">
@@ -682,7 +686,7 @@ const CandidateList: React.FC = () => {
               {/* Filters toggle button - hidden when sidebar is open */}
               {!sidebarOpen && (
                 <Button
-                  className="cl-filters-btn"
+                  className="g-btn g-btn-outline-primary cl-filters-btn"
                   onClick={toggleSidebar}
                 >
                   Filters <FilterListIcon style={{ fontSize: 18, marginLeft: 4, verticalAlign: 'middle' }} />
@@ -712,7 +716,11 @@ const CandidateList: React.FC = () => {
                     displayEmpty
                     IconComponent={ChevronIcon}
                     MenuProps={{ classes: { paper: 'cl-dropdown-paper' } }}
-                    onChange={(e) => setSelectedDrive(e.target.value as number | "")}
+                    onChange={(e) => {
+                      setSelectedDrive(e.target.value as number | "");
+                      setSelectedCandidates(new Set());
+                      setSelectMode(false);
+                    }}
                   >
                     <MenuItem value="">All Drives</MenuItem>
                     {drives.map((drive) => (
@@ -741,11 +749,7 @@ const CandidateList: React.FC = () => {
                     >
                       <MenuItem value="">Update Status</MenuItem>
                       <MenuItem value="SHORTLISTED">SHORTLISTED</MenuItem>
-                      <MenuItem value="SELECTED">SELECTED</MenuItem>
-                      <MenuItem value="REJECTED">REJECTED</MenuItem>
-                      <MenuItem value="OFFERED">OFFERED</MenuItem>
-                      <MenuItem value="JOINED">JOINED</MenuItem>
-                      <MenuItem value="DROPPED">DROPPED</MenuItem>
+                
                       <MenuItem value="CLOSED" sx={{ color: 'var(--color-error-delete)' }}>MOVE TO HISTORY</MenuItem>
                     </Select>
                   </FormControl>
@@ -768,9 +772,9 @@ const CandidateList: React.FC = () => {
               {selectedCycle && (
                 <>
                   {/* History icon button */}
-                  <Tooltip title="View History">
+                  <Tooltip title="View History" arrow classes={{ tooltip: 'g-tooltip', arrow: 'g-tooltip-arrow' }}>
                     <IconButton
-                      className="cl-icon-btn"
+                      className="g-icon-btn cl-icon-btn"
                       onClick={() => {
                         const selectedCycleData = cycles.find(c => c.cycleId === selectedCycle);
                         navigate(`/ta-recruiter/candidates/history?cycleId=${selectedCycle}&cycleName=${encodeURIComponent(selectedCycleData?.cycleName + ' - ' + selectedCycleData?.cycleYear || '')}`);
@@ -809,16 +813,20 @@ const CandidateList: React.FC = () => {
               )}
 
               {/* Add Candidate button */}
-              <Tooltip title={
-                selectedCycle && cycles.find(c => c.cycleId === selectedCycle)?.status === "CLOSED"
-                  ? "Cannot add candidates to a closed cycle"
-                  : !selectedDrive
-                  ? "Please select a drive first"
-                  : "Add Candidate"
-              }>
+              <Tooltip
+                title={
+                  selectedCycle && cycles.find(c => c.cycleId === selectedCycle)?.status === "CLOSED"
+                    ? "Cannot add candidates to a closed cycle"
+                    : !selectedDrive
+                    ? "Please select a drive first"
+                    : "Add Candidate"
+                }
+                arrow
+                classes={{ tooltip: 'g-tooltip', arrow: 'g-tooltip-arrow' }}
+              >
                 <span>
                   <Button
-                    className="cl-add-btn"
+                    className="g-btn g-btn-primary cl-add-btn"
                     startIcon={<AddIcon />}
                     onClick={handleAddCandidate}
                     disabled={!selectedDrive || (selectedCycle ? cycles.find(c => c.cycleId === selectedCycle)?.status === "CLOSED" : false)}
@@ -868,9 +876,24 @@ const CandidateList: React.FC = () => {
                         </TableCell>
                         <TableCell className="t-head-cell">College Name</TableCell>
                         <TableCell className="t-head-cell">Candidate Name</TableCell>
-                        <TableCell className="t-head-cell">CGPA</TableCell>
-                        <TableCell className="t-head-cell">No. of Arrears</TableCell>
-                        <TableCell className="t-head-cell">Passout</TableCell>
+                        <TableCell
+                          className={`t-head-cell cl-sortable-head${filters.sortBy === "cgpa" ? " cl-sort-active" : ""}`}
+                          onClick={() => filters.sortBy === "cgpa"
+                            ? handleSortChange("candidateId", "DESC")
+                            : handleSortChange("cgpa", "DESC")}
+                        >CGPA</TableCell>
+                        <TableCell
+                          className={`t-head-cell cl-sortable-head${filters.sortBy === "historyOfArrears" ? " cl-sort-active" : ""}`}
+                          onClick={() => filters.sortBy === "historyOfArrears"
+                            ? handleSortChange("candidateId", "DESC")
+                            : handleSortChange("historyOfArrears", "ASC")}
+                        >No. of Arrears</TableCell>
+                        <TableCell
+                          className={`t-head-cell cl-sortable-head${filters.sortBy === "passoutYear" ? " cl-sort-active" : ""}`}
+                          onClick={() => filters.sortBy === "passoutYear"
+                            ? handleSortChange("candidateId", "DESC")
+                            : handleSortChange("passoutYear", "DESC")}
+                        >Passout</TableCell>
                         <TableCell className="t-head-cell">Status</TableCell>
                         <TableCell className="t-head-cell">Category</TableCell>
                       </TableRow>

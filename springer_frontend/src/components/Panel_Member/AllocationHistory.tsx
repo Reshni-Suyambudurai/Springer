@@ -157,17 +157,6 @@ const AllocationHistory = () => {
   return (
     <Box className="t-page">
       <Card className="t-card">
-        <Box className="t-header">
-          <Stack direction="row" alignItems="center" gap={1.5}>
-            <Box className="t-icon-box">
-              <HistoryIcon className="ah-header-icon" />
-            </Box>
-            <Stack>
-              <Typography className="t-page-title">Allocation History</Typography>
-            </Stack>
-          </Stack>
-          <span className="ah-count-badge">{filteredAssignments.length} assignment{filteredAssignments.length !== 1 ? "s" : ""}</span>
-        </Box>
 
         <Box className="t-filter-bar">
           <FormControl size="small" className="ah-cycle-dropdown">
@@ -210,7 +199,7 @@ const AllocationHistory = () => {
             </Select>
           </FormControl>
 
-          <FormControl size="small" className="ah-status-dropdown" sx={{ minWidth: 120, marginRight: 1 }}>
+          <FormControl size="small" className="ah-status-dropdown">
             <InputLabel>Status</InputLabel>
             <Select
               value={filterStatus}
@@ -224,7 +213,7 @@ const AllocationHistory = () => {
             </Select>
           </FormControl>
 
-          <FormControl size="small" className="ah-date-dropdown" sx={{ minWidth: 150, marginRight: 1 }}>
+          <FormControl size="small" className="ah-date-dropdown">
             <InputLabel>Date</InputLabel>
             <Select
               value={filterDate}

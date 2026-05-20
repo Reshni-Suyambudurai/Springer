@@ -65,6 +65,16 @@
   --color-silver: #A8B0B9;
   --color-teal: #14B8A6;
 
+  /* ========== SHORTHAND ALIASES (used by dashboard cards & intern pages) ========== */
+  --color-blue:   var(--color-blue-500);
+  --color-green:  var(--color-green-700);
+  --color-yellow: var(--color-yellow-500);
+  --color-purple: var(--color-purple-600);
+  --color-red:    var(--color-red-500);
+  /* Generic bg/text aliases for simpler components */
+  --color-bg:     var(--color-bg-primary);
+  --color-text:   var(--color-text-primary);
+
   /* White Palette */
   --color-white: #FFFFFF;
   --color-white-off: #FAFBFC;
@@ -75,7 +85,7 @@
   /* ========== SEMANTIC COLORS ========== */
   
   /* Primary */
-  --color-primary: var(--color-blue-500);
+  --color-primary: var(--color-sidebar-bg);
   --color-primary-dark: var(--color-blue-600);
   --color-primary-light: var(--color-blue-50);
   --color-link: #155DFC;
@@ -505,4 +515,13 @@
   --opacity-black-medium: rgba(0, 0, 0, 0.4);
   --opacity-primary-hover: rgba(91, 163, 214, 0.16);
   --opacity-primary-inset: rgba(91, 163, 214, 0.05);
+
+  /* ========== SHORTHAND ALIASES - DARK THEME ========== */
+  --color-blue:   var(--color-blue-500);
+  --color-green:  var(--color-green-700);
+  --color-yellow: var(--color-yellow-500);
+  --color-purple: var(--color-purple-600);
+  --color-red:    var(--color-red-500);
+  --color-bg:     var(--color-bg-primary);
+  --color-text:   var(--color-text-primary);
 }

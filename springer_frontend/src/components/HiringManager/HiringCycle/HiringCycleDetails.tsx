@@ -1,13 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   Box, Card, Typography, Stack, Chip,
-  CircularProgress, Alert, Button, IconButton,
+  CircularProgress, Alert, Button,
   Table, TableBody, TableCell, TableContainer,
   TableHead, TableRow,
 } from '@mui/material';
 import {
-  Loop as CycleIcon,
-  ArrowBack as ArrowBackIcon,
   FileDownload as DownloadIcon,
 } from '@mui/icons-material';
 import { FigmaAddIcon as AddIcon } from '../../Common/FigmaIcons';
@@ -41,25 +39,24 @@ const HiringCycleDetails = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  useEffect(() => {
-    const fetch = async () => {
-      try {
-        setLoading(true);
-        const [cycleRes, demandsRes] = await Promise.all([
-          hiringCycleApi.getCycleById(id),
-          hiringDemandApi.getAllDemands({ cycleId: id }),
-        ]);
-        if (cycleRes.success && cycleRes.data) setCycle(cycleRes.data);
-        else setError(cycleRes.message || 'Failed to load cycle.');
-        if (demandsRes.success && demandsRes.data) setDemands(demandsRes.data);
-      } catch (err: any) {
-        setError(err.message || 'Failed to load cycle details.');
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetch();
+  const load = useCallback(async () => {
+    try {
+      setLoading(true);
+      const [cycleRes, demandsRes] = await Promise.all([
+        hiringCycleApi.getCycleById(id),
+        hiringDemandApi.getAllDemands({ cycleId: id }),
+      ]);
+      if (cycleRes.success && cycleRes.data) setCycle(cycleRes.data);
+      else setError(cycleRes.message || 'Failed to load cycle.');
+      if (demandsRes.success && demandsRes.data) setDemands(demandsRes.data);
+    } catch (err: unknown) {
+      setError((err as { message?: string }).message || 'Failed to load cycle details.');
+    } finally {
+      setLoading(false);
+    }
   }, [id]);
+
+  useEffect(() => { load(); }, [load]);
 
   const handleDownloadJd = async () => {
     try {
@@ -70,69 +67,46 @@ const HiringCycleDetails = () => {
       a.download = `hiring-cycle-${id}-jd.pdf`;
       a.click();
       window.URL.revokeObjectURL(url);
-    } catch { }
+    } catch { /* silent fail */ }
   };
 
   return (
     <Box className="hcd-page">
       <Card className="hcd-card">
 
-        {/* Header */}
-        <Box className="hcd-header">
-          <Stack direction="row" alignItems="center" justifyContent="space-between">
-            <Stack direction="row" alignItems="center" gap={1.5}>
-              <IconButton
+        {/* Action Bar */}
+        {!loading && !error && cycle && (
+          <Box className="hcd-action-bar">
+            {cycle.hasJd && (
+              <Button
+                variant="outlined"
                 size="small"
-                className="hcd-back-btn"
-                onClick={() => navigate('/hiring-manager/hiring-cycles')}
+                startIcon={<DownloadIcon className="hcd-action-icon" />}
+                className="g-btn g-btn-outline-primary"
+                onClick={handleDownloadJd}
               >
-                <ArrowBackIcon fontSize="small" />
-              </IconButton>
-              <Box className="hcd-icon-box">
-                <CycleIcon sx={{ fontSize: 20, color: 'var(--color-primary)' }} />
-              </Box>
-              <Stack>
-                <Typography className="hcd-title">
-                  {loading ? 'Cycle Details' : (cycle?.cycleName ?? 'Cycle Details')}
-                </Typography>
-                <Typography className="hcd-subtitle">Hiring cycle details and demands</Typography>
-              </Stack>
-            </Stack>
-
-            {!loading && !error && cycle && (
-              <Stack direction="row" gap={1}>
-                {cycle.hasJd && (
-                  <Button
-                    variant="outlined"
-                    size="small"
-                    startIcon={<DownloadIcon sx={{ fontSize: '16px !important' }} />}
-                    className="hcd-download-btn"
-                    onClick={handleDownloadJd}
-                  >
-                    Download JD
-                  </Button>
-                )}
-                {cycle.status === 'OPEN' && (
-                  <Button
-                    variant="contained"
-                    size="small"
-                    startIcon={<AddIcon style={{ fontSize: '16px' }} />}
-                    className="hcd-add-btn"
-                    onClick={() => navigate(`/hiring-manager/hiring-demands/add?cycleId=${id}`)}
-                  >
-                    Add Demand
-                  </Button>
-                )}
-              </Stack>
+                Download JD
+              </Button>
             )}
-          </Stack>
-        </Box>
+            {cycle.status === 'OPEN' && (
+              <Button
+                variant="contained"
+                size="small"
+                startIcon={<AddIcon style={{ fontSize: '16px' }} />}
+                className="g-btn g-btn-primary"
+                onClick={() => navigate(`/hiring-manager/hiring-demands/add?cycleId=${id}`)}
+              >
+                Add Demand
+              </Button>
+            )}
+          </Box>
+        )}
 
         <Box className="hcd-separator" />
 
         {loading ? (
           <Box className="hcd-loading">
-            <CircularProgress size={28} sx={{ color: 'var(--color-primary)' }} />
+            <CircularProgress size={28} className="t-spinner" />
             <Typography className="hcd-loading-text">Loading...</Typography>
           </Box>
         ) : error ? (
@@ -191,7 +165,7 @@ const HiringCycleDetails = () => {
             </Box>
 
             {/* Demands Section */}
-            <Box className="hcd-section" sx={{ mt: '24px' }}>
+            <Box className="hcd-section hcd-section--mt">
               <Box className="hcd-section-header">
                 <Stack direction="row" alignItems="center" gap={1}>
                   <Typography className="hcd-section-label">Hiring Demands</Typography>

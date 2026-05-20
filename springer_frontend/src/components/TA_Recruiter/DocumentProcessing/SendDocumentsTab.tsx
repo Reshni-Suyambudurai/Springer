@@ -17,12 +17,7 @@ import { documentLinkApi } from '../../../services/document.api';
 import { showToast } from '../../../utils/toast';
 import { useDocumentProcessing } from '../../../contexts/DocumentProcessingContext';
 import FilterSelect from '../../Common/FilterSelect';
-<<<<<<< HEAD
-import type { DocumentTypeResponse, DocProcessingContextProps } from '../../../types/DocumentCollection/document.types';
-import type { CandidateResponse } from '../../../types/TA_Recruiter/Drive/candidate.types';
-=======
 import type { DocProcessingContextProps } from '../../../types/DocumentCollection/document.types';
->>>>>>> origin/Mano-Branch
 import '../../../css/TA_Recruiter/DocumentProcessing/SendDocumentsTab.css';
 
 const SendDocumentsTab = ({ context }: { context: DocProcessingContextProps }) => {

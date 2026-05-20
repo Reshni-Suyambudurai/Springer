@@ -1,4 +1,4 @@
-/* ===== ACADEMY DASHBOARD SHELL â€” prefix: acd- ===== */
+﻿/* ===== ACADEMY DASHBOARD SHELL â€” prefix: acd- ===== */
 
 .acd-page {
   display: flex;
@@ -40,7 +40,7 @@
   background: transparent;
   cursor: pointer;
   font-family: 'Inter', sans-serif;
-  font-size: var(--text-sm);
+  font-size: 16px;
   font-weight: 500;
   color: var(--color-text-secondary);
   white-space: nowrap;
@@ -73,7 +73,7 @@
 }
 
 .acd-year-label {
-  font-size: var(--text-xs) !important;
+  font-size: 12px !important;
   font-weight: 600 !important;
   color: var(--color-text-secondary) !important;
   white-space: nowrap;
@@ -85,7 +85,7 @@
   border-radius: 8px;
   background-color: var(--color-filter-bg);
   height: 36px;
-  font-size: 13px;
+  font-size: 0.8125rem;
 }
 
 .acd-year-select .MuiOutlinedInput-root fieldset {
@@ -101,7 +101,7 @@
 }
 
 .acd-program-badge {
-  font-size: var(--text-xs);
+  font-size: 12px;
   font-weight: 600;
   color: var(--color-primary);
   background-color: var(--color-primary-light);
@@ -132,7 +132,7 @@
   background: transparent;
   cursor: pointer;
   font-family: 'Inter', sans-serif;
-  font-size: var(--text-sm);
+  font-size: 16px;
   font-weight: 500;
   color: var(--color-text-secondary);
   white-space: nowrap;

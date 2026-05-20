@@ -55,7 +55,6 @@ const DriveCycle: React.FC = () => {
 
   return (
     <div className="drive-cycle-container">
-      <h2 className="drive-cycle-title">Hiring Cycles</h2>
       <div className="drive-cycle-grid">
         {cycles.map((cycle) => (
           <div 

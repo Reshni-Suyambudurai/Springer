@@ -1,4 +1,3 @@
-import '../../css/Admin/Admin.css';
 
 function AdminDashboard() {
   return (

@@ -34,9 +34,7 @@ import DriveDetails from './components/TA_Recruiter/DriveProcess/DriveDetails'
 import DriveCandidates from './components/TA_Recruiter/DriveProcess/DriveCandidates'
 import PanelAllocation from './components/TA_Recruiter/DriveProcess/PanelAllocation'
 import AddRound1 from './components/TA_Recruiter/DriveProcess/AddScores/AddRound1'
-import AddScores from './components/TA_Recruiter/DriveProcess/AddScores/AddScores'
-import AddRound2 from './components/TA_Recruiter/DriveProcess/AddScores/AddRound2'
-import AddRound3 from './components/TA_Recruiter/DriveProcess/AddScores/AddRound3'
+
 
 import ApplicationHistory from './components/TA_Recruiter/DriveProcess/ApplicationHistory'
 
@@ -156,10 +154,8 @@ function App() {
           <Route path="/drive-process/drive-details/:driveId" element={<DriveDetails />} />
           <Route path="/drive-process/drive-candidates/:driveId" element={<DriveCandidates />} />
           <Route path="/drive-process/panel-allocation/:driveId" element={<PanelAllocation />} />
-          <Route path="/drive-process/add-scores/:driveId" element={<AddScores />} />
+        
           <Route path="/drive-process/add-scores/:driveId/round1" element={<AddRound1 />} />
-          <Route path="/drive-process/add-scores/:driveId/round2" element={<AddRound2 />} />
-          <Route path="/drive-process/add-scores/:driveId/round3" element={<AddRound3 />} />
 
           <Route path="/drive-process/application-history" element={<ApplicationHistory />} />
 

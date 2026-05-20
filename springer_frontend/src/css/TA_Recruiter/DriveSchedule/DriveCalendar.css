@@ -44,6 +44,7 @@
 
 .drive-cycle-status-open { color: var(--color-success-dark) !important; font-weight: 600; }
 .drive-cycle-status-closed { color: var(--color-error-delete) !important; font-weight: 600; }
+.drive-cycle-status-past { color: var(--color-danger) !important; font-weight: 600; }
 
 /* ── Nav Controls ── */
 .drive-calendar-nav-controls { display: flex; align-items: center; gap: 12px; }

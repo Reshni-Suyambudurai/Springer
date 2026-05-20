@@ -37,7 +37,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 @RequestMapping("/api/candidates")
 @RequiredArgsConstructor
 @Tag(name = "Candidate Management", description = "APIs for managing candidates in the recruitment system")
-@PreAuthorize("hasAnyRole('SYSTEM_ADMIN','TA_HEAD','TA_MANAGER','TRAINING_COORDINATOR')")
+@PreAuthorize("hasAnyRole('SYSTEM_ADMIN','TA_HEAD','TA_MANAGER','TRAINING_COORDINATOR','MEMBERS')") // HIRING_MANAGER added for candidate management access
 public class CandidatesController {
     
     private final ICandidatesService candidatesService;

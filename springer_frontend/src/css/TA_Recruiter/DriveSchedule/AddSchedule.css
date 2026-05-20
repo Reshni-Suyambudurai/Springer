@@ -1,5 +1,11 @@
 /* Only styles unique to AddSchedule — all common layout uses t-* from template.css */
 
+/* Remove card border on this page */
+.add-schedule-page .t-card {
+  border: none !important;
+  box-shadow: none !important;
+}
+
 /* ── Input Fields ── */
 .add-schedule-input { width: 100%; }
 

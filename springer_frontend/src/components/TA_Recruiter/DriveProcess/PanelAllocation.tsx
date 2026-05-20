@@ -4,7 +4,6 @@ import { Box, Typography, Card, Select, MenuItem, Button, IconButton } from "@mu
 import EditIcon from "@mui/icons-material/Edit";
 import AddIcon from "@mui/icons-material/Add";
 import RemoveCircleOutlineIcon from "@mui/icons-material/RemoveCircleOutline";
-import BackButton from "../../Common/BackButton";
 import { userApi } from "../../../services/hiring.api";
 import { driveAssignmentApi } from "../../../services/driveschedule.api";
 import { tokenstore } from "../../../auth/tokenstore";
@@ -399,18 +398,6 @@ const PanelAllocation: React.FC = () => {
     <Box className="pa-container">
       {/* Header */}
       <Card className="pa-header">
-        <Box className="pa-header-left">
-          <BackButton variant="header" />
-          <Box className="pa-header-info">
-            <Typography className="pa-title">
-              Panel Allocation — {driveName}
-            </Typography>
-            <Typography className="pa-subtitle">
-              Round {allocRoundNo ?? "—"} | Batch: {batchTime} | Drive ID: {driveId} | Passed: {candidates.length}
-            </Typography>
-          </Box>
-        </Box>
-
         <Box className="pa-header-actions">
           {noneAllocated && (
             <input
@@ -443,7 +430,7 @@ const PanelAllocation: React.FC = () => {
           <Button
             variant="contained"
             size="small"
-            className="pa-submit-btn"
+            className="g-btn g-btn-primary pa-submit-btn"
             disabled={newAssignedCount === 0 || submitting}
             onClick={handleSubmit}
           >

@@ -288,6 +288,9 @@ const CandidateDetails: React.FC = () => {
         <CardContent className="header-card-content-compact">
           <Box className="header-layout-inline">
             <Box className="header-left">
+              <Box className="candidate-header-back-wrap">
+                <BackButton onClick={handleBack} variant="header" className="candidate-details-back-btn" />
+              </Box>
               <Box className="candidate-avatar-box">
                 {(candidate.firstName?.charAt(0) || "").toUpperCase()}
                 {(candidate.lastName?.charAt(0) || "").toUpperCase()}
@@ -303,26 +306,6 @@ const CandidateDetails: React.FC = () => {
                     size="small"
                     className={`candidate-top-chip-eligibility ${candidate.isEligible ? "candidate-top-chip-eligibility-yes" : "candidate-top-chip-eligibility-no"}`}
                   />
-                  <Box className="candidate-header-actions">
-                    <Button
-                      variant="outlined"
-                      size="small"
-                      startIcon={<EditOutlinedIcon />}
-                      onClick={handleEditToggle}
-                      className="btn-status-action candidate-header-btn"
-                    >
-                      Edit
-                    </Button>
-                    <Button
-                      variant="outlined"
-                      size="small"
-                      startIcon={<SwapHorizOutlinedIcon />}
-                      onClick={() => { setSelectedStatus(""); setStatusDialogOpen(true); }}
-                      className="btn-status-action candidate-header-btn"
-                    >
-                      Change Status
-                    </Button>
-                  </Box>
                 </Box>
 
                 <Box className="candidate-top-meta-grid">
@@ -363,16 +346,38 @@ const CandidateDetails: React.FC = () => {
             </Box>
             
             <Box className="header-right">
-              <Chip
-                label={candidate.applicationStage || "SHORTLISTED"}
-                size="small"
-                className="candidate-top-chip-stage"
-              />
-              <Chip
-                label={candidate.applicationType || "STANDARD"}
-                size="small"
-                className="candidate-top-chip-type"
-              />
+              <Box className="candidate-header-actions">
+                <Button
+                  variant="outlined"
+                  size="small"
+                  startIcon={<EditOutlinedIcon />}
+                  onClick={handleEditToggle}
+                  className="btn-status-action candidate-header-btn"
+                >
+                  Edit
+                </Button>
+                <Button
+                  variant="outlined"
+                  size="small"
+                  startIcon={<SwapHorizOutlinedIcon />}
+                  onClick={() => { setSelectedStatus(""); setStatusDialogOpen(true); }}
+                  className="btn-status-action candidate-header-btn"
+                >
+                  Change Status
+                </Button>
+              </Box>
+              <Box className="candidate-header-chips">
+                <Chip
+                  label={candidate.applicationStage || "SHORTLISTED"}
+                  size="small"
+                  className="candidate-top-chip-stage"
+                />
+                <Chip
+                  label={candidate.applicationType || "STANDARD"}
+                  size="small"
+                  className="candidate-top-chip-type"
+                />
+              </Box>
             </Box>
           </Box>
         </CardContent>
@@ -673,9 +678,9 @@ const CandidateDetails: React.FC = () => {
         onClose={handleDialogClose}
         maxWidth={false}
         className="eligibility-dialog"
-        PaperProps={{ className: "ai-dialog-paper", sx: { width: "400px", maxWidth: "400px", minHeight: "auto", maxHeight: "350px" } }}
+        PaperProps={{ className: "ai-dialog-paper" }}
       >
-        <DialogTitle sx={{ p: "16px 24px 12px", borderBottom: "1px solid var(--color-border)" }} className="eligibility-dialog-title-wrap">
+        <DialogTitle className="eligibility-dialog-title-wrap">
           <Box className="eligibility-dialog-header-row">
             <Box>
               <Typography className="eligibility-dialog-title">Update Candidate Eligibility</Typography>
@@ -686,7 +691,7 @@ const CandidateDetails: React.FC = () => {
             </IconButton>
           </Box>
         </DialogTitle>
-        <DialogContent sx={{ p: "16px 24px 20px" }} className="eligibility-dialog-content">
+        <DialogContent className="eligibility-dialog-content">
           <Box className="eligibility-dialog-form">
             <FormControlLabel
               control={
@@ -716,11 +721,11 @@ const CandidateDetails: React.FC = () => {
             />
           </Box>
         </DialogContent>
-        <DialogActions sx={{ p: "16px 24px", borderTop: "1px solid var(--color-border)", justifyContent: "flex-end", gap: 1 }} className="eligibility-dialog-actions">
+        <DialogActions className="eligibility-dialog-actions">
           <button
             onClick={handleSave}
             disabled={saving || !editForm.reason.trim()}
-            className="ai-save-btn"
+            className="g-btn g-btn-primary"
           >
             {saving ? "Saving..." : "Update Eligibility"}
           </button>
@@ -733,9 +738,9 @@ const CandidateDetails: React.FC = () => {
         onClose={() => setStatusDialogOpen(false)}
         maxWidth={false}
         className="eligibility-dialog"
-        PaperProps={{ className: "ai-dialog-paper", sx: { width: "400px", maxWidth: "400px", minHeight: "auto", maxHeight: "350px" } }}
+        PaperProps={{ className: "ai-dialog-paper cd-status-dialog-paper" }}
       >
-        <DialogTitle sx={{ p: "16px 24px 12px", borderBottom: "1px solid var(--color-border)" }} className="eligibility-dialog-title-wrap">
+        <DialogTitle className="eligibility-dialog-title-wrap">
           <Box className="eligibility-dialog-header-row">
             <Box>
               <Typography className="eligibility-dialog-title">Change Candidate Status</Typography>
@@ -746,7 +751,7 @@ const CandidateDetails: React.FC = () => {
             </IconButton>
           </Box>
         </DialogTitle>
-        <DialogContent sx={{ p: "16px 24px 20px" }} className="eligibility-dialog-content">
+        <DialogContent className="eligibility-dialog-content">
           <FormControl fullWidth className="eligibility-dialog-select">
             <InputLabel>Select New Status</InputLabel>
             <Select
@@ -756,9 +761,6 @@ const CandidateDetails: React.FC = () => {
             >
               <MenuItem value="APPLIED">APPLIED</MenuItem>
               <MenuItem value="SHORTLISTED">SHORTLISTED</MenuItem>
-              <MenuItem value="SELECTED">SELECTED</MenuItem>
-              <MenuItem value="REJECTED">REJECTED</MenuItem>
-              <MenuItem value="OFFERED">OFFERED</MenuItem>
               <MenuItem value="ACCEPTED">ACCEPTED</MenuItem>
               <MenuItem value="JOINED">JOINED</MenuItem>
               <MenuItem value="NOT_JOINED">NOT_JOINED</MenuItem>
@@ -767,11 +769,11 @@ const CandidateDetails: React.FC = () => {
             </Select>
           </FormControl>
         </DialogContent>
-        <DialogActions sx={{ p: "16px 24px", borderTop: "1px solid var(--color-border)", justifyContent: "flex-end", gap: 1 }} className="eligibility-dialog-actions">
+        <DialogActions className="eligibility-dialog-actions">
           <button
             onClick={handleStatusUpdate}
             disabled={!selectedStatus || updatingStatus}
-            className="ai-save-btn"
+            className="g-btn g-btn-primary"
           >
             {updatingStatus ? "Updating..." : "Update Status"}
           </button>

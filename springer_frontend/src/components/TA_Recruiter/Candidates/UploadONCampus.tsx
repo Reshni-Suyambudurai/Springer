@@ -145,7 +145,7 @@ const UploadONCampus: React.FC<UploadONCampusProps> = ({
             variant="outlined"
             startIcon={<FileDownloadOutlinedIcon />}
             onClick={handleDownloadTemplate}
-            className="oncampus-download-btn t-btn-small"
+            className="g-btn g-btn-outline-primary oncampus-download-btn"
           >
             Download On-Campus Template
           </Button>
@@ -171,7 +171,7 @@ const UploadONCampus: React.FC<UploadONCampusProps> = ({
               variant="contained"
               component="label"
               startIcon={<UploadIcon />}
-              className="upload-zone-btn t-btn-primary"
+              className="g-btn g-btn-primary upload-zone-btn"
             >
               Upload File
               <input type="file" hidden accept=".xlsx,.xls" onChange={handleFileUpload} />

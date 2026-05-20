@@ -4,6 +4,7 @@ import { instituteApi, instituteTPOApi, programApi } from "../../../services/hir
 import type { InstituteResponse, InstituteRequest } from "../../../types/TA_Recruiter/Hiring/institute.types";
 import { showToast } from "../../../utils/toast";
 import { tokenstore } from "../../../auth/tokenstore";
+import { EMAIL_TEMPLATE_IDS } from "../../../config/emailTemplateConfig";
 import * as XLSX from "xlsx";
 import {
   Box,
@@ -20,11 +21,13 @@ import {
   Checkbox,
   Button,
   FormControlLabel,
+  Tooltip,
 } from "@mui/material";
 import SchoolIcon from "@mui/icons-material/School";
 import PlaceOutlinedIcon from "@mui/icons-material/PlaceOutlined";
 import CloseIcon from "@mui/icons-material/Close";
 import DeleteIcon from "@mui/icons-material/Delete";
+import EmailIcon from "@mui/icons-material/Email";
 import "../../../css/TA_Recruiter/Institutes/InstitutesList.css";
 import "../../../css/TA_Recruiter/Institutes/AddInstitute.css";
 
@@ -88,6 +91,7 @@ const InstitutesList: React.FC = () => {
   const [page, setPage] = useState(1);
   const pageSize = 8;
   const sentinelRef = useRef<HTMLDivElement>(null);
+  const [sendingEmail, setSendingEmail] = useState<number | null>(null);
 
   const uniqueStates = Array.from(new Set(allInstitutes.map((inst) => inst.state))).filter(Boolean);
   const uniqueTiers = Array.from(new Set(allInstitutes.map((inst) => inst.instituteTier))).filter(Boolean);
@@ -397,6 +401,36 @@ const InstitutesList: React.FC = () => {
     setAddTpoForms([]);
   };
 
+  const handleInvite = async (instituteId: number) => {
+    setSendingEmail(instituteId);
+    try {
+      const res = await instituteApi.getInstituteWithTPOsById(instituteId);
+      if (!res.success || !res.data) {
+        showToast(res.message || 'Failed to load institute contacts', 'error');
+        return;
+      }
+      const emailIds: string[] = (res.data.tpoDetails ?? [])
+        .map((tpo: { tpoEmail: string }) => tpo.tpoEmail)
+        .filter(Boolean);
+
+      if (emailIds.length === 0) {
+        showToast('No TPO contacts found for this institute', 'error');
+        return;
+      }
+      navigate('/ta-recruiter/send-email', {
+        state: {
+          templateIds: [EMAIL_TEMPLATE_IDS.INSTITUTE_INVITE_ONCAMPUS, EMAIL_TEMPLATE_IDS.INSTITUTE_INVITE_OFFCAMPUS],
+          emailIds,
+        },
+      });
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } }; message?: string };
+      showToast(err?.response?.data?.message ?? err?.message ?? 'Failed to load institute contacts', 'error');
+    } finally {
+      setSendingEmail(null);
+    }
+  };
+
   const handleToggleStatus = async (institute: InstituteResponse) => {
     try {
       await instituteApi.deleteInstitute(institute.instituteId);
@@ -615,25 +649,48 @@ const InstitutesList: React.FC = () => {
                     <img src="/InstituteIcon2.svg" alt="Institute" className="institute-card-icon-img" />
                   </Box>
                   <Box className="institute-card-info">
-                    <Typography className="institute-card-name">{institute.instituteName}</Typography>
+                    <Typography className="institute-card-name t-row-primary">{institute.instituteName}</Typography>
                     <Box className="institute-card-bottom">
                       <Typography className={getTierClassName(institute.instituteTier)}>
                         {institute.instituteTier.replace("_", " ")}
                       </Typography>
                       <Box className="institute-card-location">
                         <PlaceOutlinedIcon className="institute-card-location-icon" />
-                        <Typography className="institute-card-location-text">
+                        <Typography className="institute-card-location-text t-meta-text">
                           {institute.city}, {institute.state}
                         </Typography>
                       </Box>
                     </Box>
                   </Box>
-                  <Typography
-                    className={getStatusClassName(institute.isActive)}
-                    onClick={(e) => { e.stopPropagation(); handleToggleStatus(institute); }}
-                  >
-                    {institute.isActive ? "Active" : "Inactive"}
-                  </Typography>
+                  <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '6px' }}>
+                    <Typography
+                      className={getStatusClassName(institute.isActive)}
+                      onClick={(e) => { e.stopPropagation(); handleToggleStatus(institute); }}
+                    >
+                      {institute.isActive ? "Active" : "Inactive"}
+                    </Typography>
+                    <Tooltip
+                      title="Send Email to TPO"
+                      arrow
+                      classes={{ tooltip: 'g-tooltip', arrow: 'g-tooltip-arrow' }}
+                    >
+                      <span>
+                        <IconButton
+                          size="small"
+                          className="t-action-btn g-icon-btn"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleInvite(institute.instituteId);
+                          }}
+                          disabled={sendingEmail === institute.instituteId}
+                        >
+                          {sendingEmail === institute.instituteId
+                            ? <CircularProgress size={14} />
+                            : <EmailIcon fontSize="small" />}
+                        </IconButton>
+                      </span>
+                    </Tooltip>
+                  </Box>
                 </Box>
               </Box>
             ))}

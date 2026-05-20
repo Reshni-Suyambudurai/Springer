@@ -1,12 +1,12 @@
 ﻿import { useState, useEffect } from 'react';
 import {
-  Box, Card, Typography, Stack, Chip, IconButton,
+  Box, Card, Typography, Stack, Chip,
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
   CircularProgress, Alert,
 } from '@mui/material';
 import {
   DateRange as CycleIcon,
-  OpenInNew as OpenInNewIcon,
+ 
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { hiringCycleApi } from '../../../services/hiring.api';
@@ -41,24 +41,12 @@ const TARHiringCycleList = () => {
     <Box className="t-page">
       <Card className="t-card">
 
-        <Box className="t-header">
-          <Stack direction="row" alignItems="center" gap={1.5}>
-            <Box className="t-icon-box">
-              <CycleIcon sx={{ fontSize: 20, color: 'var(--color-primary)' }} />
-            </Box>
-            <Stack>
-              <Typography className="t-page-title">Hiring Cycles</Typography>
-              <Typography className="t-page-subtitle">View cycles and approved demands for execution</Typography>
-            </Stack>
-          </Stack>
-        </Box>
-
         <Box className="t-separator" />
 
         <Box className="t-table-section">
           {loading ? (
             <Box className="t-loading">
-              <CircularProgress size={28} sx={{ color: 'var(--color-primary)' }} />
+              <CircularProgress size={28} className="t-spinner" />
               <Typography className="t-loading-text">Loading hiring cycles...</Typography>
             </Box>
           ) : error ? (
@@ -75,7 +63,7 @@ const TARHiringCycleList = () => {
                       <TableCell className="t-head-cell">Compensation Band</TableCell>
                       <TableCell className="t-head-cell">Status</TableCell>
                       <TableCell className="t-head-cell">Created On</TableCell>
-                      <TableCell className="t-head-cell t-head-cell--actions">Actions</TableCell>
+                     
                     </TableRow>
                   </TableHead>
                   <TableBody>
@@ -97,7 +85,7 @@ const TARHiringCycleList = () => {
                           <TableCell className="t-cell">
                             <Stack direction="row" alignItems="center" gap={1.5}>
                               <Box className="tar-hcl-name-icon-box">
-                                <CycleIcon sx={{ fontSize: 16, color: 'var(--color-primary)' }} />
+                                <CycleIcon className="tar-hcl-row-icon" />
                               </Box>
                               <Typography className="t-row-primary">{cycle.cycleName}</Typography>
                             </Stack>
@@ -129,16 +117,7 @@ const TARHiringCycleList = () => {
                               })}
                             </Typography>
                           </TableCell>
-                          <TableCell className="t-cell t-cell--actions">
-                            <IconButton
-                              size="small"
-                              className="t-action-btn"
-                              title="View Cycle"
-                              onClick={(e) => { e.stopPropagation(); navigate(`/ta-recruiter/hiring-cycles/${cycle.cycleId}`); }}
-                            >
-                              <OpenInNewIcon className="tar-hcl-action-icon" />
-                            </IconButton>
-                          </TableCell>
+                          
                         </TableRow>
                       ))
                     )}

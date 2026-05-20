@@ -126,19 +126,6 @@ const PanelAssignments = () => {
     <Box className="t-page">
       <Card className="t-card">
 
-        <Box className="t-header">
-          <Stack direction="row" alignItems="center" gap={1.5}>
-            <Box className="t-icon-box">
-              <AssignIcon sx={{ fontSize: 20, color: "var(--color-primary)" }} />
-            </Box>
-            <Stack>
-              <Typography className="t-page-title">My Assignments</Typography>
-              
-            </Stack>
-          </Stack>
-          <span className="pm-assign-count-badge">{assignments.length} planned</span>
-        </Box>
-
         <Box className="t-filter-bar">
           <TextField
             placeholder="Search by candidate name..."
@@ -159,7 +146,6 @@ const PanelAssignments = () => {
             onChange={(e) => setFilterStatus(e.target.value)}
             size="small"
             className="pm-assign-status-select"
-            sx={{ minWidth: 120, marginRight: 1 }}
           >
             <MenuItem value="ALL">All Status</MenuItem>
             {[AssignmentStatus.PLANNED, AssignmentStatus.DRAFT, AssignmentStatus.HOLD].map((s) => (
@@ -171,7 +157,6 @@ const PanelAssignments = () => {
             onChange={(e) => setFilterDate(e.target.value)}
             size="small"
             className="pm-assign-date-select"
-            sx={{ minWidth: 150, marginRight: 1 }}
           >
             <MenuItem value="ALL">All Dates</MenuItem>
             {distinctDates.map((date) => (
@@ -187,7 +172,7 @@ const PanelAssignments = () => {
         <Box className="t-table-section">
           {loading ? (
             <Box className="t-loading">
-              <CircularProgress size={28} sx={{ color: "var(--color-primary)" }} />
+              <CircularProgress size={28} className="t-spinner" />
               <Typography className="t-loading-text">Loading assignments...</Typography>
             </Box>
           ) : error ? (
@@ -235,7 +220,7 @@ const PanelAssignments = () => {
                           <TableCell className="t-cell">
                             <Stack direction="row" alignItems="center" gap={1.5}>
                               <Box className="pm-assign-name-icon-box">
-                                <PersonIcon sx={{ fontSize: 16, color: "var(--color-primary)" }} />
+                                <PersonIcon className="pm-assign-person-icon" />
                               </Box>
                               <Typography className="t-row-primary">{a.candidateName}</Typography>
                             </Stack>

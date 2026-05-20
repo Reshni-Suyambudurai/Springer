@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import {  useState } from "react";
 import { tokenstore } from "../../auth/tokenstore";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import type { MenuItem } from "../../types/sidebar";
@@ -22,16 +22,6 @@ function Sidebar({ collapsed, onToggle }: SidebarProps) {
     tokenstore.clear();
     navigate('/login');
   };
-
-  useEffect(() => {
-    if (collapsed) {
-      setCollapsedHoverEnabled(false);
-      setShowCollapsedToggle(false);
-      return;
-    }
-    setCollapsedHoverEnabled(false);
-    setShowCollapsedToggle(false);
-  }, [collapsed]);
 
   const menu: Record<string, MenuItem[]> = {
 
@@ -57,7 +47,7 @@ function Sidebar({ collapsed, onToggle }: SidebarProps) {
       },
       {
         name: "Hiring Calendar",
-        path: "/hiring-calendar",
+        path: "/ta-head/drive-calendar",
         icon: (
           <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <rect x="3" y="4" width="18" height="18" rx="2" />
@@ -74,16 +64,6 @@ function Sidebar({ collapsed, onToggle }: SidebarProps) {
           <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <path d="M22 10L12 5 2 10l10 5 10-5z" />
             <path d="M6 12v5c3 2 9 2 12 0v-5" />
-          </svg>
-        )
-      },
-      {
-        name: "Request",
-        path: "/ta-head/settings",
-        icon: (
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <rect x="8" y="2" width="8" height="4" />
-            <path d="M16 4h2a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h2" />
           </svg>
         )
       }
@@ -230,19 +210,8 @@ function Sidebar({ collapsed, onToggle }: SidebarProps) {
         icon: (
           <img src="/hiring_lifeCycle.png" alt="Hiring Cycle" width="20" height="20" style={{ objectFit: 'contain', filter: 'brightness(0) invert(1)' }} />
         )
-      },
-      {
-        name: "Request",
-        path: "/hiring-manager/requests",
-        icon: (
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <rect x="8" y="2" width="8" height="4" />
-            <path d="M16 4h3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h3" />
-            <line x1="9" y1="12" x2="15" y2="12" />
-            <line x1="9" y1="16" x2="15" y2="16" />
-          </svg>
-        )
       }
+      
     ],
 
     MEMBERS: [
@@ -297,18 +266,7 @@ function Sidebar({ collapsed, onToggle }: SidebarProps) {
     ],
 
     SYSTEM_ADMIN: [
-      {
-        name: "Dashboard",
-        path: "/admin/dashboard",
-        icon: (
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <rect x="3" y="3" width="7" height="7" />
-            <rect x="14" y="3" width="7" height="7" />
-            <rect x="14" y="14" width="7" height="7" />
-            <rect x="3" y="14" width="7" height="7" />
-          </svg>
-        )
-      },
+    
       {
         name: "Users",
         path: "/admin/users",

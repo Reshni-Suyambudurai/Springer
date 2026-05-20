@@ -219,16 +219,6 @@ const Login: React.FC = () => {
               </Typography>
             </div>
 
-            <div className="login-options">
-              <label className="login-remember">
-                <input type="checkbox" className="login-checkbox" />
-                <span>Remember me</span>
-              </label>
-              <button type="button" className="login-forgot" onClick={() => {}}>
-                Forgot Password?
-              </button>
-            </div>
-
             {/* Error message */}
             {error && (
               <Alert

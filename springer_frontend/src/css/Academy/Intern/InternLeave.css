@@ -1,4 +1,4 @@
-.ilv-page {
+﻿.ilv-page {
   display: flex;
   flex-direction: column;
   gap: 16px;
@@ -10,7 +10,7 @@
   scrollbar-color: var(--color-grey-350) transparent;
 }
 
-.ilv-loading { display: flex; align-items: center; justify-content: center; padding: 60px; color: var(--color-text-secondary); font-size: var(--text-sm); }
+.ilv-loading { display: flex; align-items: center; justify-content: center; padding: 60px; color: var(--color-text-secondary); font-size: 16px; }
 
 /* Header */
 .ilv-header {
@@ -23,8 +23,8 @@
   padding: 16px 20px;
   box-shadow: none;
 }
-.ilv-title    { font-size: var(--text-md); font-weight: 700; color: var(--color-text-primary); margin: 0; }
-.ilv-subtitle { font-size: var(--text-xs); color: var(--color-text-secondary); margin: 2px 0 0; }
+.ilv-title    { font-size: 18px; font-weight: 700; color: var(--color-text-primary); margin: 0; }
+.ilv-subtitle { font-size: 12px; color: var(--color-text-secondary); margin: 2px 0 0; }
 
 .ilv-apply-btn {
   padding: 8px 18px;
@@ -32,7 +32,7 @@
   color: var(--color-white);
   border: none;
   border-radius: 8px;
-  font-size: var(--text-sm);
+  font-size: 16px;
   font-weight: 600;
   cursor: pointer;
   transition: opacity 0.15s;
@@ -62,7 +62,7 @@
 .ilv-stat-val--pending  { color: var(--color-warning-accent); }
 .ilv-stat-val--approved { color: var(--color-success-dark); }
 .ilv-stat-val--rejected { color: var(--color-error); }
-.ilv-stat-label        { font-size: var(--text-sm-14); color: var(--color-text-secondary); font-weight: 500; }
+.ilv-stat-label        { font-size: 0.8125rem; color: var(--color-text-secondary); font-weight: 500; }
 
 /* Apply form */
 .ilv-form-card {
@@ -78,9 +78,9 @@
   justify-content: space-between;
   margin-bottom: 14px;
 }
-.ilv-form-title { font-size: var(--text-sm); font-weight: 700; color: var(--color-text-primary); margin: 0; }
+.ilv-form-title { font-size: 16px; font-weight: 700; color: var(--color-text-primary); margin: 0; }
 .ilv-form-close {
-  background: none; border: none; font-size: var(--text-sm);
+  background: none; border: none; font-size: 16px;
   cursor: pointer; color: var(--color-text-secondary);
   padding: 2px 6px; border-radius: 4px;
 }
@@ -90,12 +90,12 @@
 .ilv-form-row  { display: flex; gap: 12px; flex-wrap: wrap; }
 .ilv-form-field { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 140px; }
 
-.ilv-label { font-size: var(--text-xs); font-weight: 600; color: var(--color-text-secondary); }
+.ilv-label { font-size: 12px; font-weight: 600; color: var(--color-text-secondary); }
 .ilv-input {
   padding: 8px 10px;
   border: 1px solid var(--color-border);
   border-radius: 6px;
-  font-size: var(--text-sm);
+  font-size: 16px;
   background: var(--color-bg);
   color: var(--color-text-primary);
   outline: none;
@@ -104,19 +104,19 @@
 .ilv-input:focus { border-color: var(--color-primary); }
 .ilv-textarea { resize: vertical; }
 
-.ilv-days-info { font-size: var(--text-xs); color: var(--color-primary); font-weight: 600; margin: 0; }
+.ilv-days-info { font-size: 12px; color: var(--color-primary); font-weight: 600; margin: 0; }
 
 .ilv-form-actions { display: flex; justify-content: flex-end; gap: 8px; }
 .ilv-cancel-btn {
   padding: 7px 16px; border: 1px solid var(--color-border);
   border-radius: 6px; background: transparent;
-  color: var(--color-text-secondary); font-size: var(--text-sm);
+  color: var(--color-text-secondary); font-size: 16px;
   cursor: pointer;
 }
 .ilv-submit-btn {
   padding: 7px 18px; background: var(--color-primary);
   color: var(--color-white); border: none; border-radius: 6px;
-  font-size: var(--text-sm); font-weight: 600; cursor: pointer;
+  font-size: 16px; font-weight: 600; cursor: pointer;
   transition: opacity 0.15s;
 }
 .ilv-submit-btn:disabled { opacity: 0.6; cursor: not-allowed; }
@@ -129,8 +129,8 @@
   padding: 18px 20px;
   box-shadow: none;
 }
-.ilv-list-title { font-size: var(--text-sm); font-weight: 700; color: var(--color-text-primary); margin: 0 0 12px; }
-.ilv-empty { font-size: var(--text-sm); color: var(--color-text-secondary); text-align: center; padding: 24px; margin: 0; }
+.ilv-list-title { font-size: 16px; font-weight: 700; color: var(--color-text-primary); margin: 0 0 12px; }
+.ilv-empty { font-size: 16px; color: var(--color-text-secondary); text-align: center; padding: 24px; margin: 0; }
 
 .ilv-list { display: flex; flex-direction: column; gap: 10px; }
 
@@ -148,18 +148,18 @@
 .ilv-item-right { display: flex; flex-direction: column; gap: 4px; align-items: flex-end; }
 
 .ilv-item-top   { display: flex; align-items: center; gap: 8px; }
-.ilv-item-type  { font-size: var(--text-xs); font-weight: 700; color: var(--color-primary); background: var(--color-primary-light); padding: 2px 8px; border-radius: 8px; }
-.ilv-item-dates { font-size: var(--text-xs); color: var(--color-text-secondary); margin: 0; }
+.ilv-item-type  { font-size: 12px; font-weight: 700; color: var(--color-primary); background: var(--color-primary-light); padding: 2px 8px; border-radius: 8px; }
+.ilv-item-dates { font-size: 12px; color: var(--color-text-secondary); margin: 0; }
 .ilv-item-days  { color: var(--color-primary); font-weight: 600; }
-.ilv-item-reason { font-size: var(--text-sm); color: var(--color-text-primary); margin: 0; }
+.ilv-item-reason { font-size: 16px; color: var(--color-text-primary); margin: 0; }
 
 .ilv-review-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
-.ilv-review-label { font-size: var(--text-xs); font-weight: 700; color: var(--color-text-muted); }
-.ilv-review-remark { font-size: var(--text-xs); color: var(--color-text-secondary); font-style: italic; }
-.ilv-applied-at { font-size: var(--text-xs); color: var(--color-text-secondary); margin: 0; }
+.ilv-review-label { font-size: 12px; font-weight: 700; color: var(--color-text-muted); }
+.ilv-review-remark { font-size: 12px; color: var(--color-text-secondary); font-style: italic; }
+.ilv-applied-at { font-size: 12px; color: var(--color-text-secondary); margin: 0; }
 
 /* Status chips */
-.ilv-status { font-size: var(--text-xs); font-weight: 600; padding: 2px 8px; border-radius: 8px; border: 1px solid transparent; }
+.ilv-status { font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 8px; border: 1px solid transparent; }
 .ilv-status--pending     { color: var(--color-pending-text); background: var(--color-pending-bg); border-color: var(--color-pending-border); }
 .ilv-status--tc-approved { color: var(--color-info-text); background: var(--color-info-bg); border-color: var(--color-info-border); }
 .ilv-status--approved    { color: var(--color-success-dark); background: var(--color-success-light); border-color: var(--color-success-border); }

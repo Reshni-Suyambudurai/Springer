@@ -11,7 +11,6 @@ import { Box, Card, Typography, CircularProgress, Select, MenuItem, Button, Tool
 import RefreshIcon from "@mui/icons-material/Refresh";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import copy from "copy-to-clipboard";
-import BackButton from "../../Common/BackButton";
 import Round1 from "./Scores/Round1";
 import type { PanelCandidate } from "./Scores/Round1";
 import "../../../css/TA_Recruiter/DriveProcess/DriveCandidates.css";
@@ -486,13 +485,6 @@ const DriveCandidates: React.FC = () => {
     <Box className="dc-container">
       {/* Header — mirrors InstitutesList / DriveList pattern */}
       <Card className="dc-header">
-        <Box className="dc-header-left">
-          <BackButton variant="header" />
-          <Typography variant="h6" className="dc-title">
-            {driveName ? `${driveName} — Candidates` : "Drive Candidates"}
-          </Typography>
-        </Box>
-
         <Box className="dc-header-actions">
           <Select
             value={selectedBatch}
@@ -522,10 +514,10 @@ const DriveCandidates: React.FC = () => {
           </Select>
 
           {evaluationsLoading && <CircularProgress size={20} />}
-          <Button variant="contained" className="dc-btn-action" onClick={handleStart} disabled={selectedRound !== "ALL"}>Start</Button>
-          <Button variant="contained" className="dc-btn-action" disabled={!canAddScores} onClick={() => navigate(`/drive-process/add-scores/${driveId}/round1`)}>Add Score</Button>
+          <Button variant="contained" className="g-btn g-btn-primary dc-btn-action" onClick={handleStart} disabled={selectedRound !== "ALL"}>Start</Button>
+          <Button variant="contained" className="g-btn g-btn-primary dc-btn-action" disabled={!canAddScores} onClick={() => navigate(`/drive-process/add-scores/${driveId}/round1`)}>Add Score</Button>
           
-          <Button variant="contained" className="dc-btn-action" onClick={handleFinalizeClick}>Finalize</Button>
+          <Button variant="contained" className="g-btn g-btn-primary dc-btn-action" onClick={handleFinalizeClick}>Finalize</Button>
         </Box>
       </Card>
 

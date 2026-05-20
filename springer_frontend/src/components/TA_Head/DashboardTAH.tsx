@@ -1,12 +1,7 @@
-import '../../css/TA_Head/DashboardTAH.css';
+import DashboardTAR from '../TA_Recruiter/DashboardTAR';
 
 function DashboardTAH() {
-  return (
-    <div>
-      
-      <h1>TA Head Dashboard</h1>
-    </div>
-  );
+  return <DashboardTAR />;
 }
 
 export default DashboardTAH;

@@ -1,16 +1,14 @@
-﻿import { useState, useEffect } from 'react';
+﻿import { useState, useEffect, useCallback } from 'react';
 import {
-  Box, Card, Typography, Stack, Chip, Button, IconButton,
+  Box, Card, Typography, Chip,
   CircularProgress, Alert, Dialog, DialogTitle,
   DialogContent, DialogContentText, DialogActions,
 } from '@mui/material';
 import {
-  ArrowBack as ArrowBackIcon,
-  Assignment as DemandIcon,
   CheckCircle as ApproveIcon,
   Cancel as RejectIcon,
 } from '@mui/icons-material';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { hiringDemandApi } from '../../../services/hiring.api';
 import type { HiringDemandResponse } from '../../../types/TA_Recruiter/Hiring/hiringDemand.types';
 import { showToast } from '../../../utils/toast';
@@ -42,7 +40,7 @@ const TAHiringDemandDetails = () => {
   const [actionTarget, setActionTarget] = useState<ActionType | null>(null);
   const [actioning, setActioning] = useState(false);
 
-  const load = async () => {
+  const load = useCallback(async () => {
     try {
       setLoading(true);
       const res = await hiringDemandApi.getDemandById(id);
@@ -53,9 +51,9 @@ const TAHiringDemandDetails = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
 
-  useEffect(() => { load(); }, [id]);
+  useEffect(() => { load(); }, [load]);
 
   const handleAction = async () => {
     if (!actionTarget) return;
@@ -87,58 +85,22 @@ const TAHiringDemandDetails = () => {
     <Box className="tah-hdd-page">
       <Card className="tah-hdd-card">
 
-        {/* Header */}
-        <Box className="tah-hdd-header">
-          <Stack direction="row" alignItems="center" justifyContent="space-between">
-            <Stack direction="row" alignItems="center" gap={1.5}>
-              <IconButton
-                size="small"
-                className="tah-hdd-back-btn"
-                onClick={() => navigate(`/ta-head/hiring-cycles/${demand?.cycleId}`)}
-              >
-                <ArrowBackIcon fontSize="small" />
-              </IconButton>
-              <Box className="tah-hdd-icon-box">
-                <DemandIcon sx={{ fontSize: 20, color: 'var(--color-primary)' }} />
-              </Box>
-              <Stack>
-                <Typography className="tah-hdd-title">
-                  {loading ? 'Demand Details' : `${buLabelMap[demand?.businessUnit ?? ''] ?? demand?.businessUnit}`}
-                </Typography>
-                <Typography className="tah-hdd-subtitle">{demand?.cycleName ?? 'Hiring demand details'}</Typography>
-              </Stack>
-            </Stack>
-
-            {!loading && !error && canAction && (
-              <Stack direction="row" gap={1}>
-                <Button
-                  variant="outlined"
-                  size="small"
-                  startIcon={<RejectIcon sx={{ fontSize: '16px !important' }} />}
-                  className="tah-hdd-reject-btn"
-                  onClick={() => setActionTarget('REJECTED')}
-                >
-                  Reject
-                </Button>
-                <Button
-                  variant="contained"
-                  size="small"
-                  startIcon={<ApproveIcon sx={{ fontSize: '16px !important' }} />}
-                  className="tah-hdd-approve-btn"
-                  onClick={() => setActionTarget('APPROVED')}
-                >
-                  Approve
-                </Button>
-              </Stack>
-            )}
-          </Stack>
-        </Box>
-
         <Box className="tah-hdd-separator" />
+
+        {!loading && !error && canAction && (
+          <Box className="tah-hdd-action-bar">
+            <button className="g-btn g-btn-outline-danger" onClick={() => setActionTarget('REJECTED')}>
+              <RejectIcon className="tah-hdd-action-icon" /> Reject
+            </button>
+            <button className="g-btn g-btn-primary" onClick={() => setActionTarget('APPROVED')}>
+              <ApproveIcon className="tah-hdd-action-icon" /> Approve
+            </button>
+          </Box>
+        )}
 
         {loading ? (
           <Box className="tah-hdd-loading">
-            <CircularProgress size={28} sx={{ color: 'var(--color-primary)' }} />
+            <CircularProgress size={28} className="t-spinner" />
             <Typography className="tah-hdd-loading-text">Loading...</Typography>
           </Box>
         ) : error ? (
@@ -193,7 +155,7 @@ const TAHiringDemandDetails = () => {
             </Box>
 
             {/* Skills */}
-            <Box className="tah-hdd-section" sx={{ mt: '24px' }}>
+            <Box className="tah-hdd-section tah-hdd-section--mt">
               <Box className="tah-hdd-section-header">
                 <Stack direction="row" alignItems="center" gap={1}>
                   <Typography className="tah-hdd-section-label">Required Skills</Typography>
@@ -216,17 +178,17 @@ const TAHiringDemandDetails = () => {
 
       {/* Approve / Reject Confirm Dialog */}
       <Dialog open={!!actionTarget} onClose={() => setActionTarget(null)} maxWidth="xs" fullWidth>
-        <DialogTitle sx={{ fontSize: '1rem', fontWeight: 700, color: 'var(--color-text-primary)' }}>
+        <DialogTitle className="tah-dialog-title">
           {actionTarget === 'APPROVED' ? 'Approve Demand?' : 'Reject Demand?'}
         </DialogTitle>
         <DialogContent>
-          <DialogContentText sx={{ fontSize: '0.9rem', color: 'var(--color-text-secondary)' }}>
+          <DialogContentText className="tah-dialog-text">
             {actionTarget === 'APPROVED'
               ? `Approve the demand for "${buLabelMap[demand?.businessUnit ?? '']}" with ${demand?.demandCount} positions?`
               : `Reject the demand for "${buLabelMap[demand?.businessUnit ?? '']}"? The Hiring Manager will need to revise and resubmit.`}
           </DialogContentText>
         </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
+        <DialogActions className="tah-dialog-actions">
           <Button variant="outlined" size="small" className="tah-hdd-dialog-cancel-btn" onClick={() => setActionTarget(null)}>
             Cancel
           </Button>

@@ -1,4 +1,4 @@
-.inc-loading {
+﻿.inc-loading {
   display: flex;
   justify-content: center;
   align-items: center;
@@ -24,7 +24,7 @@
 }
 
 .inc-header-title {
-  font-size: var(--text-lg) !important;
+  font-size: 20px !important;
   font-weight: 800 !important;
   color: var(--color-text-primary) !important;
   letter-spacing: -0.2px;
@@ -66,13 +66,13 @@
 }
 
 .inc-empty-title {
-  font-size: var(--text-md) !important;
+  font-size: 18px !important;
   font-weight: 700 !important;
   color: var(--color-text-primary) !important;
 }
 
 .inc-empty-sub {
-  font-size: var(--text-sm) !important;
+  font-size: 16px !important;
   color: var(--color-text-secondary) !important;
   text-align: center;
   max-width: 380px;
@@ -141,7 +141,7 @@
 }
 
 .inc-card-name {
-  font-size: var(--text-sm) !important;
+  font-size: 16px !important;
   font-weight: 700 !important;
   color: var(--color-text-primary) !important;
   white-space: nowrap;
@@ -150,14 +150,14 @@
 }
 
 .inc-card-issuer {
-  font-size: var(--text-xs) !important;
+  font-size: 12px !important;
   color: var(--color-primary) !important;
   font-weight: 600 !important;
   margin-top: 3px !important;
 }
 
 .inc-card-date {
-  font-size: var(--text-xs) !important;
+  font-size: 12px !important;
   color: var(--color-text-secondary) !important;
   margin-top: 2px !important;
 }
@@ -188,7 +188,7 @@
 
 .inc-dialog-title {
   font-weight: 800 !important;
-  font-size: var(--text-md) !important;
+  font-size: 18px !important;
   color: var(--color-text-primary) !important;
 }
 

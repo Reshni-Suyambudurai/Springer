@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   Box, Card, Typography, Stack, Chip,
   Table, TableBody, TableCell, TableContainer,
@@ -7,7 +7,7 @@ import {
 } from '@mui/material';
 import {
   Loop as CycleIcon,
-  OpenInNew as OpenInNewIcon,
+ 
   FileDownload as DownloadIcon,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
@@ -26,24 +26,23 @@ const HiringCycleList = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  useEffect(() => {
-    const fetch = async () => {
-      try {
-        setLoading(true);
-        const res = await hiringCycleApi.getAllCycles();
-        if (res.success && res.data) {
-          setCycles(res.data);
-        } else {
-          setError(res.message || 'Failed to load hiring cycles.');
-        }
-      } catch (err: any) {
-        setError(err.message || 'Failed to load hiring cycles.');
-      } finally {
-        setLoading(false);
+  const load = useCallback(async () => {
+    try {
+      setLoading(true);
+      const res = await hiringCycleApi.getAllCycles();
+      if (res.success && res.data) {
+        setCycles(res.data);
+      } else {
+        setError(res.message || 'Failed to load hiring cycles.');
       }
-    };
-    fetch();
+    } catch (err: unknown) {
+      setError((err as { message?: string }).message || 'Failed to load hiring cycles.');
+    } finally {
+      setLoading(false);
+    }
   }, []);
+
+  useEffect(() => { load(); }, [load]);
 
   const handleDownloadJd = async (e: React.MouseEvent, cycleId: number) => {
     e.stopPropagation();
@@ -66,26 +65,11 @@ const HiringCycleList = () => {
     <Box className="hcl-page">
       <Card className="hcl-card">
 
-        {/* Header */}
-        <Box className="hcl-header">
-          <Stack direction="row" alignItems="center" gap={1.5}>
-            <Box className="hcl-icon-box">
-              <CycleIcon sx={{ fontSize: 20, color: 'var(--color-primary)' }} />
-            </Box>
-            <Stack>
-              <Typography className="hcl-title">Hiring Cycles</Typography>
-              <Typography className="hcl-subtitle">View all active and closed hiring cycles</Typography>
-            </Stack>
-          </Stack>
-        </Box>
-
-        <Box className="hcl-separator" />
-
         {/* Table */}
         <Box className="hcl-table-section">
           {loading ? (
             <Box className="hcl-loading">
-              <CircularProgress size={28} sx={{ color: 'var(--color-primary)' }} />
+              <CircularProgress size={28} className="t-spinner" />
               <Typography className="hcl-loading-text">Loading hiring cycles...</Typography>
             </Box>
           ) : error ? (
@@ -105,7 +89,7 @@ const HiringCycleList = () => {
                       <TableCell className="hcl-head-cell">JD</TableCell>
                       <TableCell className="hcl-head-cell">Status</TableCell>
                       <TableCell className="hcl-head-cell">Created On</TableCell>
-                      <TableCell className="hcl-head-cell hcl-head-cell--actions">Actions</TableCell>
+                     
                     </TableRow>
                   </TableHead>
                   <TableBody>
@@ -127,7 +111,7 @@ const HiringCycleList = () => {
                           <TableCell className="hcl-cell">
                             <Stack direction="row" alignItems="center" gap={1.5}>
                               <Box className="hcl-name-icon-box">
-                                <CycleIcon sx={{ fontSize: 16, color: 'var(--color-primary)' }} />
+                                <CycleIcon className="hcl-row-icon" />
                               </Box>
                               <Typography className="hcl-cell-primary">{cycle.cycleName}</Typography>
                             </Stack>
@@ -173,19 +157,7 @@ const HiringCycleList = () => {
                               })}
                             </Typography>
                           </TableCell>
-                          <TableCell className="hcl-cell hcl-cell--actions">
-                            <IconButton
-                              size="small"
-                              className="hcl-action-btn"
-                              title="View Cycle"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                navigate(`/hiring-manager/hiring-cycles/${cycle.cycleId}`);
-                              }}
-                            >
-                              <OpenInNewIcon className="hcl-action-icon" />
-                            </IconButton>
-                          </TableCell>
+                        
                         </TableRow>
                       ))
                     )}

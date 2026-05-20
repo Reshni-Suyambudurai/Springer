@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import {
   Box, Card, Typography, Stack, Chip, Button,
   CircularProgress, Alert, Table, TableBody, TableCell,
@@ -7,14 +7,12 @@ import {
   TextField, IconButton,
 } from '@mui/material';
 import {
-  DateRange as CycleIcon,
   FileDownload as DownloadIcon,
   Add as AddIcon,
   Edit as EditIcon,
   Close as CloseIcon,
 } from '@mui/icons-material';
 import { useNavigate, useParams } from 'react-router-dom';
-import BackButton from '../../Common/BackButton';
 import { hiringCycleApi, hiringDemandApi } from '../../../services/hiring.api';
 import type { HiringCycleResponse } from '../../../types/TA_Recruiter/Hiring/hiringCycle.types';
 import type { HiringDemandResponse } from '../../../types/TA_Recruiter/Hiring/hiringDemand.types';
@@ -51,7 +49,7 @@ const TARHiringCycleDetails = () => {
     jd: null as File | null,
   });
 
-  const load = async () => {
+  const load = useCallback(async () => {
     try {
       setLoading(true);
       const [cycleRes, demandsRes] = await Promise.all([
@@ -69,9 +67,9 @@ const TARHiringCycleDetails = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
 
-  useEffect(() => { load(); }, [id]);
+  useEffect(() => { load(); }, [load]);
 
   const handleDownloadJd = async () => {
     try {
@@ -141,66 +139,51 @@ const TARHiringCycleDetails = () => {
     <Box className="t-page">
       <Card className="t-card">
 
-        {/* Header */}
-        <Box className="t-header">
-          <Stack direction="row" alignItems="center" gap={1.5}>
-            <BackButton onClick={() => navigate('/ta-recruiter/hiring-cycles')} variant="header" />
-            <Box className="t-icon-box">
-              <CycleIcon sx={{ fontSize: 20, color: 'var(--color-primary)' }} />
-            </Box>
-            <Stack>
-              <Typography className="t-page-title">
-                {loading ? 'Cycle Details' : (cycle?.cycleName ?? 'Cycle Details')}
-              </Typography>
-              <Typography className="t-page-subtitle">Approved demands ready for execution</Typography>
-            </Stack>
-          </Stack>
-
-          {!loading && cycle && (
-            <Stack direction="row" gap={1} alignItems="center">
-              <Chip
-                label={cycle.status}
-                size="small"
-                className={cycle.status === 'OPEN' ? 't-chip-success' : 't-chip-neutral'}
-              />
+        {/* Action Bar */}
+        {!loading && cycle && (
+          <Box className="tar-hcd-action-bar">
+            <Chip
+              label={cycle.status}
+              size="small"
+              className={cycle.status === 'OPEN' ? 't-chip-success' : 't-chip-neutral'}
+            />
+            <Button
+              variant="contained"
+              size="small"
+              startIcon={<AddIcon />}
+              className="g-btn g-btn-primary"
+              onClick={() => navigate(`/ta-recruiter/drive-schedules/add?cycleId=${id}`)}
+            >
+              Create Drive
+            </Button>
+            {cycle.hasJd && (
               <Button
-                variant="contained"
+                variant="outlined"
                 size="small"
-                startIcon={<AddIcon />}
-                className="t-btn-primary"
-                onClick={() => navigate(`/ta-recruiter/drive-schedules/add?cycleId=${id}`)}
+                startIcon={<DownloadIcon />}
+                className="g-btn g-btn-outline-primary"
+                onClick={handleDownloadJd}
               >
-                Create Drive
+                Download JD
               </Button>
-              {cycle.hasJd && (
-                <Button
-                  variant="outlined"
-                  size="small"
-                  startIcon={<DownloadIcon />}
-                  className="t-btn-small"
-                  onClick={handleDownloadJd}
-                >
-                  Download JD
-                </Button>
-              )}
-              <Button
-                variant="contained"
-                size="small"
-                startIcon={<EditIcon />}
-                className="t-btn-primary"
-                onClick={handleEditOpen}
-              >
-                Edit
-              </Button>
-            </Stack>
-          )}
-        </Box>
+            )}
+            <Button
+              variant="contained"
+              size="small"
+              startIcon={<EditIcon />}
+              className="g-btn g-btn-primary"
+              onClick={handleEditOpen}
+            >
+              Edit
+            </Button>
+          </Box>
+        )}
 
         <Box className="t-separator" />
 
         {loading ? (
           <Box className="t-loading">
-            <CircularProgress size={28} sx={{ color: 'var(--color-primary)' }} />
+            <CircularProgress size={28} className="t-spinner" />
             <Typography className="t-loading-text">Loading...</Typography>
           </Box>
         ) : error ? (
@@ -389,12 +372,12 @@ const TARHiringCycleDetails = () => {
           </Box>
         </DialogContent>
         <DialogActions className="tar-hcd-dialog-actions">
-          <Button variant="outlined" className="t-btn-outlined-primary" onClick={handleEditClose}>
+          <Button variant="outlined" className="g-btn g-btn-outline-primary" onClick={handleEditClose}>
             Cancel
           </Button>
           <Button
             variant="contained"
-            className="t-btn-primary"
+            className="g-btn g-btn-primary"
             onClick={handleEditSubmit}
             disabled={editSubmitting}
           >

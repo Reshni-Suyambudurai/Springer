@@ -5,7 +5,7 @@ import {
   CircularProgress, IconButton, Tooltip, Menu, MenuItem,
   Select, FormControl, InputLabel,
 } from '@mui/material';
-import EmailIcon from '@mui/icons-material/Email';
+
 import SendIcon from '@mui/icons-material/Send';
 import PeopleAltIcon from '@mui/icons-material/PeopleAlt';
 import AttachFileIcon from '@mui/icons-material/AttachFile';
@@ -21,7 +21,7 @@ import FormatAlignLeftIcon from '@mui/icons-material/FormatAlignLeft';
 import FormatAlignCenterIcon from '@mui/icons-material/FormatAlignCenter';
 import FormatAlignRightIcon from '@mui/icons-material/FormatAlignRight';
 import InsertPhotoIcon from '@mui/icons-material/InsertPhoto';
-import BackButton from './BackButton';
+
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Image from '@tiptap/extension-image';
@@ -233,19 +233,25 @@ const SendEmail: React.FC<SendEmailProps> = (props) => {
 
     const body = editor.getHTML();
 
+    const requestPayload = { templateId: selectedId, templateName, subject: subject.trim(), body, emailIds };
+    console.log('[SendEmail] request payload:', requestPayload);
+    console.log('[SendEmail] attachments count:', attachments.length);
+
     const form = new FormData();
-    form.append(
-      'request',
-      new Blob(
-        [JSON.stringify({ templateId: selectedId, templateName, subject: subject.trim(), body, emailIds })],
-        { type: 'application/json' },
-      ),
-    );
+    // Send as plain string — backend reads via @RequestParam("request") String + ObjectMapper
+    form.append('request', JSON.stringify(requestPayload));
     attachments.forEach((f) => form.append('attachments', f));
+
+    console.log('[SendEmail] FormData entries:');
+    for (const [key, val] of form.entries()) {
+      console.log('  ', key, '->', val instanceof Blob ? `Blob(size=${(val as Blob).size}, type=${(val as Blob).type})` : val);
+    }
 
     setSending(true);
     try {
+      console.log('[SendEmail] calling sendBulkEmail...');
       const res = await emailTemplateApi.sendBulkEmail(form);
+      console.log('[SendEmail] response:', res);
       if (res.success && res.data) {
         const { successCount, skippedCount } = res.data;
         showToast(
@@ -257,7 +263,8 @@ const SendEmail: React.FC<SendEmailProps> = (props) => {
         showToast(res.message || 'Failed to send emails', 'error');
       }
     } catch (error: unknown) {
-      const err = error as { response?: { data?: { message?: string } }; message?: string };
+      const err = error as { response?: { data?: { message?: string }; status?: number }; message?: string };
+      console.error('[SendEmail] error:', err?.response ?? err);
       showToast(err?.response?.data?.message ?? err?.message ?? 'Failed to send emails', 'error');
     } finally {
       setSending(false);
@@ -282,30 +289,7 @@ const SendEmail: React.FC<SendEmailProps> = (props) => {
   return (
     <Box className="t-page">
       <Card className="t-card">
-        {/* Header */}
-        <Box className="t-header">
-          <Stack direction="row" alignItems="center" className="se-header-left">
-            <BackButton onClick={onBack} variant="header" />
-            <Box className="t-icon-box">
-              <EmailIcon className="se-header-icon" />
-            </Box>
-            <Stack className="se-title-stack">
-              <Typography className="t-page-title">Send Email</Typography>
-              <Typography className="t-page-subtitle">
-                {loading
-                  ? 'Loading template...'
-                  : templates.length > 1
-                    ? `${templates.length} templates available • ${emailIds.length} recipient${emailIds.length !== 1 ? 's' : ''}`
-                    : `${templateName} • ${emailIds.length} recipient${emailIds.length !== 1 ? 's' : ''}`
-                }
-              </Typography>
-            </Stack>
-          </Stack>
-        </Box>
-
-        <Box className="t-separator" />
-
-        {/* Body — se-body overrides t-body padding so the card fills edge-to-edge */}
+        {/* Body */}
         <Box className="t-body se-body">
           {loading ? (
             <Box className="se-loading-box">
@@ -350,22 +334,22 @@ const SendEmail: React.FC<SendEmailProps> = (props) => {
 
                     {/* TipTap toolbar */}
                     <Box className="se-tiptap-toolbar">
-                      <Tooltip title="Bold"><IconButton size="small" onClick={() => editor?.chain().focus().toggleBold().run()} className={editor?.isActive('bold') ? 'se-toolbar-btn-active' : 'se-toolbar-btn'}><FormatBoldIcon fontSize="small" /></IconButton></Tooltip>
-                      <Tooltip title="Italic"><IconButton size="small" onClick={() => editor?.chain().focus().toggleItalic().run()} className={editor?.isActive('italic') ? 'se-toolbar-btn-active' : 'se-toolbar-btn'}><FormatItalicIcon fontSize="small" /></IconButton></Tooltip>
-                      <Tooltip title="Underline"><IconButton size="small" onClick={() => editor?.chain().focus().toggleUnderline().run()} className={editor?.isActive('underline') ? 'se-toolbar-btn-active' : 'se-toolbar-btn'}><FormatUnderlinedIcon fontSize="small" /></IconButton></Tooltip>
+                      <Tooltip title="Bold" arrow classes={{ tooltip: 'g-tooltip', arrow: 'g-tooltip-arrow' }}><IconButton size="small" onClick={() => editor?.chain().focus().toggleBold().run()} className={`g-icon-btn ${editor?.isActive('bold') ? 'se-toolbar-btn-active' : 'se-toolbar-btn'}`}><FormatBoldIcon fontSize="small" /></IconButton></Tooltip>
+                      <Tooltip title="Italic" arrow classes={{ tooltip: 'g-tooltip', arrow: 'g-tooltip-arrow' }}><IconButton size="small" onClick={() => editor?.chain().focus().toggleItalic().run()} className={`g-icon-btn ${editor?.isActive('italic') ? 'se-toolbar-btn-active' : 'se-toolbar-btn'}`}><FormatItalicIcon fontSize="small" /></IconButton></Tooltip>
+                      <Tooltip title="Underline" arrow classes={{ tooltip: 'g-tooltip', arrow: 'g-tooltip-arrow' }}><IconButton size="small" onClick={() => editor?.chain().focus().toggleUnderline().run()} className={`g-icon-btn ${editor?.isActive('underline') ? 'se-toolbar-btn-active' : 'se-toolbar-btn'}`}><FormatUnderlinedIcon fontSize="small" /></IconButton></Tooltip>
                       <Box className="se-toolbar-divider" />
-                      <Tooltip title="Bullet list"><IconButton size="small" onClick={() => editor?.chain().focus().toggleBulletList().run()} className={editor?.isActive('bulletList') ? 'se-toolbar-btn-active' : 'se-toolbar-btn'}><FormatListBulletedIcon fontSize="small" /></IconButton></Tooltip>
-                      <Tooltip title="Numbered list"><IconButton size="small" onClick={() => editor?.chain().focus().toggleOrderedList().run()} className={editor?.isActive('orderedList') ? 'se-toolbar-btn-active' : 'se-toolbar-btn'}><FormatListNumberedIcon fontSize="small" /></IconButton></Tooltip>
+                      <Tooltip title="Bullet list" arrow classes={{ tooltip: 'g-tooltip', arrow: 'g-tooltip-arrow' }}><IconButton size="small" onClick={() => editor?.chain().focus().toggleBulletList().run()} className={`g-icon-btn ${editor?.isActive('bulletList') ? 'se-toolbar-btn-active' : 'se-toolbar-btn'}`}><FormatListBulletedIcon fontSize="small" /></IconButton></Tooltip>
+                      <Tooltip title="Numbered list" arrow classes={{ tooltip: 'g-tooltip', arrow: 'g-tooltip-arrow' }}><IconButton size="small" onClick={() => editor?.chain().focus().toggleOrderedList().run()} className={`g-icon-btn ${editor?.isActive('orderedList') ? 'se-toolbar-btn-active' : 'se-toolbar-btn'}`}><FormatListNumberedIcon fontSize="small" /></IconButton></Tooltip>
                       <Box className="se-toolbar-divider" />
-                      <Tooltip title="Align left"><IconButton size="small" onClick={() => editor?.chain().focus().setTextAlign('left').run()} className={editor?.isActive({ textAlign: 'left' }) ? 'se-toolbar-btn-active' : 'se-toolbar-btn'}><FormatAlignLeftIcon fontSize="small" /></IconButton></Tooltip>
-                      <Tooltip title="Align center"><IconButton size="small" onClick={() => editor?.chain().focus().setTextAlign('center').run()} className={editor?.isActive({ textAlign: 'center' }) ? 'se-toolbar-btn-active' : 'se-toolbar-btn'}><FormatAlignCenterIcon fontSize="small" /></IconButton></Tooltip>
-                      <Tooltip title="Align right"><IconButton size="small" onClick={() => editor?.chain().focus().setTextAlign('right').run()} className={editor?.isActive({ textAlign: 'right' }) ? 'se-toolbar-btn-active' : 'se-toolbar-btn'}><FormatAlignRightIcon fontSize="small" /></IconButton></Tooltip>
+                      <Tooltip title="Align left" arrow classes={{ tooltip: 'g-tooltip', arrow: 'g-tooltip-arrow' }}><IconButton size="small" onClick={() => editor?.chain().focus().setTextAlign('left').run()} className={`g-icon-btn ${editor?.isActive({ textAlign: 'left' }) ? 'se-toolbar-btn-active' : 'se-toolbar-btn'}`}><FormatAlignLeftIcon fontSize="small" /></IconButton></Tooltip>
+                      <Tooltip title="Align center" arrow classes={{ tooltip: 'g-tooltip', arrow: 'g-tooltip-arrow' }}><IconButton size="small" onClick={() => editor?.chain().focus().setTextAlign('center').run()} className={`g-icon-btn ${editor?.isActive({ textAlign: 'center' }) ? 'se-toolbar-btn-active' : 'se-toolbar-btn'}`}><FormatAlignCenterIcon fontSize="small" /></IconButton></Tooltip>
+                      <Tooltip title="Align right" arrow classes={{ tooltip: 'g-tooltip', arrow: 'g-tooltip-arrow' }}><IconButton size="small" onClick={() => editor?.chain().focus().setTextAlign('right').run()} className={`g-icon-btn ${editor?.isActive({ textAlign: 'right' }) ? 'se-toolbar-btn-active' : 'se-toolbar-btn'}`}><FormatAlignRightIcon fontSize="small" /></IconButton></Tooltip>
                       <Box className="se-toolbar-divider" />
-                      <Tooltip title="Insert image">
+                      <Tooltip title="Insert image" arrow classes={{ tooltip: 'g-tooltip', arrow: 'g-tooltip-arrow' }}>
                         <IconButton
                           size="small"
                           onClick={(e) => setImageMenuAnchor(e.currentTarget)}
-                          className="se-toolbar-btn"
+                          className="g-icon-btn se-toolbar-btn"
                         >
                           <InsertPhotoIcon fontSize="small" />
                         </IconButton>
@@ -405,7 +389,7 @@ const SendEmail: React.FC<SendEmailProps> = (props) => {
                       startIcon={sending ? <CircularProgress size={16} className="se-btn-spinner" /> : <SendIcon />}
                       onClick={handleSend}
                       disabled={sending}
-                      className="t-btn-primary"
+                      className="g-btn g-btn-primary"
                     >
                       {sending ? 'Sending...' : `Send to ${emailIds.length} Recipient${emailIds.length !== 1 ? 's' : ''}`}
                     </Button>
@@ -433,7 +417,7 @@ const SendEmail: React.FC<SendEmailProps> = (props) => {
                       fullWidth
                       startIcon={<AttachFileIcon />}
                       onClick={() => fileInputRef.current?.click()}
-                      className="se-attach-btn"
+                      className="g-btn g-btn-outline-primary"
                     >
                       Attach Files
                     </Button>

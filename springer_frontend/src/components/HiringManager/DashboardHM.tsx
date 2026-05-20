@@ -1,12 +1,7 @@
-import '../../css/HiringManager/DashboardHM.css';
+import DashboardTAR from '../TA_Recruiter/DashboardTAR';
 
 function DashboardHM() {
-  return (
-    <div>
-    
-      <h1>Hiring Manager Dashboard</h1>
-    </div>
-  );
+  return <DashboardTAR />;
 }
 
 export default DashboardHM;

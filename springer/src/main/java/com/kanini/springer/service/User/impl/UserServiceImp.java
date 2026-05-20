@@ -40,11 +40,10 @@ public class UserServiceImp implements IUserService {
         if (users.isEmpty()) {
             throw new ValidationException("Invalid email or password");
         }
-        
+
         // Match by password to pick the correct account
         User user = null;
         for (User u : users) {
-            // Check BCrypt encoded password
             if (passwordEncoder.matches(password, u.getPassword())) {
                 user = u;
                 break;

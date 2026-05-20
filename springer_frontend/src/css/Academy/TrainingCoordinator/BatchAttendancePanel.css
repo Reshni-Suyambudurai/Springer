@@ -1,4 +1,4 @@
-/* ===== BATCH ATTENDANCE PANEL Ã¢â‚¬â€ prefix: atp- ===== */
+﻿/* ===== BATCH ATTENDANCE PANEL Ã¢â‚¬â€ prefix: atp- ===== */
 
 .atp-page {
   display: flex;
@@ -54,7 +54,7 @@
 }
 
 .atp-subtitle {
-  font-size: var(--text-sm) !important;
+  font-size: 16px !important;
   font-weight: 400 !important;
   color: var(--color-text-secondary) !important;
   line-height: 1.5 !important;
@@ -62,7 +62,7 @@
 
 .atp-add-button {
   text-transform: none !important;
-  font-size: var(--text-sm) !important;
+  font-size: 16px !important;
   font-weight: 600 !important;
   padding: 8px 20px !important;
   background-color: var(--color-primary) !important;
@@ -100,7 +100,7 @@
 .atp-filter-spacer { flex-grow: 1; }
 
 .atp-filter-count {
-  font-size: var(--text-xs) !important;
+  font-size: 12px !important;
   font-weight: 600 !important;
   color: var(--color-text-secondary) !important;
   white-space: nowrap;
@@ -173,7 +173,7 @@
 }
 
 .atp-row-secondary {
-  font-size: var(--text-sm) !important;
+  font-size: 16px !important;
   font-weight: 400 !important;
   color: var(--color-text-secondary) !important;
   line-height: 20px !important;
@@ -186,17 +186,17 @@
   color: var(--color-success-dark) !important;
   border-color: var(--color-success-border) !important;
   font-weight: 600 !important;
-  font-size: var(--text-xs) !important;
+  font-size: 12px !important;
 }
 
 .atp-present-days {
-  font-size: var(--text-sm) !important;
+  font-size: 16px !important;
   font-weight: 700 !important;
   color: var(--color-success-dark) !important;
 }
 
 .atp-absent-days {
-  font-size: var(--text-sm) !important;
+  font-size: 16px !important;
   font-weight: 700 !important;
   color: var(--color-error) !important;
 }
@@ -221,7 +221,7 @@
 .atp-progress-bar--low .MuiLinearProgress-bar { background-color: var(--color-error) !important; }
 
 .atp-pct-text {
-  font-size: var(--text-sm) !important;
+  font-size: 16px !important;
   font-weight: 700 !important;
   white-space: nowrap;
   min-width: 44px;
@@ -242,8 +242,8 @@
 }
 
 .atp-empty-icon { font-size: 40px !important; color: var(--color-empty-icon) !important; margin-bottom: 8px !important; }
-.atp-empty-title { font-size: var(--text-sm) !important; font-weight: 600 !important; color: var(--color-empty-text) !important; }
-.atp-empty-subtitle { font-size: var(--text-xs) !important; color: var(--color-text-muted) !important; }
+.atp-empty-title { font-size: 16px !important; font-weight: 600 !important; color: var(--color-empty-text) !important; }
+.atp-empty-subtitle { font-size: 12px !important; color: var(--color-text-muted) !important; }
 
 /* Ã¢â€â‚¬Ã¢â€â‚¬ Pagination Ã¢â€â‚¬Ã¢â€â‚¬ */
 .atp-pagination {
@@ -264,7 +264,7 @@
 
 /* Ã¢â€â‚¬Ã¢â€â‚¬ Dialog Ã¢â€â‚¬Ã¢â€â‚¬ */
 .atp-dialog-title {
-  font-size: var(--text-lg) !important;
+  font-size: 20px !important;
   font-weight: 700 !important;
   color: var(--color-text-primary) !important;
 }
@@ -299,7 +299,7 @@
 }
 
 .atp-dlg-stat-label {
-  font-size: var(--text-xs) !important;
+  font-size: 12px !important;
   font-weight: 600 !important;
   color: var(--color-text-secondary) !important;
   text-transform: uppercase;
@@ -325,7 +325,7 @@
 .atp-bulk-present-btn {
   background-color: var(--color-success) !important;
   color: var(--color-white) !important;
-  font-size: var(--text-xs) !important;
+  font-size: 12px !important;
   font-weight: 600 !important;
   text-transform: none !important;
   border-radius: 8px !important;
@@ -334,7 +334,7 @@
 .atp-bulk-absent-btn {
   color: var(--color-error) !important;
   border-color: var(--color-error) !important;
-  font-size: var(--text-xs) !important;
+  font-size: 12px !important;
   font-weight: 600 !important;
   text-transform: none !important;
   border-radius: 8px !important;
@@ -379,7 +379,7 @@
 }
 
 /* Ã¢â€â‚¬Ã¢â€â‚¬ Attendance chips Ã¢â€â‚¬Ã¢â€â‚¬ */
-.atp-attendance-chip { font-size: var(--text-xs) !important; font-weight: 600 !important; border-radius: 6px !important; }
+.atp-attendance-chip { font-size: 12px !important; font-weight: 600 !important; border-radius: 6px !important; }
 .atp-attendance-chip--present { color: var(--color-success-dark) !important; border-color: var(--color-success-border) !important; background-color: var(--color-success-light) !important; }
 .atp-attendance-chip--absent  { color: var(--color-error-dark) !important; border-color: var(--color-error-border) !important; background-color: var(--color-error-light) !important; }
 

@@ -51,6 +51,10 @@ export const useCandidateFilters = () => {
     }));
   };
 
+  const handleSortChange = (sortBy: string, sortDirection: 'ASC' | 'DESC') => {
+    setFilters((prev) => ({ ...prev, sortBy, sortDirection }));
+  };
+
   const handleCheckboxToggle = (field: keyof Filters, value: string) => {
     setFilters((prev) => {
       const currentArray = prev[field] as string[];
@@ -98,6 +102,7 @@ export const useCandidateFilters = () => {
   return {
     filters,
     handleFilterChange,
+    handleSortChange,
     handleCheckboxToggle,
     clearFilters,
     setFilters,

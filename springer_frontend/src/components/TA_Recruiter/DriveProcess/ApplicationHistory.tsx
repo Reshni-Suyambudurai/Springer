@@ -1,12 +1,11 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
-  Box, Card, Typography, Chip, CircularProgress, IconButton, Tooltip,
+  Box, Card, Typography, Chip, CircularProgress, Tooltip,
   Select, MenuItem, Button, Dialog, DialogTitle, DialogContent, DialogActions, TextField,
   Table, TableHead, TableBody, TableRow, TableCell, TableContainer,
 } from "@mui/material";
 import {
-  ArrowBack as ArrowBackIcon,
   History as HistoryIcon,
   Person as PersonIcon,
   Grading as GradingIcon,
@@ -298,9 +297,6 @@ const ApplicationHistory = ({ driveId, candidateId, embeddedInCandidateDetails =
         <Box className="ah-header">
           {/* Left Section */}
           <Box className="ah-header-left">
-            <IconButton className="ah-back-btn" onClick={() => navigate(-1)}>
-              <ArrowBackIcon />
-            </IconButton>
             <Box className="ah-header-icon">
               <HistoryIcon />
             </Box>
@@ -356,7 +352,7 @@ const ApplicationHistory = ({ driveId, candidateId, embeddedInCandidateDetails =
                 <Button
                   variant="contained"
                   size="small"
-                  className="t-btn-primary ah-override-btn"
+                  className="g-btn g-btn-primary ah-override-btn"
                   disabled={!selectedBatchTime || updatingBatchTime}
                   onClick={handleBatchTimeUpdate}
                 >
@@ -380,7 +376,7 @@ const ApplicationHistory = ({ driveId, candidateId, embeddedInCandidateDetails =
                 <Button
                   variant="contained"
                   size="small"
-                  className="t-btn-primary ah-override-btn"
+                  className="g-btn g-btn-primary ah-override-btn"
                   disabled={!overrideStatus || overrideStatus === data.applicationStatus}
                   onClick={() => setOverrideDialogOpen(true)}
                 >
@@ -477,7 +473,7 @@ const ApplicationHistory = ({ driveId, candidateId, embeddedInCandidateDetails =
                               <Box key={a.assignmentId} className="ah-panel-assignment-item">
                                 <span className="ah-panel-assignment-name">{a.panelMemberName}</span>
                                 <Chip label={a.status} size="small" className={ASSIGNMENT_CHIP[a.status] || "ah-chip-default"} />
-                                <Tooltip title={a.isActive ? "Active" : "Inactive"} arrow>
+                                <Tooltip title={a.isActive ? "Active" : "Inactive"} arrow classes={{ tooltip: 'g-tooltip', arrow: 'g-tooltip-arrow' }}>
                                   {a.isActive
                                     ? <ActiveIcon className="ah-panel-assignment-status-icon ah-panel-assignment-active" />
                                     : <InactiveIcon className="ah-panel-assignment-status-icon ah-panel-assignment-inactive" />}
@@ -672,7 +668,7 @@ const ApplicationHistory = ({ driveId, candidateId, embeddedInCandidateDetails =
           />
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setOverrideDialogOpen(false)} disabled={overrideSubmitting}>Cancel</Button>
+          <Button onClick={() => setOverrideDialogOpen(false)} disabled={overrideSubmitting} className="g-btn g-btn-outline-primary">Cancel</Button>
           <Button
             variant="contained"
             onClick={handleOverrideSubmit}

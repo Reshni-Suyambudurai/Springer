@@ -13,8 +13,6 @@ import {
   Button,
   Card,
   TextField,
-  Typography,
-  Stack,
   FormControl,
   InputLabel,
   Select,
@@ -23,8 +21,7 @@ import {
   CircularProgress,
   Autocomplete,
 } from "@mui/material";
-import BackButton from "../../Common/BackButton";
-import CalendarIcon from "@mui/icons-material/CalendarMonth";
+
 import "../../../css/TA_Recruiter/DriveSchedule/AddSchedule.css";
 
 const AddSchedule: React.FC = () => {
@@ -192,22 +189,8 @@ const AddSchedule: React.FC = () => {
   };
 
   return (
-    <Box className="t-page">
+    <Box className="t-page add-schedule-page">
       <Card className="t-card">
-        <Box className="t-header">
-          <Stack direction="row" alignItems="center" gap={1.5}>
-            <BackButton onClick={handleCancel} variant="header" />
-            <Box className="t-icon-box">
-              <CalendarIcon sx={{ fontSize: 20, color: 'var(--color-primary)' }} />
-            </Box>
-            <Stack gap="2px">
-              <Typography className="t-page-title">Schedule New Drive</Typography>
-              </Stack>
-          </Stack>
-        </Box>
-
-        <Box className="t-separator" />
-
         <Box className="t-body">
           <form onSubmit={handleSubmit} className="t-form-container">
             <Box className="t-fields-grid">
@@ -366,7 +349,7 @@ const AddSchedule: React.FC = () => {
                 type="button"
                 variant="outlined"
                 onClick={handleCancel}
-                className="t-btn-secondary"
+                className="g-btn g-btn-outline-primary"
                 disabled={loading}
               >
                 Cancel
@@ -374,7 +357,7 @@ const AddSchedule: React.FC = () => {
               <Button
                 type="submit"
                 variant="contained"
-                className="t-btn-primary"
+                className="g-btn g-btn-primary"
                 disabled={loading}
               >
                 {loading ? <CircularProgress size={24} /> : "Create Drive Schedule"}

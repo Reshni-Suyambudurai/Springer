@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   Box, Card, Typography, Stack, Chip, Button, IconButton,
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
@@ -7,7 +7,6 @@ import {
 } from '@mui/material';
 import {
   Loop as CycleIcon,
-  OpenInNew as OpenInNewIcon,
   ToggleOn as ActivateIcon,
   ToggleOff as DeactivateIcon,
 } from '@mui/icons-material';
@@ -16,10 +15,13 @@ import { useNavigate } from 'react-router-dom';
 import { hiringCycleApi } from '../../../services/hiring.api';
 import type { HiringCycleResponse } from '../../../types/TA_Recruiter/Hiring/hiringCycle.types';
 import { showToast } from '../../../utils/toast';
+import type { AppError } from '../../../services/api.error';
+import { useNavbarAction } from '../../../contexts/NavbarActionContext';
 import '../../../css/TA_Head/HiringCycle/HiringCycleList.css';
 
 const TAHiringCycleList = () => {
   const navigate = useNavigate();
+  const { setAction } = useNavbarAction();
 
   const [cycles, setCycles] = useState<HiringCycleResponse[]>([]);
   const [loading, setLoading] = useState(true);
@@ -61,8 +63,8 @@ const TAHiringCycleList = () => {
         setEditTarget(null);
         await load();
       } else showToast(res.message || 'Failed to update', 'error');
-    } catch (err: any) {
-      showToast(err.message || 'Failed to update', 'error');
+    } catch (err: unknown) {
+      showToast((err as AppError).message || 'Failed to update', 'error');
     } finally {
       setEditSaving(false);
     }
@@ -74,20 +76,25 @@ const TAHiringCycleList = () => {
   const [form, setForm] = useState({ cycleYear: '', cycleName: '', compensationBand: '', budget: '' });
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
-  const load = async () => {
+  const load = useCallback(async () => {
     try {
       setLoading(true);
       const res = await hiringCycleApi.getAllCycles();
       if (res.success && res.data) setCycles(res.data);
       else setError(res.message || 'Failed to load hiring cycles.');
-    } catch (err: any) {
-      setError(err.message || 'Failed to load hiring cycles.');
+    } catch (err: unknown) {
+      setError((err as AppError).message || 'Failed to load hiring cycles.');
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); }, [load]);
+
+  useEffect(() => {
+    setAction({ label: 'New Cycle', onClick: () => setCreateOpen(true), icon: <AddIcon /> });
+    return () => setAction(null);
+  }, [setAction]);
 
   const handleToggle = async () => {
     if (!toggleTarget) return;
@@ -100,8 +107,8 @@ const TAHiringCycleList = () => {
       } else {
         showToast(res.message || 'Failed to toggle status.', 'error');
       }
-    } catch (err: any) {
-      showToast(err.message || 'Failed to toggle status.', 'error');
+    } catch (err: unknown) {
+      showToast((err as AppError).message || 'Failed to toggle status.', 'error');
     } finally {
       setToggling(false);
       setToggleTarget(null);
@@ -134,8 +141,8 @@ const TAHiringCycleList = () => {
       } else {
         showToast(res.message || 'Failed to create cycle.', 'error');
       }
-    } catch (err: any) {
-      showToast(err.message || 'Failed to create cycle.', 'error');
+    } catch (err: unknown) {
+      showToast((err as AppError).message || 'Failed to create cycle.', 'error');
     } finally {
       setCreating(false);
     }
@@ -147,37 +154,11 @@ const TAHiringCycleList = () => {
     <Box className="tah-hcl-page">
       <Card className="tah-hcl-card">
 
-        {/* Header */}
-        <Box className="tah-hcl-header">
-          <Stack direction="row" alignItems="center" justifyContent="space-between">
-            <Stack direction="row" alignItems="center" gap={1.5}>
-              <Box className="tah-hcl-icon-box">
-                <CycleIcon sx={{ fontSize: 20, color: 'var(--color-primary)' }} />
-              </Box>
-              <Stack>
-                <Typography className="tah-hcl-title">Hiring Cycles</Typography>
-                <Typography className="tah-hcl-subtitle">Manage hiring cycles and review demands</Typography>
-              </Stack>
-            </Stack>
-            <Button
-              variant="contained"
-              size="small"
-              startIcon={<AddIcon />}
-              className="tah-hcl-add-btn"
-              onClick={() => setCreateOpen(true)}
-            >
-              New Cycle
-            </Button>
-          </Stack>
-        </Box>
-
-        <Box className="tah-hcl-separator" />
-
         {/* Table */}
         <Box className="tah-hcl-table-section">
           {loading ? (
             <Box className="tah-hcl-loading">
-              <CircularProgress size={28} sx={{ color: 'var(--color-primary)' }} />
+              <CircularProgress size={28} className="t-spinner" />
               <Typography className="tah-hcl-loading-text">Loading hiring cycles...</Typography>
             </Box>
           ) : error ? (
@@ -216,7 +197,7 @@ const TAHiringCycleList = () => {
                           <TableCell className="tah-hcl-cell">
                             <Stack direction="row" alignItems="center" gap={1.5}>
                               <Box className="tah-hcl-name-icon-box">
-                                <CycleIcon sx={{ fontSize: 16, color: 'var(--color-primary)' }} />
+                                <CycleIcon className="tah-hcl-row-icon" />
                               </Box>
                               <Typography className="tah-hcl-cell-primary">{cycle.cycleName}</Typography>
                             </Stack>
@@ -250,14 +231,7 @@ const TAHiringCycleList = () => {
                           </TableCell>
                           <TableCell className="tah-hcl-cell tah-hcl-cell--actions">
                             <Stack direction="row" justifyContent="flex-end" gap={0.5}>
-                              <IconButton
-                                size="small"
-                                className="tah-hcl-action-btn"
-                                title="View Cycle"
-                                onClick={(e) => { e.stopPropagation(); navigate(`/ta-head/hiring-cycles/${cycle.cycleId}`); }}
-                              >
-                                <OpenInNewIcon className="tah-hcl-action-icon" />
-                              </IconButton>
+                            
                               <IconButton
                                 size="small"
                                 className="tah-hcl-action-btn"
@@ -291,11 +265,9 @@ const TAHiringCycleList = () => {
 
       {/* Edit Cycle Dialog */}
       <Dialog open={!!editTarget} onClose={() => setEditTarget(null)} maxWidth="xs" fullWidth>
-        <DialogTitle sx={{ fontSize: '1rem', fontWeight: 700, color: 'var(--color-text-primary)' }}>
-          Edit Hiring Cycle
-        </DialogTitle>
+        <DialogTitle className="tah-dialog-title">Edit Hiring Cycle</DialogTitle>
         <DialogContent>
-          <Stack gap={2} sx={{ mt: 1 }}>
+          <Stack gap={2} className="tah-dialog-form">
             <TextField label="Cycle Year *" size="small" fullWidth type="number"
               value={editForm.cycleYear} onChange={(e) => setEditForm(p => ({ ...p, cycleYear: e.target.value }))} />
             <TextField label="Cycle Name *" size="small" fullWidth
@@ -306,7 +278,7 @@ const TAHiringCycleList = () => {
               value={editForm.budget} onChange={(e) => setEditForm(p => ({ ...p, budget: e.target.value }))} />
           </Stack>
         </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
+        <DialogActions className="tah-dialog-actions">
           <Button variant="outlined" size="small" className="tah-hcl-cancel-btn" onClick={() => setEditTarget(null)}>Cancel</Button>
           <Button variant="contained" size="small" className="tah-hcl-add-btn" onClick={handleEditSave} disabled={editSaving}>
             {editSaving ? 'Saving...' : 'Save Changes'}
@@ -316,17 +288,17 @@ const TAHiringCycleList = () => {
 
       {/* Toggle Confirm Dialog */}
       <Dialog open={!!toggleTarget} onClose={() => setToggleTarget(null)} maxWidth="xs" fullWidth>
-        <DialogTitle sx={{ fontSize: '1rem', fontWeight: 700, color: 'var(--color-text-primary)' }}>
+        <DialogTitle className="tah-dialog-title">
           {toggleTarget?.status === 'OPEN' ? 'Close Cycle?' : 'Open Cycle?'}
         </DialogTitle>
         <DialogContent>
-          <DialogContentText sx={{ fontSize: '0.9rem', color: 'var(--color-text-secondary)' }}>
+          <DialogContentText className="tah-dialog-text">
             {toggleTarget?.status === 'OPEN'
               ? `"${toggleTarget?.cycleName}" will be closed. No new demands can be raised.`
               : `"${toggleTarget?.cycleName}" will be reopened for new demands.`}
           </DialogContentText>
         </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
+        <DialogActions className="tah-dialog-actions">
           <Button variant="outlined" size="small" className="tah-hcl-cancel-btn" onClick={() => setToggleTarget(null)}>Cancel</Button>
           <Button
             variant="contained"
@@ -342,11 +314,9 @@ const TAHiringCycleList = () => {
 
       {/* Create Cycle Dialog */}
       <Dialog open={createOpen} onClose={() => setCreateOpen(false)} maxWidth="xs" fullWidth>
-        <DialogTitle sx={{ fontSize: '1rem', fontWeight: 700, color: 'var(--color-text-primary)' }}>
-          New Hiring Cycle
-        </DialogTitle>
+        <DialogTitle className="tah-dialog-title">New Hiring Cycle</DialogTitle>
         <DialogContent>
-          <Stack gap={2} sx={{ mt: 1 }}>
+          <Stack gap={2} className="tah-dialog-form">
             <TextField
               label="Cycle Year *"
               size="small"
@@ -384,7 +354,7 @@ const TAHiringCycleList = () => {
             />
           </Stack>
         </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
+        <DialogActions className="tah-dialog-actions">
           <Button variant="outlined" size="small" className="tah-hcl-cancel-btn" onClick={() => setCreateOpen(false)}>Cancel</Button>
           <Button variant="contained" size="small" className="tah-hcl-add-btn" onClick={handleCreate} disabled={creating}>
             {creating ? 'Creating...' : 'Create Cycle'}

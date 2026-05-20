@@ -3,7 +3,6 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { Box, Card, Typography, Stack, Chip, Button, FormControl, Select, MenuItem } from "@mui/material";
 import {
   Grading as GradingIcon,
-  ArrowBack as ArrowBackIcon,
   Person as PersonIcon,
 } from "@mui/icons-material";
 import type { DriveAssignmentResponse } from "../../types/TA_Recruiter/DriveSchedule/driveAssignment.types";
@@ -141,15 +140,11 @@ const PanelScoring = () => {
       <Card className="t-card">
         <Box className="t-header">
           <Stack direction="row" alignItems="center" gap={1.5}>
-            <button className="t-back-btn ps-back-btn" onClick={() => navigate(-1)}>
-              <ArrowBackIcon className="ps-back-icon" />
-            </button>
             <Box className="t-icon-box">
               <GradingIcon className="ps-header-icon" />
             </Box>
             <Stack>
               <Typography className="t-page-title">Panel Scoring</Typography>
-             
             </Stack>
           </Stack>
         </Box>

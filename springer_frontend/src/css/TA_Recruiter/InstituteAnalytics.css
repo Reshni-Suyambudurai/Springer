@@ -61,12 +61,12 @@
 .institute-sort-chip-joined:hover { background-color: var(--color-purple-50); }
 
 /* Active: filled background, white text */
-.institute-sort-chip-active.institute-sort-chip-applied { background-color: var(--color-blue-500); color: #fff; border-color: var(--color-blue-500); }
-.institute-sort-chip-active.institute-sort-chip-selected { background-color: var(--color-green-500); color: #fff; border-color: var(--color-green-500); }
-.institute-sort-chip-active.institute-sort-chip-rejected { background-color: var(--color-red-500); color: #fff; border-color: var(--color-red-500); }
-.institute-sort-chip-active.institute-sort-chip-dropped { background-color: var(--color-grey-375); color: #fff; border-color: var(--color-grey-375); }
-.institute-sort-chip-active.institute-sort-chip-accepted { background-color: var(--color-yellow-500); color: #fff; border-color: var(--color-yellow-500); }
-.institute-sort-chip-active.institute-sort-chip-joined { background-color: var(--color-purple-600); color: #fff; border-color: var(--color-purple-600); }
+.institute-sort-chip-active.institute-sort-chip-applied { background-color: var(--color-blue-500); color: var(--color-white); border-color: var(--color-blue-500); }
+.institute-sort-chip-active.institute-sort-chip-selected { background-color: var(--color-green-500); color: var(--color-white); border-color: var(--color-green-500); }
+.institute-sort-chip-active.institute-sort-chip-rejected { background-color: var(--color-red-500); color: var(--color-white); border-color: var(--color-red-500); }
+.institute-sort-chip-active.institute-sort-chip-dropped { background-color: var(--color-grey-375); color: var(--color-white); border-color: var(--color-grey-375); }
+.institute-sort-chip-active.institute-sort-chip-accepted { background-color: var(--color-yellow-500); color: var(--color-white); border-color: var(--color-yellow-500); }
+.institute-sort-chip-active.institute-sort-chip-joined { background-color: var(--color-purple-600); color: var(--color-white); border-color: var(--color-purple-600); }
 
 /* Arrow icon */
 .institute-sort-arrow {

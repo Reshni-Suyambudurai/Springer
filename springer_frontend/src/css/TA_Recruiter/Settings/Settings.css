@@ -48,7 +48,7 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  color: var(--color-link);
+  color: var(--color-sidebar-bg);
 }
 
 .settings-item-body {

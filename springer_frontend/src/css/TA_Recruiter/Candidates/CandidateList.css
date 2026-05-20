@@ -505,6 +505,21 @@
   z-index: 2;
 }
 
+/* Sortable column headers */
+.cl-sortable-head {
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.2s ease !important;
+}
+.cl-sortable-head:hover {
+  background: rgba(10, 31, 68, 0.12) !important;
+}
+.candidates-table-container .t-head-cell.cl-sort-active,
+.candidates-table-container thead .t-head-cell.cl-sort-active {
+  background: var(--color-sidebar-bg) !important;
+  color: #fff !important;
+}
+
 /* Scrollbar */
 .candidates-table-container::-webkit-scrollbar { width: 6px; height: 6px; }
 .candidates-table-container::-webkit-scrollbar-track { background: var(--color-bg-primary); }

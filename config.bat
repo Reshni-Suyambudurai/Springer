@@ -16,7 +16,7 @@ set DB_HOST=localhost
 
 set DB_PORT=3306
 
-set DB_NAME=Springer
+set DB_NAME=Springer_DB
 
 set DB_USER=root
 

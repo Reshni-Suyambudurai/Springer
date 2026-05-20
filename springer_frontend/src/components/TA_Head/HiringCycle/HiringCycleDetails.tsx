@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   Box, Card, Typography, Stack, Chip, Button, IconButton,
   CircularProgress, Alert, Table, TableBody, TableCell,
@@ -7,7 +7,6 @@ import {
 } from '@mui/material';
 import {
   Loop as CycleIcon,
-  ArrowBack as ArrowBackIcon,
   CheckCircle as ApproveIcon,
   Cancel as RejectIcon,
   OpenInNew as OpenInNewIcon,
@@ -17,6 +16,7 @@ import { hiringCycleApi, hiringDemandApi } from '../../../services/hiring.api';
 import type { HiringCycleResponse } from '../../../types/TA_Recruiter/Hiring/hiringCycle.types';
 import type { HiringDemandResponse } from '../../../types/TA_Recruiter/Hiring/hiringDemand.types';
 import { showToast } from '../../../utils/toast';
+import { useNavbarAction } from '../../../contexts/NavbarActionContext';
 import '../../../css/TA_Head/HiringCycle/HiringCycleDetails.css';
 
 const buLabelMap: Record<string, string> = {
@@ -37,6 +37,7 @@ type ActionType = 'APPROVED' | 'REJECTED';
 const TAHiringCycleDetails = () => {
   const navigate = useNavigate();
   const { cycleId } = useParams<{ cycleId: string }>();
+  const { setAction } = useNavbarAction();
   const id = Number(cycleId);
 
   const [cycle, setCycle] = useState<HiringCycleResponse | null>(null);
@@ -76,7 +77,7 @@ const TAHiringCycleDetails = () => {
     }
   };
 
-  const load = async () => {
+  const load = useCallback(async () => {
     try {
       setLoading(true);
       const [cycleRes, demandsRes] = await Promise.all([
@@ -91,9 +92,9 @@ const TAHiringCycleDetails = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
 
-  useEffect(() => { load(); }, [id]);
+  useEffect(() => { load(); }, [load]);
 
   const handleAction = async () => {
     if (!actionTarget) return;
@@ -126,46 +127,20 @@ const TAHiringCycleDetails = () => {
   const approvedCount  = demands.filter(d => d.approvalStatus === 'APPROVED').length;
   const rejectedCount  = demands.filter(d => d.approvalStatus === 'REJECTED').length;
 
+  useEffect(() => {
+    setAction({ label: 'Edit Cycle', onClick: () => setEditOpen(true) });
+    return () => setAction(null);
+  }, [setAction]);
+
   return (
     <Box className="tah-hcd-page">
       <Card className="tah-hcd-card">
-
-        {/* Header */}
-        <Box className="tah-hcd-header">
-          <Stack direction="row" alignItems="center" justifyContent="space-between">
-            <Stack direction="row" alignItems="center" gap={1.5}>
-              <IconButton
-                size="small"
-                className="tah-hcd-back-btn"
-                onClick={() => navigate('/ta-head/hiring-cycles')}
-              >
-                <ArrowBackIcon fontSize="small" />
-              </IconButton>
-              <Box className="tah-hcd-icon-box">
-                <CycleIcon sx={{ fontSize: 20, color: 'var(--color-primary)' }} />
-              </Box>
-              <Stack>
-                <Typography className="tah-hcd-title">
-                  {loading ? 'Cycle Details' : (cycle?.cycleName ?? 'Cycle Details')}
-                </Typography>
-                <Typography className="tah-hcd-subtitle">Review and approve hiring demands</Typography>
-              </Stack>
-            </Stack>
-            {!loading && cycle && (
-              <Chip
-                label={cycle.status}
-                size="small"
-                className={cycle.status === 'OPEN' ? 'tah-hcd-cycle-status--open' : 'tah-hcd-cycle-status--closed'}
-              />
-            )}
-          </Stack>
-        </Box>
 
         <Box className="tah-hcd-separator" />
 
         {loading ? (
           <Box className="tah-hcd-loading">
-            <CircularProgress size={28} sx={{ color: 'var(--color-primary)' }} />
+            <CircularProgress size={28} className="t-spinner" />
             <Typography className="tah-hcd-loading-text">Loading...</Typography>
           </Box>
         ) : error ? (
@@ -229,7 +204,7 @@ const TAHiringCycleDetails = () => {
             )}
 
             {/* Demands Table */}
-            <Box className="tah-hcd-section" sx={{ mt: '24px' }}>
+            <Box className="tah-hcd-section tah-hcd-section--mt">
               <Box className="tah-hcd-section-header">
                 <Stack direction="row" alignItems="center" gap={1}>
                   <Typography className="tah-hcd-section-label">Hiring Demands</Typography>
@@ -303,7 +278,7 @@ const TAHiringCycleDetails = () => {
                                 className="tah-hcd-view-btn"
                                 onClick={() => navigate(`/ta-head/hiring-demands/${demand.demandId}`)}
                               >
-                                <OpenInNewIcon sx={{ fontSize: 17 }} />
+                                <OpenInNewIcon className="tah-hcd-action-icon" />
                               </IconButton>
                               {demand.approvalStatus === 'SUBMITTED' && (
                                 <>
@@ -313,7 +288,7 @@ const TAHiringCycleDetails = () => {
                                     className="tah-hcd-approve-btn"
                                     onClick={() => setActionTarget({ demand, action: 'APPROVED' })}
                                   >
-                                    <ApproveIcon sx={{ fontSize: 19 }} />
+                                    <ApproveIcon className="tah-hcd-approve-icon" />
                                   </IconButton>
                                   <IconButton
                                     size="small"
@@ -321,7 +296,7 @@ const TAHiringCycleDetails = () => {
                                     className="tah-hcd-reject-btn"
                                     onClick={() => setActionTarget({ demand, action: 'REJECTED' })}
                                   >
-                                    <RejectIcon sx={{ fontSize: 19 }} />
+                                    <RejectIcon className="tah-hcd-reject-icon" />
                                   </IconButton>
                                 </>
                               )}
@@ -340,11 +315,9 @@ const TAHiringCycleDetails = () => {
 
       {/* Edit Cycle Dialog */}
       <Dialog open={editOpen} onClose={() => setEditOpen(false)} maxWidth="xs" fullWidth>
-        <DialogTitle sx={{ fontSize: '1rem', fontWeight: 700, color: 'var(--color-text-primary)' }}>
-          Edit Hiring Cycle
-        </DialogTitle>
+        <DialogTitle className="tah-dialog-title">Edit Hiring Cycle</DialogTitle>
         <DialogContent>
-          <Stack gap={2} sx={{ mt: 1 }}>
+          <Stack gap={2} className="tah-dialog-form">
             <TextField label="Cycle Year *" size="small" fullWidth type="number"
               value={editForm.cycleYear} onChange={(e) => setEditForm(p => ({ ...p, cycleYear: e.target.value }))} />
             <TextField label="Cycle Name *" size="small" fullWidth
@@ -355,13 +328,13 @@ const TAHiringCycleDetails = () => {
               value={editForm.budget} onChange={(e) => setEditForm(p => ({ ...p, budget: e.target.value }))} />
           </Stack>
         </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
+        <DialogActions className="tah-dialog-actions">
           <Button variant="outlined" size="small" onClick={() => setEditOpen(false)}
-            sx={{ textTransform: 'none', color: 'var(--color-grey-550)', borderColor: 'var(--color-grey-350)' }}>
+            className="tah-hcd-dialog-cancel-btn">
             Cancel
           </Button>
           <Button variant="contained" size="small" onClick={handleEditSave} disabled={editSaving}
-            sx={{ textTransform: 'none', backgroundColor: 'var(--color-primary)', '&:hover': { backgroundColor: 'var(--color-primary-dark)' } }}>
+            className="tah-hcd-dialog-save-btn">
             {editSaving ? 'Saving...' : 'Save Changes'}
           </Button>
         </DialogActions>
@@ -369,11 +342,11 @@ const TAHiringCycleDetails = () => {
 
       {/* Approve / Reject Confirm Dialog */}
       <Dialog open={!!actionTarget} onClose={() => setActionTarget(null)} maxWidth="xs" fullWidth>
-        <DialogTitle sx={{ fontSize: '1rem', fontWeight: 700, color: 'var(--color-text-primary)' }}>
+        <DialogTitle className="tah-dialog-title">
           {actionTarget?.action === 'APPROVED' ? 'Approve Demand?' : 'Reject Demand?'}
         </DialogTitle>
         <DialogContent>
-          <DialogContentText sx={{ fontSize: '0.9rem', color: 'var(--color-text-secondary)' }}>
+          <DialogContentText className="tah-dialog-text">
             {actionTarget?.action === 'APPROVED'
               ? `Approve the demand for "${buLabelMap[actionTarget?.demand.businessUnit ?? '']}" with ${actionTarget?.demand.demandCount} positions?`
               : `Reject the demand for "${buLabelMap[actionTarget?.demand.businessUnit ?? '']}"? The Hiring Manager will need to revise and resubmit.`}

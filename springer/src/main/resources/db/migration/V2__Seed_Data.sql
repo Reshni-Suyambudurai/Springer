@@ -27,23 +27,23 @@ WHERE NOT EXISTS (SELECT 1 FROM roles LIMIT 1);
 -- =====================================================================
 -- 2. USERS (Only if table is empty)
 -- =====================================================================
--- Password: password123 → $2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhLK
--- Password: admin@123  → $2a$10$xN7xL8kC.N6A9G5S8F5EHuQK7x8K6F8W4L9M5N6P7Q8R9S0T1U2V3
--- Password: password@123 → $2a$10$mF7nL9kD.O7B0H6T9G6FIvRL8y9L7G9X5M0N6O7P8Q9R0S1T2U3V4
+-- BCrypt hashes (strength 10) matching DataLoader passwords exactly:
+-- password123  → $2b$10$MgPLyULhHlc01n01JfSx/ORzBuzBDQ1bpNsP/amJYaHk81.K6Um/C
+-- password@123 → $2b$10$gYIEhX824ocE20if5lJV/eA2.sTNgvZeaA9Khd/kJgGiRgRZJRRHW
 INSERT INTO users (username, email, password, department, location, role_id, is_active, created_at)
 SELECT * FROM (
-    SELECT 'Sudha', 'sudha@kanini.com', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhLK', 'Talent Acquisition', 'Chennai', (SELECT role_id FROM roles WHERE role_name = 'TA_HEAD'), TRUE, NOW() UNION ALL
-    SELECT 'Mozhi', 'mozhi@kanini.com', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhLK', 'Talent Acquisition', 'Bangalore', (SELECT role_id FROM roles WHERE role_name = 'TA_MANAGER'), TRUE, NOW() UNION ALL
-    SELECT 'Priya', 'priya@kanini.com', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhLK', 'Talent Acquisition', 'Chennai', (SELECT role_id FROM roles WHERE role_name = 'TA_MANAGER'), TRUE, NOW() UNION ALL
-    SELECT 'Parthiban', 'parthiban@kanini.com', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhLK', 'Product Engineering', 'Bangalore', (SELECT role_id FROM roles WHERE role_name = 'HIRING_MANAGER'), TRUE, NOW() UNION ALL
-    SELECT 'Ramesh', 'ramesh@kanini.com', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhLK', 'Product Engineering', 'Coimbatore', (SELECT role_id FROM roles WHERE role_name = 'MEMBERS'), TRUE, NOW() UNION ALL
-    SELECT 'Priya Rajagopalan', 'priya.r@kanini.com', '$2a$10$mF7nL9kD.O7B0H6T9G6FIvRL8y9L7G9X5M0N6O7P8Q9R0S1T2U3V4', 'Product Engineering', 'Coimbatore', (SELECT role_id FROM roles WHERE role_name = 'MEMBERS'), TRUE, NOW() UNION ALL
-    SELECT 'Mozhiarasan', 'mozhi.a@kanini.com', '$2a$10$mF7nL9kD.O7B0H6T9G6FIvRL8y9L7G9X5M0N6O7P8Q9R0S1T2U3V4', 'Product Engineering', 'Coimbatore', (SELECT role_id FROM roles WHERE role_name = 'MEMBERS'), TRUE, NOW() UNION ALL
-    SELECT 'Praveen Kumar', 'praveen@kanini.com', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhLK', 'Product Engineering', 'Coimbatore', (SELECT role_id FROM roles WHERE role_name = 'MEMBERS'), TRUE, NOW() UNION ALL
-    SELECT 'Admin', 'admin@kanini.com', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhLK', 'Data Analytics & AI', 'Coimbatore', (SELECT role_id FROM roles WHERE role_name = 'SYSTEM_ADMIN'), TRUE, NOW() UNION ALL
-    SELECT 'Lavanya', 'lavanya@kanini.com', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhLK', 'Data Analytics & AI', 'Coimbatore', (SELECT role_id FROM roles WHERE role_name = 'TRAINING_COORDINATOR'), TRUE, NOW() UNION ALL
-    SELECT 'John', 'john@kanini.com', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhLK', 'Training', 'Coimbatore', (SELECT role_id FROM roles WHERE role_name = 'INTERN'), TRUE, NOW() UNION ALL
-    SELECT 'Joe', 'joe@kanini.com', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhLK', 'Training', 'Coimbatore', (SELECT role_id FROM roles WHERE role_name = 'INTERN'), TRUE, NOW()
+    SELECT 'Sudha',             'sudha@kanini.com',     '$2b$10$MgPLyULhHlc01n01JfSx/ORzBuzBDQ1bpNsP/amJYaHk81.K6Um/C', 'Talent Acquisition',   'Chennai',    (SELECT role_id FROM roles WHERE role_name = 'TA_HEAD'),              TRUE, NOW() UNION ALL
+    SELECT 'Mozhi',             'mozhi@kanini.com',     '$2b$10$MgPLyULhHlc01n01JfSx/ORzBuzBDQ1bpNsP/amJYaHk81.K6Um/C', 'Talent Acquisition',   'Bangalore',  (SELECT role_id FROM roles WHERE role_name = 'TA_MANAGER'),           TRUE, NOW() UNION ALL
+    SELECT 'Priya',             'priya@kanini.com',     '$2b$10$MgPLyULhHlc01n01JfSx/ORzBuzBDQ1bpNsP/amJYaHk81.K6Um/C', 'Talent Acquisition',   'Chennai',    (SELECT role_id FROM roles WHERE role_name = 'TA_MANAGER'),           TRUE, NOW() UNION ALL
+    SELECT 'Parthiban',         'parthiban@kanini.com', '$2b$10$MgPLyULhHlc01n01JfSx/ORzBuzBDQ1bpNsP/amJYaHk81.K6Um/C', 'Product Engineering',  'Bangalore',  (SELECT role_id FROM roles WHERE role_name = 'HIRING_MANAGER'),       TRUE, NOW() UNION ALL
+    SELECT 'Ramesh',            'ramesh@kanini.com',    '$2b$10$MgPLyULhHlc01n01JfSx/ORzBuzBDQ1bpNsP/amJYaHk81.K6Um/C', 'Product Engineering',  'Coimbatore', (SELECT role_id FROM roles WHERE role_name = 'MEMBERS'),              TRUE, NOW() UNION ALL
+    SELECT 'Priya Rajagopalan', 'priya@kanini.com',     '$2b$10$gYIEhX824ocE20if5lJV/eA2.sTNgvZeaA9Khd/kJgGiRgRZJRRHW', 'Product Engineering',  'Coimbatore', (SELECT role_id FROM roles WHERE role_name = 'MEMBERS'),              TRUE, NOW() UNION ALL
+    SELECT 'Mozhiarasan',       'mozhi@kanini.com',     '$2b$10$gYIEhX824ocE20if5lJV/eA2.sTNgvZeaA9Khd/kJgGiRgRZJRRHW', 'Product Engineering',  'Coimbatore', (SELECT role_id FROM roles WHERE role_name = 'MEMBERS'),              TRUE, NOW() UNION ALL
+    SELECT 'Praveen Kumar',     'praveen@kanini.com',   '$2b$10$MgPLyULhHlc01n01JfSx/ORzBuzBDQ1bpNsP/amJYaHk81.K6Um/C', 'Product Engineering',  'Coimbatore', (SELECT role_id FROM roles WHERE role_name = 'MEMBERS'),              TRUE, NOW() UNION ALL
+    SELECT 'Admin',             'admin@kanini.com',     '$2b$10$MgPLyULhHlc01n01JfSx/ORzBuzBDQ1bpNsP/amJYaHk81.K6Um/C', 'Data Analytics & AI',  'Coimbatore', (SELECT role_id FROM roles WHERE role_name = 'SYSTEM_ADMIN'),         TRUE, NOW() UNION ALL
+    SELECT 'Lavanya',           'lavanya@kanini.com',   '$2b$10$MgPLyULhHlc01n01JfSx/ORzBuzBDQ1bpNsP/amJYaHk81.K6Um/C', 'Data Analytics & AI',  'Coimbatore', (SELECT role_id FROM roles WHERE role_name = 'TRAINING_COORDINATOR'), TRUE, NOW() UNION ALL
+    SELECT 'John',              'john@kanini.com',      '$2b$10$MgPLyULhHlc01n01JfSx/ORzBuzBDQ1bpNsP/amJYaHk81.K6Um/C', 'Training',             'Coimbatore', (SELECT role_id FROM roles WHERE role_name = 'INTERN'),               TRUE, NOW() UNION ALL
+    SELECT 'Joe',               'joe@kanini.com',       '$2b$10$MgPLyULhHlc01n01JfSx/ORzBuzBDQ1bpNsP/amJYaHk81.K6Um/C', 'Training',             'Coimbatore', (SELECT role_id FROM roles WHERE role_name = 'INTERN'),               TRUE, NOW()
 ) AS tmp
 WHERE NOT EXISTS (SELECT 1 FROM users LIMIT 1);
 

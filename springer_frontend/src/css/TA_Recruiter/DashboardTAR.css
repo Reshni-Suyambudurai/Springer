@@ -182,55 +182,55 @@
 }
 
 .dashboard-card-value {
-  font-size: 1.5rem;
+  font-size: var(--text-stat);
   font-weight: 700;
 }
 
 /* Card variants */
 .dashboard-card-total {
-  background-color: rgba(29, 57, 244, 0.08);
+  background-color: var(--color-primary-hover-6);
   border-color: var(--color-blue);
-  box-shadow: 0 2px 8px rgba(29, 57, 244, 0.1);
+  box-shadow: 0 2px 8px var(--color-primary-shadow-8);
 }
 .dashboard-card-total::before { background-color: var(--color-blue); }
 .dashboard-card-total .dashboard-card-value { color: var(--color-blue); }
 
 .dashboard-card-selected {
-  background-color: rgba(34, 197, 94, 0.08);
+  background-color: var(--color-success-light);
   border-color: var(--color-green);
-  box-shadow: 0 2px 8px rgba(34, 197, 94, 0.1);
+  box-shadow: 0 2px 8px var(--opacity-shadow-medium);
 }
 .dashboard-card-selected::before { background-color: var(--color-green); }
 .dashboard-card-selected .dashboard-card-value { color: var(--color-green); }
 
 .dashboard-card-accepted {
-  background-color: rgba(249, 234, 22, 0.1);
+  background-color: var(--color-warning-bg);
   border-color: var(--color-yellow);
-  box-shadow: 0 2px 8px rgba(249, 234, 22, 0.1);
+  box-shadow: 0 2px 8px var(--opacity-shadow-medium);
 }
 .dashboard-card-accepted::before { background-color: var(--color-yellow); }
-.dashboard-card-accepted .dashboard-card-value { color: #b8a600; }
+.dashboard-card-accepted .dashboard-card-value { color: var(--color-warning); }
 
 .dashboard-card-joined {
-  background-color: rgba(178, 89, 250, 0.08);
+  background-color: var(--color-purple-50);
   border-color: var(--color-purple);
-  box-shadow: 0 2px 8px rgba(178, 89, 250, 0.1);
+  box-shadow: 0 2px 8px var(--opacity-shadow-medium);
 }
 .dashboard-card-joined::before { background-color: var(--color-purple); }
 .dashboard-card-joined .dashboard-card-value { color: var(--color-purple); }
 
 .dashboard-card-rejected {
-  background-color: rgba(242, 31, 31, 0.08);
+  background-color: var(--color-error-light);
   border-color: var(--color-red);
-  box-shadow: 0 2px 8px rgba(242, 31, 31, 0.1);
+  box-shadow: 0 2px 8px var(--opacity-shadow-medium);
 }
 .dashboard-card-rejected::before { background-color: var(--color-red); }
 .dashboard-card-rejected .dashboard-card-value { color: var(--color-red); }
 
 .dashboard-card-dropped {
-  background-color: rgba(148, 163, 184, 0.08);
+  background-color: var(--color-inactive-bg);
   border-color: var(--color-grey-375);
-  box-shadow: 0 2px 8px rgba(148, 163, 184, 0.1);
+  box-shadow: 0 2px 8px var(--opacity-shadow-medium);
 }
 .dashboard-card-dropped::before { background-color: var(--color-grey-375); }
 .dashboard-card-dropped .dashboard-card-value { color: var(--color-grey-375); }

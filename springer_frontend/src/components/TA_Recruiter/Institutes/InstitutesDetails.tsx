@@ -149,22 +149,22 @@ const InstitutesDetails: React.FC = () => {
           {/* Name + Location */}
           <Box className="id-info-main">
             <Box className="id-name-row">
-              <Typography className="id-name">{data.instituteName}</Typography>
+              <Typography className="id-name t-row-primary">{data.instituteName}</Typography>
               <span className={getTierClassName(data.instituteTier)}>
                 {data.instituteTier.replace("_", " ")}
               </span>
             </Box>
             <Box className="id-location-row">
               <PlaceOutlinedIcon className="id-location-icon" />
-              <Typography className="id-location-text">{data.city}, {data.state}, India</Typography>
+              <Typography className="id-location-text t-meta-text">{data.city}, {data.state}, India</Typography>
             </Box>
           </Box>
 
           {/* Edit Button */}
           <Button
             variant="contained"
-            startIcon={<EditIcon className="id-edit-icon" />}
-            className="id-edit-btn"
+            startIcon={<EditIcon />}
+            className="g-btn g-btn-primary"
             onClick={handleOpenEditInst}
             size="small"
           >
@@ -172,27 +172,15 @@ const InstitutesDetails: React.FC = () => {
           </Button>
         </Box>
 
-        {/* Info Grid Row 1: Website | Email | Academic */}
+        {/* Info Grid Row 1: Email | Academic */}
         <Box className="id-info-grid">
-          <Box className="id-info-cell">
-            <Box className="id-info-cell-icon">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>
-            </Box>
-            <Box>
-              <Typography className="id-cell-label">Website</Typography>
-              <Typography className="id-cell-value id-cell-link">
-                www.{data.instituteName.toLowerCase().replace(/\s+/g, "")}.edu
-              </Typography>
-            </Box>
-          </Box>
-
           <Box className="id-info-cell">
             <Box className="id-info-cell-icon">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
             </Box>
             <Box>
-              <Typography className="id-cell-label">Email</Typography>
-              <Typography className="id-cell-value">
+              <Typography className="id-cell-label t-section-label">Email</Typography>
+              <Typography className="id-cell-value t-meta-text">
                 {data.tpoDetails[0]?.tpoEmail || "contact@institute.edu"}
               </Typography>
             </Box>
@@ -203,7 +191,7 @@ const InstitutesDetails: React.FC = () => {
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 10L12 5 2 10l10 5 10-5z"/><path d="M6 12v5c3 2 9 2 12 0v-5"/></svg>
             </Box>
             <Box>
-              <Typography className="id-cell-label">Academic</Typography>
+              <Typography className="id-cell-label t-section-label">Academic</Typography>
               <Box className="id-program-chips">
                 {data.programs.length > 0 ? data.programs.map((p) => (
                   <span key={p.instituteProgramId} className="id-program-chip">
@@ -279,64 +267,7 @@ const InstitutesDetails: React.FC = () => {
         )}
       </Box>
 
-      {/* Stats Cards */}
-      <Box className="id-stats-grid">
-        {/* Card 1: Total Candidates */}
-        <Box className="id-stat-card">
-          <Box className="id-stat-top">
-            <Box className="id-stat-icon-wrap id-stat-icon-wrap-default">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="id-stat-svg-green"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
-            </Box>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="id-stat-trend-arrow"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
-          </Box>
-          <Typography className="id-stat-number">0</Typography>
-          <Typography className="id-stat-label">Total Candidates</Typography>
-          <Typography className="id-stat-trend">+0% from last year</Typography>
-        </Box>
-
-        {/* Card 2: Participated in Hiring */}
-        <Box className="id-stat-card">
-          <Box className="id-stat-top">
-            <Box className="id-stat-icon-wrap id-stat-icon-wrap-grey">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="id-stat-svg-grey"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><polyline points="16 11 18 13 22 9"/></svg>
-            </Box>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="id-stat-trend-arrow"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
-          </Box>
-          <Typography className="id-stat-number">0</Typography>
-          <Typography className="id-stat-label">Participated in Hiring</Typography>
-          <Typography className="id-stat-trend">+0% from last year</Typography>
-        </Box>
-
-        {/* Card 3: Total Selections */}
-        <Box className="id-stat-card">
-          <Box className="id-stat-top">
-            <Box className="id-stat-icon-wrap id-stat-icon-wrap-default">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="id-stat-svg-green"><circle cx="12" cy="8" r="4"/><path d="M8.5 14.5L6 22l6-3 6 3-2.5-7.5"/></svg>
-            </Box>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="id-stat-trend-arrow"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
-          </Box>
-          <Typography className="id-stat-number">0</Typography>
-          <Typography className="id-stat-label">Total Selections</Typography>
-          <Typography className="id-stat-trend">+0% from last year</Typography>
-        </Box>
-
-        {/* Card 4: Selection Percentage */}
-        <Box className="id-stat-card">
-          <Box className="id-stat-top">
-            <Box className="id-stat-icon-wrap id-stat-icon-wrap-warning">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="id-stat-svg-warning"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
-            </Box>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="id-stat-trend-arrow"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
-          </Box>
-          <Typography className="id-stat-number">0%</Typography>
-          <Typography className="id-stat-label">Selection Percentage</Typography>
-          <Box className="id-stat-progress-wrap">
-            <Box className="id-stat-progress-bar">
-              <Box className="id-stat-progress-fill id-stat-progress-fill-zero" />
-            </Box>
-          </Box>
-        </Box>
-      </Box>
+  
 
       {/* Edit Institute Dialog — same style as Add Institute */}
       <Dialog open={editInstDialog} onClose={() => setEditInstDialog(false)} maxWidth={false}
@@ -347,7 +278,7 @@ const InstitutesDetails: React.FC = () => {
               <Typography className="id-dialog-heading">Edit Institute</Typography>
               <Typography className="id-dialog-subheading">Update the details about the institute.</Typography>
             </Box>
-            <IconButton size="small" onClick={() => setEditInstDialog(false)}><CloseIcon fontSize="small" /></IconButton>
+            <IconButton size="small" className="g-icon-btn" onClick={() => setEditInstDialog(false)}><CloseIcon fontSize="small" /></IconButton>
           </Box>
           <Box className="ai-tabs">
             {(["basic", "contact", "academic"] as const).map((tab) => (

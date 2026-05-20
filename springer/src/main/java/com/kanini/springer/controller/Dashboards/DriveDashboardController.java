@@ -17,7 +17,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 @RestController
 @RequestMapping("/api/dashboards/drive")
 @RequiredArgsConstructor
-@PreAuthorize("hasAnyRole('SYSTEM_ADMIN','TA_HEAD','TA_MANAGER')")
+@PreAuthorize("hasAnyRole('SYSTEM_ADMIN','TA_HEAD','TA_MANAGER','HIRING_MANAGER','MEMBERS')")
 public class DriveDashboardController {
 
     private final IDriveDashboardService driveDashboardService;

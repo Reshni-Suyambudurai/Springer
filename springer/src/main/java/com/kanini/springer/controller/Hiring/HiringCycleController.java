@@ -24,7 +24,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 @RequestMapping("/api/hiring/cycles")
 @RequiredArgsConstructor
 @Validated
-@PreAuthorize("hasAnyRole('SYSTEM_ADMIN','TA_HEAD','TA_MANAGER','HIRING_MANAGER','TRAINING_COORDINATOR')")
+@PreAuthorize("hasAnyRole('SYSTEM_ADMIN','TA_HEAD','TA_MANAGER','HIRING_MANAGER','TRAINING_COORDINATOR','MEMBERS')")
 public class HiringCycleController {
     
     private final IHiringCycleService cycleService;

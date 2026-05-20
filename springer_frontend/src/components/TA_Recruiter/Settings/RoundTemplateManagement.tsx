@@ -4,13 +4,11 @@ import {
   Alert, Chip, Select, MenuItem, FormControl,
   Dialog,
 } from '@mui/material';
-import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
 import CloseIcon from '@mui/icons-material/Close';
 import { roundTemplateApi } from '../../../services/drive.api';
 import { showToast } from '../../../utils/toast';
 import { tokenstore } from '../../../auth/tokenstore';
-import { useNavbarAction } from '../../../contexts/NavbarActionContext';
 import type { RoundTemplateRequest, RoundTemplateResponse, RoundTemplateUpdateRequest } from '../../../types/TA_Recruiter/Drive/roundTemplate.types';
 import '../../../css/TA_Recruiter/Settings/RoundTemplateManagement.css';
 
@@ -20,7 +18,6 @@ type Template = Omit<RoundTemplateResponse, 'sections'> & { sections: Section[] 
 const EMPTY_FORM = { roundNo: '', roundName: '', outoffScore: '', minScore: '', weightage: '' };
 
 const RoundTemplateManagement = () => {
-  const { setAction } = useNavbarAction();
   const [loading, setLoading] = useState(true);
   const [templates, setTemplates] = useState<Template[]>([]);
   const [filtered, setFiltered] = useState<Template[]>([]);
@@ -54,16 +51,7 @@ const RoundTemplateManagement = () => {
     finally { setLoading(false); }
   };
 
-  const openAdd = () => { setEditMode(false); setCurrent(null); setForm(EMPTY_FORM); setSections([]); setDialogOpen(true); };
 
-  useEffect(() => {
-    setAction({
-      label: 'Add Template',
-      onClick: openAdd,
-      icon: <AddIcon className="rt-navbar-icon" />,
-    });
-    return () => setAction(null);
-  }, []);
 
   const openEdit = (t: Template) => {
     setEditMode(true); setCurrent(t);
