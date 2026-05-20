@@ -28,44 +28,45 @@
   flex: 1;
 }
 
-.dc-filter-input {
+/* MUI Select wrappers in filter bar */
+.dc-filter-form-control .MuiOutlinedInput-root {
+  height: 34px;
+  font-size: 13px;
+  font-family: inherit;
+  background: var(--color-surface);
+  border-radius: 8px;
+}
+
+.dc-filter-form-control .MuiOutlinedInput-notchedOutline {
+  border-color: var(--color-border);
+}
+
+.dc-filter-form-control .MuiOutlinedInput-root:hover .MuiOutlinedInput-notchedOutline {
+  border-color: var(--color-grey-375);
+}
+
+.dc-filter-form-control .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 12%, transparent);
+}
+
+.dc-filter-form-control .MuiSelect-select {
+  color: var(--color-text);
+  padding-top: 0;
+  padding-bottom: 0;
+  display: flex;
+  align-items: center;
+}
+
+.dc-filter-form-control .MuiSelect-icon {
+  color: var(--color-grey-500);
+}
+
+/* Stretches the search input to fill available space */
+.dc-search-input {
   flex: 1;
   min-width: 180px;
-  padding: 8px 12px;
-  font-size: 13px;
-  font-family: inherit;
-  color: var(--color-text);
-  background: var(--color-bg);
-  border: 1px solid var(--color-border);
-  border-radius: 8px;
-  outline: none;
-  transition: border-color 0.2s ease;
-}
-
-.dc-filter-input::placeholder {
-  color: var(--color-text-muted);
-}
-
-.dc-filter-input:focus {
-  border-color: var(--color-primary);
-}
-
-.dc-filter-select {
-  min-width: 140px;
-  padding: 8px 12px;
-  font-size: 13px;
-  font-family: inherit;
-  color: var(--color-text);
-  background: var(--color-bg);
-  border: 1px solid var(--color-border);
-  border-radius: 8px;
-  outline: none;
-  cursor: pointer;
-  transition: border-color 0.2s ease;
-}
-
-.dc-filter-select:focus {
-  border-color: var(--color-primary);
+  width: auto;
 }
 
 /* ========== Round Checkboxes ========== */
@@ -105,39 +106,105 @@
 }
 
 .dc-th-check {
-  width: 48px;
-  max-width: 48px;
+  width: 44px !important;
+  max-width: 44px !important;
+  padding: 0 8px !important;
 }
 
-/* ========== Header — mirrors InstitutesList / DriveList pattern ========== */
-.dc-header {
-  display: flex !important;
-  align-items: center;
-  margin-bottom: 24px;
-  gap: 16px;
-  background: var(--color-surface) !important;
-  padding: 16px 20px !important;
-  border-radius: 12px !important;
-  border: 1px solid var(--color-border) !important;
-  flex-shrink: 0;
-  box-shadow: none !important;
+.dc-td-check {
+  width: 44px !important;
+  max-width: 44px !important;
+  padding: 0 8px !important;
+  cursor: default !important;
 }
 
-.dc-header-left {
+.dc-row-checkbox {
+  width: 15px;
+  height: 15px;
+  accent-color: var(--color-primary);
+  cursor: pointer;
+  display: block;
+  margin: 0 auto;
+}
+
+/* ========== Navbar portal controls ========== */
+.dc-navbar-controls {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 8px;
 }
 
-.dc-header-actions {
+.dc-navbar-select {
+  max-width: 150px;
+}
+
+.dc-navbar-select:focus {
+  border-color: var(--color-primary);
+}
+
+.dc-navbar-spinner {
+  color: var(--color-primary) !important;
+}
+
+.dc-navbar-btn {
+  height: 34px;
+  padding: 0 14px;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  color: var(--color-surface);
+  background: var(--color-primary);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s ease;
+}
+
+.dc-navbar-btn:hover:not(:disabled) {
+  background: var(--color-primary-hover);
+}
+
+.dc-navbar-btn:disabled {
+  background: var(--color-grey-350);
+  color: var(--color-text-disabled);
+  cursor: not-allowed;
+}
+
+/* Navbar MUI Select wrappers */
+.dc-navbar-form-control .MuiOutlinedInput-root {
+  height: 34px;
+  font-size: 12px;
+  font-family: inherit;
+  background: var(--color-surface);
+  border-radius: 8px;
+  min-width: 120px;
+  max-width: 150px;
+}
+
+.dc-navbar-form-control .MuiOutlinedInput-notchedOutline {
+  border-color: var(--color-border);
+}
+
+.dc-navbar-form-control .MuiOutlinedInput-root:hover .MuiOutlinedInput-notchedOutline {
+  border-color: var(--color-grey-375);
+}
+
+.dc-navbar-form-control .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline {
+  border-color: var(--color-primary);
+}
+
+.dc-navbar-form-control .MuiSelect-select {
+  color: var(--color-text);
+  padding-top: 0;
+  padding-bottom: 0;
   display: flex;
   align-items: center;
-  gap: 16px;
-  margin-left: auto;
-  flex-wrap: wrap;
 }
 
-
+.dc-navbar-form-control .MuiSelect-icon {
+  color: var(--color-grey-500);
+}
 
 .dc-title {
   color: var(--color-text) !important;
@@ -151,59 +218,12 @@
   margin: 0 !important;
 }
 
-/* ========== Select dropdowns ========== */
-.dc-select {
-  min-width: 130px;
-  background: var(--color-surface) !important;
-}
-
-.dc-select .MuiSelect-select {
-  font-size: 13px;
-  padding: 8px 12px;
-  color: var(--color-text);
-}
-
-.dc-select .MuiOutlinedInput-notchedOutline {
-  border-color: var(--color-border);
-  border-radius: 8px;
-}
-
-.dc-select:hover .MuiOutlinedInput-notchedOutline {
-  border-color: var(--color-primary) !important;
-}
-
-.dc-select.Mui-focused .MuiOutlinedInput-notchedOutline {
-  border-color: var(--color-primary) !important;
-}
-
-/* ========== Action buttons ========== */
-.dc-btn-action {
-  font-size: 13px !important;
-  font-weight: 600 !important;
-  border-radius: 8px !important;
-  padding: 6px 16px !important;
-  border: none !important;
-  background-color: var(--color-primary) !important;
-  color: var(--color-surface) !important;
-  text-transform: none !important;
-  white-space: nowrap;
-  transition: background-color 0.2s ease !important;
-}
-
-.dc-btn-action:hover {
-  background-color: var(--color-primary-hover) !important;
-}
-
-.dc-btn-action:disabled,
-.dc-btn-action.Mui-disabled {
-  background-color: var(--color-grey-350) !important;
-  color: var(--color-text-disabled) !important;
-  box-shadow: none !important;
-  cursor: not-allowed !important;
-  pointer-events: auto !important;
-}
-
 /* Select mode toggle button (active/outlined state) */
+.dc-update-btn {
+  font-size: 12px !important;
+  padding: 6px 14px !important;
+}
+
 .dc-btn-select-active {
   font-size: 13px !important;
   font-weight: 600 !important;
@@ -365,37 +385,31 @@
 }
 
 .dc-status-in-drive {
-  border: 1.5px solid var(--color-blue-500);
   color: var(--color-blue-500);
   background-color: var(--color-blue-50);
 }
 
 .dc-status-passed {
-  border: 1.5px solid var(--color-success);
   color: var(--color-success);
   background-color: var(--color-success-light);
 }
 
 .dc-status-selected {
-  border: 1.5px solid var(--color-success-dark);
   color: var(--color-success-dark);
   background-color: var(--color-green-50);
 }
 
 .dc-status-failed {
-  border: 1.5px solid var(--color-danger);
   color: var(--color-danger);
   background-color: var(--color-error-light);
 }
 
 .dc-status-dropped {
-  border: 1.5px solid var(--color-grey-500);
   color: var(--color-grey-500);
   background-color: var(--color-grey-150);
 }
 
 .dc-status-on-hold {
-  border: 1.5px solid var(--color-warning);
   color: var(--color-warning);
   background-color: var(--color-warning-bg);
 }
@@ -410,12 +424,12 @@
   letter-spacing: 0.4px;
   white-space: nowrap;
 }
-.dc-eval-pending { color: var(--color-warning); background: var(--color-warning-bg); border: 1px solid var(--color-warning); }
-.dc-eval-pass    { color: var(--color-success); background: var(--color-success-light); border: 1px solid var(--color-success); }
-.dc-eval-fail    { color: var(--color-danger); background: var(--color-error-light); border: 1px solid var(--color-danger); }
-.dc-eval-absent  { color: var(--color-pink-600); background: var(--color-pink-50); border: 1px solid var(--color-pink-600); }
-.dc-eval-hold    { color: var(--color-blue-500); background: var(--color-blue-50); border: 1px solid var(--color-blue-500); }
-.dc-eval-skip    { color: var(--color-grey-500); background: var(--color-grey-150); border: 1px solid var(--color-grey-500); }
+.dc-eval-pending { color: var(--color-warning); background: var(--color-warning-bg); }
+.dc-eval-pass    { color: var(--color-success); background: var(--color-success-light); }
+.dc-eval-fail    { color: var(--color-danger); background: var(--color-error-light); }
+.dc-eval-absent  { color: var(--color-pink-600); background: var(--color-pink-50); }
+.dc-eval-hold    { color: var(--color-blue-500); background: var(--color-blue-50); }
+.dc-eval-skip    { color: var(--color-grey-500); background: var(--color-grey-150); }
 
 /* ========== Table ========== */
 .dc-table-container {
@@ -680,31 +694,10 @@
 
 /* ========== Responsive ========== */
 
-/* Large tablets and below - Adjust header layout */
-@media (max-width: 1200px) {
-  .dc-header {
-    flex-wrap: wrap;
-  }
-
-  .dc-header-left {
-    width: 100%;
-    margin-bottom: 8px;
-  }
-
-  .dc-header-actions {
-    width: 100%;
-    justify-content: flex-start;
-  }
-}
-
 /* Tablets - Simplify filter bar */
 @media (max-width: 992px) {
   .dc-container {
     padding: 12px;
-  }
-
-  .dc-header {
-    padding: 12px 16px !important;
   }
 
   .dc-filter-bar {
@@ -717,16 +710,6 @@
     flex-wrap: wrap;
   }
 
-  .dc-select {
-    min-width: 110px;
-  }
-
-  .dc-select .MuiSelect-select {
-    font-size: 12px;
-    padding: 6px 10px;
-  }
-
-  .dc-btn-action,
   .dc-btn-select-active {
     font-size: 12px !important;
     padding: 5px 12px !important;
@@ -756,32 +739,10 @@
     padding: 8px;
   }
 
-  .dc-header {
-    padding: 10px 12px !important;
-    margin-bottom: 12px;
-  }
-
-  .dc-header-left {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 8px;
-  }
-
   .dc-title {
     font-size: 15px !important;
   }
 
-  .dc-header-actions {
-    gap: 8px;
-    flex-wrap: wrap;
-  }
-
-  .dc-select {
-    min-width: 90px;
-    flex: 1;
-  }
-
-  .dc-btn-action,
   .dc-btn-select-active {
     font-size: 11px !important;
     padding: 5px 10px !important;
@@ -865,30 +826,10 @@
     height: 100vh;
   }
 
-  .dc-header {
-    padding: 8px !important;
-    margin-bottom: 8px;
-    border-radius: 8px !important;
-  }
-
   .dc-title {
     font-size: 14px !important;
   }
 
-  .dc-header-actions {
-    gap: 6px;
-  }
-
-  .dc-select {
-    min-width: 80px;
-  }
-
-  .dc-select .MuiSelect-select {
-    font-size: 11px;
-    padding: 5px 8px;
-  }
-
-  .dc-btn-action,
   .dc-btn-select-active {
     font-size: 10px !important;
     padding: 4px 8px !important;

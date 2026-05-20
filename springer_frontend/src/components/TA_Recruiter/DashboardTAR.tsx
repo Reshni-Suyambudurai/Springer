@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { Fragment, useEffect, useState } from 'react';
 import { hiringCycleApi } from '../../services/hiring.api';
 import { driveDashboardApi } from '../../services/drive.api';
 import { showToast } from '../../utils/toast';
@@ -22,6 +22,15 @@ function DashboardTAR() {
   const handleModeFilter = (mode: 'ALL' | 'ON_CAMPUS' | 'OFF_CAMPUS') => {
     setModeFilter(mode);
     setSelectedFunnelDriveId(null);
+  };
+
+  const handleCycleChange = (cycleId: number) => {
+    setLoading(true);
+    setDashboard(null);
+    setExpandedDriveId(null);
+    setSelectedFunnelDriveId(null);
+    setSelectedInstituteId(null);
+    setSelectedCycleId(cycleId);
   };
 
   // Fetch cycles on mount
@@ -109,7 +118,7 @@ function DashboardTAR() {
           <select
             className={`dashboard-cycle-select${selectedCycle ? ` dashboard-cycle-select-${selectedCycle.status.toLowerCase()}` : ''}`}
             value={selectedCycleId ?? ''}
-            onChange={e => setSelectedCycleId(Number(e.target.value))}
+            onChange={(e) => handleCycleChange(Number(e.target.value))}
           >
             {cycles.map(c => (
               <option key={c.cycleId} value={c.cycleId} className={`dashboard-cycle-option-${c.status.toLowerCase()}`}>
@@ -240,10 +249,9 @@ function DashboardTAR() {
                         <div className={`dashboard-funnel-layer ${layer.className}`} key={layer.label}>
                           <div className="dashboard-funnel-label">{layer.label}</div>
                           <div className="dashboard-funnel-bar-track">
-                            <div className="dashboard-funnel-bar-fill" style={{ width: `${pct}%` }}>
-                              <span className="dashboard-funnel-bar-value">{layer.value}</span>
-                            </div>
+                            <div className="dashboard-funnel-bar-fill" style={{ width: `${pct}%` }} />
                           </div>
+                          <span className="dashboard-funnel-bar-value">{layer.value}</span>
                         </div>
                       );
                     });
@@ -270,9 +278,8 @@ function DashboardTAR() {
                       const isExpanded = expandedDriveId === drive.driveId;
                       const batchEntries = drive.batchApplicationCounts ? Object.entries(drive.batchApplicationCounts) : [];
                       return (
-                        <>
+                        <Fragment key={drive.driveId}>
                           <tr
-                            key={drive.driveId}
                             className="dashboard-drive-row-expandable"
                             onClick={() => toggleDriveExpand(drive.driveId)}
                           >
@@ -309,7 +316,7 @@ function DashboardTAR() {
                               </td>
                             </tr>
                           )}
-                        </>
+                        </Fragment>
                       );
                     })}
                   </tbody>
@@ -388,10 +395,9 @@ function DashboardTAR() {
                               <div className={`dashboard-funnel-layer ${layer.className}`} key={layer.label}>
                                 <div className="dashboard-funnel-label">{layer.label}</div>
                                 <div className="dashboard-funnel-bar-track">
-                                  <div className="dashboard-funnel-bar-fill" style={{ width: `${pct}%` }}>
-                                    <span className="dashboard-funnel-bar-value">{layer.value}</span>
-                                  </div>
+                                  <div className="dashboard-funnel-bar-fill" style={{ width: `${pct}%` }} />
                                 </div>
+                                <span className="dashboard-funnel-bar-value">{layer.value}</span>
                               </div>
                             );
                           })}

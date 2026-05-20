@@ -305,11 +305,12 @@
   overflow: visible;
 }
 
-/* Dropdown menu paper — same as institute */
+/* Dropdown menu paper — use global g-dropdown-paper (index.css) */
 .cl-dropdown-paper {
-  box-shadow: none !important;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.10) !important;
   border: 1px solid var(--color-border) !important;
   border-radius: 8px !important;
+  background: #ffffff !important;
 }
 
 .cl-dropdown-paper .MuiMenuItem-root {
@@ -320,19 +321,23 @@
   align-items: center !important;
   padding: 8px 12px !important;
   height: 36px !important;
+  line-height: 1.6 !important;
+  letter-spacing: 0.01em !important;
+  transition: background 0.15s ease, color 0.15s ease !important;
 }
 
 .cl-dropdown-paper .MuiMenuItem-root:hover {
-  background-color: var(--color-grey-150) !important;
+  background-color: color-mix(in srgb, var(--color-primary) 10%, #ffffff) !important;
+  color: var(--color-primary) !important;
 }
 
 .cl-dropdown-paper .MuiMenuItem-root.Mui-selected {
-  background-color: var(--color-grey-150) !important;
-  color: var(--color-text-primary) !important;
+  background-color: color-mix(in srgb, var(--color-primary) 10%, #ffffff) !important;
+  color: var(--color-primary) !important;
 }
 
 .cl-dropdown-paper .MuiMenuItem-root.Mui-selected:hover {
-  background-color: var(--color-grey-200) !important;
+  background-color: color-mix(in srgb, var(--color-primary) 16%, #ffffff) !important;
 }
 
 .cl-dropdown-paper .MuiMenuItem-root.Mui-selected::after {
@@ -627,25 +632,93 @@
   border-radius: 20px;
   font-weight: 600;
   font-size: var(--text-xs) !important;
-  border-width: 1px;
-  border-style: solid;
+  border: none;
   letter-spacing: 0.3px;
   white-space: nowrap;
 }
 
-.cl-status-applied,
-.cl-status-shortlisted,
-.cl-status-invited,
-.cl-status-scheduled,
-.cl-status-selected,
-.cl-status-offered,
-.cl-status-joined,
-.cl-status-rejected,
-.cl-status-accepted,
+/* APPLIED — yellow */
+.cl-status-applied {
+  background-color: var(--color-yellow-50);
+  border-color: var(--color-yellow-700);
+  color: var(--color-yellow-700);
+}
+
+/* SHORTLISTED — orange */
+.cl-status-shortlisted {
+  background-color: var(--color-yellow-50);
+  border-color: var(--color-yellow-500);
+  color: var(--color-yellow-600);
+}
+
+/* INVITED — purple */
+.cl-status-invited {
+  background-color: var(--color-purple-50);
+  border-color: var(--color-purple-500);
+  color: var(--color-purple-600);
+}
+
+/* SCHEDULED — blue */
+.cl-status-scheduled {
+  background-color: var(--color-blue-50);
+  border-color: var(--color-blue-500);
+  color: var(--color-blue-500);
+}
+
+/* SELECTED — green */
+.cl-status-selected {
+  background-color: var(--color-green-50);
+  border-color: var(--color-green-500);
+  color: var(--color-green-500);
+}
+
+/* OFFERED — light blue */
+.cl-status-offered {
+  background-color: var(--color-blue-50);
+  border-color: var(--color-blue-100);
+  color: var(--color-blue-500);
+}
+
+/* JOINED — dark green */
+.cl-status-joined {
+  background-color: var(--color-green-50);
+  border-color: var(--color-green-600);
+  color: var(--color-green-600);
+}
+
+/* NOT_JOINED — red */
+.cl-status-not-joined {
+  background-color: var(--color-red-50);
+  border-color: var(--color-red-500);
+  color: var(--color-red-500);
+}
+
+/* OFFER_REJECTED — red */
+.cl-status-offer-rejected {
+  background-color: var(--color-red-50);
+  border-color: var(--color-red-500);
+  color: var(--color-red-500);
+}
+
+/* REJECTED — red */
+.cl-status-rejected {
+  background-color: var(--color-red-50);
+  border-color: var(--color-red-500);
+  color: var(--color-red-500);
+}
+
+/* ACCEPTED — navy blue */
+.cl-status-accepted {
+  background-color: var(--color-blue-50);
+  border-color: var(--color-blue-700);
+  color: var(--color-blue-700);
+}
+
+/* DROPPED — pink */
 .cl-status-dropped {
-  border-color: var(--color-candidate-status-border);
-  background-color: var(--color-candidate-status-bg);
-  color: var(--color-candidate-status-text);
+  background-color: var(--color-pink-50);
+  border-color: var(--color-pink-500);
+  color: var(--color-pink-600);
 }
 
 /* ── Category Badge ── */
@@ -655,19 +728,20 @@
   font-size: var(--text-xs);
   padding: 3px 12px;
   border-radius: 20px;
-  border-style: solid;
-  border-width: 1px;
+  border: none;
   display: inline-block;
 }
+
+/* PREMIUM — gold */
 .cl-type-premium {
-  background-color: var(--color-candidate-category-premium-bg);
-  border-color: var(--color-candidate-status-border);
-  color: var(--color-candidate-category-premium-text);
+  background-color: var(--color-gold-bg);
+  color: var(--color-gold-text);
 }
+
+/* STANDARD — silver */
 .cl-type-standard {
-  background-color: var(--color-candidate-category-bg);
-  border-color: var(--color-candidate-category-standard-border);
-  color: var(--color-candidate-category-text);
+  background-color: var(--color-silver-bg);
+  color: var(--color-silver-text);
 }
 
 /* ── No Results ── */

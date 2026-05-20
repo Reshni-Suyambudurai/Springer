@@ -1,14 +1,23 @@
-import { useEffect, useMemo, useState, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { driveDashboardApi } from '../../services/drive.api';
 import { showToast } from '../../utils/toast';
 import type { CollegeAnalysisResponse } from '../../types/TA_Recruiter/Drive/dashboard.types';
 import type { AppError } from '../../services/api.error';
 import '../../css/TA_Recruiter/InstituteAnalytics.css';
 
+const SORT_OPTIONS: { label: string; key: keyof CollegeAnalysisResponse; variant: string }[] = [
+  { label: 'Applied', key: 'totalAppliedCount', variant: 'applied' },
+  { label: 'Selected', key: 'selectedCount', variant: 'selected' },
+  { label: 'Rejected', key: 'rejectedCount', variant: 'rejected' },
+  { label: 'Dropped', key: 'droppedCount', variant: 'dropped' },
+  { label: 'Accepted', key: 'acceptedCount', variant: 'accepted' },
+  { label: 'Joined', key: 'joinedCount', variant: 'joined' },
+];
+
 interface InstituteAnalyticsProps {
   cycleId: number;
   selectedCollegeId: number | null;
-  onSelectedCollegeIdChange: (id: number | null) => void;
+  onSelectedCollegeIdChange: React.Dispatch<React.SetStateAction<number | null>>;
 }
 
 function InstituteAnalytics({ cycleId, selectedCollegeId, onSelectedCollegeIdChange }: InstituteAnalyticsProps) {
@@ -17,33 +26,25 @@ function InstituteAnalytics({ cycleId, selectedCollegeId, onSelectedCollegeIdCha
   const [sortBy, setSortBy] = useState<keyof CollegeAnalysisResponse | null>(null);
   const cardRefs = useRef<Map<number, HTMLDivElement>>(new Map());
 
-  const sortOptions: { label: string; key: keyof CollegeAnalysisResponse; variant: string }[] = [
-    { label: 'Applied', key: 'totalAppliedCount', variant: 'applied' },
-    { label: 'Selected', key: 'selectedCount', variant: 'selected' },
-    { label: 'Rejected', key: 'rejectedCount', variant: 'rejected' },
-    { label: 'Dropped', key: 'droppedCount', variant: 'dropped' },
-    { label: 'Accepted', key: 'acceptedCount', variant: 'accepted' },
-    { label: 'Joined', key: 'joinedCount', variant: 'joined' },
-  ];
-
   const sortedColleges = useMemo(() => {
     if (!sortBy) return colleges;
     return [...colleges].sort((a, b) => (b[sortBy] as number) - (a[sortBy] as number));
   }, [colleges, sortBy]);
 
-  useEffect(() => {
-    const fetchCollegeAnalysis = async () => {
+  const loadCollegeAnalysis = useCallback(async () => {
       setLoading(true);
       try {
         const res = await driveDashboardApi.getCollegeAnalysis(cycleId);
         if (res.success && res.data) {
           setColleges(res.data);
-          onSelectedCollegeIdChange((() => {
+          onSelectedCollegeIdChange((previousSelectedCollegeId) => {
             if (res.data.length === 0) return null;
-            const hasPreviousSelection = selectedCollegeId !== null &&
-              res.data.some(college => college.instituteId === selectedCollegeId);
-            return hasPreviousSelection ? selectedCollegeId : res.data[0].instituteId;
-          })());
+
+            const hasPreviousSelection = previousSelectedCollegeId !== null &&
+              res.data.some((college) => college.instituteId === previousSelectedCollegeId);
+
+            return hasPreviousSelection ? previousSelectedCollegeId : res.data[0].instituteId;
+          });
         } else {
           showToast(res.message || 'Failed to load college analysis', 'error');
         }
@@ -53,33 +54,43 @@ function InstituteAnalytics({ cycleId, selectedCollegeId, onSelectedCollegeIdCha
       } finally {
         setLoading(false);
       }
-    };
-    fetchCollegeAnalysis();
-  }, [cycleId, selectedCollegeId, onSelectedCollegeIdChange]);
+    }, [cycleId, onSelectedCollegeIdChange]);
+
+  useEffect(() => {
+    loadCollegeAnalysis();
+  }, [loadCollegeAnalysis]);
 
   useEffect(() => {
     if (selectedCollegeId !== null && colleges.length > 0) {
       const element = cardRefs.current.get(selectedCollegeId);
       if (element) {
-        setTimeout(() => {
+        const frameId = window.requestAnimationFrame(() => {
           element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }, 100);
+        });
+
+        return () => window.cancelAnimationFrame(frameId);
       }
     }
   }, [selectedCollegeId, colleges]);
 
-  const selected = colleges.find(c => c.instituteId === selectedCollegeId);
+  const selected = useMemo(
+    () => colleges.find((college) => college.instituteId === selectedCollegeId) ?? null,
+    [colleges, selectedCollegeId]
+  );
 
-  const funnelLayers = selected
-    ? [
-        { label: 'Applied', value: selected.totalAppliedCount, variant: 'funnel-applied' },
-        { label: 'Selected', value: selected.selectedCount, variant: 'funnel-selected' },
-        { label: 'Rejected', value: selected.rejectedCount, variant: 'funnel-rejected' },
-        { label: 'Dropped', value: selected.droppedCount, variant: 'funnel-dropped' },
-        { label: 'Accepted', value: selected.acceptedCount, variant: 'funnel-accepted' },
-        { label: 'Joined', value: selected.joinedCount, variant: 'funnel-joined' },
-      ]
-    : [];
+  const funnelLayers = useMemo(
+    () => selected
+      ? [
+          { label: 'Applied', value: selected.totalAppliedCount, variant: 'funnel-applied' },
+          { label: 'Selected', value: selected.selectedCount, variant: 'funnel-selected' },
+          { label: 'Rejected', value: selected.rejectedCount, variant: 'funnel-rejected' },
+          { label: 'Dropped', value: selected.droppedCount, variant: 'funnel-dropped' },
+          { label: 'Accepted', value: selected.acceptedCount, variant: 'funnel-accepted' },
+          { label: 'Joined', value: selected.joinedCount, variant: 'funnel-joined' },
+        ]
+      : [],
+    [selected]
+  );
 
   const maxVal = selected ? Math.max(selected.totalAppliedCount, 1) : 1;
 
@@ -88,7 +99,7 @@ function InstituteAnalytics({ cycleId, selectedCollegeId, onSelectedCollegeIdCha
       <div className="institute-header">
         <h3 className="institute-title">Institute Analytics</h3>
         <div className="institute-sort-chips">
-          {sortOptions.map(opt => (
+          {SORT_OPTIONS.map(opt => (
             <button
               key={opt.key}
               className={`institute-sort-chip institute-sort-chip-${opt.variant}${sortBy === opt.key ? ' institute-sort-chip-active' : ''}`}
@@ -164,10 +175,9 @@ function InstituteAnalytics({ cycleId, selectedCollegeId, onSelectedCollegeIdCha
                       <div className={`institute-funnel-layer ${layer.variant}`} key={layer.label}>
                         <div className="institute-funnel-label">{layer.label}</div>
                         <div className="institute-funnel-bar-track">
-                          <div className="institute-funnel-bar-fill" style={{ width: `${pct}%` }}>
-                            <span className="institute-funnel-bar-value">{layer.value}</span>
-                          </div>
+                          <div className="institute-funnel-bar-fill" style={{ width: `${pct}%` }} />
                         </div>
+                        <span className="institute-funnel-bar-value">{layer.value}</span>
                       </div>
                     );
                   })}

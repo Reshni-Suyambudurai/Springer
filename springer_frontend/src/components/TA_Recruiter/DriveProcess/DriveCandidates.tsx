@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
+import ReactDOM from "react-dom";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { applicationApi, candidateEvaluationApi } from "../../../services/driveschedule.api";
 import type { ApplicationResponse, BatchCandidatesMap, FinalizeApplicationsRequest } from "../../../types/TA_Recruiter/DriveSchedule/application.types";
@@ -6,7 +7,8 @@ import type { RoundEvaluationResponse, BulkRoundSkipRequest } from "../../../typ
 import { showToast } from "../../../utils/toast";
 import { handleAxiosError } from "../../../services/api.error";
 import { tokenstore } from "../../../auth/tokenstore";
-import { Box, Card, Typography, CircularProgress, Select, MenuItem, Button, Tooltip, IconButton,
+import { Box, Card, Typography, CircularProgress, Button, Tooltip, IconButton,
+  Select, MenuItem, FormControl,
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper } from "@mui/material";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
@@ -40,7 +42,6 @@ const DriveCandidates: React.FC = () => {
   const [updateStatusTo, setUpdateStatusTo] = useState<string>("");
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [updating, setUpdating] = useState<boolean>(false);
-  const [selectMode, setSelectMode] = useState<boolean>(false);
   const [selectedRoundFilters, setSelectedRoundFilters] = useState<Set<number>>(new Set());
   const [showReasonOverlay, setShowReasonOverlay] = useState<boolean>(false);
   const [skipReason, setSkipReason] = useState<string>("");
@@ -305,15 +306,6 @@ const DriveCandidates: React.FC = () => {
     setTimeout(() => setCopiedPassEmails(false), 2000);
   }, [filteredApplications]);
 
-  
-
-  const toggleSelectMode = () => {
-    setSelectMode((prev) => {
-      if (prev) setSelectedIds(new Set()); // exiting select mode clears selection
-      return !prev;
-    });
-  };
-
   const toggleSelect = (id: number) => {
     setSelectedIds((prev) => {
       const next = new Set(prev);
@@ -469,7 +461,7 @@ const DriveCandidates: React.FC = () => {
 
   const hasAlloted = filteredApplications.some((app) => app.applicationStatus === "ALLOTED");
   const canAddScores = !hasAlloted && filteredApplications.length > 0;
- 
+
   if (loading) {
     return (
       <Box className="dc-container">
@@ -481,45 +473,65 @@ const DriveCandidates: React.FC = () => {
     );
   }
 
+  const navbarSlot = document.getElementById("navbar-actions-slot");
+
   return (
     <Box className="dc-container">
-      {/* Header — mirrors InstitutesList / DriveList pattern */}
-      <Card className="dc-header">
-        <Box className="dc-header-actions">
-          <Select
-            value={selectedBatch}
-            onChange={(e) => updateFilter("batch", e.target.value as string)}
-            className="dc-select"
-            size="small"
-            displayEmpty
-          >
-            <MenuItem value="ALL">All Batches</MenuItem>
-            {batchOptions.map((batch) => (
-              <MenuItem key={batch} value={batch}>
-                {formatBatchTime(batch)}
-              </MenuItem>
-            ))}
-          </Select>
+      {/* Navbar portal: batch/round dropdowns + actions menu */}
+      {navbarSlot && ReactDOM.createPortal(
+        <div className="dc-navbar-controls">
+          <FormControl size="small" className="dc-navbar-form-control">
+            <Select
+              value={selectedBatch}
+              onChange={(e) => updateFilter("batch", e.target.value)}
+              displayEmpty
+              MenuProps={{ classes: { paper: 'g-dropdown-paper' } }}
+            >
+              <MenuItem value="ALL">All Batches</MenuItem>
+              {batchOptions.map((batch) => (
+                <MenuItem key={batch} value={batch}>{formatBatchTime(batch)}</MenuItem>
+              ))}
+            </Select>
+          </FormControl>
 
-          <Select
-            value={selectedRound}
-            onChange={(e) => updateFilter("round", e.target.value as string)}
-            className="dc-select"
-            size="small"
-          >
-            <MenuItem value="ALL">All Rounds</MenuItem>
-            <MenuItem value="APTITUDE">Aptitude</MenuItem>
-            <MenuItem value="COMMUNICATION">Communication</MenuItem>
-            <MenuItem value="TECHNICAL">Technical</MenuItem>
-          </Select>
+          <FormControl size="small" className="dc-navbar-form-control">
+            <Select
+              value={selectedRound}
+              onChange={(e) => updateFilter("round", e.target.value)}
+              MenuProps={{ classes: { paper: 'g-dropdown-paper' } }}
+            >
+              <MenuItem value="ALL">All Rounds</MenuItem>
+              <MenuItem value="APTITUDE">Aptitude</MenuItem>
+              <MenuItem value="COMMUNICATION">Communication</MenuItem>
+              <MenuItem value="TECHNICAL">Technical</MenuItem>
+            </Select>
+          </FormControl>
 
-          {evaluationsLoading && <CircularProgress size={20} />}
-          <Button variant="contained" className="g-btn g-btn-primary dc-btn-action" onClick={handleStart} disabled={selectedRound !== "ALL"}>Start</Button>
-          <Button variant="contained" className="g-btn g-btn-primary dc-btn-action" disabled={!canAddScores} onClick={() => navigate(`/drive-process/add-scores/${driveId}/round1`)}>Add Score</Button>
-          
-          <Button variant="contained" className="g-btn g-btn-primary dc-btn-action" onClick={handleFinalizeClick}>Finalize</Button>
-        </Box>
-      </Card>
+          {evaluationsLoading && <CircularProgress size={16} className="dc-navbar-spinner" />}
+
+          <button
+            className="dc-navbar-btn"
+            disabled={!hasAlloted}
+            onClick={handleStart}
+          >
+            Start
+          </button>
+          <button
+            className="dc-navbar-btn"
+            disabled={!canAddScores}
+            onClick={() => navigate(`/drive-process/add-scores/${driveId}/round1`)}
+          >
+            Add Score
+          </button>
+          <button
+            className="dc-navbar-btn"
+            onClick={handleFinalizeClick}
+          >
+            Finalize
+          </button>
+        </div>,
+        navbarSlot
+      )}
 
       {/* Filter bar — above the table */}
       {selectedRound === "ALL" && (
@@ -533,61 +545,60 @@ const DriveCandidates: React.FC = () => {
             ))}
           </span>
 
-          <select
-            className="dc-filter-select"
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-          >
-            <option value="ALL">All Status</option>
-            <option disabled>── Application ──</option>
-            <option value="ALLOTED">Alloted</option>
-            <option value="IN_DRIVE">In Drive</option>
-            <option value="DROPPED">Dropped</option>
-            <option value="FAILED">Failed</option>
-            <option value="SELECTED">Selected</option>
-            {distinctEvalStatuses.length > 0 && <option disabled>── Evaluation ──</option>}
-            {distinctEvalStatuses.map((s) => (
-              <option key={s} value={s}>{s}</option>
-            ))}
-          </select>
+          <FormControl size="small" className="dc-filter-form-control">
+            <Select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              displayEmpty
+              MenuProps={{ classes: { paper: 'g-dropdown-paper' } }}
+              className="dc-filter-mui-select"
+            >
+              <MenuItem value="ALL">All Status</MenuItem>
+              <MenuItem disabled>── Application ──</MenuItem>
+              <MenuItem value="ALLOTED">Alloted</MenuItem>
+              <MenuItem value="IN_DRIVE">In Drive</MenuItem>
+              <MenuItem value="DROPPED">Dropped</MenuItem>
+              <MenuItem value="FAILED">Failed</MenuItem>
+              <MenuItem value="SELECTED">Selected</MenuItem>
+              {distinctEvalStatuses.length > 0 && <MenuItem disabled>── Evaluation ──</MenuItem>}
+              {distinctEvalStatuses.map((s) => (
+                <MenuItem key={s} value={s}>{s}</MenuItem>
+              ))}
+            </Select>
+          </FormControl>
 
           <input
             type="text"
-            className="dc-filter-input"
+            className="g-filter-input dc-search-input"
             placeholder="Search by name or email..."
             value={searchText}
             onChange={(e) => setSearchText(e.target.value)}
           />
 
-          <Button
-            variant={selectMode ? "outlined" : "contained"}
-            className={selectMode ? "dc-btn-select-active" : "dc-btn-action"}
-            onClick={toggleSelectMode}
-          >
-            {selectMode ? `Cancel (${selectedIds.size})` : "Select"}
-          </Button>
+          <Box className="dc-filter-bar-spacer" />
 
-          <select
-            className="dc-filter-select"
-            value={updateStatusTo}
-            onChange={(e) => setUpdateStatusTo(e.target.value)}
-          >
-            <option value="">Update Status To...</option>
-            <option value="ABSENT">Absent</option>
-            <option value="HOLD">Hold</option>
-            <option value="SKIP">Skip</option>
-          </select>
+          <FormControl size="small" className="dc-filter-form-control">
+            <Select
+              value={updateStatusTo}
+              onChange={(e) => setUpdateStatusTo(e.target.value)}
+              displayEmpty
+              MenuProps={{ classes: { paper: 'g-dropdown-paper' } }}
+              className="dc-filter-mui-select"
+            >
+              <MenuItem value="">Update Status To...</MenuItem>
+              <MenuItem value="ABSENT">Absent</MenuItem>
+              <MenuItem value="HOLD">Hold</MenuItem>
+              <MenuItem value="SKIP">Skip</MenuItem>
+            </Select>
+          </FormControl>
 
-          <Button
-            variant="contained"
-            className="dc-btn-action"
+          <button
+            className="g-btn g-btn-primary dc-update-btn"
             disabled={!updateStatusTo || updating}
             onClick={() => handleBulkRoundSkip()}
           >
-            {updating ? "Updating..." : selectedIds.size > 0 ? `Update (${selectedIds.size})` : `Update All (${filteredApplications.length})`}
-          </Button>
-
-          <Box className="dc-filter-bar-spacer" />
+            {updating ? "Updating..." : selectedIds.size > 0 ? `Update (${selectedIds.size})` : "Update All"}
+          </button>
 
           <Tooltip title="Refresh data" arrow classes={{ tooltip: "g-tooltip", arrow: "g-tooltip-arrow" }}>
             <IconButton
@@ -651,6 +662,18 @@ const DriveCandidates: React.FC = () => {
           <Table className="dc-table">
             <TableHead>
               <TableRow className="dc-table-head-row">
+                <TableCell padding="checkbox" className="dc-th dc-th-check">
+                  <input
+                    type="checkbox"
+                    className="dc-row-checkbox"
+                    checked={filteredApplications.length > 0 && selectedIds.size === filteredApplications.length}
+                    ref={(el) => { if (el) el.indeterminate = selectedIds.size > 0 && selectedIds.size < filteredApplications.length; }}
+                    onChange={(e) => {
+                      if (e.target.checked) setSelectedIds(new Set(filteredApplications.map(a => a.applicationId)));
+                      else setSelectedIds(new Set());
+                    }}
+                  />
+                </TableCell>
                 <TableCell className="dc-th">Index</TableCell>
                 <TableCell className="dc-th">Candidate Name</TableCell>
                 <TableCell className="dc-th">Email</TableCell>
@@ -667,11 +690,16 @@ const DriveCandidates: React.FC = () => {
               {filteredApplications.map((app, index) => (
                 <TableRow key={app.applicationId}
                   className={`dc-table-row${selectedIds.has(app.applicationId) ? " dc-row-selected" : ""}`}
-                  onClick={() => {
-                    if (selectMode) toggleSelect(app.applicationId);
-                    else navigate("/drive-process/application-history", { state: { driveId: app.driveId, candidateId: app.candidateId } });
-                  }}
+                  onClick={() => navigate("/drive-process/application-history", { state: { driveId: app.driveId, candidateId: app.candidateId } })}
                 >
+                  <TableCell padding="checkbox" className="dc-td dc-td-check" onClick={(e) => { e.stopPropagation(); toggleSelect(app.applicationId); }}>
+                    <input
+                      type="checkbox"
+                      className="dc-row-checkbox"
+                      checked={selectedIds.has(app.applicationId)}
+                      readOnly
+                    />
+                  </TableCell>
                   <TableCell className="dc-td">{index + 1}</TableCell>
                   <TableCell className="dc-td dc-td-name">{app.candidateName}</TableCell>
                   <TableCell className="dc-td">{app.candidateEmail}</TableCell>

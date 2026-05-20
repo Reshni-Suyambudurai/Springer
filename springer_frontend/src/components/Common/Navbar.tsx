@@ -6,6 +6,8 @@ import { useNavbarAction } from '../../contexts/NavbarActionContext';
 import type { NotificationResponse } from '../../types/notification.types';
 import '../../css/Common/Navbar.css';
 
+const NOTIFICATION_DISABLED_ROLES = new Set(['TA_MANAGER', 'HIRING_MANAGER', 'TA_HEAD']);
+
 const PAGE_TITLES: Record<string, { title: string; subtitle: string }> = {
   '/dashboard': { title: 'Dashboard', subtitle: 'Welcome back' },
   '/ta-recruiter/dashboard': { title: 'Dashboard', subtitle: 'Welcome back' },
@@ -86,6 +88,8 @@ function Navbar({ onMobileMenuToggle }: NavbarProps) {
     const user = tokenstore.getUser();
     const { action } = useNavbarAction();
     const [theme, setTheme] = useState<'light' | 'dark'>(tokenstore.getTheme());
+    const shouldDisableNotifications = user?.roleName ? NOTIFICATION_DISABLED_ROLES.has(user.roleName) : false;
+    const visibleNotifications = shouldDisableNotifications ? [] : notifications;
 
     const isSettingsSubPage = [
         '/ta-recruiter/settings/skills',
@@ -113,7 +117,7 @@ function Navbar({ onMobileMenuToggle }: NavbarProps) {
         || location.pathname.startsWith('/hiring-manager/hiring-demands/')
         || location.pathname.startsWith('/ta-recruiter/hiring-cycles/');
 
-    const unreadCount = notifications.filter(n => !n.isRead).length;
+    const unreadCount = visibleNotifications.filter(n => !n.isRead).length;
 
     const getPageInfo = () => {
         const path = location.pathname;
@@ -130,7 +134,8 @@ function Navbar({ onMobileMenuToggle }: NavbarProps) {
     const { title, subtitle } = getPageInfo();
 
     useEffect(() => {
-        if (!user?.userId) return;
+        if (!user?.userId || shouldDisableNotifications) return;
+
         (async () => {
             try {
                 const res = await notificationApi.getNotifications(user.userId);
@@ -149,7 +154,7 @@ function Navbar({ onMobileMenuToggle }: NavbarProps) {
         };
         ws.onerror = () => { /* silent */ };
         return () => { ws.close(); };
-    }, [user?.userId]);
+    }, [shouldDisableNotifications, user?.userId]);
 
     const handleMarkAsRead = async (notificationId: number) => {
         try {
@@ -225,7 +230,14 @@ function Navbar({ onMobileMenuToggle }: NavbarProps) {
 
                     {/* Notification Bell */}
                     <div className="navbar-notif" ref={notifRef}>
-                        <button className="navbar-icon-btn" aria-label="Notifications" onClick={() => setShowNotifications(!showNotifications)}>
+                        <button
+                            className="navbar-icon-btn"
+                            aria-label="Notifications"
+                            onClick={() => {
+                                if (shouldDisableNotifications) return;
+                                setShowNotifications(!showNotifications);
+                            }}
+                        >
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                 <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 7h18s-3 0-3-7" />
                                 <path d="M13.73 21a2 2 0 0 1-3.46 0" />
@@ -235,7 +247,7 @@ function Navbar({ onMobileMenuToggle }: NavbarProps) {
                             )}
                         </button>
 
-                        {showNotifications && (
+                        {!shouldDisableNotifications && showNotifications && (
                             <div className="notif-dropdown">
                                 <div className="notif-dropdown-header">
                                     <span className="notif-dropdown-title">Notifications</span>
@@ -244,10 +256,10 @@ function Navbar({ onMobileMenuToggle }: NavbarProps) {
                                     )}
                                 </div>
                                 <div className="notif-dropdown-list">
-                                    {notifications.length === 0 ? (
+                                    {visibleNotifications.length === 0 ? (
                                         <div className="notif-empty">No notifications yet</div>
                                     ) : (
-                                        notifications.slice(0, 10).map(n => (
+                                        visibleNotifications.slice(0, 10).map(n => (
                                             <div
                                                 key={n.notificationId}
                                                 className={`notif-item ${!n.isRead ? 'notif-item--unread' : ''}`}

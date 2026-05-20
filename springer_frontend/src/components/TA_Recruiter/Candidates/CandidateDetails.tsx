@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { candidateApi } from "../../../services/drive.api";
 import { overrideApi } from "../../../services/override.api";
@@ -35,7 +35,6 @@ import {
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import SchoolOutlinedIcon from "@mui/icons-material/SchoolOutlined";
 import AssignmentIndOutlinedIcon from "@mui/icons-material/AssignmentIndOutlined";
-import TimelineOutlinedIcon from "@mui/icons-material/TimelineOutlined";
 import SwapHorizOutlinedIcon from "@mui/icons-material/SwapHorizOutlined";
 import WorkOutlineIcon from "@mui/icons-material/WorkOutline";
 import RocketLaunchOutlinedIcon from "@mui/icons-material/RocketLaunchOutlined";
@@ -49,6 +48,71 @@ import { internApi } from "../../../services/intern.api";
 import ApplicationHistory from "../DriveProcess/ApplicationHistory";
 import "../../../css/TA_Recruiter/Candidates/CandidateDetails.css";
 import "../../../css/TA_Recruiter/Institutes/AddInstitute.css";
+
+const formatIndianMobile = (mobile: string | number | null | undefined): string => {
+  if (mobile === null || mobile === undefined || String(mobile).trim() === "") {
+    return "N/A";
+  }
+
+  const rawMobile = String(mobile).trim();
+  const digits = rawMobile.replace(/\D/g, "");
+  const tenDigitMobile = digits.length >= 10 ? digits.slice(-10) : digits;
+
+  if (tenDigitMobile.length !== 10) {
+    return rawMobile;
+  }
+
+  return `+91 ${tenDigitMobile.slice(0, 5)} ${tenDigitMobile.slice(5)}`;
+};
+
+const formatDateLabel = (value: string | null | undefined): string => {
+  if (!value) return "N/A";
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+
+  return date.toLocaleDateString("en-IN", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+};
+
+const formatDateTimeLabel = (value: string | null | undefined): string => {
+  if (!value) return "N/A";
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+
+  return `${date.toLocaleDateString("en-IN", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  }).toLowerCase()} ${date.toLocaleTimeString("en-IN", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  })}`;
+};
+
+const getAgeFromDateOfBirth = (value: string | null | undefined): number | null => {
+  if (!value) return null;
+
+  const dateOfBirth = new Date(value);
+  if (Number.isNaN(dateOfBirth.getTime())) return null;
+
+  const today = new Date();
+  let age = today.getFullYear() - dateOfBirth.getFullYear();
+  const hasBirthdayPassed =
+    today.getMonth() > dateOfBirth.getMonth()
+    || (today.getMonth() === dateOfBirth.getMonth() && today.getDate() >= dateOfBirth.getDate());
+
+  if (!hasBirthdayPassed) {
+    age -= 1;
+  }
+
+  return age >= 0 ? age : null;
+};
 
 const CandidateDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -75,18 +139,14 @@ const CandidateDetails: React.FC = () => {
   const [activating, setActivating] = useState(false);
   const [driveDetailsExpanded, setDriveDetailsExpanded] = useState(false);
 
-  const formatIndianMobile = (mobile: string | number | null | undefined): string => {
-    if (mobile === null || mobile === undefined || String(mobile).trim() === "") {
-      return "N/A";
-    }
-    const rawMobile = String(mobile).trim();
-    const digits = rawMobile.replace(/\D/g, "");
-    const tenDigitMobile = digits.length >= 10 ? digits.slice(-10) : digits;
-    if (tenDigitMobile.length !== 10) {
-      return rawMobile;
-    }
-    return `+91 ${tenDigitMobile.slice(0, 5)} ${tenDigitMobile.slice(5)}`;
-  };
+  const populateEditForm = useCallback((data: CandidateResponse) => {
+    const user = tokenstore.getUser();
+    setEditForm({
+      isEligible: data.isEligible,
+      reason: "",
+      updatedBy: user?.userId || 0,
+    });
+  }, []);
 
   const fetchCandidateDetails = useCallback(async (candidateId: number) => {
     setLoading(true);
@@ -106,7 +166,7 @@ const CandidateDetails: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [populateEditForm]);
 
   const fetchOverrides = useCallback(async (candidateId: number) => {
     setLoadingOverrides(true);
@@ -129,15 +189,6 @@ const CandidateDetails: React.FC = () => {
       fetchOverrides(Number(id));
     }
   }, [id, fetchCandidateDetails, fetchOverrides]);
-
-  const populateEditForm = (data: CandidateResponse) => {
-    const user = tokenstore.getUser();
-    setEditForm({
-      isEligible: data.isEligible,
-      reason: "", // Clear reason for new update
-      updatedBy: user?.userId || 0,
-    });
-  };
 
   const handleEditToggle = () => {
     if (candidate) {
@@ -198,9 +249,9 @@ const CandidateDetails: React.FC = () => {
     }
   };
 
-  const handleBack = () => {
+  const handleBack = useCallback(() => {
     navigate("/ta-recruiter/candidates");
-  };
+  }, [navigate]);
 
   const handleActivateIntern = async () => {
     if (!outlookEmail.trim()) {
@@ -263,6 +314,24 @@ const CandidateDetails: React.FC = () => {
     }
   };
 
+  const locationState = location.state as { driveId?: number } | null;
+  const driveIdForHistory = locationState?.driveId ?? (candidate as (CandidateResponse & { driveId?: number }) | null)?.driveId;
+
+  const dateOfBirthLabel = useMemo(() => {
+    const formattedDate = formatDateLabel(candidate?.dateOfBirth);
+    if (formattedDate === "N/A") return formattedDate;
+    const age = getAgeFromDateOfBirth(candidate?.dateOfBirth);
+    return age === null ? formattedDate : `${formattedDate} (${age} yrs)`;
+  }, [candidate?.dateOfBirth]);
+
+  const showApplicationHistory = Boolean(
+    candidate &&
+    driveIdForHistory &&
+    !["APPLIED", "SHORTLISTED"].includes(candidate.applicationStage)
+  );
+  const shouldShowActivateInternCard = Boolean(candidate && candidate.applicationStage === "JOINED" && !candidate.userId);
+  const shouldShowManualOverrideCard = loadingOverrides || overrides.length > 0;
+
   if (loading) {
     return (
       <Box className="t-loading">
@@ -281,24 +350,8 @@ const CandidateDetails: React.FC = () => {
     );
   }
 
-  const locationState = location.state as { driveId?: number } | null;
-  const candidateWithDrive = candidate as (CandidateResponse & { driveId?: number }) | null;
-  const driveIdForHistory = locationState?.driveId ?? candidateWithDrive?.driveId;
-  const showApplicationHistory = Boolean(
-    candidate &&
-    driveIdForHistory &&
-    !["APPLIED", "SHORTLISTED"].includes(candidate.applicationStage)
-  );
-
   return (
     <Box className="candidate-details-container">
-      <Box className="candidate-details-navbar">
-        <Box className="candidate-details-navbar-left">
-          <BackButton onClick={handleBack} variant="header" className="candidate-details-back-btn" />
-          <Typography className="candidate-details-navbar-title">Candidate Profile</Typography>
-        </Box>
-      </Box>
-
       {/* Header with Candidate Name */}
       <Card className="candidate-details-header-card">
         <CardContent className="header-card-content-compact">
@@ -337,7 +390,7 @@ const CandidateDetails: React.FC = () => {
                       <CalendarTodayOutlinedIcon className="candidate-top-meta-icon" />
                       <Typography className="candidate-top-meta">
                         <span className="candidate-top-meta-label">Date of Birth:</span>{" "}
-                        <span className="candidate-top-meta-value">{candidate.dateOfBirth || "N/A"}</span>
+                        <span className="candidate-top-meta-value">{dateOfBirthLabel}</span>
                       </Typography>
                     </Box>
                   </Box>
@@ -368,7 +421,7 @@ const CandidateDetails: React.FC = () => {
                   size="small"
                   startIcon={<EditOutlinedIcon />}
                   onClick={handleEditToggle}
-                  className="btn-status-action candidate-header-btn"
+                  className="candidate-header-btn"
                 >
                   Edit
                 </Button>
@@ -377,7 +430,7 @@ const CandidateDetails: React.FC = () => {
                   size="small"
                   startIcon={<SwapHorizOutlinedIcon />}
                   onClick={() => { setSelectedStatus(""); setStatusDialogOpen(true); }}
-                  className="btn-status-action candidate-header-btn"
+                  className="candidate-header-btn"
                 >
                   Change Status
                 </Button>
@@ -462,38 +515,6 @@ const CandidateDetails: React.FC = () => {
           </Card>
         </Grid>
 
-        {/* Reason and History Card */}
-        <Grid size={{ xs: 12, md: 6 }}>
-          <Card className="details-info-card card-compact">
-            <CardContent>
-              <Typography variant="h6" className="card-section-title reason-history-section-title">
-                <AssignmentIndOutlinedIcon className="card-section-icon reason-history-section-icon" />
-                Reason and History
-              </Typography>
-              
-              <Box className="reason-history-container reason-history-details-grid">
-                {candidate.reason && (
-                  <Box className="reason-section">
-                    <Typography className="reason-section-label">Reason:</Typography>
-                    <Typography className="reason-text-danger">
-                      {candidate.reason}
-                    </Typography>
-                  </Box>
-                )}
-                
-                <Box className="history-section">
-                  <Typography className="history-section-label">Status History:</Typography>
-                  <Box className="history-box-compact">
-                    <Typography className="history-text-compact">
-                      {candidate.statusHistory || "No status changes recorded"}
-                    </Typography>
-                  </Box>
-                </Box>
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-
         {/* Skills */}
         <Grid size={{ xs: 12, md: 6 }}>
           <Card className="details-info-card">
@@ -516,44 +537,32 @@ const CandidateDetails: React.FC = () => {
           </Card>
         </Grid>
 
-        {/* Timeline Information */}
+        {/* Reason and History Card */}
         <Grid size={{ xs: 12, md: 6 }}>
-          <Card className="details-info-card">
+          <Card className="details-info-card card-compact">
             <CardContent>
-              <Typography variant="h6" className="card-section-title timeline-section-title">
-                <TimelineOutlinedIcon className="card-section-icon timeline-section-icon" />
-                Timeline
+              <Typography variant="h6" className="card-section-title reason-history-section-title">
+                <AssignmentIndOutlinedIcon className="card-section-icon reason-history-section-icon" />
+                Reason and History
               </Typography>
               
-              <Box className="timeline-list timeline-details-grid">
-                <Box className="timeline-item">
-                  <Typography className="timeline-label">Created At:</Typography>
-                  <Typography className="timeline-date">
-                    {new Date(candidate.createdAt).toLocaleDateString('en-IN', {
-                      day: 'numeric',
-                      month: 'short',
-                      year: 'numeric'
-                    }).toLowerCase()} {new Date(candidate.createdAt).toLocaleTimeString('en-IN', {
-                      hour: '2-digit',
-                      minute: '2-digit',
-                      hour12: false
-                    })}
-                  </Typography>
-                </Box>
+              <Box className="reason-history-container reason-history-details-grid">
+                {candidate.reason && (
+                  <Box className="reason-section">
+                    <Typography className="reason-section-label">Reason:</Typography>
+                    <Typography className="reason-text-danger">
+                      {candidate.reason}
+                    </Typography>
+                  </Box>
+                )}
 
-                <Box className="timeline-item">
-                  <Typography className="timeline-label">Last Updated:</Typography>
-                  <Typography className="timeline-date">
-                    {new Date(candidate.updatedAt).toLocaleDateString('en-IN', {
-                      day: 'numeric',
-                      month: 'short',
-                      year: 'numeric'
-                    }).toLowerCase()} {new Date(candidate.updatedAt).toLocaleTimeString('en-IN', {
-                      hour: '2-digit',
-                      minute: '2-digit',
-                      hour12: false
-                    })}
-                  </Typography>
+                <Box className="history-section">
+                  <Typography className="history-section-label">Status History:</Typography>
+                  <Box className="history-box-compact">
+                    <Typography className="history-text-compact">
+                      {candidate.statusHistory || "No status changes recorded"}
+                    </Typography>
+                  </Box>
                 </Box>
               </Box>
             </CardContent>
@@ -561,88 +570,72 @@ const CandidateDetails: React.FC = () => {
         </Grid>
 
         {/* Activate Intern Card — shown only for JOINED candidates without user account */}
-        {candidate.applicationStage === 'JOINED' && !candidate.userId && (
+        {shouldShowManualOverrideCard && (
           <Grid size={{ xs: 12, md: 6 }}>
-            <Card className="details-info-card">
-              <CardContent>
-                <Typography variant="h6" className="card-section-title">
-                  <RocketLaunchOutlinedIcon className="card-section-icon" />
-                  Intern Activation
-                </Typography>
-                <Typography sx={{ fontSize: '14px', color: 'var(--color-text-secondary)', mb: 2 }}>
-                  This candidate has joined. Activate their intern account to give them access to the Academy portal.
-                </Typography>
-                <Button
-                  variant="contained"
-                    startIcon={<RocketLaunchOutlinedIcon />}
-                  onClick={() => { setOutlookEmail(""); setActivateDialogOpen(true); }}
-                  className="btn-status-action"
-                >
-                  Activate as Intern
-                </Button>
-              </CardContent>
-            </Card>
-          </Grid>
-        )}
-        {overrides.length > 0 && (
-          <Grid size={{ xs: 12 }}>
             <Card className="details-info-card override-card-compact">
               <CardContent>
                 <Typography variant="h6" className="card-section-title">
                   <EditOutlinedIcon className="card-section-icon" />
                   Manual Override History
                 </Typography>
-                
+
                 {loadingOverrides ? (
                   <Box className="override-loading-section">
                     <CircularProgress size={24} />
                     <Typography>Loading overrides...</Typography>
                   </Box>
                 ) : (
-                  <Box className="override-table-wrapper-compact">
-                    <table className="override-table-compact">
-                      <thead>
-                        <tr>
-                          <th>Date</th>
-                          <th>User</th>
-                          <th>Changes</th>
-                          <th>Reason</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {overrides.map((override) => (
-                          <tr key={override.overrideId}>
-                            <td className="override-date-compact">
-                              {new Date(override.createdAt).toLocaleDateString('en-IN', {
-                                day: 'numeric',
-                                month: 'short',
-                                year: 'numeric'
-                              }).toLowerCase()} {new Date(override.createdAt).toLocaleTimeString('en-IN', {
-                                hour: '2-digit',
-                                minute: '2-digit',
-                                hour12: false
-                              })}
-                            </td>
-                            <td className="override-user-compact">{override.createdByName}</td>
-                            <td className="override-changes-compact">
-                              <Box className="override-changes-list-compact">
-                                {override.changes.map((change, idx) => (
-                                  <Box key={idx} className="override-change-compact">
-                                    <strong>{change.field}:</strong>
-                                    <span className="change-old-compact">{String(change.old ?? 'N/A')}</span>
-                                    <span className="change-arrow-compact">→</span>
-                                    <span className="change-new-compact">{String(change.newValue ?? 'N/A')}</span>
-                                  </Box>
-                                ))}
-                              </Box>
-                            </td>
-                            <td className="override-reason-compact">{override.overrideReason}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                  <Box className="override-history-list">
+                    {overrides.map((override) => (
+                      <Box key={override.overrideId} className="override-history-item">
+                        <Box className="override-history-top">
+                          <Typography className="override-date-compact">
+                            {formatDateTimeLabel(override.createdAt)}
+                          </Typography>
+                          <Typography className="override-user-compact">{override.createdByName}</Typography>
+                        </Box>
+                        <Box className="override-changes-list-compact">
+                          {override.changes.map((change, idx) => (
+                            <Box key={idx} className="override-change-compact">
+                              <strong>{change.field}:</strong>
+                              <span className="change-old-compact">{String(change.old ?? "N/A")}</span>
+                              <span className="change-arrow-compact">→</span>
+                              <span className="change-new-compact">{String(change.newValue ?? "N/A")}</span>
+                            </Box>
+                          ))}
+                        </Box>
+                        <Box className="override-history-reason-block">
+                          <Typography className="override-history-reason-label">Reason</Typography>
+                          <Typography className="override-reason-compact">{override.overrideReason || "N/A"}</Typography>
+                        </Box>
+                      </Box>
+                    ))}
                   </Box>
                 )}
+              </CardContent>
+            </Card>
+          </Grid>
+        )}
+
+        {shouldShowActivateInternCard && (
+          <Grid size={{ xs: 12, md: 6 }}>
+            <Card className="details-info-card candidate-activate-card">
+              <CardContent>
+                <Typography variant="h6" className="card-section-title">
+                  <RocketLaunchOutlinedIcon className="card-section-icon" />
+                  Intern Activation
+                </Typography>
+                <Typography className="candidate-activate-text">
+                  This candidate has joined. Activate their intern account to give them access to the Academy portal.
+                </Typography>
+                <button
+                  type="button"
+                  onClick={() => { setOutlookEmail(""); setActivateDialogOpen(true); }}
+                  className="g-btn g-btn-primary candidate-activate-btn"
+                >
+                  <RocketLaunchOutlinedIcon className="candidate-activate-btn-icon" />
+                  Activate as Intern
+                </button>
               </CardContent>
             </Card>
           </Grid>
@@ -679,8 +672,8 @@ const CandidateDetails: React.FC = () => {
       <Dialog open={activateDialogOpen} onClose={() => setActivateDialogOpen(false)} maxWidth="sm" fullWidth>
         <DialogTitle className="dialog-title">Activate Intern Account</DialogTitle>
         <DialogContent className="dialog-content">
-          <Typography sx={{ fontSize: '14px', color: 'var(--color-text-secondary)', mb: 2, mt: 1 }}>
-            Enter the Outlook email the candidate has created (e.g. <strong>manohar.kanini@outlook.com</strong>).
+          <Typography className="candidate-activate-dialog-text">
+            Enter the Outlook email the candidate has created (e.g. <span className="candidate-activate-dialog-example">manohar.kanini@outlook.com</span>).
             Login credentials will be sent to this email.
           </Typography>
           <TextField
@@ -695,22 +688,22 @@ const CandidateDetails: React.FC = () => {
           />
         </DialogContent>
         <DialogActions className="dialog-actions">
-          <Button
+          <button
+            type="button"
             onClick={() => setActivateDialogOpen(false)}
             disabled={activating}
-            variant="outlined"
-            className="t-dialog-cancel-btn"
+            className="g-btn g-btn-outline-primary"
           >
             Cancel
-          </Button>
-          <Button
+          </button>
+          <button
+            type="button"
             onClick={handleActivateIntern}
-            variant="contained"
             disabled={activating || !outlookEmail.trim()}
-            className="t-dialog-confirm-btn"
+            className="g-btn g-btn-primary"
           >
             {activating ? "Activating..." : "Activate & Send Credentials"}
-          </Button>
+          </button>
         </DialogActions>
       </Dialog>
 

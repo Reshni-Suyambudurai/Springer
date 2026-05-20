@@ -13,9 +13,6 @@
   overflow: hidden;
 }
 
-/* ── Hidden Navbar (title handled by global Navbar) ── */
-.candidate-details-navbar { display: none; }
-
 /* ── Error State ── */
 .candidate-details-error {
   display: flex;
@@ -282,11 +279,12 @@
   height: 100% !important;
   border-radius: 14px !important;
   background: var(--color-surface) !important;
-  border: 1.5px solid var(--color-border-card) !important;
+  border: none !important;
+  box-shadow: none !important;
 }
 
 .details-info-card:hover {
-  border-color: var(--color-sidebar-bg) !important;
+  box-shadow: none !important;
 }
 
 .details-info-card .MuiCardContent-root {
@@ -300,8 +298,7 @@
 .card-section-title,
 .academic-section-title,
 .reason-history-section-title,
-.skills-section-title,
-.timeline-section-title {
+.skills-section-title {
   display: flex;
   align-items: center;
   gap: 10px;
@@ -316,8 +313,7 @@
 .card-section-icon,
 .academic-section-icon,
 .reason-history-section-icon,
-.skills-section-icon,
-.timeline-section-icon {
+.skills-section-icon {
   color: var(--color-sidebar-bg) !important;
   font-size: 20px !important;
   width: 20px !important;
@@ -415,6 +411,7 @@
   flex-wrap: wrap;
   gap: 8px;
   padding: 4px 0;
+  align-content: flex-start;
 }
 
 .chip-skill {
@@ -496,58 +493,7 @@
   word-break: break-word;
 }
 
-/* ── Timeline ── */
-.timeline-list,
-.timeline-details-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.timeline-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px 14px;
-  background: var(--color-bg-primary);
-  border: 1px solid var(--color-border-light);
-  border-radius: 10px;
-  gap: 12px;
-}
-
-.timeline-label {
-  font-size: 12px !important;
-  font-weight: 500 !important;
-  color: var(--color-text-secondary) !important;
-  margin: 0 !important;
-}
-
-.timeline-date {
-  font-size: 13px !important;
-  font-weight: 600 !important;
-  color: var(--color-text-primary) !important;
-  margin: 0 !important;
-}
-
-/* ── Buttons ── */
-.btn-status-action {
-  border: none !important;
-  background-color: var(--color-primary-light) !important;
-  border-radius: 8px !important;
-  padding: 5px 14px !important;
-  color: var(--color-primary) !important;
-  text-transform: none !important;
-  font-weight: 600 !important;
-  font-size: 13px !important;
-  transition: all 0.2s ease !important;
-}
-
-.btn-status-action:hover {
-  background-color: var(--color-sidebar-bg) !important;
-  color: var(--color-white) !important;
-}
-
-/* ── Override Table ── */
+/* ── Override Card ── */
 .override-card-compact { border-left: none !important; }
 
 .override-loading-section {
@@ -559,53 +505,32 @@
   color: var(--color-text-secondary);
 }
 
-.override-table-wrapper-compact {
-  overflow-x: auto;
-  margin-top: 8px;
-  border-radius: 10px;
-  border: 1px solid var(--color-border-light);
+.override-history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
-.override-table-compact {
-  width: 100%;
-  border-collapse: collapse;
-  background: var(--color-surface);
-  font-size: 12px;
-}
-
-.override-table-compact thead {
+.override-history-item {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px;
   background: var(--color-bg-primary);
-  border-bottom: 1.5px solid var(--color-border);
+  border: 1px solid var(--color-border-light);
+  border-radius: 12px;
 }
 
-.override-table-compact th {
-  padding: 10px 14px;
-  text-align: left;
-  font-weight: 700;
-  color: var(--color-text-secondary);
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.6px;
-}
-
-.override-table-compact tbody tr {
-  border-bottom: 1px solid var(--color-border-light);
-  transition: background-color 0.15s ease;
-}
-
-.override-table-compact tbody tr:hover { background-color: var(--color-bg-primary); }
-.override-table-compact tbody tr:last-child { border-bottom: none; }
-
-.override-table-compact td {
-  padding: 10px 14px;
-  vertical-align: top;
-  color: var(--color-text-primary);
-  font-size: 12px;
+.override-history-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
 }
 
 .override-date-compact { font-weight: 600; white-space: nowrap; min-width: 110px; }
 .override-user-compact { font-weight: 600; color: var(--color-primary); min-width: 100px; }
-.override-changes-compact { max-width: 300px; }
 .override-changes-list-compact { display: flex; flex-direction: column; gap: 6px; }
 
 .override-change-compact {
@@ -623,7 +548,31 @@
 .change-old-compact { color: var(--color-error-delete); font-weight: 500; text-decoration: line-through; }
 .change-arrow-compact { color: var(--color-text-secondary); font-weight: 700; }
 .change-new-compact { color: var(--color-success-dark); font-weight: 600; }
-.override-reason-compact { color: var(--color-text-secondary); font-style: italic; max-width: 200px; }
+
+.override-history-reason-block {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.override-history-reason-label {
+  margin: 0 !important;
+  color: var(--color-text-secondary) !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.override-reason-compact {
+  color: var(--color-text-primary) !important;
+  font-size: 13px !important;
+  font-style: normal !important;
+  line-height: 1.6 !important;
+  margin: 0 !important;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
 
 .no-data-text {
   color: var(--color-text-secondary) !important;
@@ -635,6 +584,39 @@
 .dialog-title { color: var(--color-text-primary) !important; font-weight: 700 !important; }
 .dialog-content { padding-top: 20px !important; }
 .dialog-actions { padding: 14px 20px !important; gap: 10px !important; }
+
+.candidate-activate-card .MuiCardContent-root {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.candidate-activate-text {
+  margin: 0 !important;
+  color: var(--color-text-secondary) !important;
+  font-size: 14px !important;
+  line-height: 1.6 !important;
+}
+
+.candidate-activate-btn {
+  align-self: flex-start;
+}
+
+.candidate-activate-btn-icon {
+  font-size: 18px !important;
+}
+
+.candidate-activate-dialog-text {
+  margin: 8px 0 16px !important;
+  color: var(--color-text-secondary) !important;
+  font-size: 14px !important;
+  line-height: 1.6 !important;
+}
+
+.candidate-activate-dialog-example {
+  color: var(--color-text-primary);
+  font-weight: 700;
+}
 
 /* ── Back button in header ── */
 .candidate-header-back-wrap {

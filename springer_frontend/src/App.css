@@ -63,6 +63,11 @@
   --color-grey-700: #1F2937;
   --color-grey-800: #0F172A;
   --color-silver: #A8B0B9;
+  --color-silver-bg: #F0F2F5;
+  --color-silver-text: #5B6676;
+  --color-gold: #B8860B;
+  --color-gold-bg: #FDF8E1;
+  --color-gold-text: #8A6200;
   --color-teal: #14B8A6;
 
   /* ========== SHORTHAND ALIASES (used by dashboard cards & intern pages) ========== */

@@ -1,9 +1,7 @@
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import { candidateApi } from "../../../services/drive.api";
 import { hiringCycleApi } from "../../../services/hiring.api";
-import { notificationApi } from "../../../services/notification.api";
-import type { NotificationResponse } from "../../../types/notification.types";
 import type { CycleWithDrivesResponse, DriveInfo } from "../../../types/TA_Recruiter/Hiring/hiringCycle.types";
 import { showToast } from "../../../utils/toast";
 import { tokenstore } from "../../../auth/tokenstore";
@@ -53,6 +51,8 @@ const STATUS_CLASS_MAP: Record<string, string> = {
   SELECTED: 'cl-status-selected',
   OFFERED: 'cl-status-offered',
   JOINED: 'cl-status-joined',
+  NOT_JOINED: 'cl-status-not-joined',
+  OFFER_REJECTED: 'cl-status-offer-rejected',
   REJECTED: 'cl-status-rejected',
   ACCEPTED: 'cl-status-accepted',
   DROPPED: 'cl-status-dropped',
@@ -91,66 +91,6 @@ const CandidateList: React.FC = () => {
   const [selectMode, setSelectMode] = useState<boolean>(false);
   const [selectedCandidates, setSelectedCandidates] = useState<Set<number>>(new Set());
   const [bulkResultErrors, setBulkResultErrors] = useState<string[]>([]);
-  const [notifications, setNotifications] = useState<NotificationResponse[]>([]);
-  const [showNotifications, setShowNotifications] = useState(false);
-  const notifRef = useRef<HTMLDivElement>(null);
-  const user = tokenstore.getUser();
-  const unreadCount = notifications.filter(n => !n.isRead).length;
-
-  const loadNotifications = useCallback(async () => {
-    if (!user?.userId) return;
-    try {
-      const res = await notificationApi.getNotifications(user.userId);
-      if (res.success && res.data) setNotifications(res.data);
-    } catch { /* silent */ }
-  }, [user?.userId]);
-
-  useEffect(() => {
-    if (!user?.userId) return;
-    loadNotifications();
-    const ws = new WebSocket(`ws://localhost:8080/ws/notifications?userId=${user.userId}`);
-    ws.onmessage = (event) => {
-      try {
-        const newNotif: NotificationResponse = JSON.parse(event.data);
-        setNotifications(prev => [newNotif, ...prev]);
-      } catch { /* ignore */ }
-    };
-    ws.onerror = () => { /* silent */ };
-    return () => { ws.close(); };
-  }, [user?.userId, loadNotifications]);
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (notifRef.current && !notifRef.current.contains(event.target as Node)) {
-        setShowNotifications(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  const handleMarkAsRead = async (notificationId: number) => {
-    try {
-      await notificationApi.markAsRead(notificationId);
-      setNotifications(prev => prev.map(n => n.notificationId === notificationId ? { ...n, isRead: true } : n));
-    } catch { /* silent */ }
-  };
-
-  const handleMarkAllRead = async () => {
-    const unread = notifications.filter(n => !n.isRead);
-    await Promise.allSettled(unread.map(n => notificationApi.markAsRead(n.notificationId)));
-    setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
-  };
-
-  const formatTime = (iso: string) => {
-    const diff = Date.now() - new Date(iso).getTime();
-    const mins = Math.floor(diff / 60000);
-    if (mins < 1) return 'Just now';
-    if (mins < 60) return `${mins}m ago`;
-    const hrs = Math.floor(mins / 60);
-    if (hrs < 24) return `${hrs}h ago`;
-    return `${Math.floor(hrs / 24)}d ago`;
-  };
   
   // Use custom pagination hook for ACTIVE candidates
   const {
@@ -633,50 +573,6 @@ const CandidateList: React.FC = () => {
                   ))}
                 </Select>
               </FormControl>
-              {/* Notification Bell */}
-              <div className="navbar-notif" ref={notifRef}>
-                <button className="navbar-icon-btn" aria-label="Notifications" onClick={() => setShowNotifications(!showNotifications)}>
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 7h18s-3 0-3-7" />
-                    <path d="M13.73 21a2 2 0 0 1-3.46 0" />
-                  </svg>
-                  {unreadCount > 0 && (
-                    <span className="notification-badge">{unreadCount > 9 ? '9+' : unreadCount}</span>
-                  )}
-                </button>
-                {showNotifications && (
-                  <div className="notif-dropdown">
-                    <div className="notif-dropdown-header">
-                      <span className="notif-dropdown-title">Notifications</span>
-                      {unreadCount > 0 && (
-                        <button className="notif-mark-all" onClick={handleMarkAllRead}>Mark all read</button>
-                      )}
-                    </div>
-                    <div className="notif-dropdown-list">
-                      {notifications.length === 0 ? (
-                        <div className="notif-empty">No notifications yet</div>
-                      ) : (
-                        notifications.slice(0, 10).map(n => (
-                          <div
-                            key={n.notificationId}
-                            className={`notif-item ${!n.isRead ? 'notif-item--unread' : ''}`}
-                            onClick={() => handleMarkAsRead(n.notificationId)}
-                          >
-                            <div className="notif-item-icon">
-                              {n.type === 'COURSE_ASSIGNMENT' ? '📚' : '🔔'}
-                            </div>
-                            <div className="notif-item-body">
-                              <p className="notif-item-msg">{n.message}</p>
-                              <span className="notif-item-time">{formatTime(n.createdAt)}</span>
-                            </div>
-                            {!n.isRead && <span className="notif-item-dot" />}
-                          </div>
-                        ))
-                      )}
-                    </div>
-                  </div>
-                )}
-              </div>
             </Box>
           </Box>
 
