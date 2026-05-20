@@ -138,16 +138,7 @@ const PanelScoring = () => {
   return (
     <Box className="t-page">
       <Card className="t-card">
-        <Box className="t-header">
-          <Stack direction="row" alignItems="center" gap={1.5}>
-            <Box className="t-icon-box">
-              <GradingIcon className="ps-header-icon" />
-            </Box>
-            <Stack>
-              <Typography className="t-page-title">Panel Scoring</Typography>
-            </Stack>
-          </Stack>
-        </Box>
+      
 
         <Box className="t-separator" />
 

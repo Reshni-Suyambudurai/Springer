@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { candidateApi } from "../../../services/drive.api";
 import { overrideApi } from "../../../services/override.api";
 import type { CandidateResponse, CandidateUpdateRequest } from "../../../types/TA_Recruiter/Drive/candidate.types";
@@ -28,6 +28,9 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
 } from "@mui/material";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import SchoolOutlinedIcon from "@mui/icons-material/SchoolOutlined";
@@ -41,13 +44,16 @@ import CalendarTodayOutlinedIcon from "@mui/icons-material/CalendarTodayOutlined
 import LocalPhoneOutlinedIcon from "@mui/icons-material/LocalPhoneOutlined";
 import CreditCardOutlinedIcon from "@mui/icons-material/CreditCardOutlined";
 import CloseIcon from "@mui/icons-material/Close";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { internApi } from "../../../services/intern.api";
+import ApplicationHistory from "../DriveProcess/ApplicationHistory";
 import "../../../css/TA_Recruiter/Candidates/CandidateDetails.css";
 import "../../../css/TA_Recruiter/Institutes/AddInstitute.css";
 
 const CandidateDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const [candidate, setCandidate] = useState<CandidateResponse | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [editDialogOpen, setEditDialogOpen] = useState<boolean>(false);
@@ -67,6 +73,7 @@ const CandidateDetails: React.FC = () => {
   const [activateDialogOpen, setActivateDialogOpen] = useState(false);
   const [outlookEmail, setOutlookEmail] = useState("");
   const [activating, setActivating] = useState(false);
+  const [driveDetailsExpanded, setDriveDetailsExpanded] = useState(false);
 
   const formatIndianMobile = (mobile: string | number | null | undefined): string => {
     if (mobile === null || mobile === undefined || String(mobile).trim() === "") {
@@ -273,6 +280,15 @@ const CandidateDetails: React.FC = () => {
       </Box>
     );
   }
+
+  const locationState = location.state as { driveId?: number } | null;
+  const candidateWithDrive = candidate as (CandidateResponse & { driveId?: number }) | null;
+  const driveIdForHistory = locationState?.driveId ?? candidateWithDrive?.driveId;
+  const showApplicationHistory = Boolean(
+    candidate &&
+    driveIdForHistory &&
+    !["APPLIED", "SHORTLISTED"].includes(candidate.applicationStage)
+  );
 
   return (
     <Box className="candidate-details-container">
@@ -631,6 +647,32 @@ const CandidateDetails: React.FC = () => {
             </Card>
           </Grid>
         )}
+
+        {showApplicationHistory && (
+          <Grid size={{ xs: 12 }}>
+            <Accordion
+              expanded={driveDetailsExpanded}
+              onChange={(_, isExpanded) => setDriveDetailsExpanded(isExpanded)}
+              className="drive-details-accordion"
+            >
+              <AccordionSummary
+                expandIcon={<ExpandMoreIcon />}
+                className="drive-details-accordion-summary"
+              >
+                <Typography variant="h6">Drive Details</Typography>
+              </AccordionSummary>
+              <AccordionDetails className="drive-details-accordion-details">
+                {driveDetailsExpanded && (
+                  <ApplicationHistory
+                    driveId={Number(driveIdForHistory)}
+                    candidateId={candidate.candidateId}
+                    embeddedInCandidateDetails={true}
+                  />
+                )}
+              </AccordionDetails>
+            </Accordion>
+          </Grid>
+        )}
       </Grid>
 
       {/* Activate Intern Dialog */}
@@ -671,6 +713,8 @@ const CandidateDetails: React.FC = () => {
           </Button>
         </DialogActions>
       </Dialog>
+
+
 
       {/* Eligibility Edit Dialog */}
       <Dialog 

@@ -103,7 +103,9 @@ function DashboardTAR() {
             className={`dashboard-cycle-icon${selectedCycle ? ` dashboard-cycle-icon-${selectedCycle.status.toLowerCase()}` : ''}${showInstitute ? ' dashboard-cycle-icon-active' : ''}`}
             onClick={() => setShowInstitute(prev => !prev)}
             title="Toggle Institute Analytics"
-          >🏫</span>
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--color-primary)" strokeWidth="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+          </span>
           <select
             className={`dashboard-cycle-select${selectedCycle ? ` dashboard-cycle-select-${selectedCycle.status.toLowerCase()}` : ''}`}
             value={selectedCycleId ?? ''}
@@ -165,7 +167,9 @@ function DashboardTAR() {
               className={`dashboard-mode-card${modeFilter === 'ON_CAMPUS' ? ' dashboard-mode-card-active' : ''}`}
               onClick={() => handleModeFilter(modeFilter === 'ON_CAMPUS' ? 'ALL' : 'ON_CAMPUS')}
             >
-              <div className="dashboard-mode-icon dashboard-mode-icon-oncampus">🏫</div>
+              <div className="dashboard-mode-icon dashboard-mode-icon-oncampus">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--color-primary)" strokeWidth="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+              </div>
               <div className="dashboard-mode-info">
                 <span className="dashboard-mode-count">{dashboard.onCampusDriveCount}</span>
                 <span className="dashboard-mode-label">On-Campus Drives</span>
@@ -175,7 +179,9 @@ function DashboardTAR() {
               className={`dashboard-mode-card${modeFilter === 'OFF_CAMPUS' ? ' dashboard-mode-card-active' : ''}`}
               onClick={() => handleModeFilter(modeFilter === 'OFF_CAMPUS' ? 'ALL' : 'OFF_CAMPUS')}
             >
-              <div className="dashboard-mode-icon dashboard-mode-icon-offcampus">🌐</div>
+              <div className="dashboard-mode-icon dashboard-mode-icon-offcampus">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--color-primary)" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+              </div>
               <div className="dashboard-mode-info">
                 <span className="dashboard-mode-count">{dashboard.offCampusDriveCount}</span>
                 <span className="dashboard-mode-label">Off-Campus Drives</span>
@@ -331,8 +337,8 @@ function DashboardTAR() {
                         </span>
                       </div>
                       <div className="dashboard-funnel-drive-meta">
-                        <span className="dashboard-funnel-drive-meta-item">📍 {drive.location || '—'}</span>
-                        <span className="dashboard-funnel-drive-meta-item">📅 {drive.startDate ? new Date(drive.startDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'}</span>
+                        <span className="dashboard-funnel-drive-meta-item"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--color-primary)" strokeWidth="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg> {drive.location || '—'}</span>
+                        <span className="dashboard-funnel-drive-meta-item"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--color-primary)" strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> {drive.startDate ? new Date(drive.startDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'}</span>
                       </div>
                     </div>
                   ))}

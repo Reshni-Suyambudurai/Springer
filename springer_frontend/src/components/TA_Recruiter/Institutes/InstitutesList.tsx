@@ -736,7 +736,39 @@ const InstitutesList: React.FC = () => {
                 <Box className="ai-field"><label className="ai-label">City <span className="ai-req">*</span></label>
                   <input className="ai-input" placeholder="Enter city" value={addForm.city} onChange={(e) => setAddForm({ ...addForm, city: e.target.value })} /></Box>
                 <Box className="ai-field"><label className="ai-label">State <span className="ai-req">*</span></label>
-                  <input className="ai-input" placeholder="Enter state" value={addForm.state} onChange={(e) => setAddForm({ ...addForm, state: e.target.value })} /></Box>
+                  <Box style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <select
+                    className="ai-select"
+                    value={["Tamil Nadu","Andhra Pradesh","Kerala","Karnataka","Puducherry","Telangana","Maharashtra","Others"].includes(addForm.state) ? addForm.state : (addForm.state ? "Others" : "")}
+                    onChange={(e) => {
+                      if (e.target.value === "Others") {
+                        setAddForm({ ...addForm, state: "Others" });
+                      } else {
+                        setAddForm({ ...addForm, state: e.target.value });
+                      }
+                    }}
+                  >
+                    <option value="">Select state</option>
+                    <option value="Tamil Nadu">Tamil Nadu</option>
+                    <option value="Andhra Pradesh">Andhra Pradesh</option>
+                    <option value="Kerala">Kerala</option>
+                    <option value="Karnataka">Karnataka</option>
+                    <option value="Puducherry">Puducherry</option>
+                    <option value="Telangana">Telangana</option>
+                    <option value="Maharashtra">Maharashtra</option>
+                    <option value="Others">Others</option>
+                  </select>
+                  {(addForm.state === "Others" || (!["Tamil Nadu","Andhra Pradesh","Kerala","Karnataka","Puducherry","Telangana","Maharashtra",""].includes(addForm.state))) && (
+                    <input
+                      className="ai-input"
+                      style={{ display: 'inline-block', width: 'auto', flex: 1, marginLeft: '8px' }}
+                      placeholder="Enter state name"
+                      value={addForm.state === "Others" ? "" : addForm.state}
+                      onChange={(e) => setAddForm({ ...addForm, state: e.target.value })}
+                    />
+                  )}
+                  </Box>
+                </Box>
               </Box>
               <Box className="ai-row-2">
                 <Box className="ai-field"><label className="ai-label">Status <span className="ai-req">*</span></label>

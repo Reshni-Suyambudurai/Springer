@@ -37,7 +37,6 @@
   background: linear-gradient(120deg, #0A1F44 0%, #0d2d5e 50%, #1A3A5C 100%) !important;
   border-radius: 0 !important;
   border: none !important;
-  box-shadow: 0 4px 24px rgba(10, 31, 68, 0.18) !important;
 }
 
 .header-card-content-compact {
@@ -282,14 +281,11 @@
   width: 100% !important;
   height: 100% !important;
   border-radius: 14px !important;
-  box-shadow: 0 2px 12px rgba(10, 31, 68, 0.08), 0 1px 4px rgba(10, 31, 68, 0.04) !important;
   background: var(--color-surface) !important;
   border: 1.5px solid var(--color-border-card) !important;
-  transition: box-shadow 0.2s ease, border-color 0.2s ease !important;
 }
 
 .details-info-card:hover {
-  box-shadow: 0 6px 24px rgba(10, 31, 68, 0.12), 0 2px 8px rgba(10, 31, 68, 0.06) !important;
   border-color: var(--color-sidebar-bg) !important;
 }
 
