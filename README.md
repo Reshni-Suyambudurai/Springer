@@ -178,14 +178,20 @@ Tables and seed data are created automatically on first backend startup.
 
 ## Default Login Credentials
 
-| Role | Email | Password | Description |
-|------|-------|----------|-------------|
-| **TA Head** | sudha@kanini.com | password123 | Approve demands, manage cycles |
-| **TA Recruiter** | mozhi@kanini.com | password123 | Manage institutes, drives, candidates |
-| **Hiring Manager** | parthiban@kanini.com | password123 | Raise hiring demands |
-| **Panel Member** | ramesh@kanini.com | password123 | Score candidates in rounds |
-| **Training Coordinator** | lavanya@kanini.com | password123 | Manage academy training programs |
-| **System Admin** | admin@kanini.com | admin@123 | Admin dashboard and user management |
+| Name | Role | Email | Password | Department | Location |
+|------|------|-------|----------|------------|----------|
+| **Sudha** | TA Head | sudha@kanini.com | password123 | Talent Acquisition | Chennai |
+| **Mozhi** | TA Manager | mozhi@kanini.com | password123 | Talent Acquisition | Bangalore |
+| **Priya** | TA Manager | priya@kanini.com | password123 | Talent Acquisition | Chennai |
+| **Parthiban** | Hiring Manager | parthiban@kanini.com | password123 | Product Engineering | Bangalore |
+| **Ramesh** | Panel Member | ramesh@kanini.com | password123 | Product Engineering | Coimbatore |
+| **Priya Rajagopalan** | Panel Member | priya@kanini.com | password@123 | Product Engineering | Coimbatore |
+| **Mozhiarasan** | Panel Member | mozhi@kanini.com | password@123 | Product Engineering | Coimbatore |
+| **Praveen Kumar** | Panel Member | praveen@kanini.com | password123 | Product Engineering | Coimbatore |
+| **Admin** | System Admin | admin@kanini.com | password123 | Data Analytics & AI | Coimbatore |
+| **Lavanya** | Training Coordinator | lavanya@kanini.com | password123 | Data Analytics & AI | Coimbatore |
+| **John** | Intern | john@kanini.com | password123 | Training | Coimbatore |
+| **Joe** | Intern | joe@kanini.com | password123 | Training | Coimbatore |
 
 ---
 
