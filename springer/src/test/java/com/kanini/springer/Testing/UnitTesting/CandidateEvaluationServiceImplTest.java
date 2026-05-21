@@ -572,7 +572,7 @@ class CandidateEvaluationServiceImplTest {
             roundResponse.setRoundConfigId(1L);
             roundResponse.setRoundNo(3);
 
-            when(roundTemplateRepository.findByRoundNo(3)).thenReturn(Optional.of(stubRoundTemplate));
+            when(roundTemplateRepository.findByRoundNoOrderByRoundConfigIdAsc(3)).thenReturn(List.of(stubRoundTemplate));
             when(evaluationRepository.findByApplicationIdsAndRoundConfigIdFetched(anyList(), anyLong()))
                     .thenReturn(List.of(stubEvaluation));
             when(roundTemplateMapper.toResponse(stubRoundTemplate)).thenReturn(roundResponse);
@@ -583,7 +583,7 @@ class CandidateEvaluationServiceImplTest {
             assertThat(result).isNotNull();
             assertThat(result.getRoundTemplate()).isNotNull();
             assertThat(result.getEvaluations()).hasSize(1);
-            verify(roundTemplateRepository).findByRoundNo(3);
+            verify(roundTemplateRepository).findByRoundNoOrderByRoundConfigIdAsc(3);
         }
 
         @Test
@@ -597,7 +597,7 @@ class CandidateEvaluationServiceImplTest {
                     .isInstanceOf(ValidationException.class)
                     .hasMessageContaining("Round number is required");
 
-            verify(roundTemplateRepository, never()).findByRoundNo(anyInt());
+            verify(roundTemplateRepository, never()).findByRoundNoOrderByRoundConfigIdAsc(anyInt());
         }
 
         @Test
@@ -607,7 +607,7 @@ class CandidateEvaluationServiceImplTest {
             request.setRoundNo(99);
             request.setApplicationIds(List.of(1L));
 
-            when(roundTemplateRepository.findByRoundNo(99)).thenReturn(Optional.empty());
+            when(roundTemplateRepository.findByRoundNoOrderByRoundConfigIdAsc(99)).thenReturn(Collections.emptyList());
 
             assertThatThrownBy(() -> evaluationService.getEvaluationsByRoundAndApplications(request))
                     .isInstanceOf(ResourceNotFoundException.class)

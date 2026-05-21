@@ -121,7 +121,7 @@ class OfferLetterServiceImplTest {
             OfferLetter offer = new OfferLetter();
             OfferLetterResponse response = OfferLetterResponse.builder().candidateId(1L).build();
 
-            when(offerRepository.findById(1L)).thenReturn(Optional.of(offer));
+            when(offerRepository.findByIdWithDetails(1L)).thenReturn(Optional.of(offer));
             when(mapper.toResponse(offer)).thenReturn(response);
 
             assertThat(service.getOfferById(1L)).isNotNull();
@@ -129,7 +129,7 @@ class OfferLetterServiceImplTest {
 
         @Test @DisplayName("failure - throws ResourceNotFoundException when not found")
         void getById_notFound_throwsNotFound() {
-            when(offerRepository.findById(999L)).thenReturn(Optional.empty());
+            when(offerRepository.findByIdWithDetails(999L)).thenReturn(Optional.empty());
             assertThatThrownBy(() -> service.getOfferById(999L))
                     .isInstanceOf(ResourceNotFoundException.class);
         }

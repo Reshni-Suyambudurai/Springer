@@ -422,9 +422,7 @@ class InstituteServiceImplTest {
             request.setInstituteName("Anna University"); // same name, same owner
 
             when(instituteRepository.findById(1L)).thenReturn(Optional.of(stubInstitute));
-            // findByInstituteName returns the same institute (same ID) — should NOT throw
-            when(instituteRepository.findByInstituteName("Anna University"))
-                    .thenReturn(Optional.of(stubInstitute));
+            // No need to stub findByInstituteName() - service doesn't call it when name hasn't changed
             when(instituteRepository.save(any(Institute.class))).thenReturn(stubInstitute);
             when(mapper.toResponse(stubInstitute)).thenReturn(stubResponse);
 

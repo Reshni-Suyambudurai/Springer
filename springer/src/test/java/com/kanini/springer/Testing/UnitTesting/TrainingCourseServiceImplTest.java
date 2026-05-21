@@ -60,7 +60,6 @@ class TrainingCourseServiceImplTest {
             TrainingCourseResponse response = buildResponse(1, "Java Fundamentals");
 
             when(courseRepository.findByCourseName("Java Fundamentals")).thenReturn(Collections.emptyList());
-            when(courseRepository.findAll()).thenReturn(Collections.emptyList());
             when(mapper.toEntity(req)).thenReturn(entity);
             when(courseRepository.save(entity)).thenReturn(entity);
             when(mapper.toResponse(entity)).thenReturn(response);
