@@ -37,7 +37,7 @@ h6 { font-size: var(--text-xs); font-weight: 500; line-height: 1.5; }
 /* ═══════════════════════════════════════════════════ */
 
 .g-btn {
-  padding: 8px 24px;
+  padding: 4px 16px;
   border-radius: 8px;
   font-size: var(--text-sm);
   font-weight: 600;
