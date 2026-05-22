@@ -43,6 +43,14 @@ import SchoolIcon from "@mui/icons-material/School";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import "../../../css/TA_Recruiter/Candidates/CandidateList.css";
 
+const isPastDriveDate = (startDate?: string): boolean => {
+  if (!startDate) return false;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const driveDate = new Date(startDate + 'T00:00:00');
+  return driveDate < today;
+};
+
 const STATUS_CLASS_MAP: Record<string, string> = {
   APPLIED: 'cl-status-applied',
   SHORTLISTED: 'cl-status-shortlisted',
@@ -620,7 +628,11 @@ const CandidateList: React.FC = () => {
                   >
                     <MenuItem value="">All Drives</MenuItem>
                     {drives.map((drive) => (
-                      <MenuItem key={drive.driveId} value={drive.driveId}>
+                      <MenuItem
+                        key={drive.driveId}
+                        value={drive.driveId}
+                        className={isPastDriveDate(drive.startDate) ? 'drive-option-past' : ''}
+                      >
                         <Box className="drive-option">
                           <span className={`drive-mode-dot ${drive.mode === "ON_CAMPUS" ? "oncampus" : "offcampus"}`} />
                           {drive.driveName}
@@ -646,7 +658,7 @@ const CandidateList: React.FC = () => {
                       <MenuItem value="">Update Status</MenuItem>
                       <MenuItem value="SHORTLISTED">SHORTLISTED</MenuItem>
                 
-                      <MenuItem value="CLOSED" sx={{ color: 'var(--color-error-delete)' }}>MOVE TO HISTORY</MenuItem>
+                      <MenuItem value="CLOSED" className="cl-status-danger">MOVE TO HISTORY</MenuItem>
                     </Select>
                   </FormControl>
                   <button
@@ -684,6 +696,7 @@ const CandidateList: React.FC = () => {
                   <ScheduleDrive
                     cycleId={selectedCycle}
                     driveId={selectedDrive || null}
+                    isPastDrive={isPastDriveDate(drives.find(d => d.driveId === selectedDrive)?.startDate)}
                     candidateIds={selectMode ? Array.from(selectedCandidates) : []}
                     selectMode={selectMode}
                     selectedCount={selectedCandidates.size}

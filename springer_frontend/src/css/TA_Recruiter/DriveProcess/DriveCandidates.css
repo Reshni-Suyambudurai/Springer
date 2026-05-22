@@ -439,7 +439,6 @@
   box-shadow: none !important;
   overflow: auto;
   max-height: calc(100vh - 10px);
-  padding-bottom: 48px !important;
 }
 
 .dc-table-head-row {

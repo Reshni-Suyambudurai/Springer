@@ -24,6 +24,7 @@ import type { ApplicationRequest } from "../../../types/TA_Recruiter/DriveSchedu
 interface ScheduleDriveProps {
   cycleId: number | null;
   driveId: number | null;
+  isPastDrive?: boolean;
   candidateIds: number[];
   selectMode: boolean;
   selectedCount: number;
@@ -35,6 +36,7 @@ interface ScheduleDriveProps {
 const ScheduleDrive: React.FC<ScheduleDriveProps> = ({
   cycleId,
   driveId,
+  isPastDrive = false,
   candidateIds,
   selectMode,
   selectedCount,
@@ -179,12 +181,22 @@ const ScheduleDrive: React.FC<ScheduleDriveProps> = ({
 
   return (
     <>
-      <Tooltip title={!driveId ? "Select a drive first" : `Schedule ${selectMode ? selectedCount : totalElements} candidate(s) to drive`} arrow classes={{ tooltip: 'g-tooltip', arrow: 'g-tooltip-arrow' }}>
+      <Tooltip
+        title={
+          isPastDrive
+            ? "Cannot schedule candidates for a past drive"
+            : !driveId
+            ? "Select a drive first"
+            : `Schedule ${selectMode ? selectedCount : totalElements} candidate(s) to drive`
+        }
+        arrow
+        classes={{ tooltip: 'g-tooltip', arrow: 'g-tooltip-arrow' }}
+      >
         <span>
           <IconButton
             onClick={handleScheduleClick}
-            disabled={!driveId || (selectMode ? candidateIds.length === 0 : totalElements === 0) || loadingDrives || scheduling}
-            className="g-icon-btn schedule-drive-btn"
+            disabled={!driveId || isPastDrive || (selectMode ? candidateIds.length === 0 : totalElements === 0) || loadingDrives || scheduling}
+            className={`g-icon-btn schedule-drive-btn${driveId && !isPastDrive ? ' schedule-drive-btn--active' : ''}`}
           >
             <EventIcon />
           </IconButton>
@@ -283,7 +295,7 @@ const ScheduleDrive: React.FC<ScheduleDriveProps> = ({
           <Button
             onClick={handleConfirm}
             disabled={scheduling}
-            className="schedule-drive-confirm-btn"
+            className="g-btn g-btn-primary schedule-drive-confirm-btn"
           >
             {scheduling ? "Scheduling..." : "OK"}
           </Button>

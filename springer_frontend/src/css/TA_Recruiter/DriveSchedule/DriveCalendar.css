@@ -131,6 +131,12 @@
 }
 .drive-calendar-weekday-cell:last-child { border-right: none; }
 
+/* Sun (first) and Sat (last) header cells — gray tint */
+.drive-calendar-weekday-cell:first-child,
+.drive-calendar-weekday-cell:last-child {
+  background-color: var(--color-grey-150);
+}
+
 /* ── Calendar Grid ── */
 .drive-calendar-grid {
   display: grid;
@@ -158,6 +164,17 @@
 .drive-calendar-day-cell:nth-child(7n) { border-right: none; }
 .drive-calendar-day-cell:hover { border: 2px solid var(--color-primary) !important; z-index: 10; background-color: var(--color-primary-hover-4); }
 .drive-calendar-day-cell:has(.drive-calendar-event:hover) { border: 2px solid var(--color-primary) !important; z-index: 10; }
+
+/* Saturday (7th col) and Sunday (1st col) — gray background */
+.drive-calendar-day-cell:nth-child(7n),
+.drive-calendar-day-cell:nth-child(7n+1) {
+  background-color: var(--color-grey-150);
+}
+
+.drive-calendar-day-cell:nth-child(7n):hover,
+.drive-calendar-day-cell:nth-child(7n+1):hover {
+  background-color: var(--color-primary-hover-4);
+}
 
 .drive-calendar-empty-cell { background-color: var(--color-bg-secondary); opacity: 0.4; }
 

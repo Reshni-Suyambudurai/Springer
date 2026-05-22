@@ -171,7 +171,7 @@
 }
 
 .candidates-content--filter-open .cl-drive-select .MuiOutlinedInput-root {
-  width: 148px !important;
+  width: 220px !important;
 }
 
 .candidates-content--filter-open .cl-status-select .MuiOutlinedInput-root {
@@ -259,7 +259,7 @@
   background: var(--color-filter-bg) !important;
   font-size: var(--text-sm) !important;
   height: 36px !important;
-  width: 156px !important;
+  width: 260px !important;
 }
 .cl-drive-select .MuiOutlinedInput-notchedOutline {
   border: none !important;
@@ -347,6 +347,15 @@
   font-size: var(--text-sm);
   color: var(--color-text-secondary);
   font-weight: 600;
+}
+
+.cl-dropdown-paper .MuiMenuItem-root.cl-status-danger {
+  color: var(--color-error-delete) !important;
+  font-weight: 600;
+}
+
+.cl-dropdown-paper .MuiMenuItem-root.drive-option-past {
+  color: var(--color-error-delete) !important;
 }
 
 /* Update button */

@@ -458,9 +458,9 @@ console.log("Skills data:", response.data);
       )}
 
       {/* Add Single Candidate Dialog */}
-      <Dialog open={addDialog} onClose={() => setAddDialog(false)} maxWidth="md" fullWidth>
-        <DialogTitle>Add New Candidate</DialogTitle>
-        <DialogContent>
+      <Dialog open={addDialog} onClose={() => setAddDialog(false)} maxWidth="md" fullWidth PaperProps={{ className: "add-candidates-dialog-paper" }}>
+        <DialogTitle className="add-candidates-dialog-title">Add New Candidate</DialogTitle>
+        <DialogContent className="add-candidates-dialog-content">
           <Box className="add-candidates-form">
             <Box className="add-candidates-form-row">
               <TextField
@@ -536,7 +536,7 @@ console.log("Skills data:", response.data);
                   clearFieldError("instituteId");
                   setSingleForm({ ...singleForm, instituteId: newValue?.instituteId || 0 });
                 }}
-                className={fieldErrors.instituteId ? "ac-field-error" : ""}
+                className={`add-candidates-autocomplete${fieldErrors.instituteId ? " ac-field-error" : ""}`}
                 renderInput={(params) => (
                   <TextField {...params} label="Institute" placeholder="Search institute..." required error={!!fieldErrors.instituteId} />
                 )}
@@ -676,6 +676,7 @@ console.log("Skills data:", response.data);
               getOptionLabel={(option) => option.skillName}
               value={skills.filter((skill) => singleForm.skillIds.includes(skill.skillId))}
               onChange={handleSkillChange}
+              className="add-candidates-autocomplete add-candidates-autocomplete--skills"
               renderInput={(params) => (
                 <TextField {...params} label="Skills" placeholder="Search skills..." />
               )}
@@ -683,7 +684,7 @@ console.log("Skills data:", response.data);
             />
 
             {singleForm.skillIds.length > 0 && (
-              <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, mt: 1 }}>
+              <Box className="add-candidates-skill-chips">
                 {singleForm.skillIds.map((skillId) => {
                   const skill = skills.find((s) => s.skillId === skillId);
                   return (
