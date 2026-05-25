@@ -53,6 +53,7 @@ const AddInstitute: React.FC = () => {
     tpoEmail: "",
     tpoMobile: "",
     tpoDesignation: "",
+    isPrimary: true,
   });
 
   const handleAddSingle = async () => {
@@ -93,7 +94,7 @@ const AddInstitute: React.FC = () => {
         city: "",
         isActive: true,
       });
-      setTpoForm({ tpoName: "", tpoEmail: "", tpoMobile: "", tpoDesignation: "" });
+      setTpoForm({ tpoName: "", tpoEmail: "", tpoMobile: "", tpoDesignation: "", isPrimary: true });
       setShowTpoForm(false);
     } catch (error) {
       console.error(error);
@@ -461,40 +462,31 @@ const AddInstitute: React.FC = () => {
                   </select>
                 </Box>
               </Box>
-              <Box className="ai-row-3">
-                <Box className="ai-field">
-                  <label className="ai-label">City <span className="ai-req">*</span></label>
-                  <input className="ai-input" placeholder="Enter city" value={singleForm.city}
-                    onChange={(e) => setSingleForm({ ...singleForm, city: e.target.value })} />
-                </Box>
+              <Box className="ai-row-2">
                 <Box className="ai-field">
                   <label className="ai-label">State <span className="ai-req">*</span></label>
                   <input className="ai-input" placeholder="Enter state" value={singleForm.state}
                     onChange={(e) => setSingleForm({ ...singleForm, state: e.target.value })} />
                 </Box>
                 <Box className="ai-field">
-                  <label className="ai-label">Country</label>
-                  <input className="ai-input" placeholder="Enter country" defaultValue="India" />
+                  <label className="ai-label">City <span className="ai-req">*</span></label>
+                  <input className="ai-input" placeholder="Enter city" value={singleForm.city}
+                    onChange={(e) => setSingleForm({ ...singleForm, city: e.target.value })} />
                 </Box>
               </Box>
-              <Box className="ai-row-2">
-                <Box className="ai-field">
-                  <label className="ai-label">Institute Type</label>
-                  <select className="ai-select">
-                    <option value="">Select type</option>
-                    <option value="ENGINEERING">Engineering</option>
-                    <option value="ARTS">Arts & Science</option>
-                    <option value="MANAGEMENT">Management</option>
-                    <option value="POLYTECHNIC">Polytechnic</option>
-                  </select>
-                </Box>
-                <Box className="ai-field">
-                  <label className="ai-label">Status <span className="ai-req">*</span></label>
-                  <select className="ai-select" value={singleForm.isActive ? "active" : "inactive"}
-                    onChange={(e) => setSingleForm({ ...singleForm, isActive: e.target.value === "active" })}>
-                    <option value="active">Active</option>
-                    <option value="inactive">Inactive</option>
-                  </select>
+              <Box className="ai-field">
+                <label className="ai-label">Status</label>
+                <Box className="ai-toggle-wrap">
+                  <button
+                    type="button"
+                    className={`ai-toggle${singleForm.isActive ? " ai-toggle--on" : ""}`}
+                    onClick={() => setSingleForm((prev) => ({ ...prev, isActive: !prev.isActive }))}
+                    aria-pressed={singleForm.isActive}
+                    aria-label="Toggle active status"
+                  >
+                    <span className="ai-toggle-thumb" />
+                  </button>
+                  <span className="ai-toggle-label">{singleForm.isActive ? "Active" : "Inactive"}</span>
                 </Box>
               </Box>
             </Box>
@@ -503,26 +495,10 @@ const AddInstitute: React.FC = () => {
           {/* Contact Details */}
           {activeTab === "contact" && (
             <Box className="ai-form">
-              <Box className="ai-row-2">
-                <Box className="ai-field">
-                  <label className="ai-label">Official Email <span className="ai-req">*</span></label>
-                  <input className="ai-input" placeholder="contact@institute.edu" type="email"
-                    value={tpoForm.tpoEmail} onChange={(e) => setTpoForm({ ...tpoForm, tpoEmail: e.target.value })} />
-                </Box>
-                <Box className="ai-field">
-                  <label className="ai-label">Alternate Email</label>
-                  <input className="ai-input" placeholder="admin@institute.edu" type="email" />
-                </Box>
-              </Box>
-              <Box className="ai-field">
-                <label className="ai-label">Website URL</label>
-                <input className="ai-input" placeholder="https://www.institute.edu" type="url" />
-              </Box>
-
-              {/* Primary Contact Person */}
+              {/* TPO Contact Person */}
               <Box className="ai-contact-card">
                 <Box className="ai-contact-card-header">
-                  <Typography className="ai-contact-card-title">Primary Contact Person</Typography>
+                  <Typography className="ai-contact-card-title">TPO Contact</Typography>
                   {!showTpoForm && (
                     <button className="ai-add-contact-btn" onClick={() => setShowTpoForm(true)}>
                       + Add
@@ -547,6 +523,18 @@ const AddInstitute: React.FC = () => {
                       <label className="ai-label">Email</label>
                       <input className="ai-input" placeholder="person@institute.edu" type="email"
                         value={tpoForm.tpoEmail} onChange={(e) => setTpoForm({ ...tpoForm, tpoEmail: e.target.value })} />
+                    </Box>
+                    <Box className="ai-toggle-wrap">
+                      <button
+                        type="button"
+                        className={`ai-toggle${tpoForm.isPrimary ? " ai-toggle--on" : ""}`}
+                        onClick={() => setTpoForm((prev) => ({ ...prev, isPrimary: !prev.isPrimary }))}
+                        aria-pressed={tpoForm.isPrimary}
+                        aria-label="Toggle primary contact"
+                      >
+                        <span className="ai-toggle-thumb" />
+                      </button>
+                      <span className="ai-toggle-label">{tpoForm.isPrimary ? "Primary Contact" : "Secondary Contact"}</span>
                     </Box>
                   </>
                 )}

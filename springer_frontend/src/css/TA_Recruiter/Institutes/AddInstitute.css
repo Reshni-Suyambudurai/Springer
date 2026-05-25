@@ -1,5 +1,59 @@
 /* Only styles unique to AddInstitute — all common layout uses t-* from template.css */
 
+/* ── Toggle Switch ── */
+.ai-toggle-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 0;
+}
+
+.ai-toggle {
+  position: relative;
+  width: 40px;
+  height: 22px;
+  border-radius: 11px;
+  border: none;
+  background: var(--color-border-table);
+  cursor: pointer;
+  padding: 0;
+  transition: background 0.2s ease;
+  flex-shrink: 0;
+}
+
+.ai-toggle--on {
+  background: var(--color-primary);
+}
+
+.ai-toggle-thumb {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--color-surface);
+  transition: transform 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  display: block;
+}
+
+.ai-toggle--on .ai-toggle-thumb {
+  transform: translateX(18px);
+}
+
+.ai-toggle-label {
+  font-size: var(--text-sm);
+  color: var(--color-text-primary);
+  font-weight: 500;
+  user-select: none;
+}
+
+/* Input that appears below a select (Others state) */
+.ai-input--mt {
+  margin-top: 8px;
+}
+
 .add-institute-container {
   padding: 10px;
   max-width: 100%;

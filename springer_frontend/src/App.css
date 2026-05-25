@@ -17,6 +17,11 @@
   --color-green-600: #2E4620;
   --color-green-700: #8DC63F;
 
+  /* Selected status — bright green highlight */
+  --color-status-selected-bg: #e6ffe6;
+  --color-status-selected-border: #80ff80;
+  --color-status-selected-text: #1a7a1a;
+
   /* Red Palette */
   --color-red-50: #FBEAE8;
   --color-red-100: #FF6B6B;

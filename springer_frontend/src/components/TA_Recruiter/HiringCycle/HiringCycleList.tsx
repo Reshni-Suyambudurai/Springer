@@ -26,8 +26,8 @@ const TARHiringCycleList = () => {
         const res = await hiringCycleApi.getAllCycles();
         if (res.success && res.data) setCycles(res.data);
         else setError(res.message || 'Failed to load hiring cycles.');
-      } catch (err: any) {
-        setError(err.message || 'Failed to load hiring cycles.');
+      } catch (err: unknown) {
+        setError(err instanceof Error ? err.message : 'Failed to load hiring cycles.');
       } finally {
         setLoading(false);
       }

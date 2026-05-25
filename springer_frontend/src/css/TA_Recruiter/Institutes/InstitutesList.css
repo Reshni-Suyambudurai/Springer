@@ -25,6 +25,42 @@
   box-shadow: 0 1px 4px var(--opacity-shadow-light);
 }
 
+/* -- Filter Toggle Button -- */
+.institutes-filter-toggle-btn {
+  color: var(--color-text-secondary) !important;
+  border-radius: 8px !important;
+  padding: 6px !important;
+  transition: all 0.2s ease !important;
+}
+.institutes-filter-toggle-btn:hover {
+  background-color: var(--color-icon-bg) !important;
+  color: var(--color-primary) !important;
+}
+.institutes-filter-toggle-btn--active {
+  color: var(--color-primary) !important;
+  background-color: var(--color-icon-bg) !important;
+}
+
+/* -- Main layout with sidebar -- */
+.institutes-main-layout {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  position: relative;
+}
+
+.institutes-content {
+  flex: 1;
+  overflow-y: auto;
+  transition: margin-left 0.2s ease;
+}
+
+.institutes-content--shifted {
+  margin-left: 280px;
+}
+
+
 .institutes-search-wrap {
   display: flex;
   align-items: center;
@@ -436,6 +472,14 @@
   display: flex;
   align-items: flex-start;
   gap: 12px;
+}
+
+.institute-card-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+  flex-shrink: 0;
 }
 
 .institute-card-icon-wrap {

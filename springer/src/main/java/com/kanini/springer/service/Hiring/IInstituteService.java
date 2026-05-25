@@ -1,9 +1,11 @@
 package com.kanini.springer.service.Hiring;
 
 import com.kanini.springer.dto.Hiring.BulkInsertResponse;
+import com.kanini.springer.dto.Hiring.InstituteCreateRequest;
 import com.kanini.springer.dto.Hiring.InstituteNameResponse;
 import com.kanini.springer.dto.Hiring.InstituteRequest;
 import com.kanini.springer.dto.Hiring.InstituteResponse;
+import com.kanini.springer.dto.Hiring.InstituteUpdateRequest;
 import com.kanini.springer.dto.Hiring.InstituteWithTPOsResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -52,6 +54,17 @@ public interface IInstituteService {
      */
     InstituteWithTPOsResponse getInstituteWithTPOsById(Long instituteId);
     
+    /**
+     * Full update of institute: basic fields + programs + TPO contacts in one transaction.
+     */
+    InstituteWithTPOsResponse fullUpdateInstitute(Long instituteId, InstituteUpdateRequest request);
+
+    /**
+     * Create institute with optional programs and multiple TPO contacts in one transaction.
+     * Max 5 DB hits regardless of list sizes.
+     */
+    InstituteWithTPOsResponse createInstituteFull(InstituteCreateRequest request);
+
     /**
      * Get all institute names and IDs only
      */

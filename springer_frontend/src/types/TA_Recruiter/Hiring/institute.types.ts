@@ -89,4 +89,44 @@ export interface InstituteNameResponse {
   instituteName: string;
 }
 
+// Full update request — PUT /api/institutes/{id}/full
+export interface InstituteUpdateRequest {
+  instituteName?: string;
+  instituteTier?: string;
+  state?: string;
+  city?: string;
+  isActive?: boolean;
+  programIds?: number[];
+  tpoContacts?: {
+    tpoId: number;
+    tpoName?: string;
+    tpoEmail?: string;
+    tpoMobile?: string;
+    tpoDesignation?: string;
+    isPrimary?: boolean;
+  }[];
+  newTpoContacts?: {
+    tpoName: string;
+    tpoEmail: string;
+    tpoMobile?: string;
+    tpoDesignation?: string;
+    isPrimary?: boolean;
+  }[];
+}
 
+// Full create request — POST /api/institutes/full
+export interface InstituteCreateRequest {
+  instituteName: string;
+  instituteTier: string;
+  state: string;
+  city: string;
+  isActive?: boolean;
+  programIds?: number[];
+  tpoContacts?: {
+    tpoName: string;
+    tpoEmail: string;
+    tpoMobile?: string;
+    tpoDesignation?: string;
+    isPrimary?: boolean;
+  }[];
+}

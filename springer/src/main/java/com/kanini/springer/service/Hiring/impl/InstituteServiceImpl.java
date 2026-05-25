@@ -1,9 +1,11 @@
 package com.kanini.springer.service.Hiring.impl;
 
 import com.kanini.springer.dto.Hiring.BulkInsertResponse;
+import com.kanini.springer.dto.Hiring.InstituteCreateRequest;
 import com.kanini.springer.dto.Hiring.InstituteNameResponse;
 import com.kanini.springer.dto.Hiring.InstituteRequest;
 import com.kanini.springer.dto.Hiring.InstituteResponse;
+import com.kanini.springer.dto.Hiring.InstituteUpdateRequest;
 import com.kanini.springer.dto.Hiring.InstituteWithTPOsResponse;
 import com.kanini.springer.entity.HiringReq.Institute;
 import com.kanini.springer.entity.HiringReq.InstituteContact;
@@ -28,6 +30,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -319,5 +322,179 @@ public class InstituteServiceImpl implements IInstituteService {
                         institute.getInstituteName()
                 ))
                 .toList();
+    }
+
+    @Override
+    @Transactional
+    public InstituteWithTPOsResponse fullUpdateInstitute(Long instituteId, InstituteUpdateRequest request) {
+        // HIT 1 — load institute
+        Institute institute = instituteRepository.findById(instituteId)
+                .orElseThrow(() -> new ResourceNotFoundException("Institute", "ID", instituteId));
+
+        // ── 1. Update basic fields ─────────────────────────────────────────────
+        if (request.getInstituteName() != null && !request.getInstituteName().isBlank()) {
+            if (!institute.getInstituteName().equalsIgnoreCase(request.getInstituteName())) {
+                // HIT 2 (conditional) — uniqueness check only when name changed
+                if (instituteRepository.findByInstituteName(request.getInstituteName()).isPresent()) {
+                    throw new ValidationException("Institute already exists with name: " + request.getInstituteName());
+                }
+            }
+            institute.setInstituteName(request.getInstituteName());
+        }
+        if (request.getInstituteTier() != null && !request.getInstituteTier().isBlank())
+            institute.setInstituteTier(InstituteTier.valueOf(request.getInstituteTier()));
+        if (request.getState() != null) institute.setState(request.getState());
+        if (request.getCity() != null) institute.setCity(request.getCity());
+        if (request.getIsActive() != null) institute.setIsActive(request.getIsActive());
+        // HIT 3 — single UPDATE for all basic field changes
+        instituteRepository.save(institute);
+
+        // ── 2. Replace program mappings (2 hits regardless of list size) ───────
+        if (request.getProgramIds() != null) {
+            // HIT 4 — single bulk DELETE via JPQL
+            instituteProgramRepository.deleteByInstituteId(instituteId);
+
+            if (!request.getProgramIds().isEmpty()) {
+                // HIT 5 — single SELECT IN to fetch all programs at once
+                List<Program> programs = programRepository.findAllById(request.getProgramIds());
+                if (programs.size() != request.getProgramIds().size()) {
+                    throw new ResourceNotFoundException("One or more Program IDs not found", "IDs", request.getProgramIds());
+                }
+                List<InstituteProgram> newMappings = programs.stream().map(program -> {
+                    InstituteProgram ip = new InstituteProgram();
+                    ip.setInstitute(institute);
+                    ip.setProgram(program);
+                    return ip;
+                }).toList();
+                // HIT 6 — single batch INSERT
+                instituteProgramRepository.saveAll(newMappings);
+            }
+        }
+
+        // ── 3. Update existing TPO contacts (2 hits regardless of list size) ──
+        if (request.getTpoContacts() != null && !request.getTpoContacts().isEmpty()) {
+            List<Integer> tpoIds = request.getTpoContacts().stream()
+                    .map(InstituteUpdateRequest.ExistingTPORequest::getTpoId)
+                    .toList();
+            // HIT 7 — single SELECT IN for all TPO contacts
+            List<InstituteContact> existingContacts = contactRepository.findAllById(tpoIds);
+            if (existingContacts.size() != tpoIds.size()) {
+                throw new ResourceNotFoundException("One or more TPO contacts not found", "IDs", tpoIds);
+            }
+            Map<Integer, InstituteContact> contactMap = existingContacts.stream()
+                    .collect(Collectors.toMap(InstituteContact::getTpoId, c -> c));
+            for (InstituteUpdateRequest.ExistingTPORequest tpoReq : request.getTpoContacts()) {
+                InstituteContact contact = contactMap.get(tpoReq.getTpoId());
+                if (tpoReq.getTpoName() != null) contact.setTpoName(tpoReq.getTpoName());
+                if (tpoReq.getTpoEmail() != null) contact.setTpoEmail(tpoReq.getTpoEmail());
+                if (tpoReq.getTpoMobile() != null) contact.setTpoMobile(tpoReq.getTpoMobile());
+                if (tpoReq.getTpoDesignation() != null) contact.setTpoDesignation(tpoReq.getTpoDesignation());
+                if (tpoReq.getIsPrimary() != null) contact.setIsPrimary(tpoReq.getIsPrimary());
+            }
+            // HIT 8 — single batch UPDATE
+            contactRepository.saveAll(existingContacts);
+        }
+
+        // ── 4. Create new TPO contacts (1 hit regardless of list size) ─────────
+        if (request.getNewTpoContacts() != null) {
+            List<InstituteContact> newContacts = request.getNewTpoContacts().stream()
+                    .filter(t -> t.getTpoName() != null && !t.getTpoName().isBlank()
+                              && t.getTpoEmail() != null && !t.getTpoEmail().isBlank())
+                    .map(newTpo -> {
+                        InstituteContact contact = new InstituteContact();
+                        contact.setInstitute(institute);
+                        contact.setTpoName(newTpo.getTpoName());
+                        contact.setTpoEmail(newTpo.getTpoEmail());
+                        contact.setTpoMobile(newTpo.getTpoMobile() != null ? newTpo.getTpoMobile() : "");
+                        contact.setTpoDesignation(newTpo.getTpoDesignation());
+                        contact.setTpoStatus(ContactStatus.ACTIVE);
+                        contact.setIsPrimary(newTpo.getIsPrimary() != null ? newTpo.getIsPrimary() : false);
+                        return contact;
+                    }).toList();
+            if (!newContacts.isEmpty()) {
+                // HIT 9 — single batch INSERT
+                contactRepository.saveAll(newContacts);
+            }
+        }
+
+        // ── 5. Return fresh full response (2 hits) ─────────────────────────────
+        // HIT 10 — load final contacts
+        List<InstituteContact> contacts = contactRepository.findByInstituteInstituteId(instituteId);
+        // HIT 11 — load final programs
+        List<InstituteProgram> finalPrograms = instituteProgramRepository.findByInstituteInstituteId(instituteId);
+        return withTPOsMapper.toResponse(institute, contacts, finalPrograms);
+    }
+
+    // ── createInstituteFull ────────────────────────────────────────────────────
+    // DB hits: HIT 1 uniqueness check | HIT 2 save institute
+    //          HIT 3 batch fetch programs (optional) | HIT 4 batch insert programs (optional)
+    //          HIT 5 batch insert TPO contacts (optional) | HIT 6+7 load response
+    // Max 7 hits — min 4 hits (no programs, no contacts)
+    @Override
+    @Transactional
+    public InstituteWithTPOsResponse createInstituteFull(InstituteCreateRequest request) {
+        // HIT 1 — uniqueness check
+        if (instituteRepository.findByInstituteName(request.getInstituteName()).isPresent()) {
+            throw new ValidationException("Institute already exists with name: " + request.getInstituteName());
+        }
+
+        // ── 1. Build and save institute ────────────────────────────────────────
+        Institute institute = new Institute();
+        institute.setInstituteName(request.getInstituteName());
+        if (request.getInstituteTier() != null && !request.getInstituteTier().isBlank()) {
+            institute.setInstituteTier(InstituteTier.valueOf(request.getInstituteTier()));
+        }
+        institute.setState(request.getState());
+        institute.setCity(request.getCity());
+        institute.setIsActive(request.getIsActive() != null ? request.getIsActive() : true);
+        // HIT 2 — INSERT institute
+        Institute savedInstitute = instituteRepository.save(institute);
+        Long newId = savedInstitute.getInstituteId();
+
+        // ── 2. Map programs (2 optional hits) ─────────────────────────────────
+        if (request.getProgramIds() != null && !request.getProgramIds().isEmpty()) {
+            // HIT 3 — batch SELECT programs
+            List<Program> programs = programRepository.findAllById(request.getProgramIds());
+            if (programs.size() != request.getProgramIds().size()) {
+                throw new ResourceNotFoundException("One or more Program IDs not found", "IDs", request.getProgramIds());
+            }
+            List<InstituteProgram> mappings = programs.stream().map(program -> {
+                InstituteProgram ip = new InstituteProgram();
+                ip.setInstitute(savedInstitute);
+                ip.setProgram(program);
+                return ip;
+            }).toList();
+            // HIT 4 — batch INSERT program mappings
+            instituteProgramRepository.saveAll(mappings);
+        }
+
+        // ── 3. Create TPO contacts (1 optional hit) ────────────────────────────
+        if (request.getTpoContacts() != null && !request.getTpoContacts().isEmpty()) {
+            List<InstituteContact> contacts = request.getTpoContacts().stream()
+                    .filter(t -> t.getTpoName() != null && !t.getTpoName().isBlank()
+                              && t.getTpoEmail() != null && !t.getTpoEmail().isBlank())
+                    .map(t -> {
+                        InstituteContact contact = new InstituteContact();
+                        contact.setInstitute(savedInstitute);
+                        contact.setTpoName(t.getTpoName());
+                        contact.setTpoEmail(t.getTpoEmail());
+                        contact.setTpoMobile(t.getTpoMobile() != null ? t.getTpoMobile() : "");
+                        contact.setTpoDesignation(t.getTpoDesignation());
+                        contact.setTpoStatus(ContactStatus.ACTIVE);
+                        contact.setIsPrimary(t.getIsPrimary() != null ? t.getIsPrimary() : false);
+                        return contact;
+                    }).toList();
+            if (!contacts.isEmpty()) {
+                // HIT 5 — batch INSERT contacts
+                contactRepository.saveAll(contacts);
+            }
+        }
+
+        // ── 4. Return fresh full response ──────────────────────────────────────
+        // HIT 6 — load contacts
+        List<InstituteContact> savedContacts = contactRepository.findByInstituteInstituteId(newId);
+        // HIT 7 — load program mappings
+        List<InstituteProgram> savedPrograms = instituteProgramRepository.findByInstituteInstituteId(newId);
+        return withTPOsMapper.toResponse(savedInstitute, savedContacts, savedPrograms);
     }
 }
