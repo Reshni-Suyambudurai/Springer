@@ -1,26 +1,24 @@
 import React, { useState, useEffect, useMemo, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { instituteApi, instituteTPOApi, programApi } from "../../../services/hiring.api";
+import { instituteApi, programApi } from "../../../services/hiring.api";
 import type { InstituteResponse, InstituteRequest } from "../../../types/TA_Recruiter/Hiring/institute.types";
 import { showToast } from "../../../utils/toast";
 import { tokenstore } from "../../../auth/tokenstore";
 import { EMAIL_TEMPLATE_IDS } from "../../../config/emailTemplateConfig";
 import * as XLSX from "xlsx";
+import InstituteFilter from "./InstituteFilter";
+import InstituteFormDialog from "./InstituteFormDialog";
+import type { InstituteBasicForm, TpoForm } from "./InstituteFormDialog";
 import {
   Box,
   CircularProgress,
   Typography,
-  MenuItem,
-  Select,
-  FormControl,
   IconButton,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
-  Checkbox,
   Button,
-  FormControlLabel,
   Tooltip,
 } from "@mui/material";
 import SchoolIcon from "@mui/icons-material/School";
@@ -28,10 +26,11 @@ import PlaceOutlinedIcon from "@mui/icons-material/PlaceOutlined";
 import CloseIcon from "@mui/icons-material/Close";
 import DeleteIcon from "@mui/icons-material/Delete";
 import EmailIcon from "@mui/icons-material/Email";
+import FilterListIcon from "@mui/icons-material/FilterList";
 import "../../../css/TA_Recruiter/Institutes/InstitutesList.css";
 import "../../../css/TA_Recruiter/Institutes/AddInstitute.css";
 
-interface Filters {
+interface InstituteFilters {
   instituteName: string;
   state: string;
   cities: string[];
@@ -40,31 +39,13 @@ interface Filters {
   programs: string[];
 }
 
-interface AddTpoForm {
-  tpoName: string;
-  tpoEmail: string;
-  tpoMobile: string;
-  tpoDesignation: string;
-}
-
-const EMPTY_TPO_FORM: AddTpoForm = { tpoName: "", tpoEmail: "", tpoMobile: "", tpoDesignation: "" };
-
-const ChevronIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={{ position: 'absolute', right: 8, pointerEvents: 'none' }}>
-    <path d="M4 6L8 10L12 6" stroke="var(--color-filter-arrow)" strokeWidth="1.33" strokeLinecap="round" strokeLinejoin="round"/>
-  </svg>
-);
-
 const InstitutesList: React.FC = () => {
   const navigate = useNavigate();
   const [allInstitutes, setAllInstitutes] = useState<InstituteResponse[]>([]);
   const [filteredInstitutes, setFilteredInstitutes] = useState<InstituteResponse[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
-  const [showMoreFilters, setShowMoreFilters] = useState(false);
-  const [showAcademicDropdown, setShowAcademicDropdown] = useState(false);
-  const moreFiltersRef = useRef<HTMLDivElement>(null);
-  const academicDropdownRef = useRef<HTMLDivElement>(null);
-  const [filters, setFilters] = useState<Filters>({
+  const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
+  const [filters, setFilters] = useState<InstituteFilters>({
     instituteName: "",
     state: "",
     cities: [],
@@ -73,11 +54,10 @@ const InstitutesList: React.FC = () => {
     programs: [],
   });
   const [addInstituteDialog, setAddInstituteDialog] = useState(false);
-  const [addActiveTab, setAddActiveTab] = useState<"basic" | "contact" | "academic">("basic");
-  const [addForm, setAddForm] = useState({ instituteName: "", instituteTier: "", city: "", state: "", isActive: true });
+  const [addForm, setAddForm] = useState<InstituteBasicForm>({ instituteName: "", instituteTier: "", city: "", state: "", isActive: true });
   const [addSelectedProgramIds, setAddSelectedProgramIds] = useState<number[]>([]);
   const [allPrograms, setAllPrograms] = useState<{ programId: number; programName: string }[]>([]);
-  const [addTpoForms, setAddTpoForms] = useState<AddTpoForm[]>([]);
+  const [addTpoForms, setAddTpoForms] = useState<TpoForm[]>([]);
   const [uploadDialog, setUploadDialog] = useState(false);
   const [dragOver, setDragOver] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -127,20 +107,6 @@ const InstitutesList: React.FC = () => {
     if (savedFilters) setFilters(savedFilters);
   }, []);
 
-  // Close more filters panel on outside click
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (moreFiltersRef.current && !moreFiltersRef.current.contains(e.target as Node)) {
-        setShowMoreFilters(false);
-      }
-      if (academicDropdownRef.current && !academicDropdownRef.current.contains(e.target as Node)) {
-        setShowAcademicDropdown(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
   const fetchInstitutes = async () => {
     try {
       const response = await instituteApi.getAllInstitutes();
@@ -187,7 +153,9 @@ const InstitutesList: React.FC = () => {
 
 
 
-  const handleFilterChange = (field: keyof Filters, value: string | string[]) => {
+  const hasActiveFilters = !!(filters.state || filters.cities.length || filters.instituteTier || filters.status || filters.programs.length);
+
+  const handleFilterChange = (field: keyof InstituteFilters, value: string | string[]) => {
     setFilters((prev) => {
       const updated = { ...prev, [field]: value };
       if (field === "state") updated.cities = [];
@@ -196,9 +164,13 @@ const InstitutesList: React.FC = () => {
     });
   };
 
-  const handleProgramToggle = (program: string) => {
+  const handleCheckboxToggle = (field: keyof InstituteFilters, value: string) => {
     setFilters((prev) => {
-      const updated = { ...prev, programs: prev.programs.includes(program) ? prev.programs.filter((p) => p !== program) : [...prev.programs, program] };
+      const current = prev[field] as string[];
+      const updated = {
+        ...prev,
+        [field]: current.includes(value) ? current.filter((v) => v !== value) : [...current, value],
+      };
       tokenstore.saveInstituteFilters(updated);
       return updated;
     });
@@ -352,7 +324,6 @@ const InstitutesList: React.FC = () => {
 
   const resetAddInstituteState = () => {
     setAddInstituteDialog(false);
-    setAddActiveTab("basic");
     setAddForm({ instituteName: "", instituteTier: "", city: "", state: "", isActive: true });
     setAddSelectedProgramIds([]);
     setAddTpoForms([]);
@@ -363,28 +334,20 @@ const InstitutesList: React.FC = () => {
       showToast("Please fill all required fields", "error"); return;
     }
     const validTpoForms = addTpoForms.filter((form) => form.tpoName.trim() && form.tpoEmail.trim());
-    const primaryTpo = validTpoForms[0];
     try {
-      const createResponse = await instituteApi.createInstitute({
+      await instituteApi.createInstituteFull({
         ...addForm,
         ...(addSelectedProgramIds.length > 0 ? { programIds: addSelectedProgramIds } : {}),
-        ...(primaryTpo ? { tpoContact: primaryTpo } : {}),
-      });
-
-      if (validTpoForms.length > 1 && createResponse.data?.instituteId) {
-        for (const form of validTpoForms.slice(1)) {
-          await instituteTPOApi.createContact({
-            instituteId: createResponse.data.instituteId,
+        ...(validTpoForms.length > 0 ? {
+          tpoContacts: validTpoForms.map((form, idx) => ({
             tpoName: form.tpoName,
             tpoEmail: form.tpoEmail,
             tpoMobile: form.tpoMobile,
             tpoDesignation: form.tpoDesignation,
-            tpoStatus: "ACTIVE",
-            isPrimary: false,
-          });
-        }
-      }
-
+            isPrimary: idx === 0,
+          }))
+        } : {}),
+      });
       showToast("Institute added successfully", "success");
       resetAddInstituteState();
       fetchInstitutes();
@@ -397,7 +360,6 @@ const InstitutesList: React.FC = () => {
   const handleInstituteClick = (instituteId: number) => navigate(`/ta-recruiter/institutes/${instituteId}`);
   const handleAddInstitute = () => {
     setAddInstituteDialog(true);
-    setAddActiveTab("basic");
     setAddTpoForms([]);
   };
 
@@ -410,11 +372,12 @@ const InstitutesList: React.FC = () => {
         return;
       }
       const emailIds: string[] = (res.data.tpoDetails ?? [])
+        .filter((tpo: { tpoEmail: string; tpoStatus: string }) => tpo.tpoStatus === "ACTIVE")
         .map((tpo: { tpoEmail: string }) => tpo.tpoEmail)
         .filter(Boolean);
 
       if (emailIds.length === 0) {
-        showToast('No TPO contacts found for this institute', 'error');
+        showToast('No active TPO contacts found for this institute', 'error');
         return;
       }
       navigate('/ta-recruiter/send-email', {
@@ -465,8 +428,17 @@ const InstitutesList: React.FC = () => {
 
   return (
     <Box className="institutes-container">
-      {/* Top Filter Bar */}
+      {/* Top Bar */}
       <Box className="institutes-filter-bar">
+        {/* Filter Toggle */}
+        <IconButton
+          size="small"
+          onClick={() => setSidebarOpen((prev) => !prev)}
+          className={`institutes-filter-toggle-btn${hasActiveFilters ? " institutes-filter-toggle-btn--active" : ""}`}
+        >
+          <FilterListIcon fontSize="small" />
+        </IconButton>
+
         {/* Search */}
         <Box className="institutes-search-wrap">
           <span className="institutes-search-icon">
@@ -481,130 +453,6 @@ const InstitutesList: React.FC = () => {
             onChange={(e) => handleFilterChange("instituteName", e.target.value)}
           />
         </Box>
-
-        {/* Location Filter */}
-        <FormControl size="small" className="institutes-mui-select">
-          <Select
-            value={filters.state}
-            onChange={(e) => handleFilterChange("state", e.target.value)}
-            displayEmpty
-            IconComponent={ChevronIcon}
-          >
-            <MenuItem value="">All Locations</MenuItem>
-            {uniqueStates.map((state) => (
-              <MenuItem key={state} value={state}>{state}</MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-
-        {/* City Filter — shown only when a state is selected */}
-        {filters.state && citiesForSelectedState.length > 0 && (
-          <FormControl size="small" className="institutes-mui-select">
-            <Select
-              value={filters.cities[0] || ""}
-              onChange={(e) => handleFilterChange("cities", e.target.value ? [e.target.value] : [])}
-              displayEmpty
-              IconComponent={ChevronIcon}
-            >
-              <MenuItem value="">All Cities</MenuItem>
-              {citiesForSelectedState.map((city) => (
-                <MenuItem key={city} value={city}>{city}</MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        )}
-
-        {/* Academic Filter */}
-        <div className="institutes-academic-wrap" ref={academicDropdownRef}>
-          <button
-            className={`institutes-academic-btn${filters.programs.length > 0 ? " institutes-academic-btn--active" : ""}`}
-            onClick={() => setShowAcademicDropdown(!showAcademicDropdown)}
-          >
-            {filters.programs.length > 0 ? `Academic (${filters.programs.length})` : "Academic"}
-            <ChevronIcon />
-          </button>
-          {showAcademicDropdown && (
-            <Box className="institutes-academic-panel">
-              <Box className="institutes-academic-grid">
-                {uniquePrograms.map((program) => (
-                  <FormControlLabel
-                    key={program}
-                    control={
-                      <Checkbox
-                        checked={filters.programs.includes(program)}
-                        onChange={() => handleProgramToggle(program)}
-                        size="small"
-                      />
-                    }
-                    label={program.replace(/_/g, " ")}
-                    className="institutes-academic-check"
-                  />
-                ))}
-              </Box>
-            </Box>
-          )}
-        </div>
-
-        {/* Funnel Filter Icon */}
-        <div className="institutes-more-filters-wrap" ref={moreFiltersRef}>
-          <button
-            className={`institutes-funnel-btn${(filters.instituteTier || filters.status) ? " institutes-funnel-btn--active" : ""}`}
-            onClick={() => setShowMoreFilters(!showMoreFilters)}
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
-            </svg>
-            {(filters.instituteTier || filters.status) && <span className="institutes-funnel-dot" />}
-          </button>
-
-          {showMoreFilters && (
-            <Box className="institutes-more-panel">
-              <Box className="institutes-more-panel-header">
-                <Typography className="institutes-more-panel-title">Filters</Typography>
-                <IconButton size="small" onClick={() => setShowMoreFilters(false)}>
-                  <CloseIcon fontSize="small" />
-                </IconButton>
-              </Box>
-
-              {/* Tier */}
-              <Box className="institutes-more-section">
-                <Typography className="institutes-more-label">Tier</Typography>
-                <FormControl size="small" fullWidth className="institutes-mui-select">
-                  <Select value={filters.instituteTier} onChange={(e) => handleFilterChange("instituteTier", e.target.value)} displayEmpty IconComponent={ChevronIcon}>
-                    <MenuItem value="">All Tiers</MenuItem>
-                    {uniqueTiers.map((tier) => <MenuItem key={tier} value={tier}>{tier.replace("_", " ")}</MenuItem>)}
-                  </Select>
-                </FormControl>
-              </Box>
-
-              {/* Status */}
-              <Box className="institutes-more-section">
-                <Typography className="institutes-more-label">Status</Typography>
-                <FormControl size="small" fullWidth className="institutes-mui-select">
-                  <Select value={filters.status} onChange={(e) => handleFilterChange("status", e.target.value)} displayEmpty IconComponent={ChevronIcon}>
-                    <MenuItem value="">All Status</MenuItem>
-                    <MenuItem value="active">Active</MenuItem>
-                    <MenuItem value="inactive">Inactive</MenuItem>
-                  </Select>
-                </FormControl>
-              </Box>
-
-              <Box className="institutes-more-footer">
-                {(filters.instituteTier || filters.status) && (
-                  <button className="institutes-clear-btn" onClick={() => setFilters(prev => ({ ...prev, instituteTier: "", status: "" }))}>Clear</button>
-                )}
-              </Box>
-            </Box>
-          )}
-        </div>
-
-        {/* Refresh/Clear filters button */}
-        <button className="institutes-icon-action-btn" onClick={clearFilters} title="Clear filters">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <polyline points="23 4 23 10 17 10" />
-            <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
-          </svg>
-        </button>
 
         <Box className="institutes-filter-spacer" />
 
@@ -626,241 +474,123 @@ const InstitutesList: React.FC = () => {
         </Box>
       </Box>
 
-      {/* Card Grid */}
-      {filteredInstitutes.length === 0 ? (
-        <Box className="no-results-card">
-          <Box className="no-results-content">
-            <SchoolIcon className="no-results-icon" />
-            <Typography variant="h6">No institutes found</Typography>
-            <Typography variant="body2">Try adjusting your filters or add a new institute</Typography>
-          </Box>
-        </Box>
-      ) : (
-        <Box className="institutes-grid-wrap">
-          <Box className="institutes-grid">
-            {filteredInstitutes.slice(0, page * pageSize).map((institute) => (
-              <Box
-                key={institute.instituteId}
-                className="institute-card"
-                onClick={() => handleInstituteClick(institute.instituteId)}
-              >
-                <Box className="institute-card-top">
-                  <Box className="institute-card-icon-wrap">
-                    <img src="/InstituteIcon2.svg" alt="Institute" className="institute-card-icon-img" />
-                  </Box>
-                  <Box className="institute-card-info">
-                    <Typography className="institute-card-name t-row-primary">{institute.instituteName}</Typography>
-                    <Box className="institute-card-bottom">
-                      <Typography className={getTierClassName(institute.instituteTier)}>
-                        {institute.instituteTier.replace("_", " ")}
-                      </Typography>
-                      <Box className="institute-card-location">
-                        <PlaceOutlinedIcon className="institute-card-location-icon" />
-                        <Typography className="institute-card-location-text t-meta-text">
-                          {institute.city}, {institute.state}
+      {/* Main layout: sidebar + content */}
+      <Box className="institutes-main-layout">
+        {/* Filter Sidebar */}
+        <InstituteFilter
+          isOpen={sidebarOpen}
+          onClose={() => setSidebarOpen(false)}
+          filters={filters}
+          onFilterChange={handleFilterChange}
+          onCheckboxToggle={handleCheckboxToggle}
+          onClearFilters={clearFilters}
+          uniqueStates={uniqueStates}
+          citiesForSelectedState={citiesForSelectedState}
+          uniqueTiers={uniqueTiers}
+          uniquePrograms={uniquePrograms}
+          totalCount={allInstitutes.length}
+          filteredCount={filteredInstitutes.length}
+          hasActiveFilters={hasActiveFilters}
+        />
+
+        {/* Card Grid */}
+        <Box className={`institutes-content${sidebarOpen ? " institutes-content--shifted" : ""}`}>
+          {filteredInstitutes.length === 0 ? (
+            <Box className="no-results-card">
+              <Box className="no-results-content">
+                <SchoolIcon className="no-results-icon" />
+                <Typography variant="h6">No institutes found</Typography>
+                <Typography variant="body2">Try adjusting your filters or add a new institute</Typography>
+              </Box>
+            </Box>
+          ) : (
+            <Box className="institutes-grid-wrap">
+              <Box className="institutes-grid">
+                {filteredInstitutes.slice(0, page * pageSize).map((institute) => (
+                  <Box
+                    key={institute.instituteId}
+                    className="institute-card"
+                    onClick={() => handleInstituteClick(institute.instituteId)}
+                  >
+                    <Box className="institute-card-top">
+                      <Box className="institute-card-icon-wrap">
+                        <img src="/InstituteIcon2.svg" alt="Institute" className="institute-card-icon-img" />
+                      </Box>
+                      <Box className="institute-card-info">
+                        <Typography className="institute-card-name t-row-primary">{institute.instituteName}</Typography>
+                        <Box className="institute-card-bottom">
+                          <Typography className={getTierClassName(institute.instituteTier)}>
+                            {institute.instituteTier.replace("_", " ")}
+                          </Typography>
+                          <Box className="institute-card-location">
+                            <PlaceOutlinedIcon className="institute-card-location-icon" />
+                            <Typography className="institute-card-location-text t-meta-text">
+                              {institute.city}, {institute.state}
+                            </Typography>
+                          </Box>
+                        </Box>
+                      </Box>
+                      <Box className="institute-card-actions">
+                        <Typography
+                          className={getStatusClassName(institute.isActive)}
+                          onClick={(e) => { e.stopPropagation(); handleToggleStatus(institute); }}
+                        >
+                          {institute.isActive ? "Active" : "Inactive"}
                         </Typography>
+                        <Tooltip
+                          title="Send Email to TPO"
+                          arrow
+                          classes={{ tooltip: 'g-tooltip', arrow: 'g-tooltip-arrow' }}
+                        >
+                          <span>
+                            <IconButton
+                              size="small"
+                              className="t-action-btn g-icon-btn"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleInvite(institute.instituteId);
+                              }}
+                              disabled={sendingEmail === institute.instituteId}
+                            >
+                              {sendingEmail === institute.instituteId
+                                ? <CircularProgress size={14} />
+                                : <EmailIcon fontSize="small" />}
+                            </IconButton>
+                          </span>
+                        </Tooltip>
                       </Box>
                     </Box>
                   </Box>
-                  <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '6px' }}>
-                    <Typography
-                      className={getStatusClassName(institute.isActive)}
-                      onClick={(e) => { e.stopPropagation(); handleToggleStatus(institute); }}
-                    >
-                      {institute.isActive ? "Active" : "Inactive"}
-                    </Typography>
-                    <Tooltip
-                      title="Send Email to TPO"
-                      arrow
-                      classes={{ tooltip: 'g-tooltip', arrow: 'g-tooltip-arrow' }}
-                    >
-                      <span>
-                        <IconButton
-                          size="small"
-                          className="t-action-btn g-icon-btn"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleInvite(institute.instituteId);
-                          }}
-                          disabled={sendingEmail === institute.instituteId}
-                        >
-                          {sendingEmail === institute.instituteId
-                            ? <CircularProgress size={14} />
-                            : <EmailIcon fontSize="small" />}
-                        </IconButton>
-                      </span>
-                    </Tooltip>
-                  </Box>
-                </Box>
+                ))}
               </Box>
-            ))}
-          </Box>
-          <div ref={sentinelRef} className="il-sentinel" />
+              <div ref={sentinelRef} className="il-sentinel" />
+            </Box>
+          )}
         </Box>
-      )}
+      </Box>
 
-      {/* Add Institute Dialog */}
-      <Dialog open={addInstituteDialog} onClose={resetAddInstituteState} maxWidth={false}
-        PaperProps={{ className: 'ai-dialog-paper' }}>
-        <DialogTitle className="ai-dialog-title-wrap">
-          <Box className="ai-dialog-title-box">
-            <Box>
-              <Typography className="ai-dialog-heading">Add New Institute</Typography>
-              <Typography className="ai-dialog-subheading">Enter all the details about the institute. All fields marked with * are required.</Typography>
-            </Box>
-            <IconButton size="small" onClick={resetAddInstituteState}><CloseIcon fontSize="small" /></IconButton>
-          </Box>
-          <Box className="ai-tabs">
-            {(["basic", "contact", "academic"] as const).map((tab) => (
-              <button key={tab} className={`ai-tab${addActiveTab === tab ? " ai-tab--active" : ""}`} onClick={() => setAddActiveTab(tab)}>
-                {tab === "basic" ? "Basic Information" : tab === "contact" ? "Contact Details" : "Academic"}
-              </button>
-            ))}
-          </Box>
-        </DialogTitle>
-        <DialogContent className="ai-dialog-content-wrap">
-          {addActiveTab === "basic" && (
-            <Box className="ai-form">
-              <Box className="ai-row-2">
-                <Box className="ai-field"><label className="ai-label">Institute Name <span className="ai-req">*</span></label>
-                  <input className="ai-input" placeholder="Enter institute name" value={addForm.instituteName} onChange={(e) => setAddForm({ ...addForm, instituteName: e.target.value })} /></Box>
-                <Box className="ai-field"><label className="ai-label">Tier <span className="ai-req">*</span></label>
-                  <select className="ai-select" value={addForm.instituteTier} onChange={(e) => setAddForm({ ...addForm, instituteTier: e.target.value })}>
-                    <option value="">Select tier</option>
-                    <option value="TIER_1">TIER 1</option>
-                    <option value="TIER_2">TIER 2</option>
-                    <option value="TIER_3">TIER 3</option>
-                  </select></Box>
-              </Box>
-              <Box className="ai-row-3">
-                <Box className="ai-field"><label className="ai-label">City <span className="ai-req">*</span></label>
-                  <input className="ai-input" placeholder="Enter city" value={addForm.city} onChange={(e) => setAddForm({ ...addForm, city: e.target.value })} /></Box>
-                <Box className="ai-field"><label className="ai-label">State <span className="ai-req">*</span></label>
-                  <Box style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <select
-                    className="ai-select"
-                    value={["Tamil Nadu","Andhra Pradesh","Kerala","Karnataka","Puducherry","Telangana","Maharashtra","Others"].includes(addForm.state) ? addForm.state : (addForm.state ? "Others" : "")}
-                    onChange={(e) => {
-                      if (e.target.value === "Others") {
-                        setAddForm({ ...addForm, state: "Others" });
-                      } else {
-                        setAddForm({ ...addForm, state: e.target.value });
-                      }
-                    }}
-                  >
-                    <option value="">Select state</option>
-                    <option value="Tamil Nadu">Tamil Nadu</option>
-                    <option value="Andhra Pradesh">Andhra Pradesh</option>
-                    <option value="Kerala">Kerala</option>
-                    <option value="Karnataka">Karnataka</option>
-                    <option value="Puducherry">Puducherry</option>
-                    <option value="Telangana">Telangana</option>
-                    <option value="Maharashtra">Maharashtra</option>
-                    <option value="Others">Others</option>
-                  </select>
-                  {(addForm.state === "Others" || (!["Tamil Nadu","Andhra Pradesh","Kerala","Karnataka","Puducherry","Telangana","Maharashtra",""].includes(addForm.state))) && (
-                    <input
-                      className="ai-input"
-                      style={{ display: 'inline-block', width: 'auto', flex: 1, marginLeft: '8px' }}
-                      placeholder="Enter state name"
-                      value={addForm.state === "Others" ? "" : addForm.state}
-                      onChange={(e) => setAddForm({ ...addForm, state: e.target.value })}
-                    />
-                  )}
-                  </Box>
-                </Box>
-              </Box>
-              <Box className="ai-row-2">
-                <Box className="ai-field"><label className="ai-label">Status <span className="ai-req">*</span></label>
-                  <select className="ai-select" value={addForm.isActive ? "active" : "inactive"} onChange={(e) => setAddForm({ ...addForm, isActive: e.target.value === "active" })}>
-                    <option value="active">Active</option><option value="inactive">Inactive</option>
-                  </select></Box>
-              </Box>
-            </Box>
-          )}
-          {addActiveTab === "contact" && (
-            <Box className="ai-form">
-              <Box className="ai-contact-card">
-                <Box className="ai-contact-card-header">
-                  <Typography className="ai-contact-card-title">TPO Contacts</Typography>
-                  <button className="ai-add-contact-btn" onClick={() => setAddTpoForms((prev) => [...prev, { ...EMPTY_TPO_FORM }])}>+ Add</button>
-                </Box>
-              </Box>
-              {addTpoForms.map((form, idx) => (
-                <Box key={idx} className="ai-contact-card">
-                  <Box className="ai-contact-card-header">
-                    <Typography className="ai-contact-card-title">{idx === 0 ? "Primary Contact Person" : `TPO Contact ${idx + 1}`}</Typography>
-                    {idx > 0 && (
-                      <button className="ai-add-contact-btn ai-remove-contact-btn" onClick={() => setAddTpoForms((prev) => prev.filter((_, i) => i !== idx))}>✕ Remove</button>
-                    )}
-                  </Box>
-                  <Box className="ai-row-2">
-                    <Box className="ai-field"><label className="ai-label">TPO Name <span className="ai-req">*</span></label>
-                      <input className="ai-input" placeholder="Enter contact person name" value={form.tpoName} onChange={(e) => setAddTpoForms((prev) => prev.map((f, i) => i === idx ? { ...f, tpoName: e.target.value } : f))} /></Box>
-                    <Box className="ai-field"><label className="ai-label">Phone <span className="ai-req">*</span></label>
-                      <input className="ai-input" placeholder="+91 98765 43210" value={form.tpoMobile} onChange={(e) => setAddTpoForms((prev) => prev.map((f, i) => i === idx ? { ...f, tpoMobile: e.target.value.replace(/\D/g, "").slice(0, 10) } : f))} /></Box>
-                  </Box>
-                  <Box className="ai-row-2">
-                    <Box className="ai-field"><label className="ai-label">Email <span className="ai-req">*</span></label>
-                      <input className="ai-input" placeholder="person@institute.edu" type="email" value={form.tpoEmail} onChange={(e) => setAddTpoForms((prev) => prev.map((f, i) => i === idx ? { ...f, tpoEmail: e.target.value } : f))} /></Box>
-                    <Box className="ai-field"><label className="ai-label">Designation</label>
-                      <input className="ai-input" placeholder="e.g., Placement Officer" value={form.tpoDesignation} onChange={(e) => setAddTpoForms((prev) => prev.map((f, i) => i === idx ? { ...f, tpoDesignation: e.target.value } : f))} /></Box>
-                  </Box>
-                </Box>
-              ))}
-            </Box>
-          )}
-          {addActiveTab === "academic" && (
-            <Box className="ai-form">
-              <Typography className="ai-academic-title">Academic Information</Typography>
-              <Typography className="ai-academic-subtitle">Add all departments available in the institute</Typography>
-              <Box className="ai-program-chips-wrap">
-                {allPrograms.map((program) => {
-                  const selected = addSelectedProgramIds.includes(program.programId);
-                  return (
-                    <button
-                      key={program.programId}
-                      type="button"
-                      className={`ai-program-chip${selected ? ' ai-program-chip--active' : ''}`}
-                      onClick={() => setAddSelectedProgramIds((prev) =>
-                        prev.includes(program.programId) ? prev.filter((id) => id !== program.programId) : [...prev, program.programId]
-                      )}
-                    >
-                      <span className="ai-chip-checkbox">{selected && <span className="ai-chip-check" />}</span>
-                      {program.programName}
-                    </button>
-                  );
-                })}
-              </Box>
-            </Box>
-          )}
-        </DialogContent>
-        <DialogActions className="ai-dialog-actions-wrap">
-          {addActiveTab === "academic" ? (
-            <>
-              <button className="ai-clear-btn" onClick={() => setAddSelectedProgramIds([])}>
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
-                Clear
-              </button>
-              <button className="ai-save-btn" onClick={handleAddInstituteSave}>
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z" /><polyline points="17 21 17 13 7 13 7 21" /><polyline points="7 3 7 8 15 8" /></svg>
-                Save
-              </button>
-            </>
-          ) : (
-            <>
-              <button className="ai-cancel-btn" onClick={resetAddInstituteState}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
-                Cancel
-              </button>
-              <button className="ai-save-btn" onClick={handleAddInstituteSave}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z" /><polyline points="17 21 17 13 7 13 7 21" /><polyline points="7 3 7 8 15 8" /></svg>
-                Save
-              </button>
-            </>
-          )}
-        </DialogActions>
-      </Dialog>
+      <InstituteFormDialog
+        open={addInstituteDialog}
+        mode="add"
+        basicForm={addForm}
+        tpoForms={addTpoForms}
+        selectedProgramIds={addSelectedProgramIds}
+        allPrograms={allPrograms}
+        onClose={resetAddInstituteState}
+        onSave={handleAddInstituteSave}
+        onBasicChange={(field, value) => setAddForm((prev) => ({ ...prev, [field]: value }))}
+        onTpoChange={(idx, field, value) =>
+          setAddTpoForms((prev) => prev.map((f, i) => i === idx ? { ...f, [field]: value } : f))
+        }
+        onTpoAdd={() => setAddTpoForms((prev) => [...prev, { tpoName: "", tpoEmail: "", tpoMobile: "", tpoDesignation: "", isPrimary: false }])}
+        onTpoRemove={(idx) => setAddTpoForms((prev) => prev.filter((_, i) => i !== idx))}
+        onProgramToggle={(id) =>
+          setAddSelectedProgramIds((prev) =>
+            prev.includes(id) ? prev.filter((p) => p !== id) : [...prev, id]
+          )
+        }
+        onClearPrograms={() => setAddSelectedProgramIds([])}
+      />
 
       {/* Upload Dialog */}
       <Dialog

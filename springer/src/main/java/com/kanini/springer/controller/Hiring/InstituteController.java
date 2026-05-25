@@ -1,9 +1,11 @@
 package com.kanini.springer.controller.Hiring;
 
 import com.kanini.springer.dto.Hiring.BulkInsertResponse;
+import com.kanini.springer.dto.Hiring.InstituteCreateRequest;
 import com.kanini.springer.dto.Hiring.InstituteNameResponse;
 import com.kanini.springer.dto.Hiring.InstituteRequest;
 import com.kanini.springer.dto.Hiring.InstituteResponse;
+import com.kanini.springer.dto.Hiring.InstituteUpdateRequest;
 import com.kanini.springer.dto.Hiring.InstituteWithTPOsResponse;
 import com.kanini.springer.service.Hiring.IInstituteService;
 import com.kanini.springer.dto.Authentication.ApiResponse;
@@ -40,6 +42,18 @@ public class InstituteController {
         }
         
         InstituteResponse response = instituteService.createInstitute(request);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(new ApiResponse<>(true, "Institute created successfully", response));
+    }
+
+    @PostMapping("/full")
+    @Operation(summary = "Create institute (full)", description = "Creates an institute with optional programs and multiple TPO contacts in a single transaction.")
+    public ResponseEntity<ApiResponse<InstituteWithTPOsResponse>> createInstituteFull(@RequestBody InstituteCreateRequest request) {
+        if (request.getInstituteName() == null || request.getInstituteName().isBlank()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new ApiResponse<>(false, "Institute name is required", null));
+        }
+        InstituteWithTPOsResponse response = instituteService.createInstituteFull(request);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(new ApiResponse<>(true, "Institute created successfully", response));
     }
@@ -84,6 +98,15 @@ public class InstituteController {
             @PathVariable("id") Long instituteId,
             @RequestBody InstituteRequest request) {
         InstituteResponse response = instituteService.updateInstitute(instituteId, request);
+        return ResponseEntity.ok(new ApiResponse<>(true, "Institute updated successfully", response));
+    }
+
+    @PutMapping("/{id}/full")
+    @Operation(summary = "Full update of institute", description = "Updates basic info, programs and TPO contacts in a single transaction.")
+    public ResponseEntity<ApiResponse<InstituteWithTPOsResponse>> fullUpdateInstitute(
+            @PathVariable("id") Long instituteId,
+            @RequestBody InstituteUpdateRequest request) {
+        InstituteWithTPOsResponse response = instituteService.fullUpdateInstitute(instituteId, request);
         return ResponseEntity.ok(new ApiResponse<>(true, "Institute updated successfully", response));
     }
     

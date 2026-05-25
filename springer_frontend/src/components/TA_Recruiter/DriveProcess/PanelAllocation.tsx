@@ -33,8 +33,7 @@ const PanelAllocation: React.FC = () => {
 
   const candidates = navState?.candidates || [];
   const roundNo = navState?.roundNo;
-  const batchTime = navState?.batchTime;
-  const driveName = navState?.driveName;
+ 
 
   const [panelMembers, setPanelMembers] = useState<UserResponse[]>([]);
   const [assignments, setAssignments] = useState<Record<number, number | "">>({});

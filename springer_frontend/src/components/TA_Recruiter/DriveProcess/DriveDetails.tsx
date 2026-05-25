@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { Box, Card, Typography, CircularProgress } from "@mui/material";
 import { driveScheduleApi } from "../../../services/driveschedule.api";
 import type { DriveAnalyticsResponse } from "../../../types/TA_Recruiter/DriveSchedule/driveSchedule.types";
@@ -9,7 +9,7 @@ import "../../../css/TA_Recruiter/DriveProcess/DriveDetails.css";
 
 const DriveDetails: React.FC = () => {
   const { driveId } = useParams<{ driveId: string }>();
-  const navigate = useNavigate();
+
   const [analytics, setAnalytics] = useState<DriveAnalyticsResponse | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
 
@@ -36,10 +36,7 @@ const DriveDetails: React.FC = () => {
     }
   };
 
-  const handleBackClick = () => {
-    navigate(-1);
-  };
-
+  
   const formatDate = (dateStr?: string) => {
     if (!dateStr) return "—";
     return new Date(dateStr).toLocaleDateString("en-IN", {

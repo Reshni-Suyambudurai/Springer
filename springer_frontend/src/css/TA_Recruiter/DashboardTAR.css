@@ -23,7 +23,7 @@
 .dashboard-title {
   font-size: var(--text-xl);
   font-weight: 700;
-  color: var(--color-text-primary);
+  color: var(--color-primary);
   margin: 0;
   text-align: center;
   flex: 1;

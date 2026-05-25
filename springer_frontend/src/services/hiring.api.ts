@@ -14,7 +14,9 @@ import type {
   InstituteResponse, 
   InstituteWithTPOsResponse,
   PagedInstituteWithTPOsResponse,
-  InstituteNameResponse
+  InstituteNameResponse,
+  InstituteUpdateRequest,
+  InstituteCreateRequest
 } from "../types/TA_Recruiter/Hiring/institute.types";
 import type { 
   InstituteContactRequest, 
@@ -446,6 +448,32 @@ export const instituteApi = {
   async getAllInstituteNames(): Promise<ApiResponse<InstituteNameResponse[]>> {
     try {
       const response = await http.get('/institutes/names');
+      return response.data;
+    } catch (error) {
+      throw handleAxiosError(error);
+    }
+  },
+
+  /**
+   * Full update: basic info + programs + TPO contacts in one call
+   * PUT /api/institutes/{id}/full
+   */
+  async fullUpdateInstitute(id: number, data: InstituteUpdateRequest): Promise<ApiResponse<InstituteWithTPOsResponse>> {
+    try {
+      const response = await http.put(`/institutes/${id}/full`, data);
+      return response.data;
+    } catch (error) {
+      throw handleAxiosError(error);
+    }
+  },
+
+  /**
+   * Create institute with optional programs and multiple TPO contacts in one call
+   * POST /api/institutes/full
+   */
+  async createInstituteFull(data: InstituteCreateRequest): Promise<ApiResponse<InstituteWithTPOsResponse>> {
+    try {
+      const response = await http.post(`/institutes/full`, data);
       return response.data;
     } catch (error) {
       throw handleAxiosError(error);

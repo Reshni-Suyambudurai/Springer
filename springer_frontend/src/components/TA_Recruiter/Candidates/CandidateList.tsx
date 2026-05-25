@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { candidateApi } from "../../../services/drive.api";
 import { hiringCycleApi } from "../../../services/hiring.api";
 import type { CycleWithDrivesResponse, DriveInfo } from "../../../types/TA_Recruiter/Hiring/hiringCycle.types";
@@ -87,8 +87,6 @@ const ChevronIcon = () => (
 
 const CandidateList: React.FC = () => {
   const navigate = useNavigate();
-  const [, setSearchParams] = useSearchParams();
-  const location = useLocation();
   const [cycles, setCycles] = useState<CycleWithDrivesResponse[]>([]);
   const [selectedCycle, setSelectedCycle] = useState<number | null>(null);
   const [selectedDrive, setSelectedDrive] = useState<number | "">("");
@@ -224,26 +222,9 @@ const CandidateList: React.FC = () => {
     }
   }, [setFilters]);
 
-  // Sync filters with URL params
-  useEffect(() => {
-    const params = new URLSearchParams();
-    
-    if (filters.candidateName) params.set('candidateName', filters.candidateName);
-    if (filters.instituteName) params.set('instituteName', filters.instituteName);
-    if (filters.state) params.set('state', filters.state);
-    if (filters.cities.length > 0) params.set('cities', filters.cities.join(','));
-    if (filters.degrees.length > 0) params.set('degrees', filters.degrees.join(','));
-    if (filters.departments.length > 0) params.set('departments', filters.departments.join(','));
-    if (filters.eligibility.length > 0) params.set('eligibility', filters.eligibility.join(','));
-    if (filters.applicationTypes.length > 0) params.set('applicationTypes', filters.applicationTypes.join(','));
-    if (filters.applicationStages.length > 0) params.set('applicationStages', filters.applicationStages.join(','));
-    if (filters.skills.length > 0) params.set('skills', filters.skills.join(','));
-    
-    setSearchParams(params, { replace: true });
-  }, [filters.candidateName, filters.instituteName, filters.state, filters.cities,
-      filters.degrees, filters.departments, filters.eligibility,
-      filters.applicationTypes, filters.applicationStages, filters.skills,
-      setSearchParams]);
+  // Sync filters with URL params — REMOVED (caused triple API calls:
+  // filter useEffect + setSearchParams -> location.key change -> location.key useEffect)
+  // Filters are persisted via manual Save button to sessionStorage only.
 
   // Save filters to sessionStorage
   const saveFilters = () => {
@@ -274,13 +255,9 @@ const CandidateList: React.FC = () => {
     fetchCycles();
   }, []);
 
-  // Refresh candidates when navigating back to this page
-  useEffect(() => {
-    if (selectedCycle !== null) {
-      fetchCandidates(selectedCycle, backendFiltersWithDrive, false);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [location.key]);
+  // NOTE: location.key useEffect removed — it fired fetchCandidates on every
+  // URL change, including changes caused by the now-removed URL sync useEffect,
+  // producing a second API call on every filter change.
 
   const fetchCycles = async () => {
     try {

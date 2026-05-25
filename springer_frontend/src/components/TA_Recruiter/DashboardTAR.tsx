@@ -106,7 +106,7 @@ function DashboardTAR() {
   return (
     <div className="dashboard-container">
       <div className="dashboard-header">
-        <h2 className="dashboard-title">Drive Dashboard</h2>
+        <h2 className="dashboard-title">KANINI Drive Dashboard</h2>
         <div className="dashboard-header-right">
           <span
             className={`dashboard-cycle-icon${selectedCycle ? ` dashboard-cycle-icon-${selectedCycle.status.toLowerCase()}` : ''}${showInstitute ? ' dashboard-cycle-icon-active' : ''}`}

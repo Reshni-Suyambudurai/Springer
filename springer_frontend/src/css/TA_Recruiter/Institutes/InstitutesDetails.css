@@ -271,9 +271,73 @@
 
 /* -- TPO Primary badge -- */
 .id-tpo-primary-badge {
-  color: var(--color-primary);
-  font-size: 10px;
-  margin-left: 4px;
+  display: inline-block;
+  background-color: var(--color-primary);
+  color: var(--color-white);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  padding: 2px 7px;
+  border-radius: 20px;
+  margin-left: 6px;
+  vertical-align: middle;
+  line-height: 1.4;
+}
+
+/* -- TPO status inline toggle switch -- */
+.id-tpo-email-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.id-tpo-toggle {
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  user-select: none;
+}
+
+.id-tpo-toggle__track {
+  position: relative;
+  display: inline-block;
+  width: 32px;
+  height: 18px;
+  border-radius: 9px;
+  transition: background-color 0.2s ease;
+}
+
+.id-tpo-toggle__track--on {
+  background-color: var(--color-green);
+}
+
+.id-tpo-toggle__track--off {
+  background-color: var(--color-red);
+}
+
+.id-tpo-toggle__thumb {
+  position: absolute;
+  top: 2px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background-color: var(--color-white);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+  transition: left 0.2s ease;
+}
+
+.id-tpo-toggle__track--on .id-tpo-toggle__thumb {
+  left: 16px;
+}
+
+.id-tpo-toggle__track--off .id-tpo-toggle__thumb {
+  left: 2px;
+}
+
+.id-tpo-toggle:hover .id-tpo-toggle__track {
+  opacity: 0.85;
 }
 
 /* -- Edit Dialog (reuses ai-dialog-paper from InstitutesList) -- */

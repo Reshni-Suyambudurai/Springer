@@ -4,16 +4,12 @@ import { instituteApi, instituteTPOApi, programApi } from "../../../services/hir
 import type { InstituteWithTPOsResponse } from "../../../types/TA_Recruiter/Hiring/institute.types";
 import type { ProgramResponse } from "../../../types/TA_Recruiter/Hiring/program.types";
 import { showToast } from "../../../utils/toast";
-import {
-  Box, CircularProgress, Typography, IconButton,
-  Dialog, DialogTitle, DialogContent, DialogActions,
-  Button,
-} from "@mui/material";
+import { Box, CircularProgress, Typography, Button } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
-import CloseIcon from "@mui/icons-material/Close";
 import PlaceOutlinedIcon from "@mui/icons-material/PlaceOutlined";
+import InstituteFormDialog from "./InstituteFormDialog";
+import type { InstituteBasicForm, TpoForm, ExistingTpoForm } from "./InstituteFormDialog";
 import "../../../css/TA_Recruiter/Institutes/InstitutesDetails.css";
-import "../../../css/TA_Recruiter/Institutes/AddInstitute.css";
 
 const InstitutesDetails: React.FC = () => {
   const { instituteId } = useParams<{ instituteId: string }>();
@@ -22,11 +18,11 @@ const InstitutesDetails: React.FC = () => {
   const [allPrograms, setAllPrograms] = useState<ProgramResponse[]>([]);
 
   const [editInstDialog, setEditInstDialog] = useState(false);
-  const [editInstTab, setEditInstTab] = useState<"basic" | "contact" | "academic">("basic");
-  const [editInstForm, setEditInstForm] = useState({ instituteName: "", instituteTier: "", city: "", state: "", isActive: true });
+  const [editInstForm, setEditInstForm] = useState<InstituteBasicForm>({
+    instituteName: "", instituteTier: "", city: "", state: "", isActive: true,
+  });
   const [editSelectedProgramIds, setEditSelectedProgramIds] = useState<number[]>([]);
-  const [editTpoForms, setEditTpoForms] = useState<{ tpoId: number; tpoName: string; tpoEmail: string; tpoMobile: string; tpoDesignation: string; isPrimary: boolean }[]>([]);
-  const [extraTpoForms, setExtraTpoForms] = useState<{ tpoName: string; tpoEmail: string; tpoMobile: string; tpoDesignation: string }[]>([]);
+  const [editTpoForms, setEditTpoForms] = useState<(TpoForm | ExistingTpoForm)[]>([]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -47,17 +43,6 @@ const InstitutesDetails: React.FC = () => {
     if (instituteId) fetchData();
   }, [instituteId]);
 
-  const refreshData = async () => {
-    try {
-      const [instituteResponse, programsResponse] = await Promise.all([
-        instituteApi.getInstituteWithTPOsById(Number(instituteId)),
-        programApi.getAllPrograms()
-      ]);
-      setData(instituteResponse.data);
-      setAllPrograms(programsResponse.data);
-    } catch (error) { console.error(error); }
-  };
-
   const getTierClassName = (tier: string) => {
     switch (tier) {
       case "TIER_1": return "id-tier-badge id-tier-1";
@@ -67,8 +52,18 @@ const InstitutesDetails: React.FC = () => {
     }
   };
 
-  const handleOpenEditInst = () => {
-    if (!data) return;
+  const handleToggleTpoStatus = async (tpoId: number) => {
+    try {
+      await instituteTPOApi.deleteContact(tpoId);
+      const updated = await instituteApi.getInstituteWithTPOsById(Number(instituteId));
+      setData(updated.data);
+    } catch (error: unknown) {
+      const err = error as { message?: string };
+      showToast(err.message || "Failed to toggle TPO status", "error");
+    }
+  };
+
+  const handleOpenEditInst = () => {    if (!data) return;
     setEditInstForm({ 
       instituteName: data.instituteName, 
       instituteTier: data.instituteTier, 
@@ -78,7 +73,6 @@ const InstitutesDetails: React.FC = () => {
     });
     setEditSelectedProgramIds(data.programs.map(p => p.programId));
     setEditTpoForms(data.tpoDetails.map(t => ({ tpoId: t.tpoId, tpoName: t.tpoName, tpoEmail: t.tpoEmail, tpoMobile: t.tpoMobile, tpoDesignation: t.tpoDesignation || "", isPrimary: t.isPrimary })));
-    setEditInstTab("basic");
     setEditInstDialog(true);
   };
 
@@ -87,49 +81,42 @@ const InstitutesDetails: React.FC = () => {
       showToast("Please fill all required fields", "error"); return;
     }
     try {
-      await instituteApi.updateInstitute(Number(instituteId), { ...editInstForm });
-    } catch (error) {
-      console.error(error);
-      showToast("Failed to update institute", "error"); return;
+      const existingForms = editTpoForms.filter(
+        (f): f is ExistingTpoForm => (f as ExistingTpoForm).tpoId !== undefined
+      );
+      const newForms = editTpoForms.filter(
+        (f) => (f as ExistingTpoForm).tpoId === undefined
+      );
+
+      const result = await instituteApi.fullUpdateInstitute(Number(instituteId), {
+        ...editInstForm,
+        programIds: editSelectedProgramIds,
+        tpoContacts: existingForms.map((f) => ({
+          tpoId: f.tpoId,
+          tpoName: f.tpoName,
+          tpoEmail: f.tpoEmail,
+          tpoMobile: f.tpoMobile,
+          tpoDesignation: f.tpoDesignation,
+          isPrimary: f.isPrimary,
+        })),
+        newTpoContacts: newForms
+          .filter((f) => f.tpoName && f.tpoEmail)
+          .map((f) => ({
+            tpoName: f.tpoName,
+            tpoEmail: f.tpoEmail,
+            tpoMobile: f.tpoMobile,
+            tpoDesignation: f.tpoDesignation,
+            isPrimary: f.isPrimary,
+          })),
+      });
+      setData(result.data);
+      showToast("Institute updated successfully", "success");
+      setEditInstDialog(false);
+      setEditTpoForms([]);
+    } catch (error: unknown) {
+      const err = error as { message?: string };
+      showToast(err.message || "Failed to update institute", "error");
     }
-    // Update all existing TPO contacts
-    for (const form of editTpoForms) {
-      if (form.tpoName && form.tpoEmail) {
-        try {
-          await instituteTPOApi.updateContact(form.tpoId, {
-            tpoName: form.tpoName, tpoEmail: form.tpoEmail,
-            tpoMobile: form.tpoMobile, tpoDesignation: form.tpoDesignation,
-          });
-        } catch (error: unknown) {
-          const err = error as { message?: string };
-          showToast(err.message || "Failed to update TPO contact", "error"); return;
-        }
-      }
-    }
-    // Save extra TPO contacts
-    for (const form of extraTpoForms) {
-      if (form.tpoName && form.tpoEmail) {
-        try {
-          await instituteTPOApi.createContact({
-            instituteId: Number(instituteId),
-            tpoName: form.tpoName,
-            tpoEmail: form.tpoEmail,
-            tpoMobile: form.tpoMobile,
-            tpoDesignation: form.tpoDesignation,
-            tpoStatus: "ACTIVE",
-            isPrimary: false,
-          });
-        } catch (error: unknown) {
-          const err = error as { message?: string };
-          showToast(err.message || "Failed to save additional TPO contact", "error"); return;
-        }
-      }
-    }
-    showToast("Institute updated successfully", "success");
-    setEditInstDialog(false);
-    setExtraTpoForms([]);
-    setEditTpoForms([]);
-    await refreshData();
   };
 
   if (loading) return <Box className="t-loading"><CircularProgress /></Box>;
@@ -230,9 +217,21 @@ const InstitutesDetails: React.FC = () => {
               </Box>
               <Box>
                 <Typography className="id-cell-label">Email</Typography>
-                <Typography className="id-cell-value">{tpo.tpoEmail || "—"}</Typography>
+                <Box className="id-tpo-email-row">
+                  <Typography className="id-cell-value">{tpo.tpoEmail || "—"}</Typography>
+                  <label
+                    className="id-tpo-toggle"
+                    title={tpo.tpoStatus === "ACTIVE" ? "Active — click to deactivate" : "Inactive — click to activate"}
+                    onClick={() => handleToggleTpoStatus(tpo.tpoId)}
+                  >
+                    <span className={`id-tpo-toggle__track ${tpo.tpoStatus === "ACTIVE" ? "id-tpo-toggle__track--on" : "id-tpo-toggle__track--off"}`}>
+                      <span className="id-tpo-toggle__thumb" />
+                    </span>
+                  </label>
+                </Box>
               </Box>
             </Box>
+
           </Box>
         )) : (
           <Box className="id-info-grid">
@@ -269,152 +268,34 @@ const InstitutesDetails: React.FC = () => {
 
   
 
-      {/* Edit Institute Dialog — same style as Add Institute */}
-      <Dialog open={editInstDialog} onClose={() => setEditInstDialog(false)} maxWidth={false}
-        PaperProps={{ className: 'ai-dialog-paper' }}>
-        <DialogTitle className="id-dialog-title-wrap">
-          <Box className="id-dialog-title-box">
-            <Box>
-              <Typography className="id-dialog-heading">Edit Institute</Typography>
-              <Typography className="id-dialog-subheading">Update the details about the institute.</Typography>
-            </Box>
-            <IconButton size="small" className="g-icon-btn" onClick={() => setEditInstDialog(false)}><CloseIcon fontSize="small" /></IconButton>
-          </Box>
-          <Box className="ai-tabs">
-            {(["basic", "contact", "academic"] as const).map((tab) => (
-              <button key={tab} className={`ai-tab${editInstTab === tab ? " ai-tab--active" : ""}`} onClick={() => setEditInstTab(tab)}>
-                {tab === "basic" ? "Basic Information" : tab === "contact" ? "Contact Details" : "Academic"}
-              </button>
-            ))}
-          </Box>
-        </DialogTitle>
-        <DialogContent className="id-dialog-content-wrap">
-          {editInstTab === "basic" && (
-            <Box className="ai-form">
-              <Box className="ai-row-2">
-                <Box className="ai-field"><label className="ai-label">Institute Name <span className="ai-req">*</span></label>
-                  <input className="ai-input" value={editInstForm.instituteName} onChange={(e) => setEditInstForm({ ...editInstForm, instituteName: e.target.value })} /></Box>
-                <Box className="ai-field"><label className="ai-label">Tier <span className="ai-req">*</span></label>
-                  <select className="ai-select" value={editInstForm.instituteTier} onChange={(e) => setEditInstForm({ ...editInstForm, instituteTier: e.target.value })}>
-                    <option value="TIER_1">TIER 1</option>
-                    <option value="TIER_2">TIER 2</option>
-                    <option value="TIER_3">TIER 3</option>
-                  </select></Box>
-              </Box>
-              <Box className="ai-row-3">
-                <Box className="ai-field"><label className="ai-label">City <span className="ai-req">*</span></label>
-                  <input className="ai-input" value={editInstForm.city} onChange={(e) => setEditInstForm({ ...editInstForm, city: e.target.value })} /></Box>
-                <Box className="ai-field"><label className="ai-label">State <span className="ai-req">*</span></label>
-                  <input className="ai-input" value={editInstForm.state} onChange={(e) => setEditInstForm({ ...editInstForm, state: e.target.value })} /></Box>
-              </Box>
-              <Box className="ai-field"><label className="ai-label">Status <span className="ai-req">*</span></label>
-                <select className="ai-select" value={editInstForm.isActive ? "active" : "inactive"} onChange={(e) => setEditInstForm({ ...editInstForm, isActive: e.target.value === "active" })}>
-                  <option value="active">Active</option>
-                  <option value="inactive">Inactive</option>
-                </select></Box>
-            </Box>
-          )}
-          {editInstTab === "contact" && (
-            <Box className="ai-form">
-              {editTpoForms.map((form, idx) => (
-                <Box key={form.tpoId} className="ai-contact-card">
-                  <Box className="ai-contact-card-header">
-                    <Typography className="ai-contact-card-title">{form.isPrimary ? "Primary Contact Person" : `TPO Contact ${idx + 1}`}</Typography>
-                    {!form.isPrimary && (
-                      <button className="ai-add-contact-btn id-remove-contact-btn" onClick={() => setEditTpoForms(prev => prev.filter((_, i) => i !== idx))}>✕ Remove</button>
-                    )}
-                  </Box>
-                  <Box className="ai-row-2">
-                    <Box className="ai-field"><label className="ai-label">TPO Name</label>
-                      <input className="ai-input" value={form.tpoName} onChange={(e) => setEditTpoForms(prev => prev.map((f, i) => i === idx ? { ...f, tpoName: e.target.value } : f))} /></Box>
-                    <Box className="ai-field"><label className="ai-label">Phone</label>
-                      <input className="ai-input" value={form.tpoMobile} onChange={(e) => setEditTpoForms(prev => prev.map((f, i) => i === idx ? { ...f, tpoMobile: e.target.value.replace(/\D/g, "").slice(0, 10) } : f))} /></Box>
-                  </Box>
-                  <Box className="ai-row-2">
-                    <Box className="ai-field"><label className="ai-label">Email</label>
-                      <input className="ai-input" type="email" value={form.tpoEmail} onChange={(e) => setEditTpoForms(prev => prev.map((f, i) => i === idx ? { ...f, tpoEmail: e.target.value } : f))} /></Box>
-                    <Box className="ai-field"><label className="ai-label">Designation</label>
-                      <input className="ai-input" value={form.tpoDesignation} onChange={(e) => setEditTpoForms(prev => prev.map((f, i) => i === idx ? { ...f, tpoDesignation: e.target.value } : f))} /></Box>
-                  </Box>
-                </Box>
-              ))}
-              {extraTpoForms.map((form, idx) => (
-                <Box key={idx} className="ai-contact-card">
-                  <Box className="ai-contact-card-header">
-                    <Typography className="ai-contact-card-title">New TPO Contact</Typography>
-                    <button className="ai-add-contact-btn id-remove-contact-btn" onClick={() => setExtraTpoForms(prev => prev.filter((_, i) => i !== idx))}>✕ Remove</button>
-                  </Box>
-                  <Box className="ai-row-2">
-                    <Box className="ai-field"><label className="ai-label">TPO Name <span className="ai-req">*</span></label>
-                      <input className="ai-input" placeholder="Enter contact person name" value={form.tpoName} onChange={(e) => setExtraTpoForms(prev => prev.map((f, i) => i === idx ? { ...f, tpoName: e.target.value } : f))} /></Box>
-                    <Box className="ai-field"><label className="ai-label">Phone</label>
-                      <input className="ai-input" placeholder="+91 98765 43210" value={form.tpoMobile} onChange={(e) => setExtraTpoForms(prev => prev.map((f, i) => i === idx ? { ...f, tpoMobile: e.target.value.replace(/\D/g, "").slice(0, 10) } : f))} /></Box>
-                  </Box>
-                  <Box className="ai-row-2">
-                    <Box className="ai-field"><label className="ai-label">Email <span className="ai-req">*</span></label>
-                      <input className="ai-input" placeholder="person@institute.edu" type="email" value={form.tpoEmail} onChange={(e) => setExtraTpoForms(prev => prev.map((f, i) => i === idx ? { ...f, tpoEmail: e.target.value } : f))} /></Box>
-                    <Box className="ai-field"><label className="ai-label">Designation</label>
-                      <input className="ai-input" placeholder="e.g., Placement Officer" value={form.tpoDesignation} onChange={(e) => setExtraTpoForms(prev => prev.map((f, i) => i === idx ? { ...f, tpoDesignation: e.target.value } : f))} /></Box>
-                  </Box>
-                </Box>
-              ))}
-              <button className="ai-add-contact-btn id-add-contact-ml" onClick={() => setExtraTpoForms(prev => [...prev, { tpoName: "", tpoEmail: "", tpoMobile: "", tpoDesignation: "" }])}>+ Add</button>
-            </Box>
-          )}
-          {editInstTab === "academic" && (
-            <Box className="ai-form">
-              <Typography className="ai-academic-title">Academic Information</Typography>
-              <Typography className="ai-academic-subtitle">Add all departments available in the institute</Typography>
-              <Box className="ai-program-chips-wrap">
-                {allPrograms.map((program) => {
-                  const selected = editSelectedProgramIds.includes(program.programId);
-                  return (
-                    <button
-                      key={program.programId}
-                      type="button"
-                      className={`ai-program-chip${selected ? ' ai-program-chip--active' : ''}`}
-                      onClick={() => setEditSelectedProgramIds((prev) =>
-                        prev.includes(program.programId) ? prev.filter((id) => id !== program.programId) : [...prev, program.programId]
-                      )}
-                    >
-                      <span className="ai-chip-checkbox">{selected && <span className="ai-chip-check" />}</span>
-                      {program.programName.replace(/_/g, " ")}
-                    </button>
-                  );
-                })}
-              </Box>
-            </Box>
-          )}
-        </DialogContent>
-        <DialogActions className="id-dialog-actions-wrap">
-          {editInstTab === "academic" ? (
-            <>
-              <button className="ai-clear-btn" onClick={() => setEditSelectedProgramIds([])}>
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                Clear
-              </button>
-              <button className="ai-save-btn" onClick={handleEditInstSave}>
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
-                Save
-              </button>
-            </>
-          ) : (
-            <>
-              <button className="ai-cancel-btn" onClick={() => setEditInstDialog(false)}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                Cancel
-              </button>
-              <button className="ai-save-btn" onClick={handleEditInstSave}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
-                Save
-              </button>
-            </>
-          )}
-        </DialogActions>
-      </Dialog>
+      <InstituteFormDialog
+        open={editInstDialog}
+        mode="edit"
+        basicForm={editInstForm}
+        tpoForms={editTpoForms}
+        selectedProgramIds={editSelectedProgramIds}
+        allPrograms={allPrograms}
+        onClose={() => { setEditInstDialog(false); setEditTpoForms([]); }}
+        onSave={handleEditInstSave}
+        onBasicChange={(field, value) => setEditInstForm((prev) => ({ ...prev, [field]: value }))}
+        onTpoChange={(idx, field, value) =>
+          setEditTpoForms((prev) => prev.map((f, i) => i === idx ? { ...f, [field]: value } : f))
+        }
+        onTpoAdd={() =>
+          setEditTpoForms((prev) => [...prev, { tpoName: "", tpoEmail: "", tpoMobile: "", tpoDesignation: "", isPrimary: false }])
+        }
+        onTpoRemove={(idx) => setEditTpoForms((prev) => prev.filter((_, i) => i !== idx))}
+        onProgramToggle={(id) =>
+          setEditSelectedProgramIds((prev) =>
+            prev.includes(id) ? prev.filter((p) => p !== id) : [...prev, id]
+          )
+        }
+        onClearPrograms={() => setEditSelectedProgramIds([])}
+      />
 
     </Box>
   );
 };
 
 export default InstitutesDetails;
+

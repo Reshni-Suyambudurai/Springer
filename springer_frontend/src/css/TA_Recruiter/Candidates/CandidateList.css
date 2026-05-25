@@ -674,11 +674,11 @@
   color: var(--color-blue-500);
 }
 
-/* SELECTED — green */
+/* SELECTED — dark green */
 .cl-status-selected {
-  background-color: var(--color-green-50);
-  border-color: var(--color-green-500);
-  color: var(--color-green-500);
+  background-color: var(--color-status-selected-bg);
+  border-color: var(--color-status-selected-border);
+  color: var(--color-status-selected-text);
 }
 
 /* OFFERED — light blue */
