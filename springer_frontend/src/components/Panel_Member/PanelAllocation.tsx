@@ -26,6 +26,7 @@ const PanelAssignments = () => {
   const [searchName, setSearchName] = useState("");
   const [filterStatus, setFilterStatus] = useState<string>("ALL");
   const [filterDate, setFilterDate] = useState<string>("ALL");
+  const [filterRound, setFilterRound] = useState<string>("ALL");
 
   // Extract unique dates from assignments
   const distinctDates = Array.from(
@@ -35,7 +36,14 @@ const PanelAssignments = () => {
         .filter((d): d is string => !!d)
     )
   );
-
+  // Extract unique round names from assignments
+  const distinctRounds = Array.from(
+    new Set(
+      assignments
+        .map((a) => a.roundName)
+        .filter((r): r is string => !!r)
+    )
+  );
   useEffect(() => {
     const fetchAssignments = async () => {
       try {
@@ -71,7 +79,8 @@ const PanelAssignments = () => {
       ? new Date(a.createdAt).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })
       : "";
     const matchesDate = filterDate === "ALL" || assignmentDate === filterDate;
-    return matchesName && matchesStatus && matchesDate;
+    const matchesRound = filterRound === "ALL" || a.roundName === filterRound;
+    return matchesName && matchesStatus && matchesDate && matchesRound;
   });
 
   const handleRowClick = async (assignment: DriveAssignmentResponse) => {
@@ -161,6 +170,17 @@ const PanelAssignments = () => {
             <MenuItem value="ALL">All Dates</MenuItem>
             {distinctDates.map((date) => (
               <MenuItem key={date} value={date}>{date}</MenuItem>
+            ))}
+          </Select>
+          <Select
+            value={filterRound}
+            onChange={(e) => setFilterRound(e.target.value)}
+            size="small"
+            className="pm-assign-date-select"
+          >
+            <MenuItem value="ALL">All Rounds</MenuItem>
+            {distinctRounds.map((round) => (
+              <MenuItem key={round} value={round}>{round}</MenuItem>
             ))}
           </Select>
           <Box className="t-filter-spacer" />

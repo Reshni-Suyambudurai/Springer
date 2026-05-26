@@ -1,9 +1,8 @@
-import React, { useState, useRef, useCallback } from "react";
+import React, { useState, useRef, useCallback, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import * as XLSX from "xlsx";
 import {
   Box,
-  Card,
   Button,
   Typography,
   Table,
@@ -24,8 +23,8 @@ import CheckIcon from "@mui/icons-material/Check";
 import CloseIcon from "@mui/icons-material/Close";
 import SearchIcon from "@mui/icons-material/Search";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
-import BackButton from "../../../Common/BackButton";
 import ErrorOverlay from "../../../Common/ErrorOverlay";
+import { useNavbarAction } from "../../../../contexts/NavbarActionContext";
 import { showToast } from "../../../../utils/toast";
 import { candidateEvaluationApi } from "../../../../services/driveschedule.api";
 import { roundTemplateApi } from "../../../../services/drive.api";
@@ -37,6 +36,7 @@ const EDITABLE_HEADERS = ["Candidate_name", "Candidate_email"];
 
 const AddRound1: React.FC = () => {
   const { driveId } = useParams<{ driveId: string }>();
+  const { setAction } = useNavbarAction();
   const [dynamicHeaders, setDynamicHeaders] = useState<string[]>([]);
   const [rows, setRows] = useState<Record<string, unknown>[]>([]);
   const [fileName, setFileName] = useState<string>("");
@@ -407,26 +407,20 @@ const AddRound1: React.FC = () => {
     }
   };
 
+  useEffect(() => {
+    setAction({
+      label: "Download Template",
+      onClick: handleDownloadFormat,
+      icon: <DownloadIcon fontSize="small" />,
+    });
+    return () => {
+      setAction(null);
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   return (
     <Box className="ar1-container">
-      <Card className="ar1-header">
-        <Box className="ar1-header-left">
-          <BackButton variant="header" />
-          <Typography variant="h6" className="ar1-title">
-            Upload Aptitude Score
-          </Typography>
-        </Box>
-
-        <Box className="ar1-header-actions">
-          <Button
-            startIcon={<DownloadIcon />}
-            onClick={handleDownloadFormat}
-            className="ar1-btn ar1-btn-download"
-          >
-            Download Template
-          </Button>
-        </Box>
-      </Card>
 
       {/* Drag and Drop zone — shown when no data */}
       {rows.length === 0 && (

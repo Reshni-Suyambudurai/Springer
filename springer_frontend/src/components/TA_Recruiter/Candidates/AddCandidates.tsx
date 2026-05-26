@@ -128,10 +128,7 @@ console.log("Skills data:", response.data);
     if (!cycleId) {
       showToast("No cycle selected. Please select a cycle first.", "error");
       navigate("/ta-recruiter/candidates");
-      return;
     }
-    fetchInstitutes();
-    fetchSkills();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -360,7 +357,13 @@ console.log("Skills data:", response.data);
           <Button
             variant="contained"
             startIcon={<AddIcon />}
-            onClick={() => { setFieldErrors({}); setAddDialog(true); }}
+            onClick={() => {
+              setFieldErrors({});
+              // Fetch institutes and skills only on first open — not on page load
+              if (institutes.length === 0) fetchInstitutes();
+              if (skills.length === 0) fetchSkills();
+              setAddDialog(true);
+            }}
             className="g-btn g-btn-primary add-candidates-header-btn"
           >
             Add Candidate

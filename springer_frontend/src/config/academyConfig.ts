@@ -55,7 +55,6 @@ const COORDINATOR_TRAINING: AcademyTab[] = [
 const COORDINATOR_MANAGEMENT: AcademyTab[] = [
   { key: 'leaves',    label: 'Leave Requests', group: 'management' },
   { key: 'warnings',  label: 'Disciplinary',   group: 'management' },
-  { key: 'calendar',  label: 'Calendar',        group: 'management' },
 ];
 
 const RECRUITER_GROUPS: AcademyTabGroup[] = [
@@ -65,11 +64,6 @@ const RECRUITER_GROUPS: AcademyTabGroup[] = [
 ];
 
 const COORDINATOR_GROUPS: AcademyTabGroup[] = [
-  { key: 'training',   label: 'Training',   tabs: COORDINATOR_TRAINING },
-  { key: 'management', label: 'Management', tabs: COORDINATOR_MANAGEMENT },
-];
-
-const MEMBERS_GROUPS: AcademyTabGroup[] = [
   { key: 'training',   label: 'Training',   tabs: COORDINATOR_TRAINING },
   { key: 'management', label: 'Management', tabs: COORDINATOR_MANAGEMENT },
 ];
@@ -86,9 +80,8 @@ const BASE_CONFIG = {
 
 export const getAcademyConfig = async (role?: string): Promise<AcademyConfig> => {
   const upper = role?.toUpperCase() ?? '';
-  const groups = upper === 'MEMBERS' ? MEMBERS_GROUPS
-    : upper === 'TRAINING_COORDINATOR' ? COORDINATOR_GROUPS
-    : RECRUITER_GROUPS;
+  const isCoordinator = upper === 'TRAINING_COORDINATOR' || upper === 'MEMBERS';
+  const groups = isCoordinator ? COORDINATOR_GROUPS : RECRUITER_GROUPS;
   const tabs = groups.flatMap(g => g.tabs);
   return { ...BASE_CONFIG, tabGroups: groups, tabs };
 };

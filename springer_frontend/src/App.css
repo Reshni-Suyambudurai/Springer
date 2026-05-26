@@ -128,6 +128,7 @@
   --color-success-trend: #00A63E;
   --color-success-light: #ECFDF3;
   --color-success-border: #6CE9A6;
+  --color-candidate-name-eligible: var(--color-success-dark);
   
   --color-warning: #C98A1A;
   
@@ -387,6 +388,7 @@
   --color-success-dark: #8fad4c;
   --color-success-light: #3a5f2e;
   --color-success-border: #6c9e3a;
+  --color-candidate-name-eligible: var(--color-success);
   
   --color-warning: #f5a623;
   

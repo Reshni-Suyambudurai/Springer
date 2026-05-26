@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import type { ReactNode } from 'react';
 import { tokenstore } from '../auth/tokenstore';
 import { internApi } from '../services/intern.api';
@@ -16,49 +16,49 @@ interface InternDataContextType {
 const InternDataContext = createContext<InternDataContextType | undefined>(undefined);
 
 export const InternDataProvider = ({ children }: { children: ReactNode }) => {
-  const user = tokenstore.getUser();
+  // useMemo so tokenstore.getUser() is only called once per mount, not on every render
+  const user = useMemo(() => tokenstore.getUser(), []);
   const [data, setData] = useState<InternDashboardData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  // Start loading=false and pre-set error if no user — avoids setState inside effect
+  const [loading, setLoading] = useState<boolean>(!!user?.userId);
+  const [error, setError] = useState<string | null>(user?.userId ? null : 'User not authenticated');
   const [retryCount, setRetryCount] = useState(0);
 
-  const retry = () => setRetryCount(c => c + 1);
-  const refresh = () => setRetryCount(c => c + 1);
+  // useCallback so retry/refresh have stable references across renders
+  const retry = useCallback(() => setRetryCount(c => c + 1), []);
+  const refresh = useCallback(() => setRetryCount(c => c + 1), []);
 
   useEffect(() => {
+    if (!user?.userId) return; // state already initialised correctly above
+
     let cancelled = false;
 
-    if (!user?.userId) {
-      setData(null);
-      setLoading(false);
-      setError('User not authenticated');
-      return () => { cancelled = true; };
-    }
-
-    setLoading(true);
-    setError(null);
-
-    internApi.getDashboard(user.userId)
-      .then(res => {
-        if (!cancelled && res.success && res.data) {
-          setData(res.data);
-          setError(null);
-        } else if (!cancelled) {
-          setError('Failed to load dashboard data');
-        }
-      })
-      .catch(err => {
+    const load = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const res = await internApi.getDashboard(user.userId);
         if (!cancelled) {
-          const errorMsg = err.message || 'Failed to load data';
+          if (res.success && res.data) {
+            setData(res.data);
+            setError(null);
+          } else {
+            setError('Failed to load dashboard data');
+          }
+        }
+      } catch (err: unknown) {
+        if (!cancelled) {
+          const errorMsg = err instanceof Error ? err.message : 'Failed to load data';
           setError(errorMsg);
           showToast(errorMsg, 'error');
           setData(null);
         }
-      })
-      .finally(() => {
+      } finally {
         if (!cancelled) setLoading(false);
-      });
+      }
+    };
 
+    load();
     return () => { cancelled = true; };
   }, [user?.userId, retryCount]);
 
@@ -69,6 +69,7 @@ export const InternDataProvider = ({ children }: { children: ReactNode }) => {
   );
 };
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useInternDataContext = () => {
   const context = useContext(InternDataContext);
   if (context === undefined) {

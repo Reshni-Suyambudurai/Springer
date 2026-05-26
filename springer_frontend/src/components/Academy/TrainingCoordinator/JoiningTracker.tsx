@@ -1,11 +1,12 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import * as XLSX from 'xlsx';
 import {
   Box, Card, Typography, Table, TableBody, TableCell,
   TableContainer, TableHead, TableRow,
   CircularProgress, MenuItem, TextField, Button, Stack, IconButton,
   Dialog, DialogTitle, DialogContent, DialogActions, InputAdornment,
 } from '@mui/material';
-import { Person as PersonIcon } from '@mui/icons-material';
+import { Person as PersonIcon, Download as DownloadIcon, Upload as UploadIcon } from '@mui/icons-material';
 import { FigmaSearchIcon as SearchIcon, FigmaCloseIcon as CloseIcon } from '../../Common/FigmaIcons';
 import { joiningTrackerApi } from '../../../services/academy.api';
 import { internApi } from '../../../services/intern.api';
@@ -71,6 +72,101 @@ const JoiningTracker = ({ context }: { context: AcademyContextProps }) => {
       showToast(err.message || 'Failed to activate intern', 'error');
     } finally {
       setActivating(false);
+    }
+  };
+
+  // ── Bulk Activation ─────────────────────────────────────────────────────────
+  const bulkUploadRef = useRef<HTMLInputElement>(null);
+  const [bulkActivating, setBulkActivating] = useState(false);
+
+  const downloadActivationTemplate = () => {
+    const pendingInterns = allCycleCandidates.filter(
+      c => c.applicationStage === 'JOINED' && !c.userId
+    );
+    if (pendingInterns.length === 0) {
+      showToast('No pending interns to activate', 'error');
+      return;
+    }
+    const rows = pendingInterns.map(c => ({
+      'Candidate ID': c.candidateId,
+      'Candidate Name': `${c.firstName} ${c.lastName}`,
+      'Personal Email': c.email,
+      'Company Email (Fill This)': '',
+    }));
+    const worksheet = XLSX.utils.json_to_sheet(rows);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Intern Activation');
+    XLSX.writeFile(workbook, `intern_activation_template.xlsx`);
+    showToast('Template downloaded. Fill the "Company Email" column and upload.', 'success');
+  };
+
+  const handleBulkUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    e.target.value = '';
+    if (!file.name.endsWith('.xlsx')) { showToast('Only .xlsx files are supported', 'error'); return; }
+
+    try {
+      setBulkActivating(true);
+      const data = await file.arrayBuffer();
+      const workbook = XLSX.read(data);
+      const sheet = workbook.Sheets[workbook.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json<Record<string, unknown>>(sheet);
+
+      if (rows.length === 0) { showToast('Excel file is empty', 'error'); return; }
+
+      const interns = rows
+        .filter(row => {
+          const email = String(row['Company Email (Fill This)'] ?? '').trim();
+          return email.length > 0;
+        })
+        .map(row => ({
+          candidateId: Number(row['Candidate ID']),
+          candidateName: String(row['Candidate Name'] ?? ''),
+          outlookEmail: String(row['Company Email (Fill This)'] ?? '').trim(),
+        }));
+
+      if (interns.length === 0) {
+        showToast('No company emails filled in the template', 'error');
+        return;
+      }
+
+      const res = await internApi.bulkActivateInterns(interns);
+      if (res.success && res.data) {
+        const d = res.data;
+        if (d.failedCount === 0) {
+          showToast(`✅ ${d.successCount} intern(s) activated successfully!`, 'success');
+        } else if (d.successCount === 0) {
+          showToast(`❌ All ${d.failedCount} failed. Check errors.`, 'error');
+        } else {
+          showToast(`⚠ ${d.successCount} activated, ${d.failedCount} failed`, 'error');
+        }
+        // Show first few errors
+        if (d.results) {
+          d.results.filter(r => !r.success).slice(0, 3).forEach(r =>
+            showToast(`${r.candidateName}: ${r.message}`, 'error')
+          );
+        }
+        // Update local state for successfully activated
+        if (d.results) {
+          const successMap = new Map(
+            d.results.filter(r => r.success && r.userId).map(r => [r.candidateId, r.userId!])
+          );
+          if (successMap.size > 0) {
+            setAllCycleCandidates(prev =>
+              prev.map(c => successMap.has(c.candidateId)
+                ? { ...c, userId: successMap.get(c.candidateId)! }
+                : c
+              )
+            );
+          }
+        }
+      }
+    } catch (error) {
+      const err = handleAxiosError(error);
+      showToast(err.message || 'Bulk activation failed', 'error');
+    } finally {
+      setBulkActivating(false);
     }
   };
 
@@ -314,6 +410,22 @@ const JoiningTracker = ({ context }: { context: AcademyContextProps }) => {
             {degrees.map(v => <MenuItem key={v} value={v}>{v}</MenuItem>)}
           </TextField>
           <Box className="jt-filter-spacer" />
+          {stageFilter === 'JOINED' && (
+            <Stack direction="row" spacing={1} alignItems="center">
+              <Button variant="outlined" size="small" startIcon={<DownloadIcon />}
+                onClick={downloadActivationTemplate} className="jt-btn-template">
+                Template
+              </Button>
+              <input ref={bulkUploadRef} type="file" accept=".xlsx"
+                style={{ display: 'none' }} onChange={handleBulkUpload} />
+              <Button variant="contained" size="small"
+                startIcon={bulkActivating ? <CircularProgress size={14} /> : <UploadIcon />}
+                onClick={() => bulkUploadRef.current?.click()}
+                disabled={bulkActivating} className="jt-btn-bulk-activate">
+                {bulkActivating ? 'Activating...' : 'Bulk Activate'}
+              </Button>
+            </Stack>
+          )}
           </Box>
         </Box>
 

@@ -142,10 +142,10 @@ const BatchAllocationsList = ({ context }: { context: AcademyContextProps }) => 
         const allocatedIds = new Set(
           allocations.filter(a => a.programId === programId).map(a => a.candidateId)
         );
-        const eligible = res.data.filter((c: { candidateId: number }) => !allocatedIds.has(c.candidateId));
+        const eligible = res.data.filter(c => !allocatedIds.has(c.candidateId));
         setCandidates(eligible);
         const defaultMap: Record<number, number> = {};
-        eligible.forEach((c: { candidateId: number }) => { defaultMap[c.candidateId] = 1; });
+        eligible.forEach(c => { defaultMap[c.candidateId] = 1; });
         setCandidateBatchMap(defaultMap);
       }
     } catch {

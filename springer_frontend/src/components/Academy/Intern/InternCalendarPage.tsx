@@ -198,7 +198,10 @@ const InternCalendarPage = () => {
             </span>
             <span className="ical-header-pill ical-header-pill--leave">{totalApprovedLeaveDays ?? 0} Leave Days</span>
           </div>
-          <div className="ical-legend">
+        </div>
+      </div>
+      <div className="ical-subheader">
+        <div className="ical-legend">
             <span className="ical-legend-item"><span className="ical-dot ical-dot--batch" />Batch</span>
             <span className="ical-legend-item"><span className="ical-dot ical-dot--active" />Active</span>
             <span className="ical-legend-item"><span className="ical-dot ical-dot--planned" />Planned</span>
@@ -207,8 +210,8 @@ const InternCalendarPage = () => {
             <span className="ical-legend-item"><span className="ical-dot ical-dot--present" />Present</span>
             <span className="ical-legend-item"><span className="ical-dot ical-dot--absent" />Absent</span>
             <span className="ical-legend-item"><span className="ical-dot ical-dot--leave" />Leave</span>
-          </div>
-          <div className="ical-view-toggle">
+        </div>
+        <div className="ical-view-toggle">
             <span className="ical-view-toggle-label">View:</span>
             <select
               className="ical-view-select"
@@ -218,7 +221,6 @@ const InternCalendarPage = () => {
               <option value="month">Month</option>
               <option value="week">Week</option>
             </select>
-          </div>
         </div>
       </div>
 

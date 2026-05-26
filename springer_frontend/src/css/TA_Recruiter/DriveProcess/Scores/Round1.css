@@ -363,6 +363,7 @@
   flex: 1;
   overflow: auto;
   min-height: 0;
+  max-height: calc(100vh - 200px);
 }
 
 .r1-thead-row {

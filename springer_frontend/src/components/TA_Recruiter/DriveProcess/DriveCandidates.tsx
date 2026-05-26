@@ -366,17 +366,17 @@ const DriveCandidates: React.FC = () => {
   };
 
   const handleFinalizeClick = () => {
-    // Determine which applications to finalize based on batch selection
+    // Determine which applications to finalize based on batch selection + active filters
     let applicationsToFinalize: ApplicationResponse[] = [];
     
     if (selectedBatch === "ALL") {
-      // All applications across all batches
-      applicationsToFinalize = applications;
+      // Use only the currently visible (filtered) applications
+      applicationsToFinalize = filteredApplications;
     } else {
-      // Filter by selected batch
+      // Filter by selected batch, then apply active filters
       const batchAppIds = batchMap[selectedBatch];
       if (batchAppIds && batchAppIds.length > 0) {
-        applicationsToFinalize = applications.filter(app => batchAppIds.includes(app.applicationId));
+        applicationsToFinalize = filteredApplications.filter(app => batchAppIds.includes(app.applicationId));
       }
     }
 
@@ -403,15 +403,17 @@ const DriveCandidates: React.FC = () => {
   };
 
   const handleFinalizeConfirm = async () => {
-    // Collect application IDs
+    // Collect application IDs from filtered (visible) rows only
     let applicationIds: number[] = [];
     
     if (selectedBatch === "ALL") {
-      applicationIds = applications.map(app => app.applicationId);
+      applicationIds = filteredApplications.map(app => app.applicationId);
     } else {
       const batchAppIds = batchMap[selectedBatch];
       if (batchAppIds) {
-        applicationIds = batchAppIds;
+        applicationIds = filteredApplications
+          .filter(app => batchAppIds.includes(app.applicationId))
+          .map(app => app.applicationId);
       }
     }
 
@@ -843,8 +845,8 @@ const DriveCandidates: React.FC = () => {
                   Are you sure you want to finalize these applications? 
                   This will update candidate stages based on their application status.
                   {selectedBatch === "ALL" 
-                    ? ` All ${applications.length} applications will be finalized.`
-                    : ` Applications in the selected batch will be finalized.`}
+                    ? ` All ${filteredApplications.length} applications will be finalized.`
+                    : ` ${filteredApplications.filter(app => batchMap[selectedBatch]?.includes(app.applicationId)).length} applications in the selected batch will be finalized.`}
                 </Typography>
                 <div className="dc-dialog-actions">
                   <Button
