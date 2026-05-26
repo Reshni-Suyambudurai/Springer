@@ -131,7 +131,7 @@ const Login: React.FC = () => {
         <div className="login-form-wrapper">
           <Box className="login-brand">
             <div className="login-logo">
-              <img src="/Image (Springer).png" alt="Springer" className="login-logo-img" />
+              <img src="/kanini.png" alt="Springer" className="login-logo-img" />
               <span className="login-logo-text">SPRINGER</span>
             </div>
             <Typography variant="h5" className="login-title">
@@ -250,9 +250,7 @@ const Login: React.FC = () => {
           </Box>
         </div>
 
-        <Typography className="login-copyright" variant="caption">
-          © 2026 Springer. All rights reserved.
-        </Typography>
+       
       </div>
     </div>
   );

@@ -1,4 +1,4 @@
-﻿import { createContext, useContext, useState, useCallback } from 'react';
+﻿import { createContext, useContext, useState, useCallback, useRef, useMemo } from 'react';
 import type { ReactNode } from 'react';
 import { hiringCycleApi } from '../services/hiring.api';
 import { documentTypeApi, documentSubmissionApi } from '../services/document.api';
@@ -42,54 +42,73 @@ export const DocumentProcessingProvider = ({ children }: { children: ReactNode }
   const [loadingSubmissions, setLoadingSubmissions] = useState(false);
   const [loadingCandidates, setLoadingCandidates] = useState(false);
 
+  // Refs used as guards inside useCallback to avoid stale-closure deps warnings
+  const loadingCyclesRef = useRef(false);
+  const cyclesLoadedRef = useRef(false);
+  const loadingDocTypesRef = useRef(false);
+  const loadingSubmissionsRef = useRef(false);
+  const loadingCandidatesRef = useRef(false);
+
   const fetchCycles = useCallback(async () => {
-    if (loadingCycles || cycles.length > 0) return; // Skip if already loaded
+    if (loadingCyclesRef.current || cyclesLoadedRef.current) return;
+    loadingCyclesRef.current = true;
+    setLoadingCycles(true);
     try {
-      setLoadingCycles(true);
       const res = await hiringCycleApi.getAllCycles();
-      if (res.success && res.data) setCycles(res.data);
-    } catch (err: any) {
-      showToast(err.message || 'Failed to load cycles', 'error');
+      if (res.success && res.data) {
+        setCycles(res.data);
+        cyclesLoadedRef.current = true;
+      }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Failed to load cycles';
+      showToast(msg, 'error');
     } finally {
+      loadingCyclesRef.current = false;
       setLoadingCycles(false);
     }
   }, []);
 
   const fetchDocTypes = useCallback(async () => {
-    if (loadingDocTypes) return;
+    if (loadingDocTypesRef.current) return;
+    loadingDocTypesRef.current = true;
+    setLoadingDocTypes(true);
     try {
-      setLoadingDocTypes(true);
       const res = await documentTypeApi.getAllTypes();
       if (res.success && res.data) setDocTypes(res.data);
-    } catch (err: any) {
-      showToast(err.message || 'Failed to load document types', 'error');
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Failed to load document types';
+      showToast(msg, 'error');
     } finally {
+      loadingDocTypesRef.current = false;
       setLoadingDocTypes(false);
     }
   }, []);
 
   const fetchSubmissions = useCallback(async (cycleId: number) => {
-    if (loadingSubmissions) return;
+    if (loadingSubmissionsRef.current) return;
+    loadingSubmissionsRef.current = true;
+    setLoadingSubmissions(true);
     try {
-      setLoadingSubmissions(true);
-      const res = await documentSubmissionApi.getAllSubmissions({ 
-        cycleId, 
+      const res = await documentSubmissionApi.getAllSubmissions({
+        cycleId,
         applicationStage: 'SELECTED',
-        size: 2000 
+        size: 2000,
       });
       if (res.success && res.data) setSubmissions(res.data);
-    } catch (err: any) {
-      showToast(err.message || 'Failed to load submissions', 'error');
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Failed to load submissions';
+      showToast(msg, 'error');
     } finally {
+      loadingSubmissionsRef.current = false;
       setLoadingSubmissions(false);
     }
   }, []);
 
   const fetchSelectedCandidates = useCallback(async (cycleId: number) => {
-    if (loadingCandidates) return;
+    if (loadingCandidatesRef.current) return;
+    loadingCandidatesRef.current = true;
+    setLoadingCandidates(true);
     try {
-      setLoadingCandidates(true);
-      // Fetch SELECTED candidates for document processing
       const res = await candidateApi.getCandidatesWithFilters({
         cycleId,
         applicationStages: ['SELECTED'],
@@ -97,9 +116,11 @@ export const DocumentProcessingProvider = ({ children }: { children: ReactNode }
         size: 2000,
       });
       if (res.success && res.data) setSelectedCandidates(res.data.content ?? []);
-    } catch (err: any) {
-      showToast(err.message || 'Failed to load candidates', 'error');
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Failed to load candidates';
+      showToast(msg, 'error');
     } finally {
+      loadingCandidatesRef.current = false;
       setLoadingCandidates(false);
     }
   }, []);
@@ -112,29 +133,36 @@ export const DocumentProcessingProvider = ({ children }: { children: ReactNode }
     ]);
   }, [fetchDocTypes, fetchSubmissions, fetchSelectedCandidates]);
 
+  // useMemo so the context value object only changes when actual data/state changes,
+  // preventing all consumers from re-rendering on unrelated parent renders
+  const value = useMemo(() => ({
+    cycles,
+    docTypes,
+    submissions,
+    selectedCandidates,
+    loadingCycles,
+    loadingDocTypes,
+    loadingSubmissions,
+    loadingCandidates,
+    fetchCycles,
+    fetchDocTypes,
+    fetchSubmissions,
+    fetchSelectedCandidates,
+    refreshAll,
+  }), [
+    cycles, docTypes, submissions, selectedCandidates,
+    loadingCycles, loadingDocTypes, loadingSubmissions, loadingCandidates,
+    fetchCycles, fetchDocTypes, fetchSubmissions, fetchSelectedCandidates, refreshAll,
+  ]);
+
   return (
-    <DocumentProcessingContext.Provider
-      value={{
-        cycles,
-        docTypes,
-        submissions,
-        selectedCandidates,
-        loadingCycles,
-        loadingDocTypes,
-        loadingSubmissions,
-        loadingCandidates,
-        fetchCycles,
-        fetchDocTypes,
-        fetchSubmissions,
-        fetchSelectedCandidates,
-        refreshAll,
-      }}
-    >
+    <DocumentProcessingContext.Provider value={value}>
       {children}
     </DocumentProcessingContext.Provider>
   );
 };
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useDocumentProcessing = () => {
   const context = useContext(DocumentProcessingContext);
   if (!context) {

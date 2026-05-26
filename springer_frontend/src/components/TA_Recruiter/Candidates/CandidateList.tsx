@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { candidateApi } from "../../../services/drive.api";
 import { hiringCycleApi } from "../../../services/hiring.api";
@@ -85,6 +85,11 @@ const ChevronIcon = () => (
   </svg>
 );
 
+// Module-level restore state — written only when navigating to candidate details,
+// read once on remount (back navigation), then cleared. Not affected by Add Candidate.
+let _restoreCycle: number | null = null;
+let _restoreDrive: number | '' = '';
+
 const CandidateList: React.FC = () => {
   const navigate = useNavigate();
   const [cycles, setCycles] = useState<CycleWithDrivesResponse[]>([]);
@@ -125,7 +130,7 @@ const CandidateList: React.FC = () => {
   } = useCandidateFilters();
 
   // Calculate cities based on selected state from context data
-  const citiesForSelectedState = React.useMemo(() => {
+  const citiesForSelectedState = useMemo(() => {
     if (!filters.state || !filterOptions?.stateToCitiesMap) {
       return [];
     }
@@ -134,7 +139,7 @@ const CandidateList: React.FC = () => {
   }, [filters.state, filterOptions?.stateToCitiesMap]);
 
   // Single search bar: match across all visible table fields
-  const filteredCandidates = React.useMemo(() => {
+  const filteredCandidates = useMemo(() => {
     const searchTerm = (filters.candidateName || "").trim().toLowerCase();
     if (!searchTerm) return allCandidates;
 
@@ -155,17 +160,21 @@ const CandidateList: React.FC = () => {
     });
   }, [allCandidates, filters.candidateName]);
 
-  const visibleCandidateIds = React.useMemo(
+  const visibleCandidateIds = useMemo(
     () => filteredCandidates.map((candidate) => candidate.candidateId),
     [filteredCandidates]
   );
 
-  const allVisibleSelected =
-    visibleCandidateIds.length > 0 &&
-    visibleCandidateIds.every((id) => selectedCandidates.has(id));
+  // useMemo: these iterate visibleCandidateIds (O(n)) — avoid recomputing on every render
+  const allVisibleSelected = useMemo(
+    () => visibleCandidateIds.length > 0 && visibleCandidateIds.every((id) => selectedCandidates.has(id)),
+    [visibleCandidateIds, selectedCandidates]
+  );
 
-  const someVisibleSelected =
-    visibleCandidateIds.some((id) => selectedCandidates.has(id));
+  const someVisibleSelected = useMemo(
+    () => visibleCandidateIds.some((id) => selectedCandidates.has(id)),
+    [visibleCandidateIds, selectedCandidates]
+  );
 
   const handleToggleSelectAllVisible = (checked: boolean) => {
     if (checked) {
@@ -188,7 +197,7 @@ const CandidateList: React.FC = () => {
     setSelectMode(remainingSelectedCount > 0);
   };
 
-  const backendFiltersWithDrive = React.useMemo(
+  const backendFiltersWithDrive = useMemo(
     () => ({
       ...filters,
       candidateName: undefined,
@@ -260,15 +269,31 @@ const CandidateList: React.FC = () => {
   // producing a second API call on every filter change.
 
   const fetchCycles = async () => {
+    // Read restore state set by handleCandidateView, then clear it (single-use)
+    const savedCycleId = _restoreCycle;
+    const savedDriveId = _restoreDrive;
+    _restoreCycle = null;
+    _restoreDrive = '';
     try {
       const response = await hiringCycleApi.getAllCyclesWithDrives();
       if (response.data) {
         const cyclesWithDrives = response.data;
-
         setCycles(cyclesWithDrives);
+
         if (cyclesWithDrives.length > 0) {
-          setSelectedCycle(cyclesWithDrives[0].cycleId);
-          setDrives(cyclesWithDrives[0].drives);
+          const restoredCycle = savedCycleId
+            ? cyclesWithDrives.find(c => c.cycleId === savedCycleId)
+            : null;
+          const cycleToUse = restoredCycle ?? cyclesWithDrives[0];
+
+          setSelectedCycle(cycleToUse.cycleId);
+          setDrives(cycleToUse.drives);
+
+          if (savedDriveId && cycleToUse.drives.some(d => d.driveId === savedDriveId)) {
+            setSelectedDrive(savedDriveId);
+          } else {
+            setSelectedDrive("");
+          }
         }
       }
     } catch (error) {
@@ -303,30 +328,36 @@ const CandidateList: React.FC = () => {
   };
 
   const handleCandidateView = (candidateId: number) => {
+    // Store current selection — picked up by fetchCycles on remount after back navigation
+    _restoreCycle = selectedCycle;
+    _restoreDrive = selectedDrive;
     navigate(`/ta-recruiter/candidates/${candidateId}`);
   };
 
-  const handleAddCandidate = () => {
+  const handleAddCandidate = useCallback(() => {
+    // Restore cycle+drive on back navigation (same as row click)
+    _restoreCycle = selectedCycle;
+    _restoreDrive = selectedDrive;
     const selectedCycleData = cycles.find(c => c.cycleId === selectedCycle);
     const selectedDriveData = drives.find(d => d.driveId === selectedDrive);
-    navigate("/ta-recruiter/candidates/add", { 
-      state: { 
+    navigate("/ta-recruiter/candidates/add", {
+      state: {
         cycleId: selectedCycle,
         cycleYear: selectedCycleData?.cycleYear,
         cycleName: selectedCycleData?.cycleName,
         driveId: selectedDrive || undefined,
         driveName: selectedDriveData?.driveName || undefined,
         instituteName: selectedDriveData?.instituteName || undefined,
-      } 
+      }
     });
-  };
+  }, [cycles, drives, selectedCycle, selectedDrive, navigate]);
 
-  const handleBackFromDriveView = () => {
+  const handleBackFromDriveView = useCallback(() => {
     setSelectedDrive("");
     setBulkStatusUpdate("");
     setSelectMode(false);
     setSelectedCandidates(new Set());
-  };
+  }, []);
 
   
 

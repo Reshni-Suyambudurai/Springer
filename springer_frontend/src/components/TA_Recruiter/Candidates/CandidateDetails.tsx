@@ -48,6 +48,7 @@ import { internApi } from "../../../services/intern.api";
 import ApplicationHistory from "../DriveProcess/ApplicationHistory";
 import "../../../css/TA_Recruiter/Candidates/CandidateDetails.css";
 import "../../../css/TA_Recruiter/Institutes/AddInstitute.css";
+import "../../../css/TA_Recruiter/Candidates/CandidateList.css";
 
 const formatIndianMobile = (mobile: string | number | null | undefined): string => {
   if (mobile === null || mobile === undefined || String(mobile).trim() === "") {
@@ -370,11 +371,6 @@ const CandidateDetails: React.FC = () => {
                   <Typography className="candidate-name-inline">
                     {candidate.firstName} {candidate.lastName}
                   </Typography>
-                  <Chip
-                    label={candidate.isEligible ? "Eligible" : "Ineligible"}
-                    size="small"
-                    className={`candidate-top-chip-eligibility ${candidate.isEligible ? "candidate-top-chip-eligibility-yes" : "candidate-top-chip-eligibility-no"}`}
-                  />
                 </Box>
 
                 <Box className="candidate-top-meta-grid">
@@ -437,14 +433,19 @@ const CandidateDetails: React.FC = () => {
               </Box>
               <Box className="candidate-header-chips">
                 <Chip
-                  label={candidate.applicationStage || "SHORTLISTED"}
+                  label={candidate.applicationStage || "APPLIED"}
                   size="small"
                   className="candidate-top-chip-stage"
                 />
                 <Chip
                   label={candidate.applicationType || "STANDARD"}
                   size="small"
-                  className="candidate-top-chip-type"
+                  className={`cl-status-badge ${candidate.applicationType === "PREMIUM" ? "cl-type-premium" : "cl-type-standard"}`}
+                />
+                <Chip
+                  label={candidate.isEligible ? "Eligible" : "Ineligible"}
+                  size="small"
+                  className={`candidate-top-chip-eligibility ${candidate.isEligible ? "candidate-top-chip-eligibility-yes" : "candidate-top-chip-eligibility-no"}`}
                 />
               </Box>
             </Box>

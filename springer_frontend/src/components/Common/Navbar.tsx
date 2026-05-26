@@ -115,12 +115,14 @@ function Navbar({ onMobileMenuToggle }: NavbarProps) {
         || location.pathname.startsWith('/ta-head/hiring-demands/')
         || location.pathname.startsWith('/hiring-manager/hiring-cycles/')
         || location.pathname.startsWith('/hiring-manager/hiring-demands/')
-        || location.pathname.startsWith('/ta-recruiter/hiring-cycles/');
+        || location.pathname.startsWith('/ta-recruiter/hiring-cycles/')
+        || location.pathname.startsWith('/drive-process/add-scores/');
 
     const unreadCount = visibleNotifications.filter(n => !n.isRead).length;
 
     const getPageInfo = () => {
         const path = location.pathname;
+        if (path.startsWith('/drive-process/add-scores/')) return { title: 'Upload Aptitude Score', subtitle: '' };
         if (PAGE_TITLES[path]) return PAGE_TITLES[path];
         // Check for 3-segment paths like /ta-recruiter/settings/skills
         const base3 = '/' + path.split('/').slice(1, 4).join('/');

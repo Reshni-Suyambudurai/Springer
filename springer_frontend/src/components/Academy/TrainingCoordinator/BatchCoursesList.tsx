@@ -369,7 +369,9 @@ const BatchCoursesList = ({ context }: { context: AcademyContextProps }) => {
                                 const today = new Date();
                                 today.setHours(0, 0, 0, 0);
                                 const startDate = bc.startDate ? new Date(bc.startDate) : null;
+                                if (startDate) startDate.setHours(0, 0, 0, 0);
                                 const endDate   = bc.endDate   ? new Date(bc.endDate)   : null;
+                                if (endDate) endDate.setHours(0, 0, 0, 0);
                                 const tooEarlyForActive    = bc.status === 'PLANNED' && startDate !== null && today < startDate;
                                 const tooEarlyForCompleted = bc.status === 'ACTIVE'  && endDate   !== null && today < endDate;
                                 const isDisabled = tooEarlyForActive || tooEarlyForCompleted;

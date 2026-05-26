@@ -4,18 +4,23 @@
 
 .login-page {
   min-height: 100vh;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  position: relative;
   background: var(--color-bg);
+  padding-right: 80px;
 }
 
-/* ── Left: Image panel ── */
+/* ── Full-screen background image ── */
 .login-left-image {
-  background-image: url("../../assets/TA_logo.jpg");
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  background-image: url("/LandingPage.svg");
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
-  position: relative;
 }
 
 .login-left-image::after {
@@ -29,20 +34,25 @@
   );
 }
 
-/* ── Right: Form panel ── */
+/* ── Right: Form panel (centered card on top of image) ── */
 .login-right-form {
+  position: relative;
+  z-index: 1;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
   padding: 48px 40px 24px;
   background: var(--color-surface);
-  position: relative;
+  border-radius: 16px;
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.35);
+  width: 100%;
+  max-width: 460px;
+  margin: 24px;
 }
 
 .login-form-wrapper {
   width: 100%;
-  max-width: 380px;
 }
 
 /* ── Logo ── */

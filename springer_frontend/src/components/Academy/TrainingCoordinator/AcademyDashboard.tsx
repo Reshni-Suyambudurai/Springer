@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { Box, MenuItem, TextField, Typography } from '@mui/material';
 import { useLocation } from 'react-router-dom';
 import type { TrainingProgramResponse } from '../../../types/Academy/academy.types';
@@ -128,7 +129,7 @@ const AcademyDashboard = () => {
       case 'batch-courses':      return <BatchCoursesList context={ctx} />;
       case 'batch-allocations':  return <BatchAllocationsList context={ctx} />;
       case 'attendance':         return <BatchAttendancePanel context={attCtx} />;
-      case 'scores':             return <TrainingScoresPanel context={ctx} readOnly={userRole === 'TA_MANAGER'} />;
+      case 'scores':             return <TrainingScoresPanel context={ctx} />;
       case 'candidate-progress': return <CandidateProgress context={ctx} />;
       case 'joining-tracker':    return <JoiningTracker context={ctx} />;
       case 'calendar':           return <AcademyCalendar context={ctx} />;
@@ -140,9 +141,27 @@ const AcademyDashboard = () => {
 
   return (
     <Box className="acd-page">
+
+      {/* Year filter rendered into Navbar via portal */}
+      {document.getElementById('navbar-actions-slot') && createPortal(
+        <Box className="acd-year-filter-group">
+          <Typography className="acd-year-label">Year</Typography>
+          <TextField
+            select size="small"
+            value={availableYears.length === 0 && programYear !== 0 ? 0 : programYear}
+            onChange={e => setProgramYear(Number(e.target.value))}
+            className="acd-year-select"
+          >
+            <MenuItem value={0}>All</MenuItem>
+            {availableYears.map(y => <MenuItem key={y} value={y}>{y}</MenuItem>)}
+          </TextField>
+        </Box>,
+        document.getElementById('navbar-actions-slot')!
+      )}
+
       <Box className="acd-header">
 
-        {/* ── Single row: group pills (left) + year filter (right) ── */}
+        {/* ── Single row: group pills (left) ── */}
         <Box className="acd-top-row">
           <Box className="acd-group-bar">
             {tabGroups.map(group => (
@@ -155,24 +174,6 @@ const AcademyDashboard = () => {
                 {group.label}
               </button>
             ))}
-          </Box>
-
-          <Box className="acd-year-filter-group">
-            <Typography className="acd-year-label">Year</Typography>
-            <TextField
-              select size="small"
-              value={availableYears.length === 0 && programYear !== 0 ? 0 : programYear}
-              onChange={e => setProgramYear(Number(e.target.value))}
-              className="acd-year-select"
-            >
-              <MenuItem value={0}>All</MenuItem>
-              {availableYears.map(y => <MenuItem key={y} value={y}>{y}</MenuItem>)}
-            </TextField>
-            {!loadingPrograms && programYear !== 0 && (
-              <span className="acd-program-badge">
-                {filteredPrograms.length} program{filteredPrograms.length !== 1 ? 's' : ''}
-              </span>
-            )}
           </Box>
         </Box>
 

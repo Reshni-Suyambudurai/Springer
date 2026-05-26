@@ -167,8 +167,8 @@ const TrainingScoresPanel = ({ context, readOnly = false }: { context: AcademyCo
         .filter((c): c is TrainingCourseResponse => !!c)
     : [];
 
-  // For TC and MEMBERS, restrict score editing to only their assigned courses
-  const isAssignedCourse = (userRole === 'TRAINING_COORDINATOR' || userRole === 'MEMBERS')
+  // Restrict score editing to only assigned courses for TC, MEMBERS, and TA_MANAGER
+  const isAssignedCourse = (userRole === 'TRAINING_COORDINATOR' || userRole === 'MEMBERS' || userRole === 'TA_MANAGER')
     ? batchCourses.some(bc => bc.programId === filterProgramId && bc.batchNo === filterBatchNo && bc.courseId === filterCourseId && bc.conductedBy === userId)
     : true;
 
@@ -459,13 +459,13 @@ const TrainingScoresPanel = ({ context, readOnly = false }: { context: AcademyCo
             </FilterSelect>
 
             <Box className="sc-filter-spacer" />
-            {canEdit && (
+            {canEdit && isAssignedCourse && (
               <Button variant="outlined" size="small" startIcon={<DownloadIcon />}
                 onClick={downloadScoreTemplate} className="sc-template-btn">
                 Template
               </Button>
             )}
-            {canEdit && (
+            {canEdit && isAssignedCourse && (
               <>
                 <input ref={uploadRef} type="file" accept=".xlsx"
                   style={{ display: 'none' }} onChange={handleScoreUpload} />
@@ -482,7 +482,7 @@ const TrainingScoresPanel = ({ context, readOnly = false }: { context: AcademyCo
                 </Button>
               </>
             )}
-            {canEdit && (
+            {canEdit && isAssignedCourse && (
               <Button variant="contained" startIcon={<AddIcon />}
                 onClick={openDlg}
                 disabled={!canGiveScore}
