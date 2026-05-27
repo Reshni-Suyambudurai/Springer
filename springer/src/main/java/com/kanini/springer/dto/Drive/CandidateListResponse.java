@@ -27,4 +27,5 @@ public class CandidateListResponse {
     private String applicationType;
     private Boolean isEligible;
     private String reason;
+    private Long userId;
 }

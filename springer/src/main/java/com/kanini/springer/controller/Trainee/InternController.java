@@ -4,6 +4,8 @@ import com.kanini.springer.dto.Authentication.ApiResponse;
 import com.kanini.springer.dto.Authentication.ChangePasswordRequest;
 import com.kanini.springer.dto.Trainee.InternActivationRequest;
 import com.kanini.springer.dto.Trainee.InternActivationResponse;
+import com.kanini.springer.dto.Trainee.BulkInternActivationRequest;
+import com.kanini.springer.dto.Trainee.BulkInternActivationResponse;
 import com.kanini.springer.dto.Trainee.InternCertificateResponse;
 import com.kanini.springer.dto.Trainee.InternDashboardResponse;
 import com.kanini.springer.dto.Trainee.InternProfileRequest;
@@ -56,6 +58,15 @@ public class InternController {
             @Valid @RequestBody InternActivationRequest request) {
         InternActivationResponse response = internActivationService.activateIntern(candidateId, request);
         return ResponseEntity.ok(ApiResponse.success(response.getMessage(), response));
+    }
+
+    @PreAuthorize("hasAnyRole('TRAINING_COORDINATOR','TA_MANAGER','TA_HEAD')")
+    @PostMapping("/activate/bulk")
+    public ResponseEntity<ApiResponse<BulkInternActivationResponse>> bulkActivateInterns(
+            @Valid @RequestBody BulkInternActivationRequest request) {
+        BulkInternActivationResponse response = internActivationService.bulkActivateInterns(request);
+        String msg = response.getSuccessCount() + " activated, " + response.getFailedCount() + " failed";
+        return ResponseEntity.ok(ApiResponse.success(msg, response));
     }
 
     // ── Password ──────────────────────────────────────────────────────────────

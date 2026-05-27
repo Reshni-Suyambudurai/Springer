@@ -66,11 +66,24 @@ const SendDocumentsTab = ({ context }: { context: DocProcessingContextProps }) =
   }, [cycleId]);
 
   useEffect(() => {
+    const STATUS_PRIORITY: Record<string, number> = { APPROVED: 4, COLLECTED: 3, REJECTED: 2, PENDING: 1 };
+
+    // Deduplicate: keep highest-priority status per candidate+docType
+    const dedupMap = new Map<string, typeof submissions[0]>();
+    submissions.forEach(s => {
+      const key = `${s.candidateId}_${s.documentType}`;
+      const existing = dedupMap.get(key);
+      if (!existing || (STATUS_PRIORITY[s.verificationStatus] || 0) > (STATUS_PRIORITY[existing.verificationStatus] || 0)) {
+        dedupMap.set(key, s);
+      }
+    });
+    const deduped = Array.from(dedupMap.values());
+
     const submittedCounts: Record<number, Set<string>> = {};
     const pendingCounts: Record<number, number> = {};
     const detailsMap: Record<number, Record<string, boolean>> = {};
 
-    submissions.forEach(s => {
+    deduped.forEach(s => {
       if (s.verificationStatus === 'PENDING') {
         pendingCounts[s.candidateId] = (pendingCounts[s.candidateId] || 0) + 1;
         if (!detailsMap[s.candidateId]) detailsMap[s.candidateId] = {};

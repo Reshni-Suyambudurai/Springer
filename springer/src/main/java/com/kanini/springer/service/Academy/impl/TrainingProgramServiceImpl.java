@@ -155,7 +155,8 @@ public class TrainingProgramServiceImpl implements ITrainingProgramService {
                 c.getDegree(),
                 c.getCycle() != null ? c.getCycle().getCycleId() : null,
                 c.getApplicationStage() != null ? c.getApplicationStage().toString() : null,
-                c.getUpdatedAt()
+                c.getUpdatedAt(),
+                c.getUser() != null ? c.getUser().getUserId() : null
         )).collect(Collectors.toList());
     }
     

@@ -38,7 +38,7 @@ const AcademyDashboard = () => {
   const [programs, setPrograms]       = useState<TrainingProgramResponse[]>([]);
   const [availableYears, setAvailableYears] = useState<number[]>([]);
   const [cycles, setCycles]               = useState<HiringCycleResponse[]>([]);
-  const [loadingPrograms, setLoadingPrograms] = useState(false);
+  const [, setLoadingPrograms] = useState(false);
 
   const deriveYears = (progs: TrainingProgramResponse[], cycs: HiringCycleResponse[]) => {
     const progYears = progs.map(p => p.programYear).filter((y): y is number => y != null);

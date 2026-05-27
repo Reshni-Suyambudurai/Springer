@@ -85,7 +85,15 @@ const OffersTab = ({ context }: { context: DocProcessingContextProps }) => {
     try {
       setLoadingOffers(true);
       const all = await fetchAllOffersByCycle();
-      setOffers(all);
+      // Deduplicate by candidateId — keep latest (highest offerId)
+      const deduped = Object.values(
+        all.reduce((map: Record<number, OfferLetterResponse>, o) => {
+          const existing = map[o.candidateId];
+          if (!existing || o.offerId > existing.offerId) map[o.candidateId] = o;
+          return map;
+        }, {})
+      );
+      setOffers(deduped);
     } catch (err: any) {
       showToast(err.message || 'Failed to load offers', 'error');
     } finally { setLoadingOffers(false); }

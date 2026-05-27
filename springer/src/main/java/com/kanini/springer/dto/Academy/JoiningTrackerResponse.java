@@ -25,4 +25,5 @@ public class JoiningTrackerResponse {
     private Long cycleId;
     private String applicationStage;
     private LocalDateTime updatedAt;
+    private Long userId;
 }

@@ -380,9 +380,8 @@ const VerifyDocumentsTab = ({ context }: { context: DocProcessingContextProps })
                                               checked={isSelected}
                                               onChange={() => toggleDocSelection(doc.documentId)}
                                               sx={{
-                                                position: 'absolute',
-                                                top: 4,
-                                                left: 4,
+                                                padding: '2px',
+                                                marginRight: '4px',
                                                 color: 'var(--color-primary)',
                                                 '&.Mui-checked': { color: 'var(--color-primary)' },
                                               }}
