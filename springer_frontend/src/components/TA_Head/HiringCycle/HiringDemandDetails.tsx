@@ -1,6 +1,6 @@
 ﻿import { useState, useEffect, useCallback } from 'react';
 import {
-  Box, Card, Typography, Chip,
+  Box, Card, Typography, Chip, Stack, Button,
   CircularProgress, Alert, Dialog, DialogTitle,
   DialogContent, DialogContentText, DialogActions,
 } from '@mui/material';
@@ -30,7 +30,6 @@ const approvalStatusClassMap: Record<string, string> = {
 type ActionType = 'APPROVED' | 'REJECTED';
 
 const TAHiringDemandDetails = () => {
-  const navigate = useNavigate();
   const { demandId } = useParams<{ demandId: string }>();
   const id = Number(demandId);
 

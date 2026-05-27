@@ -6,7 +6,6 @@ import {
   DialogContent, DialogContentText, DialogActions, TextField,
 } from '@mui/material';
 import {
-  Loop as CycleIcon,
   CheckCircle as ApproveIcon,
   Cancel as RejectIcon,
   OpenInNew as OpenInNewIcon,
