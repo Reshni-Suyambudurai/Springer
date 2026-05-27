@@ -244,10 +244,9 @@ function Sidebar({ collapsed, onToggle }: SidebarProps) {
         path: "/members/panel-history",
         icon: (
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M17 21v-2a4 4 0 00-8 0v2" />
-            <circle cx="9" cy="7" r="4" />
-            <path d="M23 21v-2a4 4 0 00-3-3.87" />
-            <path d="M16 3.13a4 4 0 010 7.75" />
+            <path d="M3 3v5h5" />
+            <path d="M3.05 13a9 9 0 1 0 2.13-5.71L3 8" />
+            <path d="M12 7v5l3 2" />
           </svg>
         )
       },
