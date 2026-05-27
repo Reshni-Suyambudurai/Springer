@@ -30,7 +30,7 @@ public class DocumentSubmissionController {
     private final IDocumentSubmissionService submissionService;
     private final IDocumentLinkService documentLinkService;
     private final CandidateRepository candidateRepository;
-    
+
     @PostMapping(consumes = "multipart/form-data")
     public ResponseEntity<ApiResponse<DocumentSubmissionResponse>> submitDocument(
             @RequestParam Long documentTypeId,

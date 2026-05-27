@@ -246,7 +246,6 @@
   border: 0.8px solid var(--color-inactive-border);
   border-radius: 8px;
   min-height: 64px;
-  position: relative;
 }
 
 .vdt-doc-card--approved { border-left: 3px solid var(--color-success-dark); }

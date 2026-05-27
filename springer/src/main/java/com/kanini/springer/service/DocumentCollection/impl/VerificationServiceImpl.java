@@ -14,7 +14,6 @@ import com.kanini.springer.repository.AuditTrailRepository;
 import com.kanini.springer.repository.Hiring.UserRepository;
 import com.kanini.springer.entity.HiringReq.User;
 import com.kanini.springer.service.DocumentCollection.IVerificationService;
-import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -27,7 +26,6 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
-@RequiredArgsConstructor
 public class VerificationServiceImpl implements IVerificationService {
 
     private static final String DOCUMENT_NOT_FOUND = "Document not found with ID: ";
@@ -36,6 +34,16 @@ public class VerificationServiceImpl implements IVerificationService {
     private final DocumentTypeRepository typeRepository;
     private final AuditTrailRepository auditTrailRepository;
     private final UserRepository userRepository;
+
+    public VerificationServiceImpl(DocumentSubmissionRepository submissionRepository,
+                                   DocumentTypeRepository typeRepository,
+                                   AuditTrailRepository auditTrailRepository,
+                                   UserRepository userRepository) {
+        this.submissionRepository = submissionRepository;
+        this.typeRepository = typeRepository;
+        this.auditTrailRepository = auditTrailRepository;
+        this.userRepository = userRepository;
+    }
     
     @Override
     @Transactional
@@ -188,11 +196,22 @@ public class VerificationServiceImpl implements IVerificationService {
         // Only active submissions (excludes REJECTED and PENDING) — REJECTED are historical, not current state
         List<DocumentSubmission> submissions = submissionRepository.findActiveSubmissionsByCandidateAndCycle(candidateId, cycleId);
 
-        int totalRequired = submissions.size();
-        int totalApproved = (int) submissions.stream()
+        // Dedup: keep only the latest submission per document type (handles re-uploads)
+        java.util.Map<Long, DocumentSubmission> latestByType = new java.util.HashMap<>();
+        for (DocumentSubmission s : submissions) {
+            Long typeId = s.getDocumentType().getDocumentTypeId();
+            DocumentSubmission existing = latestByType.get(typeId);
+            if (existing == null || s.getCandidateDocumentId() > existing.getCandidateDocumentId()) {
+                latestByType.put(typeId, s);
+            }
+        }
+        java.util.Collection<DocumentSubmission> latest = latestByType.values();
+
+        int totalRequired = latest.size();
+        int totalApproved = (int) latest.stream()
                 .filter(s -> s.getVerificationStatus() == Enums.VerificationStatus.APPROVED)
                 .count();
-        int totalPending = (int) submissions.stream()
+        int totalPending = (int) latest.stream()
                 .filter(s -> s.getVerificationStatus() == Enums.VerificationStatus.COLLECTED)
                 .count();
         int totalRejected = 0; // REJECTED rows excluded from active submissions
@@ -228,6 +247,17 @@ public class VerificationServiceImpl implements IVerificationService {
     public boolean getOfferReadyStatus(Long candidateId, Long cycleId) {
         List<DocumentSubmission> submissions = submissionRepository.findActiveSubmissionsByCandidateAndCycle(candidateId, cycleId);
         if (submissions.isEmpty()) return false;
-        return submissions.stream().allMatch(s -> s.getVerificationStatus() == Enums.VerificationStatus.APPROVED);
+
+        // Only check the latest submission per document type (handles re-uploads)
+        java.util.Map<Long, DocumentSubmission> latestByType = new java.util.HashMap<>();
+        for (DocumentSubmission s : submissions) {
+            Long typeId = s.getDocumentType().getDocumentTypeId();
+            DocumentSubmission existing = latestByType.get(typeId);
+            if (existing == null || s.getCandidateDocumentId() > existing.getCandidateDocumentId()) {
+                latestByType.put(typeId, s);
+            }
+        }
+
+        return latestByType.values().stream().allMatch(s -> s.getVerificationStatus() == Enums.VerificationStatus.APPROVED);
     }
 }

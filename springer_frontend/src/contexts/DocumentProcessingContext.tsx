@@ -89,12 +89,12 @@ export const DocumentProcessingProvider = ({ children }: { children: ReactNode }
     loadingSubmissionsRef.current = true;
     setLoadingSubmissions(true);
     try {
-      const res = await documentSubmissionApi.getAllSubmissions({
-        cycleId,
-        applicationStage: 'SELECTED',
-        size: 2000,
-      });
-      if (res.success && res.data) setSubmissions(res.data);
+      const stages = ['SELECTED', 'OFFERED', 'OFFER_ACCEPTED'];
+      const results = await Promise.all(
+        stages.map(stage => documentSubmissionApi.getAllSubmissions({ cycleId, applicationStage: stage, size: 2000 }))
+      );
+      const allSubs = results.flatMap(r => (r.success && r.data) ? r.data : []);
+      setSubmissions(allSubs);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Failed to load submissions';
       showToast(msg, 'error');
@@ -111,7 +111,7 @@ export const DocumentProcessingProvider = ({ children }: { children: ReactNode }
     try {
       const res = await candidateApi.getCandidatesWithFilters({
         cycleId,
-        applicationStages: ['SELECTED'],
+        applicationStages: ['SELECTED', 'OFFERED', 'OFFER_ACCEPTED'],
         page: 0,
         size: 2000,
       });

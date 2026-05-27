@@ -5,6 +5,8 @@ import type {
   InternDashboardData,
   InternActivationRequest,
   InternActivationResponse,
+  BulkInternEntry,
+  BulkInternActivationResponse,
   InternProfileRequest,
   InternProfileResponse,
   InternCertificateResponse,
@@ -28,6 +30,15 @@ export const internApi = {
   async activateIntern(candidateId: number, data: InternActivationRequest): Promise<ApiResponse<InternActivationResponse>> {
     try {
       const response = await http.post(`/intern/activate/${candidateId}`, data);
+      return response.data;
+    } catch (error) {
+      throw handleAxiosError(error);
+    }
+  },
+
+  async bulkActivateInterns(interns: BulkInternEntry[]): Promise<ApiResponse<BulkInternActivationResponse>> {
+    try {
+      const response = await http.post('/intern/activate/bulk', { interns });
       return response.data;
     } catch (error) {
       throw handleAxiosError(error);

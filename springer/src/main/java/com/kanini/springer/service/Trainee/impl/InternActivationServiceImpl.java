@@ -2,6 +2,8 @@ package com.kanini.springer.service.Trainee.impl;
 
 import com.kanini.springer.dto.Trainee.InternActivationRequest;
 import com.kanini.springer.dto.Trainee.InternActivationResponse;
+import com.kanini.springer.dto.Trainee.BulkInternActivationRequest;
+import com.kanini.springer.dto.Trainee.BulkInternActivationResponse;
 import com.kanini.springer.entity.Drive.Candidate;
 import com.kanini.springer.entity.HiringReq.Role;
 import com.kanini.springer.entity.HiringReq.User;
@@ -19,6 +21,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -92,5 +96,102 @@ public class InternActivationServiceImpl implements IInternActivationService {
                 outlookEmail,
                 "Intern account activated. Login credentials sent to " + outlookEmail
         );
+    }
+
+    @Override
+    @Transactional
+    public BulkInternActivationResponse bulkActivateInterns(BulkInternActivationRequest request) {
+        List<BulkInternActivationResponse.ActivationResult> results = new ArrayList<>();
+        int successCount = 0;
+        int failedCount = 0;
+
+        Role internRole = roleRepository.findByRoleName(RoleName.INTERN)
+                .orElseThrow(() -> new ResourceNotFoundException("INTERN role not found in DB"));
+
+        for (BulkInternActivationRequest.BulkInternEntry entry : request.getInterns()) {
+            try {
+                String outlookEmail = entry.getOutlookEmail() != null ? entry.getOutlookEmail().trim().toLowerCase() : "";
+                if (outlookEmail.isEmpty()) {
+                    results.add(new BulkInternActivationResponse.ActivationResult(
+                            entry.getCandidateId(), entry.getCandidateName(), outlookEmail,
+                            false, "Outlook email is required", null));
+                    failedCount++;
+                    continue;
+                }
+
+                Candidate candidate = candidatesRepository.findById(entry.getCandidateId()).orElse(null);
+                if (candidate == null) {
+                    results.add(new BulkInternActivationResponse.ActivationResult(
+                            entry.getCandidateId(), entry.getCandidateName(), outlookEmail,
+                            false, "Candidate not found", null));
+                    failedCount++;
+                    continue;
+                }
+
+                if (candidate.getUser() != null) {
+                    results.add(new BulkInternActivationResponse.ActivationResult(
+                            entry.getCandidateId(), entry.getCandidateName(), outlookEmail,
+                            false, "Already activated", null));
+                    failedCount++;
+                    continue;
+                }
+
+                if (candidate.getApplicationStage() != com.kanini.springer.entity.enums.Enums.ApplicationStage.JOINED) {
+                    results.add(new BulkInternActivationResponse.ActivationResult(
+                            entry.getCandidateId(), entry.getCandidateName(), outlookEmail,
+                            false, "Only JOINED candidates can be activated", null));
+                    failedCount++;
+                    continue;
+                }
+
+                if (userRepository.existsByEmail(outlookEmail)) {
+                    results.add(new BulkInternActivationResponse.ActivationResult(
+                            entry.getCandidateId(), entry.getCandidateName(), outlookEmail,
+                            false, "Email already registered: " + outlookEmail, null));
+                    failedCount++;
+                    continue;
+                }
+
+                String tempPassword = "Kanini@" + UUID.randomUUID().toString().substring(0, 6).toUpperCase();
+                String fullName = candidate.getFirstName()
+                        + (candidate.getLastName() != null ? " " + candidate.getLastName() : "");
+
+                User user = new User();
+                user.setUsername(fullName);
+                user.setEmail(outlookEmail);
+                user.setPassword(passwordEncoder.encode(tempPassword));
+                user.setDepartment(candidate.getDepartment());
+                user.setLocation("Training");
+                user.setIsActive(true);
+                user.setRole(internRole);
+                User savedUser = userRepository.save(user);
+
+                candidate.setUser(savedUser);
+                candidatesRepository.save(candidate);
+
+                boolean emailSent = emailService.sendInternWelcomeEmail(outlookEmail, fullName, tempPassword);
+                if (!emailSent) {
+                    log.warn("Email failed for {} but account was created", outlookEmail);
+                }
+
+                log.info("Bulk: Intern activated for candidate {} with email {} (userId: {})",
+                        candidate.getEmail(), outlookEmail, savedUser.getUserId());
+
+                results.add(new BulkInternActivationResponse.ActivationResult(
+                        entry.getCandidateId(), entry.getCandidateName(), outlookEmail,
+                        true, "Activated successfully", savedUser.getUserId()));
+                successCount++;
+
+            } catch (Exception e) {
+                log.error("Bulk activation failed for candidateId {}: {}", entry.getCandidateId(), e.getMessage());
+                results.add(new BulkInternActivationResponse.ActivationResult(
+                        entry.getCandidateId(), entry.getCandidateName(),
+                        entry.getOutlookEmail() != null ? entry.getOutlookEmail() : "",
+                        false, "Error: " + e.getMessage(), null));
+                failedCount++;
+            }
+        }
+
+        return new BulkInternActivationResponse(request.getInterns().size(), successCount, failedCount, results);
     }
 }

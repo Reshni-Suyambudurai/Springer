@@ -1,6 +1,9 @@
 package com.kanini.springer.config;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.boot.web.embedded.tomcat.TomcatServletWebServerFactory;
+import org.springframework.boot.web.server.WebServerFactoryCustomizer;
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -11,10 +14,11 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.core.Ordered;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
+import org.springframework.web.filter.CorsFilter;
 
 import java.util.Arrays;
 
@@ -42,6 +46,7 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/auth/**").permitAll() // Allow login without authentication
                 .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html", "/swagger-resources/**", "/webjars/**").permitAll() // Allow Swagger UI
+                .requestMatchers("/error").permitAll() // Allow error page so error responses get CORS headers
                 // Candidate-facing document endpoints — authenticated by JWT token in URL, not session login
                 .requestMatchers("/api/documents/submission-status").permitAll()
                 .requestMatchers("/api/documents/submissions").permitAll()
@@ -62,10 +67,9 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOriginPatterns(Arrays.asList(
-             "http://localhost:8080",  // Swagger UI
-            "http://localhost:5173",  // Vite React
-            "http://localhost:5174",  // Vite React (fallback port)
-        
+            "http://localhost:8080",
+            "http://localhost:5173",
+            "http://localhost:5174",
             "https://*.vercel.app",
             "https://*.up.railway.app"
         ));
@@ -83,5 +87,18 @@ public class SecurityConfig {
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
-}
 
+    @Bean
+    public FilterRegistrationBean<CorsFilter> corsFilterRegistration() {
+        FilterRegistrationBean<CorsFilter> registration = new FilterRegistrationBean<>(
+            new CorsFilter(corsConfigurationSource()));
+        registration.setOrder(-102); // just before Spring Security (-100)
+        return registration;
+    }
+
+    @Bean
+    public WebServerFactoryCustomizer<TomcatServletWebServerFactory> tomcatMultipartFix() {
+        return factory -> factory.addContextCustomizers(
+            context -> context.setAllowCasualMultipartParsing(true));
+    }
+}

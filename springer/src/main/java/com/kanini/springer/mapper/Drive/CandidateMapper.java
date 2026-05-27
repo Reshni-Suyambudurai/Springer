@@ -143,6 +143,7 @@ public class CandidateMapper {
         r.setApplicationType(candidate.getApplicationType() != null ? candidate.getApplicationType().toString() : null);
         r.setIsEligible(candidate.getIsEligible());
         r.setReason(candidate.getReason());
+        r.setUserId(candidate.getUser() != null ? candidate.getUser().getUserId() : null);
         return r;
     }
     

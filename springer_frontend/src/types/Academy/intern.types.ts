@@ -8,6 +8,28 @@ export interface InternActivationResponse {
   message: string;
 }
 
+export interface BulkInternEntry {
+  candidateId: number;
+  candidateName: string;
+  outlookEmail: string;
+}
+
+export interface BulkActivationResult {
+  candidateId: number;
+  candidateName: string;
+  outlookEmail: string;
+  success: boolean;
+  message: string;
+  userId: number | null;
+}
+
+export interface BulkInternActivationResponse {
+  totalRequested: number;
+  successCount: number;
+  failedCount: number;
+  results: BulkActivationResult[];
+}
+
 export interface InternCourseScore {
   courseId: number;
   courseName: string;

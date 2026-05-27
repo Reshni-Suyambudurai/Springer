@@ -193,6 +193,19 @@ Tables and seed data are created automatically on first backend startup.
 | **John** | Intern | john@kanini.com | password123 | Training | Coimbatore |
 | **Joe** | Intern | joe@kanini.com | password123 | Training | Coimbatore |
 
+### Intern Accounts (Linked to Training Academy)
+
+These intern accounts are linked to candidates in the training program. They can log in to see their dashboard, attendance, scores, leaves, and warnings.
+
+| Name | Email | Password | Batch | Department |
+|------|-------|----------|-------|------------|
+| Manohar Bavigadda | manoharbavigadda@gmail.com | password123 | Batch 1 | Computer Science |
+| Srinivath Mohan | knowledgeiq255@gmail.com | password123 | Batch 1 | Computer Science |
+| Pradeep Kumar | pradeepkumar.dev@gmail.com | password123 | Batch 1 | Information Technology |
+| Kavitha Rajan | kavitharajan.work@gmail.com | password123 | Batch 2 | Electronics |
+| Arun Prakash | arunprakash.kanini@gmail.com | password123 | Batch 2 | Computer Science |
+| Divya Lakshmi | divyalakshmi.tech@gmail.com | password123 | Batch 2 | Data Science |
+
 ---
 
 ## Environment Profiles
