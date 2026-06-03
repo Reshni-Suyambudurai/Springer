@@ -42,7 +42,6 @@ const DriveList: React.FC = () => {
     }
   };
 
-
   const formatDateTime = (iso?: string) => {
     if (!iso) return null;
     const d = new Date(iso);
@@ -53,11 +52,23 @@ const DriveList: React.FC = () => {
   };
 
   const handleDetails = (driveId: number) => {
-    navigate(`/drive-process/drive-details/${driveId}`);
+    const drive = drives.find((item) => item.driveId === driveId);
+    navigate(`/drive-process/drive-details/${driveId}`, {
+      state: {
+        backTo: `/drive-process/drive-list/${drive?.cycleId || cycleId}`,
+      },
+    });
   };
 
   const handleCandidateScore = (driveId: number) => {
-    navigate(`/drive-process/drive-candidates/${driveId}`);
+    const drive = drives.find((item) => item.driveId === driveId);
+    navigate(`/drive-process/drive-candidates/${driveId}`, {
+      state: {
+        backTo: `/drive-process/drive-list/${drive?.cycleId || cycleId}`,
+        driveName: drive?.driveName,
+        cycleName: drive?.cycleName || cycleName,
+      },
+    });
   };
 
   if (loading) {
@@ -90,7 +101,7 @@ const DriveList: React.FC = () => {
         <Box className="drive-list-grid">
           {drives.map((drive) => (
             <Card key={drive.driveId} className="drive-list-card">
-              {/* Card Header */}
+              {/* Card Header: name + badges on one line */}
               <Box className="drive-list-card-header">
                 <Typography className="drive-list-card-title">{drive.driveName}</Typography>
                 <Box className="drive-list-card-badges">
@@ -111,18 +122,22 @@ const DriveList: React.FC = () => {
                 </Box>
               </Box>
 
-              {/* Card Footer — created left, updated right */}
+              {/* Card Footer: created left, updated right */}
               <Box className="drive-list-card-footer">
                 <Box className="drive-list-card-footer-item">
-                  <Typography className="drive-list-footer-label">Created by</Typography>
+                  <Typography className="drive-list-footer-label">Created By</Typography>
                   <Typography className="drive-list-footer-name">{drive.createdByName}</Typography>
                   <Typography className="drive-list-footer-time">{formatDateTime(drive.createdAt)}</Typography>
                 </Box>
-                {drive.updatedByName && (
+                {(drive.updatedByName || drive.updatedAt) && (
                   <Box className="drive-list-card-footer-item drive-list-card-footer-item--right">
-                    <Typography className="drive-list-footer-label">Updated by</Typography>
-                    <Typography className="drive-list-footer-name">{drive.updatedByName}</Typography>
-                    <Typography className="drive-list-footer-time">{formatDateTime(drive.updatedAt)}</Typography>
+                    <Typography className="drive-list-footer-label">Updated By</Typography>
+                    {drive.updatedByName && (
+                      <Typography className="drive-list-footer-name">{drive.updatedByName}</Typography>
+                    )}
+                    {drive.updatedAt && (
+                      <Typography className="drive-list-footer-time">{formatDateTime(drive.updatedAt)}</Typography>
+                    )}
                   </Box>
                 )}
               </Box>
@@ -130,13 +145,13 @@ const DriveList: React.FC = () => {
               {/* Card Actions */}
               <Box className="drive-list-card-actions">
                 <Button
-                  className="drive-list-btn drive-list-btn-score"
+                  className="drive-list-btn g-btn g-btn-outline-primary"
                   onClick={() => handleDetails(drive.driveId)}
                 >
                   Details
                 </Button>
                 <Button
-                  className="drive-list-btn drive-list-btn-score"
+                  className="drive-list-btn g-btn g-btn-primary"
                   onClick={() => handleCandidateScore(drive.driveId)}
                 >
                   Candidate Score

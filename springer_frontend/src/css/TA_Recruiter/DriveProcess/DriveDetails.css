@@ -318,56 +318,66 @@
 }
 
 /* ========== Analytics Stats ========== */
-.dd-stats-row {
+.dd-batch-layout {
   display: flex;
-  gap: 16px;
-  margin-bottom: 24px;
-  flex-wrap: wrap;
+  gap: 24px;
+  align-items: flex-start;
+  margin-top: 16px;
+}
+
+.dd-batch-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  flex-shrink: 0;
+  min-width: 160px;
 }
 
 .dd-stat-box {
-  flex: 1;
-  min-width: 140px;
-  background-color: var(--color-bg);
-  border: 1px solid var(--color-border);
-  border-radius: 10px;
-  padding: 20px;
+  background-color: var(--color-sidebar-bg);
+  border-radius: 12px;
+  padding: 20px 24px;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 6px;
+  text-align: center;
 }
 
 .dd-stat-value {
-  font-size: 32px !important;
-  font-weight: 700 !important;
-  color: var(--color-primary) !important;
+  font-size: 34px !important;
+  font-weight: 800 !important;
+  color: var(--color-white) !important;
   line-height: 1 !important;
 }
 
 .dd-stat-label {
-  font-size: 12px !important;
-  color: var(--color-text-muted) !important;
+  font-size: 11px !important;
+  color: var(--color-white) !important;
   font-weight: 500 !important;
-  text-align: center;
+  opacity: 0.8;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
 }
 
-/* ========== Batch Time Table ========== */
-.dd-batch-table {
+/* ========== Batch Key-Value Panel ========== */
+.dd-batch-kv-panel {
+  flex: 1;
   border: 1px solid var(--color-border);
   border-radius: 10px;
   overflow: hidden;
 }
 
-.dd-batch-table-head {
+.dd-batch-kv-header {
   display: flex;
   justify-content: space-between;
-  padding: 10px 18px;
-  background-color: var(--color-bg);
+  align-items: center;
+  padding: 10px 16px;
+  background-color: var(--color-grey-150);
   border-bottom: 1px solid var(--color-border);
 }
 
-.dd-batch-th {
+.dd-batch-kv-th {
   font-size: 11px !important;
   font-weight: 700 !important;
   color: var(--color-text-muted) !important;
@@ -375,42 +385,44 @@
   letter-spacing: 0.5px;
 }
 
-.dd-batch-th--right {
+.dd-batch-kv-th--right {
   text-align: right;
 }
 
-.dd-batch-row {
+.dd-batch-kv-body {
+  display: flex;
+  flex-direction: column;
+}
+
+.dd-batch-kv-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px 18px;
+  padding: 11px 16px;
   border-bottom: 1px solid var(--color-border);
+  transition: background-color 0.15s ease;
 }
 
-.dd-batch-row:last-child {
+.dd-batch-kv-row:last-child {
   border-bottom: none;
 }
 
-.dd-batch-row:hover {
-  background-color: var(--color-bg);
+.dd-batch-kv-row:hover {
+  background-color: var(--color-grey-50);
 }
 
-.dd-batch-td {
+.dd-batch-kv-time {
   font-size: 13px !important;
   color: var(--color-text) !important;
   font-weight: 500 !important;
 }
 
-.dd-batch-td--right {
-  text-align: right;
-}
-
 .dd-count-badge {
   display: inline-block;
   padding: 2px 12px;
-  border-radius: 12px;
-  border: 1.5px solid var(--color-primary);
-  color: var(--color-text);
+  border-radius: 20px;
+  background-color: var(--color-sidebar-bg);
+  color: var(--color-white);
   font-size: 13px;
   font-weight: 700;
 }
@@ -547,15 +559,16 @@
 .dd-rounds-container {
   display: flex;
   flex-direction: row;
-  gap: 4px;
+  gap: 8px;
   align-items: stretch;
 }
 
 .dd-round-card {
   flex: 1;
-  background: var(--gradient-primary-border);
+  background: linear-gradient(to right, var(--color-primary-hover), var(--color-blue-700), var(--color-primary-gradient-end));
   border: none;
   padding: 2px;
+  border-radius: 0;
   transition: all 0.3s ease;
   position: relative;
   clip-path: polygon(
@@ -569,8 +582,9 @@
 
 .dd-round-card-inner {
   background-color: var(--color-surface);
-  padding: 14px 28px 14px 16px;
+  padding: 14px 32px 14px 16px;
   height: 100%;
+  border-radius: 0;
   clip-path: polygon(
     0 0,
     calc(100% - 25px) 0,
@@ -581,17 +595,17 @@
 }
 
 .dd-round-card:last-child {
-  clip-path: none;
   border-radius: 0 10px 10px 0;
   padding: 2px;
   border: none;
-  background: var(--gradient-primary-border);
+  background: linear-gradient(to right, var(--color-primary-hover), var(--color-blue-700), var(--color-primary-gradient-end));
+  clip-path: none;
 }
 
 .dd-round-card:last-child .dd-round-card-inner {
-  clip-path: none;
   border-radius: 0 8px 8px 0;
   padding: 14px 16px;
+  clip-path: none;
 }
 
 .dd-round-empty:last-child {
@@ -613,11 +627,9 @@
 .dd-round-card::before {
   content: '';
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  inset: 0;
   background: linear-gradient(135deg, var(--color-primary-hover), var(--color-primary));
+  border-radius: 0;
   clip-path: polygon(
     0 0,
     calc(100% - 25px) 0,
@@ -631,8 +643,8 @@
 }
 
 .dd-round-card:last-child::before {
-  clip-path: none;
   border-radius: 0 10px 10px 0;
+  clip-path: none;
 }
 
 .dd-round-card:hover {
@@ -650,8 +662,7 @@
 }
 
 .dd-round-empty {
-  background: linear-gradient(to right, var(--color-grey-300), var(--color-grey-400), var(--color-grey-500));
-  border-style: dashed;
+  background: var(--color-border);
 }
 
 .dd-round-empty .dd-round-card-inner {
