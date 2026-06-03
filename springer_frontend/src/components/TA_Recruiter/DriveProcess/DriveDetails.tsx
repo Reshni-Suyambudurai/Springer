@@ -296,33 +296,37 @@ const DriveDetails: React.FC = () => {
         <Card className="dd-card">
           <Typography className="dd-card-heading">Batch Time Distribution</Typography>
 
-          <Box className="dd-stats-row">
-            <Box className="dd-stat-box">
-              <Typography className="dd-stat-value">{totalApplications}</Typography>
-              <Typography className="dd-stat-label">Total Applications</Typography>
-            </Box>
-            <Box className="dd-stat-box">
-              <Typography className="dd-stat-value">{distinctBatchTimeCount}</Typography>
-              <Typography className="dd-stat-label">Distinct Batch Times</Typography>
-            </Box>
-          </Box>
-
-          {Object.keys(applicationsPerBatchTime).length > 0 && (
-            <Box className="dd-batch-table">
-              <Box className="dd-batch-table-head">
-                <Typography className="dd-batch-th">Batch Time</Typography>
-                <Typography className="dd-batch-th dd-batch-th--right">Applications</Typography>
+          <Box className="dd-batch-layout">
+            {/* Left: Summary Stats */}
+            <Box className="dd-batch-stats">
+              <Box className="dd-stat-box">
+                <Typography className="dd-stat-value">{totalApplications}</Typography>
+                <Typography className="dd-stat-label">Total Applications</Typography>
               </Box>
-              {Object.entries(applicationsPerBatchTime).map(([key, count]) => (
-                <Box key={key} className="dd-batch-row">
-                  <Typography className="dd-batch-td">{formatBatchTime(key)}</Typography>
-                  <Typography className="dd-batch-td dd-batch-td--right">
-                    <span className="dd-count-badge">{count}</span>
-                  </Typography>
-                </Box>
-              ))}
+              <Box className="dd-stat-box">
+                <Typography className="dd-stat-value">{distinctBatchTimeCount}</Typography>
+                <Typography className="dd-stat-label">No. of Batches</Typography>
+              </Box>
             </Box>
-          )}
+
+            {/* Right: Batch Time → Applications key-value */}
+            {Object.keys(applicationsPerBatchTime).length > 0 && (
+              <Box className="dd-batch-kv-panel">
+                <Box className="dd-batch-kv-header">
+                  <Typography className="dd-batch-kv-th">Batch Time</Typography>
+                  <Typography className="dd-batch-kv-th dd-batch-kv-th--right">Applications</Typography>
+                </Box>
+                <Box className="dd-batch-kv-body">
+                  {Object.entries(applicationsPerBatchTime).map(([key, count]) => (
+                    <Box key={key} className="dd-batch-kv-row">
+                      <Typography className="dd-batch-kv-time">{formatBatchTime(key)}</Typography>
+                      <span className="dd-count-badge">{count}</span>
+                    </Box>
+                  ))}
+                </Box>
+              </Box>
+            )}
+          </Box>
         </Card>
 
       </Box>
