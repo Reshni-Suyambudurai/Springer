@@ -25,8 +25,8 @@ export const syncEligibilityFiltersToSession = async (): Promise<boolean> => {
     const rules: EligibilityRuleDTO[] = response.data.rules;
 
     // Extract degree and department rules (operator: "IN")
-    const degreeRule = rules.find(rule => rule.field === "degree" && rule.operator === "IN");
-    const departmentRule = rules.find(rule => rule.field === "department" && rule.operator === "IN");
+    const degreeRule = rules.find(rule => rule.field.toLowerCase() === "degree" && rule.operator === "IN");
+    const departmentRule = rules.find(rule => rule.field.toLowerCase() === "department" && rule.operator === "IN");
 
     // Get current filters from sessionStorage or create empty ones
     const currentFilters = tokenstore.getCandidateFilters();
