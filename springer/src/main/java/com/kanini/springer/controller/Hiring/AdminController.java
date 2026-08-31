@@ -2,6 +2,7 @@ package com.kanini.springer.controller.Hiring;
 
 import com.kanini.springer.dto.Authentication.ApiResponse;
 import com.kanini.springer.dto.Authentication.CreateUserRequest;
+import com.kanini.springer.dto.Authentication.UpdateUserRequest;
 import com.kanini.springer.dto.Authentication.UserResponse;
 import com.kanini.springer.service.User.IAdminService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -35,6 +36,19 @@ public class AdminController {
         UserResponse response = adminService.createUser(request);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success("User created successfully", response));
+    }
+
+    /**
+     * Update a user while keeping the email address unchanged
+     * PATCH /api/admin/users/{id}
+     */
+    @PatchMapping("/users/{id}")
+    @Operation(summary = "Update a user", description = "Updates a user's editable fields while preserving the email address")
+    public ResponseEntity<ApiResponse<UserResponse>> updateUser(
+            @PathVariable Long id,
+            @Valid @RequestBody UpdateUserRequest request) {
+        UserResponse response = adminService.updateUser(id, request);
+        return ResponseEntity.ok(ApiResponse.success("User updated successfully", response));
     }
 
     /**

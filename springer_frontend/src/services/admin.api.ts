@@ -2,7 +2,7 @@ import { http } from "./api/https";
 import { handleAxiosError } from "./api.error";
 
 import type { ApiResponse } from "../types/api.response";
-import type { CreateUserRequest, UserResponse } from "../types/Common/admin.types";
+import type { CreateUserRequest, UpdateUserRequest, UserResponse } from "../types/Common/admin.types";
 
 export const adminApi = {
   /**
@@ -12,6 +12,19 @@ export const adminApi = {
   async createUser(data: CreateUserRequest): Promise<ApiResponse<UserResponse>> {
     try {
       const response = await http.post('/admin/users', data);
+      return response.data;
+    } catch (error) {
+      throw handleAxiosError(error);
+    }
+  },
+
+  /**
+   * Update the editable fields of a user
+   * PATCH /api/admin/users/{id}
+   */
+  async updateUser(userId: number, data: UpdateUserRequest): Promise<ApiResponse<UserResponse>> {
+    try {
+      const response = await http.patch(`/admin/users/${userId}`, data);
       return response.data;
     } catch (error) {
       throw handleAxiosError(error);
