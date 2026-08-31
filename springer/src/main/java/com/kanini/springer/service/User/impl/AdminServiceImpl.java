@@ -1,6 +1,7 @@
 package com.kanini.springer.service.User.impl;
 
 import com.kanini.springer.dto.Authentication.CreateUserRequest;
+import com.kanini.springer.dto.Authentication.UpdateUserRequest;
 import com.kanini.springer.dto.Authentication.UserResponse;
 import com.kanini.springer.entity.HiringReq.Role;
 import com.kanini.springer.entity.HiringReq.User;
@@ -52,6 +53,34 @@ public class AdminServiceImpl implements IAdminService {
         User savedUser = userRepository.save(user);
 
         return userMapper.toResponse(savedUser);
+    }
+
+    @Override
+    @Transactional
+    public UserResponse updateUser(Long userId, UpdateUserRequest request) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User", "ID", userId));
+
+        RoleName roleName;
+        try {
+            roleName = RoleName.valueOf(request.getRoleName());
+        } catch (IllegalArgumentException e) {
+            throw new ValidationException("Invalid role name: " + request.getRoleName());
+        }
+
+        Role role = roleRepository.findByRoleName(roleName)
+                .orElseThrow(() -> new ResourceNotFoundException("Role", "name", request.getRoleName()));
+
+        user.setUsername(request.getUsername());
+        user.setRole(role);
+        user.setDepartment(request.getDepartment());
+        user.setLocation(request.getLocation());
+        if (request.getPassword() != null && !request.getPassword().isBlank()) {
+            user.setPassword(passwordEncoder.encode(request.getPassword()));
+        }
+
+        User updatedUser = userRepository.save(user);
+        return userMapper.toResponse(updatedUser);
     }
 
     @Override

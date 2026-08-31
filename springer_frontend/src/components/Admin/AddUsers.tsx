@@ -3,33 +3,8 @@ import { Button, CircularProgress } from '@mui/material';
 import { showToast } from '../../utils/toast';
 import { adminApi } from '../../services/admin.api';
 import type { AppError } from '../../services/api.error';
+import { DEPARTMENT_OPTIONS, LOCATION_OPTIONS, ROLE_OPTIONS } from '../../config/adminUserOptions';
 import '../../css/Admin/AddUsers.css';
-
-const ROLE_OPTIONS = [
-  { label: 'TA Manager',           value: 'TA_MANAGER' },
-  { label: 'TA Head',              value: 'TA_HEAD' },
-  { label: 'Hiring Manager',       value: 'HIRING_MANAGER' },
-  { label: 'Panel Member',         value: 'MEMBERS' },
-  { label: 'Training Coordinator', value: 'TRAINING_COORDINATOR' },
-  { label: 'System Admin',         value: 'SYSTEM_ADMIN' },
-];
-
-const DEPARTMENT_OPTIONS = [
-  'Data and Analytics',
-  'Product Engineering',
-  'ServiceNow',
-  'AI Engineer',
-  'Sales',
-  'Administration',
-  'HR'
-];
-
-const LOCATION_OPTIONS = [
-  'Chennai',
-  'Bangalore',
-  'Coimbatore',
-  'Pune',
-];
 
 interface UserForm {
   username: string;
@@ -271,7 +246,7 @@ function AddUsers() {
             <Button
               type="button"
               variant="outlined"
-              className="t-btn-secondary"
+              className="g-btn g-btn-outline-primary"
               onClick={handleReset}
               disabled={submitting}
             >
@@ -280,7 +255,7 @@ function AddUsers() {
             <Button
               type="submit"
               variant="contained"
-              className="t-btn-primary"
+              className="g-btn g-btn-primary"
               disabled={submitting}
             >
               {submitting ? <CircularProgress size={18} className="au-spinner" /> : 'Create User'}

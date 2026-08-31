@@ -216,6 +216,7 @@
 }
 .cl-filters-btn:hover {
   background: var(--color-filter-bg) !important;
+  color: var(--color-primary) !important;
 }
 
 /* Search */
