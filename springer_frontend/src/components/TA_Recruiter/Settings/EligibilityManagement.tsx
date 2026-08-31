@@ -21,6 +21,9 @@ const FIELD_LABELS: Record<string, string> = {
   cgpa: 'CGPA', passoutYear: 'Passout Year', historyOfArrears: 'History of Arrears', degree: 'Degree', department: 'Department',
 };
 
+const getAllowedValueOptions = (field: string) =>
+  field.toLowerCase() === 'degree' ? DEGREE_OPTIONS : DEPARTMENT_OPTIONS;
+
 const EligibilityManagement = () => {
   const { setAction } = useNavbarAction();
   const [loading, setLoading] = useState(true);
@@ -144,7 +147,7 @@ const EligibilityManagement = () => {
       return <Typography className="eligibility-value-text">{rule.value}</Typography>;
     }
 
-    const options = rule.field === 'degree' ? DEGREE_OPTIONS : DEPARTMENT_OPTIONS;
+    const options = getAllowedValueOptions(rule.field);
 
     if (rule.operator === 'BETWEEN') return (
       <Box>
@@ -230,7 +233,7 @@ const EligibilityManagement = () => {
                       <Box className="eligibility-table-cell">
                         <Box className="eligibility-select-all-row">
                           <Button size="small" variant="outlined" className="t-btn-small"
-                            onClick={() => handleChange(index, 'allowedValues', rule.field === 'degree' ? DEGREE_OPTIONS : DEPARTMENT_OPTIONS)}>Select All</Button>
+                            onClick={() => handleChange(index, 'allowedValues', getAllowedValueOptions(rule.field))}>Select All</Button>
                           <Button size="small" variant="outlined" className="t-btn-small"
                             onClick={() => handleChange(index, 'allowedValues', [])}>Clear</Button>
                           <Typography className="eligibility-between-text">
@@ -241,7 +244,7 @@ const EligibilityManagement = () => {
                     </Box>
                     <Box className="eligibility-checkbox-expanded">
                       <Box className="eligibility-checkbox-grid">
-                        {(rule.field === 'degree' ? DEGREE_OPTIONS : DEPARTMENT_OPTIONS).map((opt) => (
+                        {getAllowedValueOptions(rule.field).map((opt) => (
                           <FormControlLabel key={opt} label={<Typography fontSize="var(--text-xs)">{opt}</Typography>}
                             control={<Checkbox size="small" checked={rule.allowedValues?.includes(opt) || false}
                               onChange={(e) => {
