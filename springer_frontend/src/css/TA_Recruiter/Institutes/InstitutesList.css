@@ -612,7 +612,8 @@
   top: 50% !important;
   left: 50% !important;
   transform: translate(-50%, -50%) !important;
-  width: min(960px, calc(100vw - 32px)) !important;
+  width: min(1260px, calc(100vw - 32px)) !important;
+  max-width: min(1260px, calc(100vw - 32px)) !important;
   max-height: calc(100vh - 32px) !important;
 }
 
@@ -620,6 +621,13 @@
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
+}
+
+.iu-dialog-title-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: 16px;
 }
 
 .iu-dialog-heading {
@@ -640,6 +648,7 @@
   display: flex !important;
   flex-direction: column !important;
   gap: 16px !important;
+  min-height: 400px;
 }
 .iu-dialog-actions-wrap { padding: 16px 24px !important; gap: 8px !important; }
 
@@ -677,6 +686,7 @@
 
 .iu-table {
   width: 100%;
+  min-width: 980px;
   border-collapse: collapse;
   font-size: 0.8125rem;
 }
@@ -710,6 +720,19 @@
 .iu-delete-btn { color: var(--color-error-dark) !important; padding: 4px !important; }
 
 .iu-cell-text { color: var(--color-text-primary); }
+
+.iu-tpo-cell { min-width: 240px; }
+.iu-tpo-details { display: flex; flex-direction: column; gap: 2px; }
+.iu-tpo-name {
+  color: var(--color-text-primary) !important;
+  font-size: inherit !important;
+  font-weight: 700 !important;
+}
+.iu-tpo-meta {
+  color: var(--color-text-secondary) !important;
+  font-size: 0.75rem !important;
+  overflow-wrap: anywhere;
+}
 
 /* -- Error Overlay -- */
 .iu-error-overlay {
@@ -853,7 +876,16 @@
 
 .iu-hint-text--orange { color: var(--color-warning) !important; }
 
+.iu-upload-empty-state {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .iu-dropzone {
+  width: min(720px, 100%);
+  box-sizing: border-box;
   border: 2px dashed var(--color-border);
   border-radius: 10px;
   padding: 32px 20px;
@@ -862,7 +894,7 @@
   align-items: center;
   gap: 10px;
   transition: all 0.2s ease;
-  background: var(--color-surface);
+  background: var(--color-success-light);
 }
 
 .iu-dropzone--active { border-color: var(--color-primary); background: var(--color-primary-light); }
@@ -909,6 +941,29 @@
   transition: all 0.2s ease;
 }
 .iu-browse-btn:hover { border-color: var(--color-primary); color: var(--color-primary); }
+
+.iu-upload-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+
+.iu-upload-guide {
+  width: min(100%, 620px);
+  box-sizing: border-box;
+  padding: 10px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-bg-primary);
+}
+
+.iu-upload-guide-text {
+  margin: 0 !important;
+  color: var(--color-text-secondary) !important;
+  font-size: var(--text-xs) !important;
+  line-height: 1.45 !important;
+}
 
 .iu-formats {
   font-size: var(--text-xs) !important;

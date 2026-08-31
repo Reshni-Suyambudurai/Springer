@@ -7,8 +7,6 @@ import TARHiringCycleList from './components/TA_Recruiter/HiringCycle/HiringCycl
 import TARHiringCycleDetails from './components/TA_Recruiter/HiringCycle/HiringCycleDetails'
 import InstitutesList from './components/TA_Recruiter/Institutes/InstitutesList'
 import InstitutesDetails from './components/TA_Recruiter/Institutes/InstitutesDetails'
-import AddInstitute from './components/TA_Recruiter/Institutes/AddInstitute'
-import InstituteUpload from './components/TA_Recruiter/Institutes/InstituteUpload'
 import CandidateList from './components/TA_Recruiter/Candidates/CandidateList'
 import CandidatesHistory from './components/TA_Recruiter/Candidates/CandidatesHistory'
 import CandidateDetails from './components/TA_Recruiter/Candidates/CandidateDetails'
@@ -134,8 +132,6 @@ function App() {
           <Route path="/ta-recruiter/hiring-cycles" element={<TARHiringCycleList />} />
           <Route path="/ta-recruiter/hiring-cycles/:cycleId" element={<TARHiringCycleDetails />} />
           <Route path="/ta-recruiter/institutes" element={<InstitutesList />} />
-          <Route path="/ta-recruiter/institutes/add" element={<AddInstitute />} />
-          <Route path="/ta-recruiter/institutes/upload" element={<InstituteUpload />} />
           <Route path="/ta-recruiter/institutes/:instituteId" element={<InstitutesDetails />} />
 
           <Route path="/ta-recruiter/candidates" element={<CandidateList />} />
