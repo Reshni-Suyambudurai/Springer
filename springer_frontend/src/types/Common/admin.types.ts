@@ -9,6 +9,14 @@ export interface CreateUserRequest {
   location?: string;
 }
 
+export interface UpdateUserRequest {
+  username: string;
+  password?: string;
+  roleName: string;
+  department?: string;
+  location?: string;
+}
+
 export interface UserResponse {
   userId: number;
   username: string;

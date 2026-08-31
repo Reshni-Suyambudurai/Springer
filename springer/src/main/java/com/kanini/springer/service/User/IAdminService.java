@@ -1,6 +1,7 @@
 package com.kanini.springer.service.User;
 
 import com.kanini.springer.dto.Authentication.CreateUserRequest;
+import com.kanini.springer.dto.Authentication.UpdateUserRequest;
 import com.kanini.springer.dto.Authentication.UserResponse;
 
 import java.util.List;
@@ -11,6 +12,11 @@ public interface IAdminService {
      * Create a new user and persist to the users table
      */
     UserResponse createUser(CreateUserRequest request);
+
+    /**
+     * Update a user while retaining immutable account fields such as email.
+     */
+    UserResponse updateUser(Long userId, UpdateUserRequest request);
 
     /**
      * Retrieve all users except those assigned the INTERN role

@@ -3,6 +3,7 @@ package com.kanini.springer.Testing.IntegrationTesting;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.kanini.springer.dto.Authentication.CreateUserRequest;
+import com.kanini.springer.dto.Authentication.UpdateUserRequest;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
@@ -207,11 +208,71 @@ class AdminControllerIntegrationTest {
     }
 
     // =========================================================================
-    // 3. PATCH /api/admin/users/{id}/toggle-status — toggle user status
+        // 3. PATCH /api/admin/users/{id} — update user
     // =========================================================================
 
     @Test
     @Order(8)
+        @DisplayName("PATCH /api/admin/users/{id} - updates editable user fields")
+        void updateUser_success_returnsOk() throws Exception {
+                UpdateUserRequest request = new UpdateUserRequest();
+                request.setUsername("Updated Test User");
+                request.setRoleName("TA_HEAD");
+                request.setDepartment("HR");
+                request.setLocation("Chennai");
+
+                mockMvc.perform(patch("/api/admin/users/{id}", createdUserId)
+                                                .header("Authorization", "Bearer " + jwtToken)
+                                                .contentType(MediaType.APPLICATION_JSON)
+                                                .content(objectMapper.writeValueAsString(request)))
+                                .andExpect(status().isOk())
+                                .andExpect(jsonPath("$.success").value(true))
+                                .andExpect(jsonPath("$.data.userId").value(createdUserId))
+                                .andExpect(jsonPath("$.data.username").value("Updated Test User"))
+                                .andExpect(jsonPath("$.data.email").value("testuser@kanini.com"))
+                                .andExpect(jsonPath("$.data.roleName").value("TA_HEAD"))
+                                .andExpect(jsonPath("$.data.department").value("HR"))
+                                .andExpect(jsonPath("$.data.location").value("Chennai"));
+        }
+
+        @Test
+        @Order(9)
+        @DisplayName("PATCH /api/admin/users/{id} - rejects a short replacement password")
+        void updateUser_shortPassword_returns400() throws Exception {
+                UpdateUserRequest request = new UpdateUserRequest();
+                request.setUsername("Updated Test User");
+                request.setPassword("12345");
+                request.setRoleName("TA_HEAD");
+
+                mockMvc.perform(patch("/api/admin/users/{id}", createdUserId)
+                                                .header("Authorization", "Bearer " + jwtToken)
+                                                .contentType(MediaType.APPLICATION_JSON)
+                                                .content(objectMapper.writeValueAsString(request)))
+                                .andExpect(status().isBadRequest());
+        }
+
+        @Test
+        @Order(10)
+        @DisplayName("PATCH /api/admin/users/{id} - returns 404 for a non-existent user")
+        void updateUser_notFound_returns404() throws Exception {
+                UpdateUserRequest request = new UpdateUserRequest();
+                request.setUsername("Updated Test User");
+                request.setRoleName("TA_HEAD");
+
+                mockMvc.perform(patch("/api/admin/users/{id}", 99999L)
+                                                .header("Authorization", "Bearer " + jwtToken)
+                                                .contentType(MediaType.APPLICATION_JSON)
+                                                .content(objectMapper.writeValueAsString(request)))
+                                .andExpect(status().isNotFound())
+                                .andExpect(jsonPath("$.success").value(false));
+        }
+
+        // =========================================================================
+        // 4. PATCH /api/admin/users/{id}/toggle-status — toggle user status
+        // =========================================================================
+
+        @Test
+        @Order(11)
     @DisplayName("PATCH /api/admin/users/{id}/toggle-status - toggles status successfully")
     void toggleStatusUsingId_success_returnsOk() throws Exception {
         // First toggle: from true to false
@@ -230,7 +291,7 @@ class AdminControllerIntegrationTest {
     }
 
     @Test
-    @Order(9)
+        @Order(12)
     @DisplayName("PATCH /api/admin/users/{id}/toggle-status - toggles back to active")
     void toggleStatusUsingId_togglesBackToActive_returnsOk() throws Exception {
         // Second toggle: from false back to true
@@ -243,7 +304,7 @@ class AdminControllerIntegrationTest {
     }
 
     @Test
-    @Order(10)
+        @Order(13)
     @DisplayName("PATCH /api/admin/users/{id}/toggle-status - returns 404 for non-existent user ID")
     void toggleStatusUsingId_notFound_returns404() throws Exception {
         mockMvc.perform(patch("/api/admin/users/{id}/toggle-status", 99999L)
@@ -254,11 +315,11 @@ class AdminControllerIntegrationTest {
     }
 
     // =========================================================================
-    // 4. Verify created user appears in GET all users
+        // 5. Verify created user appears in GET all users
     // =========================================================================
 
     @Test
-    @Order(11)
+        @Order(14)
     @DisplayName("GET /api/admin/users - includes newly created user")
     void getAllUsersExceptInternRole_includesNewUser_returnsOk() throws Exception {
         mockMvc.perform(get("/api/admin/users")
@@ -267,15 +328,16 @@ class AdminControllerIntegrationTest {
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data").isArray())
                 .andExpect(jsonPath("$.data[?(@.userId == " + createdUserId + ")]").exists())
-                .andExpect(jsonPath("$.data[?(@.email == 'testuser@kanini.com')]").exists());
+                .andExpect(jsonPath("$.data[?(@.email == 'testuser@kanini.com')]").exists())
+                .andExpect(jsonPath("$.data[?(@.username == 'Updated Test User')]").exists());
     }
 
     // =========================================================================
-    // 5. Auth Tests — no JWT token
+        // 6. Auth Tests — no JWT token
     // =========================================================================
 
     @Test
-    @Order(12)
+        @Order(15)
     @DisplayName("GET /api/admin/users - returns 401 without JWT token")
     void getAllUsersExceptInternRole_noAuth_returns401() throws Exception {
         mockMvc.perform(get("/api/admin/users"))
@@ -283,7 +345,7 @@ class AdminControllerIntegrationTest {
     }
 
     @Test
-    @Order(13)
+        @Order(16)
     @DisplayName("POST /api/admin/users - returns 401 without JWT token")
     void createUser_noAuth_returns401() throws Exception {
         CreateUserRequest request = new CreateUserRequest();

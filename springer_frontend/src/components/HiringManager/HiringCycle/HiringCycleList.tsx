@@ -110,9 +110,6 @@ const HiringCycleList = () => {
                         >
                           <TableCell className="hcl-cell">
                             <Stack direction="row" alignItems="center" gap={1.5}>
-                              <Box className="hcl-name-icon-box">
-                                <CycleIcon className="hcl-row-icon" />
-                              </Box>
                               <Typography className="hcl-cell-primary">{cycle.cycleName}</Typography>
                             </Stack>
                           </TableCell>

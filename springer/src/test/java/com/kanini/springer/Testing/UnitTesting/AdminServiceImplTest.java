@@ -1,6 +1,7 @@
 package com.kanini.springer.Testing.UnitTesting;
 
 import com.kanini.springer.dto.Authentication.CreateUserRequest;
+import com.kanini.springer.dto.Authentication.UpdateUserRequest;
 import com.kanini.springer.dto.Authentication.UserResponse;
 import com.kanini.springer.entity.HiringReq.Role;
 import com.kanini.springer.entity.HiringReq.User;
@@ -296,6 +297,81 @@ class AdminServiceImplTest {
     }
 
     // =======================================================================
+        // updateUser()
+        // =======================================================================
+
+        @Nested
+        @DisplayName("updateUser()")
+        class UpdateUser {
+
+        @Test
+        @DisplayName("success - updates editable fields without replacing a blank password")
+        void updateUser_withoutPassword_preservesPassword() {
+            UpdateUserRequest request = new UpdateUserRequest(
+                "Updated User", "", "TA_MANAGER", "HR", "Chennai");
+
+            when(userRepository.findById(1L)).thenReturn(Optional.of(stubUser));
+            when(roleRepository.findByRoleName(RoleName.TA_MANAGER)).thenReturn(Optional.of(stubRole));
+            when(userRepository.save(stubUser)).thenReturn(stubUser);
+            when(userMapper.toResponse(stubUser)).thenReturn(stubResponse);
+
+            adminService.updateUser(1L, request);
+
+            assertThat(stubUser.getUsername()).isEqualTo("Updated User");
+            assertThat(stubUser.getDepartment()).isEqualTo("HR");
+            assertThat(stubUser.getLocation()).isEqualTo("Chennai");
+            assertThat(stubUser.getPassword()).isEqualTo("encodedPassword123");
+            verify(passwordEncoder, never()).encode(anyString());
+            verify(userRepository).save(stubUser);
+        }
+
+        @Test
+        @DisplayName("success - encodes and replaces a supplied password")
+        void updateUser_withPassword_encodesPassword() {
+            UpdateUserRequest request = new UpdateUserRequest(
+                "Updated User", "newPassword123", "TA_MANAGER", "HR", "Chennai");
+
+            when(userRepository.findById(1L)).thenReturn(Optional.of(stubUser));
+            when(roleRepository.findByRoleName(RoleName.TA_MANAGER)).thenReturn(Optional.of(stubRole));
+            when(passwordEncoder.encode("newPassword123")).thenReturn("newEncodedPassword");
+            when(userRepository.save(stubUser)).thenReturn(stubUser);
+            when(userMapper.toResponse(stubUser)).thenReturn(stubResponse);
+
+            adminService.updateUser(1L, request);
+
+            assertThat(stubUser.getPassword()).isEqualTo("newEncodedPassword");
+            verify(passwordEncoder).encode("newPassword123");
+        }
+
+        @Test
+        @DisplayName("error - throws ResourceNotFoundException for a missing user")
+        void updateUser_missingUser_throwsResourceNotFoundException() {
+            UpdateUserRequest request = new UpdateUserRequest(
+                "Updated User", null, "TA_MANAGER", "HR", "Chennai");
+            when(userRepository.findById(99999L)).thenReturn(Optional.empty());
+
+            assertThatThrownBy(() -> adminService.updateUser(99999L, request))
+                .isInstanceOf(ResourceNotFoundException.class);
+
+            verify(userRepository, never()).save(any(User.class));
+        }
+
+        @Test
+        @DisplayName("error - rejects an invalid role name")
+        void updateUser_invalidRole_throwsValidationException() {
+            UpdateUserRequest request = new UpdateUserRequest(
+                "Updated User", null, "INVALID_ROLE", "HR", "Chennai");
+            when(userRepository.findById(1L)).thenReturn(Optional.of(stubUser));
+
+            assertThatThrownBy(() -> adminService.updateUser(1L, request))
+                .isInstanceOf(ValidationException.class)
+                .hasMessageContaining("Invalid role name");
+
+            verify(userRepository, never()).save(any(User.class));
+        }
+        }
+
+        // =======================================================================
     // getAllUsersExceptInternRole()
     // =======================================================================
 
