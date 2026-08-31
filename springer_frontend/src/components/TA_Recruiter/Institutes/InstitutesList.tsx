@@ -184,13 +184,12 @@ const InstitutesList: React.FC = () => {
   };
 
   const handleDownloadTemplate = () => {
-    const wb = XLSX.utils.book_new();
-    const ws = XLSX.utils.aoa_to_sheet([
-      ["instituteName *", "city *", "state *", "instituteTier *"],
-      ["Anna University", "Chennai", "Tamil Nadu", "TIER_1"],
-    ]);
-    XLSX.utils.book_append_sheet(wb, ws, "Institutes");
-    XLSX.writeFile(wb, "Institute_Template.xlsx");
+    const link = document.createElement("a");
+    link.href = "/files/Institute_Template.xlsx";
+    link.download = "Institute_Template.xlsx";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   const parseFile = async (file: File) => {
@@ -200,18 +199,20 @@ const InstitutesList: React.FC = () => {
       const ws = wb.Sheets[wb.SheetNames[0]];
       const rows = XLSX.utils.sheet_to_json(ws) as Record<string, unknown>[];
       const institutes: InstituteRequest[] = rows.map((row) => {
-        const tpoName = (row["tpo_name"] || "") as string;
-        const tpoEmail = (row["tpo_email"] || "") as string;
+        const tpoName = String(row["tpo_name"] || row["tpoName"] || "").trim();
+        const tpoEmail = String(row["tpo_email"] || row["tpoEmail"] || "").trim();
         const tpoMobile = String(row["tpo_mobile"] || row["tpoMobile"] || "").replace(/\D/g, "");
-        const tpoDesignation = (row["tpo_designation"] || row["tpoDesignation"] || "") as string;
+        const tpoDesignation = String(row["tpo_designation"] || row["tpoDesignation"] || "").trim();
         const inst: InstituteRequest = {
-          instituteName: (row["instituteName *"] || row["instituteName"] || "") as string,
+          instituteName: String(row["instituteName *"] || row["instituteName"] || "").trim(),
           instituteTier: (row["instituteTier *"] || row["Tier"] || row["instituteTier"] || "TIER_1") as string,
-          state: (row["state *"] || row["State"] || row["state"] || "") as string,
-          city: (row["city *"] || row["City"] || row["city"] || "") as string,
+          state: String(row["state *"] || row["State"] || row["state"] || "").trim(),
+          city: String(row["city *"] || row["City"] || row["city"] || "").trim(),
           isActive: true,
         };
-        if (tpoName && tpoEmail) inst.tpoContact = { tpoName, tpoEmail, tpoMobile, tpoDesignation };
+        if (tpoName || tpoEmail || tpoMobile || tpoDesignation) {
+          inst.tpoContact = { tpoName, tpoEmail, tpoMobile, tpoDesignation };
+        }
         return inst;
       });
 
@@ -220,6 +221,11 @@ const InstitutesList: React.FC = () => {
         if (!inst.instituteName) errors.push(`Row ${idx + 1}: Missing Institute Name`);
         if (!inst.city) errors.push(`Row ${idx + 1}: Missing City`);
         if (!inst.state) errors.push(`Row ${idx + 1}: Missing State`);
+        const hasTpoName = Boolean(inst.tpoContact?.tpoName);
+        const hasTpoEmail = Boolean(inst.tpoContact?.tpoEmail);
+        if (hasTpoName !== hasTpoEmail) {
+          errors.push(`Row ${idx + 1}: TPO name and email must both be provided`);
+        }
       });
       if (errors.length > 0) { showToast(`Validation errors: ${errors.join(", ")}`, "error"); return; }
 
@@ -605,39 +611,19 @@ const InstitutesList: React.FC = () => {
               <Typography className="iu-dialog-heading">Upload Institutes via Excel</Typography>
               <Typography className="iu-dialog-subheading">Upload multiple institutes at once using our Excel template</Typography>
             </Box>
-            <IconButton size="small" onClick={() => { setUploadDialog(false); setSelectedFile(null); setPreviewData([]); setUploadDuplicateIndices(new Set()); setUploadBatchDuplicateIndices(new Set()); }}>
-              <CloseIcon fontSize="small" />
-            </IconButton>
+            <Box className="iu-dialog-title-actions">
+              <button className="iu-download-btn" onClick={handleDownloadTemplate}>Download template</button>
+              <IconButton size="small" onClick={() => { setUploadDialog(false); setSelectedFile(null); setPreviewData([]); setUploadDuplicateIndices(new Set()); setUploadBatchDuplicateIndices(new Set()); }}>
+                <CloseIcon fontSize="small" />
+              </IconButton>
+            </Box>
           </Box>
         </DialogTitle>
         <DialogContent className="iu-dialog-content-wrap">
 
           {/* Dropzone — hide when data loaded */}
           {previewData.length === 0 && (
-            <>
-              <Box className="iu-step-card">
-                <Box className="iu-step-header">
-                  <Box className="iu-step-icon">
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-                      <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
-                      <polyline points="14 2 14 8 20 8" />
-                      <line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" />
-                    </svg>
-                  </Box>
-                  <Box>
-                    <Typography className="iu-step-title">Step 1: Download Template</Typography>
-                    <Typography className="iu-step-desc">Download our Excel template with all required fields.</Typography>
-                  </Box>
-                </Box>
-                <button className="iu-download-btn" onClick={handleDownloadTemplate}>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
-                    <polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" />
-                  </svg>
-                  Download Excel Template
-                </button>
-              </Box>
-              <Typography className="iu-step-title">Step 2: Upload Filled Template</Typography>
+            <Box className="iu-upload-empty-state">
               <Box
                 className={`iu-dropzone${dragOver ? " iu-dropzone--active" : ""}${selectedFile ? " iu-dropzone--selected" : ""}`}
                 onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
@@ -651,12 +637,18 @@ const InstitutesList: React.FC = () => {
                   </svg>
                 </Box>
                 <Typography className="iu-drop-text">{selectedFile ? selectedFile.name : "Drag and drop your Excel file here"}</Typography>
-                <Typography className="iu-or">or</Typography>
-                <button className="iu-browse-btn" onClick={() => fileInputRef.current?.click()}>Browse Files</button>
+                <Box className="iu-upload-actions">
+                  <button className="iu-browse-btn" onClick={() => fileInputRef.current?.click()}>Browse Files</button>
+                </Box>
+                <Box className="iu-upload-guide">
+                  <Typography className="iu-upload-guide-text">
+                    Required: <strong>instituteName, city, state</strong>. TPO columns are optional; include both <strong>tpo_name</strong> and <strong>tpo_email</strong> together.
+                  </Typography>
+                </Box>
                 <Typography className="iu-formats">Supported formats: .xlsx, .xls (Max size: 10MB)</Typography>
                 <input ref={fileInputRef} type="file" hidden accept=".xlsx,.xls" onChange={handleFileChange} />
               </Box>
-            </>
+            </Box>
           )}
 
           {/* Preview Table with duplicate detection */}
@@ -703,7 +695,16 @@ const InstitutesList: React.FC = () => {
                         <td>{inst.instituteTier}</td>
                         <td>{inst.city}</td>
                         <td>{inst.state}</td>
-                        <td>{inst.tpoContact?.tpoName || "—"}</td>
+                        <td className="iu-tpo-cell">
+                          {inst.tpoContact ? (
+                            <Box className="iu-tpo-details">
+                              <Typography className="iu-tpo-name">{inst.tpoContact.tpoName || "Unnamed TPO"}</Typography>
+                              {inst.tpoContact.tpoEmail && <Typography className="iu-tpo-meta">{inst.tpoContact.tpoEmail}</Typography>}
+                              {inst.tpoContact.tpoMobile && <Typography className="iu-tpo-meta">{inst.tpoContact.tpoMobile}</Typography>}
+                              {inst.tpoContact.tpoDesignation && <Typography className="iu-tpo-meta">{inst.tpoContact.tpoDesignation}</Typography>}
+                            </Box>
+                          ) : "—"}
+                        </td>
                         <td className="center">
                           <IconButton size="small" onClick={() => handleUploadRemoveRow(index)} className="iu-delete-btn">
                             <DeleteIcon fontSize="small" />
