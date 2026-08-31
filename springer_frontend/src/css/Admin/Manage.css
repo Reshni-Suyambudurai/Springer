@@ -238,6 +238,16 @@
 .mg-card-footer {
   display: flex;
   justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
+}
+
+.mg-edit-btn {
+  color: var(--color-primary) !important;
+}
+
+.mg-edit-btn:hover {
+  background-color: var(--color-primary-light) !important;
 }
 
 .mg-toggle-btn {
@@ -283,4 +293,90 @@
 
 .mg-btn-spinner {
   color: currentColor !important;
+}
+
+.mg-edit-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px 16px;
+  padding-top: 8px;
+}
+
+.mg-edit-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.mg-edit-field label {
+  color: var(--color-text);
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.mg-edit-field label span,
+.mg-edit-field small {
+  color: var(--color-error);
+}
+
+.mg-edit-input {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1.5px solid var(--color-border);
+  border-radius: 6px;
+  background: var(--color-surface);
+  color: var(--color-text);
+  font: inherit;
+  padding: 9px 12px;
+}
+
+.mg-edit-input:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-primary-shadow-8);
+  outline: none;
+}
+
+.mg-edit-input:disabled {
+  cursor: not-allowed;
+  background: var(--color-bg-secondary);
+  color: var(--color-text-secondary);
+}
+
+.mg-edit-input--error {
+  border-color: var(--color-error);
+}
+
+.mg-edit-field small {
+  min-height: 1rem;
+  font-size: 0.75rem;
+}
+
+.mg-edit-password-wrap {
+  position: relative;
+}
+
+.mg-edit-password-wrap .mg-edit-input {
+  padding-right: 52px;
+}
+
+.mg-edit-password-toggle {
+  position: absolute;
+  top: 50%;
+  right: 8px;
+  transform: translateY(-50%);
+  border: 0;
+  background: transparent;
+  color: var(--color-primary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+}
+
+@media (max-width: 600px) {
+  .mg-cards-grid,
+  .mg-edit-form {
+    grid-template-columns: 1fr;
+  }
 }

@@ -56,7 +56,7 @@ public class UserServiceImp implements IUserService {
         
         // Check if user is active
         if (!user.getIsActive()) {
-            throw new ValidationException("User account is inactive");
+            throw new ValidationException("Your account has been deactivated. Please contact an administrator.");
         }
         
         // Generate JWT token
