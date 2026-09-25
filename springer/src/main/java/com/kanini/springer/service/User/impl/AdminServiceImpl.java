@@ -45,6 +45,19 @@ public class AdminServiceImpl implements IAdminService {
         Role role = roleRepository.findByRoleName(roleName)
                 .orElseThrow(() -> new ResourceNotFoundException("Role", "name", request.getRoleName()));
 
+        List<User> existingUsers = userRepository.findAllByEmailWithRole(request.getEmail());
+        boolean passwordAlreadyUsed = existingUsers.stream()
+            .anyMatch(existingUser -> passwordEncoder.matches(request.getPassword(), existingUser.getPassword()));
+        if (passwordAlreadyUsed) {
+            throw new ValidationException("An account with this email and password already exists.");
+        }
+
+        boolean roleAlreadyUsed = existingUsers.stream()
+            .anyMatch(existingUser -> existingUser.getRole().getRoleName() == roleName);
+        if (roleAlreadyUsed) {
+            throw new ValidationException("An account with this email and role already exists.");
+        }
+
         // Encode password before persisting
         String encodedPassword = passwordEncoder.encode(request.getPassword());
 
@@ -70,6 +83,23 @@ public class AdminServiceImpl implements IAdminService {
 
         Role role = roleRepository.findByRoleName(roleName)
                 .orElseThrow(() -> new ResourceNotFoundException("Role", "name", request.getRoleName()));
+
+        List<User> otherUsersWithSameEmail = userRepository.findAllByEmailWithRole(user.getEmail()).stream()
+            .filter(existingUser -> !existingUser.getUserId().equals(userId))
+            .toList();
+        if (request.getPassword() != null && !request.getPassword().isBlank()) {
+            boolean passwordAlreadyUsed = otherUsersWithSameEmail.stream()
+                .anyMatch(existingUser -> passwordEncoder.matches(request.getPassword(), existingUser.getPassword()));
+            if (passwordAlreadyUsed) {
+            throw new ValidationException("An account with this email and password already exists.");
+            }
+        }
+
+        boolean roleAlreadyUsed = otherUsersWithSameEmail.stream()
+            .anyMatch(existingUser -> existingUser.getRole().getRoleName() == roleName);
+        if (roleAlreadyUsed) {
+            throw new ValidationException("An account with this email and role already exists.");
+        }
 
         user.setUsername(request.getUsername());
         user.setRole(role);

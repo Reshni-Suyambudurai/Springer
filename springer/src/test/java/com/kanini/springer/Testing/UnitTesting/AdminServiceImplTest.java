@@ -294,6 +294,48 @@ class AdminServiceImplTest {
             verify(passwordEncoder).encode("plainPassword");
             verify(adminUserMapper).toEntity(request, stubRole, "$2a$10$encodedHashValue");
         }
+
+        @Test
+        @DisplayName("error - rejects an existing email with the same role")
+        void createUser_existingEmailAndRole_throwsValidationException() {
+            CreateUserRequest request = new CreateUserRequest();
+            request.setUsername("Another User");
+            request.setEmail("testuser@kanini.com");
+            request.setPassword("differentPassword123");
+            request.setRoleName("TA_MANAGER");
+
+            when(roleRepository.findByRoleName(RoleName.TA_MANAGER)).thenReturn(Optional.of(stubRole));
+            when(userRepository.findAllByEmailWithRole("testuser@kanini.com")).thenReturn(List.of(stubUser));
+            when(passwordEncoder.matches("differentPassword123", "encodedPassword123")).thenReturn(false);
+
+            assertThatThrownBy(() -> adminService.createUser(request))
+                    .isInstanceOf(ValidationException.class)
+                    .hasMessageContaining("email and role already exists");
+
+            verify(userRepository, never()).save(any(User.class));
+        }
+
+        @Test
+        @DisplayName("error - rejects an existing email with the same password")
+        void createUser_existingEmailAndPassword_throwsValidationException() {
+            CreateUserRequest request = new CreateUserRequest();
+            request.setUsername("Another User");
+            request.setEmail("testuser@kanini.com");
+            request.setPassword("password123");
+            request.setRoleName("TA_HEAD");
+
+            Role taHeadRole = new Role();
+            taHeadRole.setRoleName(RoleName.TA_HEAD);
+            when(roleRepository.findByRoleName(RoleName.TA_HEAD)).thenReturn(Optional.of(taHeadRole));
+            when(userRepository.findAllByEmailWithRole("testuser@kanini.com")).thenReturn(List.of(stubUser));
+            when(passwordEncoder.matches("password123", "encodedPassword123")).thenReturn(true);
+
+            assertThatThrownBy(() -> adminService.createUser(request))
+                    .isInstanceOf(ValidationException.class)
+                    .hasMessageContaining("email and password already exists");
+
+            verify(userRepository, never()).save(any(User.class));
+        }
     }
 
     // =======================================================================
@@ -341,6 +383,54 @@ class AdminServiceImplTest {
 
             assertThat(stubUser.getPassword()).isEqualTo("newEncodedPassword");
             verify(passwordEncoder).encode("newPassword123");
+        }
+
+        @Test
+        @DisplayName("error - rejects a password already used by another account with the same email")
+        void updateUser_duplicateEmailAndPassword_throwsValidationException() {
+            User otherUser = new User();
+            otherUser.setUserId(2L);
+            otherUser.setEmail(stubUser.getEmail());
+            otherUser.setPassword("otherEncodedPassword");
+            Role otherRole = new Role();
+            otherRole.setRoleName(RoleName.TA_HEAD);
+            otherUser.setRole(otherRole);
+            UpdateUserRequest request = new UpdateUserRequest(
+                "Updated User", "password123", "TA_MANAGER", "HR", "Chennai");
+
+            when(userRepository.findById(1L)).thenReturn(Optional.of(stubUser));
+            when(roleRepository.findByRoleName(RoleName.TA_MANAGER)).thenReturn(Optional.of(stubRole));
+            when(userRepository.findAllByEmailWithRole(stubUser.getEmail())).thenReturn(List.of(stubUser, otherUser));
+            when(passwordEncoder.matches("password123", "otherEncodedPassword")).thenReturn(true);
+
+            assertThatThrownBy(() -> adminService.updateUser(1L, request))
+                .isInstanceOf(ValidationException.class)
+                .hasMessageContaining("email and password already exists");
+
+            verify(userRepository, never()).save(any(User.class));
+        }
+
+        @Test
+        @DisplayName("error - rejects a role already used by another account with the same email")
+        void updateUser_duplicateEmailAndRole_throwsValidationException() {
+            User otherUser = new User();
+            otherUser.setUserId(2L);
+            otherUser.setEmail(stubUser.getEmail());
+            otherUser.setPassword("otherEncodedPassword");
+            otherUser.setRole(stubRole);
+            UpdateUserRequest request = new UpdateUserRequest(
+                "Updated User", "differentPassword123", "TA_MANAGER", "HR", "Chennai");
+
+            when(userRepository.findById(1L)).thenReturn(Optional.of(stubUser));
+            when(roleRepository.findByRoleName(RoleName.TA_MANAGER)).thenReturn(Optional.of(stubRole));
+            when(userRepository.findAllByEmailWithRole(stubUser.getEmail())).thenReturn(List.of(stubUser, otherUser));
+            when(passwordEncoder.matches("differentPassword123", "otherEncodedPassword")).thenReturn(false);
+
+            assertThatThrownBy(() -> adminService.updateUser(1L, request))
+                .isInstanceOf(ValidationException.class)
+                .hasMessageContaining("email and role already exists");
+
+            verify(userRepository, never()).save(any(User.class));
         }
 
         @Test
