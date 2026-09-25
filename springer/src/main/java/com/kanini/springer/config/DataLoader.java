@@ -160,17 +160,15 @@ public class DataLoader {
         // Create users
         User[] users = {
             createUser("Sudha", "sudha@kanini.com", "password123", "Talent Acquisition", "Chennai", taHeadRole),
-            createUser("Mozhi", "mozhi@kanini.com", "password123", "Talent Acquisition", "Bangalore", taManagerRole),
-            createUser("Priya", "priya@kanini.com", "password123", "Talent Acquisition", "Chennai", taManagerRole),
+            createUser("Mozhi", "mozhi@kanini.com", "password123", "Talent Enablement", "Coimbatore", taManagerRole),
+            createUser("Priya", "priya@kanini.com", "password123", "Talent Enablement", "Chennai", taManagerRole),
+            createUser("Savitha", "savitha@kanini.com", "password123", "Talent Enablement", "Coimbatore", taManagerRole),
             createUser("Parthiban", "parthiban@kanini.com", "password123", "Product Engineering", "Bangalore", hiringManagerRole),
             createUser("Ramesh", "ramesh@kanini.com", "password123", "Product Engineering", "Coimbatore", membersRole),
             createUser("Priya Rajagopalan", "priya@kanini.com", "password@123", "Product Engineering", "Coimbatore", membersRole),
-            createUser("Mozhiarasan", "mozhi@kanini.com", "password@123", "Product Engineering", "Coimbatore", membersRole),
-            createUser("Praveen Kumar", "praveen@kanini.com", "password123", "Product Engineering", "Coimbatore", membersRole),
             createUser("Admin", "admin@kanini.com", "password123", "Data Analytics & AI", "Coimbatore", adminRole),
             createUser("Lavanya", "lavanya@kanini.com", "password123", "Data Analytics & AI", "Coimbatore", trainingCoordinatorRole),
-            createUser("John", "john@kanini.com", "password123", "Training", "Coimbatore", internRole),
-            createUser("Joe", "joe@kanini.com", "password123", "Training", "Coimbatore", internRole)
+           
         };
 
         userRepository.saveAll(java.util.Arrays.asList(users));
@@ -194,8 +192,7 @@ public class DataLoader {
         log.info("Seeding hiring cycles...");
 
         HiringCycle[] cycles = {
-            createHiringCycle(2024, "2024 Campus Hiring", CycleStatus.CLOSED),
-            createHiringCycle(2025, "2025 Campus Hiring", CycleStatus.CLOSED),
+           
             createHiringCycle(2026, "2026 Campus Hiring", CycleStatus.OPEN)
         };
 
@@ -216,15 +213,10 @@ public class DataLoader {
         log.info("Seeding institutes...");
 
         Institute[] institutes = {
-            createInstitute("OTHERS", "TIER_1", "Tamil Nadu", "Chennai"),
-            createInstitute("Anna University", "TIER_1", "Tamil Nadu", "Chennai"),
-            createInstitute("SSN College of Engineering", "TIER_1", "Tamil Nadu", "Chennai"),
-            createInstitute("PSG College of Technology", "TIER_2", "Tamil Nadu", "Coimbatore"),
-            createInstitute("Amrita Vishwa Vidyapeetham", "TIER_1", "Tamil Nadu", "Coimbatore"),
-            createInstitute("VIT University", "TIER_1", "Tamil Nadu", "Vellore"),
-            createInstitute("SRM Institute of Science and Technology", "TIER_2", "Tamil Nadu", "Chennai"),
-            createInstitute("Karunya Institute of Technology", "TIER_2", "Tamil Nadu", "Coimbatore"),
-            createInstitute("CEG - College of Engineering Guindy", "TIER_1", "Tamil Nadu", "Chennai")
+            createInstitute("OTHERS", "TIER_3", "Tamil Nadu", "Chennai"),
+            
+            createInstitute("PSG College of Technology", "TIER_1", "Tamil Nadu", "Coimbatore"),
+        
         };
 
         instituteRepository.saveAll(java.util.Arrays.asList(institutes));
@@ -314,38 +306,13 @@ public class DataLoader {
         List<Institute> institutes = instituteRepository.findAll();
         List<Program> programs = programRepository.findAll();
 
-        // Anna University - offers B.Tech, M.Tech, MBA, PhD
-        assignProgramsToInstitute(institutes, programs, "Anna University", 
-            ProgramName.B_TECH, ProgramName.M_TECH, ProgramName.MBA, ProgramName.PHD);
-
-        // SSN College of Engineering - offers B.E, M.E, M.Tech
-        assignProgramsToInstitute(institutes, programs, "SSN College of Engineering", 
-            ProgramName.B_E, ProgramName.M_E, ProgramName.M_TECH);
+      
 
         // PSG College of Technology - offers B.E, M.E, MBA, MCA
         assignProgramsToInstitute(institutes, programs, "PSG College of Technology", 
             ProgramName.B_E, ProgramName.M_E, ProgramName.MBA, ProgramName.MCA);
 
-        // Amrita Vishwa Vidyapeetham - offers B.Tech, M.Tech, MBA, PhD, MCA, M.Sc
-        assignProgramsToInstitute(institutes, programs, "Amrita Vishwa Vidyapeetham", 
-            ProgramName.B_TECH, ProgramName.M_TECH, ProgramName.MBA, ProgramName.PHD, ProgramName.MCA, ProgramName.M_SC);
-
-        // VIT University - offers B.Tech, M.Tech, MBA, PhD, MCA
-        assignProgramsToInstitute(institutes, programs, "VIT University", 
-            ProgramName.B_TECH, ProgramName.M_TECH, ProgramName.MBA, ProgramName.PHD, ProgramName.MCA);
-
-        // SRM Institute - offers B.Tech, M.Tech, MBA, BCA, MCA, BBA
-        assignProgramsToInstitute(institutes, programs, "SRM Institute of Science and Technology", 
-            ProgramName.B_TECH, ProgramName.M_TECH, ProgramName.MBA, ProgramName.BCA, ProgramName.MCA, ProgramName.BBA);
-
-        // Karunya Institute - offers B.E, M.E, MBA, DIPLOMA
-        assignProgramsToInstitute(institutes, programs, "Karunya Institute of Technology", 
-            ProgramName.B_E, ProgramName.M_E, ProgramName.MBA, ProgramName.DIPLOMA);
-
-        // CEG - College of Engineering Guindy - offers B.E, M.E, M.Tech, PhD
-        assignProgramsToInstitute(institutes, programs, "CEG - College of Engineering Guindy", 
-            ProgramName.B_E, ProgramName.M_E, ProgramName.M_TECH, ProgramName.PHD);
-
+      
         log.info("Seeded institute-program relationships for {} institutes", institutes.size());
     }
 
