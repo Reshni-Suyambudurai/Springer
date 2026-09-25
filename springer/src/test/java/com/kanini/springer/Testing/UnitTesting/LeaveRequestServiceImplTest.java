@@ -83,8 +83,8 @@ class LeaveRequestServiceImplTest {
     private LeaveRequestRequest buildRequest(Long studentId) {
         LeaveRequestRequest req = new LeaveRequestRequest();
         req.setStudentId(studentId);
-        req.setFromDate("2026-06-10");
-        req.setToDate("2026-06-11");
+        req.setFromDate(LocalDate.now().plusDays(1).toString());
+        req.setToDate(LocalDate.now().plusDays(2).toString());
         req.setLeaveType("SICK");
         req.setReason("Fever");
         return req;

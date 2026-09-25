@@ -160,6 +160,12 @@ mvn spring-boot:run
 ```
 Runs on **http://localhost:8080** | Swagger: **http://localhost:8080/swagger-ui.html**
 
+**Backend Tests:**
+```bash
+cd springer
+.\mvnw.cmd test
+```
+
 **Frontend:**
 ```bash
 cd springer_frontend
@@ -181,17 +187,14 @@ Tables and seed data are created automatically on first backend startup.
 | Name | Role | Email | Password | Department | Location |
 |------|------|-------|----------|------------|----------|
 | **Sudha** | TA Head | sudha@kanini.com | password123 | Talent Acquisition | Chennai |
-| **Mozhi** | TA Manager | mozhi@kanini.com | password123 | Talent Acquisition | Bangalore |
-| **Priya** | TA Manager | priya@kanini.com | password123 | Talent Acquisition | Chennai |
+| **Mozhi** | TA Manager | mozhi@kanini.com | password123 | Talent Enablement | Coimbatore |
+| **Priya** | TA Manager | priya@kanini.com | password123 | Talent Enablement | Chennai |
+| **Savitha** | TA Manager | savitha@kanini.com | password123 | Talent Enablement | Coimbatore |
 | **Parthiban** | Hiring Manager | parthiban@kanini.com | password123 | Product Engineering | Bangalore |
 | **Ramesh** | Panel Member | ramesh@kanini.com | password123 | Product Engineering | Coimbatore |
 | **Priya Rajagopalan** | Panel Member | priya@kanini.com | password@123 | Product Engineering | Coimbatore |
-| **Mozhiarasan** | Panel Member | mozhi@kanini.com | password@123 | Product Engineering | Coimbatore |
-| **Praveen Kumar** | Panel Member | praveen@kanini.com | password123 | Product Engineering | Coimbatore |
 | **Admin** | System Admin | admin@kanini.com | password123 | Data Analytics & AI | Coimbatore |
 | **Lavanya** | Training Coordinator | lavanya@kanini.com | password123 | Data Analytics & AI | Coimbatore |
-| **John** | Intern | john@kanini.com | password123 | Training | Coimbatore |
-| **Joe** | Intern | joe@kanini.com | password123 | Training | Coimbatore |
 
 ### Intern Accounts (Linked to Training Academy)
 
