@@ -43,17 +43,12 @@ if %errorlevel% neq 0 (
 echo        Node.js ......... OK
 
 if exist "springer\mvnw.cmd" (
-    echo        Maven ........... OK (using mvnw)
+    echo        Maven ........... OK (using Maven Wrapper)
     set MVN_CMD=mvnw.cmd
 ) else (
-    where mvn >nul 2>&1
-    if %errorlevel% neq 0 (
-        echo  [ERROR] Maven not found!
-        pause
-        exit /b 1
-    )
-    echo        Maven ........... OK
-    set MVN_CMD=mvn
+    echo  [ERROR] Maven Wrapper not found at springer\mvnw.cmd.
+    pause
+    exit /b 1
 )
 
 REM -- Check MySQL Service --
