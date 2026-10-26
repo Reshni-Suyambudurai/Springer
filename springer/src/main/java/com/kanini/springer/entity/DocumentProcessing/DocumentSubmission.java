@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.time.LocalDateTime;
 
@@ -39,7 +41,7 @@ public class DocumentSubmission {
     
     private Long uploadedNo; // file reg no
     
-    @Lob
+    @JdbcTypeCode(SqlTypes.LONGVARBINARY)
     private byte[] uploadedFile; // file data or path
     
     @ManyToOne(fetch = FetchType.LAZY)

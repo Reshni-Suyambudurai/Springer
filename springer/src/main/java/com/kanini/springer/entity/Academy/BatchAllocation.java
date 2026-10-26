@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -41,7 +43,7 @@ public class BatchAllocation {
     @JoinColumn(name = "candidate_id")
     private Candidate candidate;
     
-    @Lob //Large Object. Used to store large data like images, videos, etc.
+    @JdbcTypeCode(SqlTypes.LONGVARBINARY)
     private byte[] image;
     
     private Integer batchNumber;

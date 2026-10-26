@@ -56,4 +56,5 @@ springer_frontend/dist-ssr/
 *.properties.local
 
 *.md
+!POSTGRESQL_MIGRATION_AUDIT.md
 

@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -38,7 +40,7 @@ public class HiringCycle {
     
     private Integer compensationBand;
     
-    @Lob
+    @JdbcTypeCode(SqlTypes.LONGVARBINARY)
     private byte[] jd; // Job description as blob
     
     private Integer budget;

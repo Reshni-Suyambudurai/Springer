@@ -28,6 +28,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Comparator;
 import java.util.List;
+import java.time.temporal.ChronoUnit;
 
 @Service
 @RequiredArgsConstructor
@@ -118,7 +119,11 @@ public class InternServiceImpl implements IInternService {
             if (bmScore > myWeightedScore) rank++;
         }
 
-        Integer totalApprovedLeaveDays = leaveRequestRepository.sumApprovedLeaveDays(studentId);
+        int totalApprovedLeaveDays = leaveRequestRepository
+                .findByStudent_StudentIdAndStatus(studentId, com.kanini.springer.entity.enums.Enums.LeaveStatus.APPROVED)
+                .stream()
+                .mapToInt(leave -> Math.toIntExact(ChronoUnit.DAYS.between(leave.getFromDate(), leave.getToDate()) + 1))
+                .sum();
 
         String status = "IN_TRAINING";
         if (allocation.getPerformance() != null) {

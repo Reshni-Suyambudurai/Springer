@@ -4,10 +4,12 @@ import com.kanini.springer.dto.Trainee.InternDashboardResponse;
 import com.kanini.springer.entity.Academy.BatchAllocation;
 import com.kanini.springer.entity.Academy.BatchCourse;
 import com.kanini.springer.entity.Academy.BatchSchedule;
+import com.kanini.springer.entity.Academy.LeaveRequest;
 import com.kanini.springer.entity.Academy.TrainingCourse;
 import com.kanini.springer.entity.Academy.TrainingProgram;
 import com.kanini.springer.entity.Drive.Candidate;
 import com.kanini.springer.entity.enums.Enums.TrainingLocation;
+import com.kanini.springer.entity.enums.Enums.LeaveStatus;
 import com.kanini.springer.exception.ResourceNotFoundException;
 import com.kanini.springer.repository.Academy.BatchAllocationRepository;
 import com.kanini.springer.repository.Academy.BatchCourseRepository;
@@ -28,6 +30,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.time.LocalDate;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
@@ -104,7 +107,8 @@ class InternServiceImplTest {
         when(attendanceRepository.findByStudent_StudentId(alloc.getStudentId())).thenReturn(Collections.emptyList());
         when(batchScheduleRepository.findByProgram_ProgramIdAndBatchNumber(1, 1)).thenReturn(Optional.empty());
         when(allocationRepository.findByProgram_ProgramIdAndBatchNumber(1, 1)).thenReturn(List.of(alloc));
-        when(leaveRequestRepository.sumApprovedLeaveDays(alloc.getStudentId())).thenReturn(null);
+        when(leaveRequestRepository.findByStudent_StudentIdAndStatus(alloc.getStudentId(), LeaveStatus.APPROVED))
+            .thenReturn(Collections.emptyList());
         when(scoreRepository.findByStudent_StudentIdIn(any())).thenReturn(Collections.emptyList());
     }
 
@@ -126,7 +130,8 @@ class InternServiceImplTest {
             when(attendanceRepository.findByStudent_StudentId(101L)).thenReturn(Collections.emptyList());
             when(batchScheduleRepository.findByProgram_ProgramIdAndBatchNumber(1, 1)).thenReturn(Optional.empty());
             when(allocationRepository.findByProgram_ProgramIdAndBatchNumber(1, 1)).thenReturn(List.of(alloc));
-            when(leaveRequestRepository.sumApprovedLeaveDays(101L)).thenReturn(null);
+                when(leaveRequestRepository.findByStudent_StudentIdAndStatus(101L, LeaveStatus.APPROVED))
+                    .thenReturn(Collections.emptyList());
             when(scoreRepository.findByStudent_StudentIdIn(any())).thenReturn(Collections.emptyList());
 
             InternDashboardResponse result = service.getDashboard(10L);
@@ -155,7 +160,8 @@ class InternServiceImplTest {
             when(attendanceRepository.findByStudent_StudentId(101L)).thenReturn(Collections.emptyList());
             when(batchScheduleRepository.findByProgram_ProgramIdAndBatchNumber(1, 1)).thenReturn(Optional.of(schedule));
             when(allocationRepository.findByProgram_ProgramIdAndBatchNumber(1, 1)).thenReturn(List.of(alloc));
-            when(leaveRequestRepository.sumApprovedLeaveDays(101L)).thenReturn(null);
+                when(leaveRequestRepository.findByStudent_StudentIdAndStatus(101L, LeaveStatus.APPROVED))
+                    .thenReturn(Collections.emptyList());
             when(scoreRepository.findByStudent_StudentIdIn(any())).thenReturn(Collections.emptyList());
 
             InternDashboardResponse result = service.getDashboard(10L);
@@ -200,13 +206,41 @@ class InternServiceImplTest {
             when(attendanceRepository.findByStudent_StudentId(101L)).thenReturn(Collections.emptyList());
             when(batchScheduleRepository.findByProgram_ProgramIdAndBatchNumber(1, 1)).thenReturn(Optional.empty());
             when(allocationRepository.findByProgram_ProgramIdAndBatchNumber(1, 1)).thenReturn(List.of(alloc));
-            when(leaveRequestRepository.sumApprovedLeaveDays(101L)).thenReturn(null);
+                when(leaveRequestRepository.findByStudent_StudentIdAndStatus(101L, LeaveStatus.APPROVED))
+                    .thenReturn(Collections.emptyList());
             when(scoreRepository.findByStudent_StudentIdIn(any())).thenReturn(Collections.emptyList());
 
             InternDashboardResponse result = service.getDashboard(10L);
 
             assertThat(result.getRank()).isEqualTo(1);
             assertThat(result.getTotalInBatch()).isEqualTo(1);
+        }
+
+        @Test @DisplayName("success - calculates inclusive days across approved leave requests")
+        void getDashboard_approvedLeaves_returnsInclusiveDayCount() {
+            Candidate candidate = buildCandidate(1L);
+            BatchAllocation allocation = buildActiveAllocation(101L, 1L);
+            LeaveRequest firstLeave = new LeaveRequest();
+            firstLeave.setFromDate(LocalDate.of(2026, 1, 5));
+            firstLeave.setToDate(LocalDate.of(2026, 1, 7));
+            LeaveRequest secondLeave = new LeaveRequest();
+            secondLeave.setFromDate(LocalDate.of(2026, 2, 1));
+            secondLeave.setToDate(LocalDate.of(2026, 2, 1));
+
+            when(candidatesRepository.findByUser_UserId(10L)).thenReturn(Optional.of(candidate));
+            when(allocationRepository.findByCandidate_CandidateId(1L)).thenReturn(List.of(allocation));
+            when(scoreRepository.findByStudent_StudentId(101L)).thenReturn(Collections.emptyList());
+            when(batchCourseRepository.findByProgram_ProgramIdAndBatchNo(1, 1)).thenReturn(Collections.emptyList());
+            when(attendanceRepository.findByStudent_StudentId(101L)).thenReturn(Collections.emptyList());
+            when(batchScheduleRepository.findByProgram_ProgramIdAndBatchNumber(1, 1)).thenReturn(Optional.empty());
+            when(allocationRepository.findByProgram_ProgramIdAndBatchNumber(1, 1)).thenReturn(List.of(allocation));
+            when(leaveRequestRepository.findByStudent_StudentIdAndStatus(101L, LeaveStatus.APPROVED))
+                    .thenReturn(List.of(firstLeave, secondLeave));
+            when(scoreRepository.findByStudent_StudentIdIn(any())).thenReturn(Collections.emptyList());
+
+            InternDashboardResponse result = service.getDashboard(10L);
+
+            assertThat(result.getTotalApprovedLeaveDays()).isEqualTo(4);
         }
     }
 }
