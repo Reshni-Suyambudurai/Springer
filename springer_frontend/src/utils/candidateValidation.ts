@@ -64,22 +64,21 @@ export const calculateAge = (dob: string): number => {
  * Validate candidates loaded from an Excel file (basic field-level checks).
  * Returns an array of error strings. Empty array = all valid.
  */
-export const validateFileData = (
-  candidates: CandidateRequest[],
-  options?: { requireInstituteId?: boolean }
-): string[] => {
+export const validateFileData = (candidates: CandidateRequest[]): string[] => {
   const errors: string[] = [];
 
   candidates.forEach((cand, idx) => {
     const row = idx + 2; // Excel row (header = row 1)
     if (!cand.firstName) errors.push(`Row ${row}: Missing First Name`);
     if (!cand.email) errors.push(`Row ${row}: Missing Email`);
-    if (!cand.mobile) errors.push(`Row ${row}: Missing Mobile`);
-    if (!cand.cgpa || cand.cgpa === 0) errors.push(`Row ${row}: Missing CGPA`);
-    if (!cand.passoutYear) errors.push(`Row ${row}: Missing Passout Year`);
-
-    if (options?.requireInstituteId && (!cand.instituteId || cand.instituteId === 0)) {
-      errors.push(`Row ${row}: Missing Institute ID`);
+    if (cand.email && !EMAIL_REGEX.test(cand.email)) {
+      errors.push(`Row ${row}: Invalid email format '${cand.email}'`);
+    }
+    if (cand.mobile && !MOBILE_REGEX.test(cand.mobile)) {
+      errors.push(`Row ${row}: Mobile number must be exactly 10 digits`);
+    }
+    if (cand.aadhaarNumber && !AADHAAR_REGEX.test(cand.aadhaarNumber)) {
+      errors.push(`Row ${row}: Aadhaar number must be exactly 12 digits`);
     }
 
     if (cand.dateOfBirth) {
@@ -110,22 +109,21 @@ export const validateBulkBeforeUpload = (candidates: CandidateRequest[]): string
 
   candidates.forEach((cand, idx) => {
     const row = idx + 1;
+    if (!cand.firstName) {
+      errors.push(`Row ${row}: Missing First Name`);
+    }
     if (!cand.email) {
       errors.push(`Row ${row}: Missing Email`);
     } else if (!EMAIL_REGEX.test(cand.email)) {
       errors.push(`Row ${row}: Invalid email format '${cand.email}'`);
     }
-    if (!cand.mobile) {
-      errors.push(`Row ${row}: Missing Mobile Number`);
-    } else if (!MOBILE_REGEX.test(cand.mobile)) {
+    if (cand.mobile && !MOBILE_REGEX.test(cand.mobile)) {
       errors.push(`Row ${row}: Mobile number must be exactly 10 digits (found: '${cand.mobile}')`);
     }
     if (cand.aadhaarNumber && !AADHAAR_REGEX.test(cand.aadhaarNumber)) {
       errors.push(`Row ${row}: Aadhaar number must be exactly 12 digits (found: '${cand.aadhaarNumber}')`);
     }
-    if (!cand.passoutYear) {
-      errors.push(`Row ${row}: Missing Passout Year`);
-    } else if (cand.passoutYear < MIN_PASSOUT_YEAR || cand.passoutYear > MAX_PASSOUT_YEAR) {
+    if (cand.passoutYear && (cand.passoutYear < MIN_PASSOUT_YEAR || cand.passoutYear > MAX_PASSOUT_YEAR)) {
       errors.push(`Row ${row}: Passout year must be between ${MIN_PASSOUT_YEAR} and ${MAX_PASSOUT_YEAR} (found: ${cand.passoutYear})`);
     }
   });
@@ -142,7 +140,7 @@ export const parseExcelRow = (
   defaults: { cycleId: number; driveId?: number; instituteId?: number }
 ): CandidateRequest => {
   let applicationType: "STANDARD" | "PREMIUM" = "STANDARD";
-  const appTypeValue = row["Application Type"] || row["applicationType"] || "";
+  const appTypeValue = row["category"] || row["Category"] || row["Application Type"] || row["applicationType"] || "";
   if (typeof appTypeValue === "string") {
     const normalizedValue = appTypeValue.toUpperCase().trim();
     if (normalizedValue === "PREMIUM") {
@@ -162,7 +160,7 @@ export const parseExcelRow = (
     historyOfArrears: Number(row["History of Arrears"] || row["historyOfArrears"] || 0),
     degree: (row["Degree"] || row["degree"] || "") as string,
     department: (row["Department"] || row["department"] || "") as string,
-    passoutYear: Number(row["Passout Year"] || row["passoutYear"] || new Date().getFullYear()),
+    passoutYear: Number(row["Passout Year"] || row["passoutYear"] || 0),
     dateOfBirth: (row["Date of Birth"] || row["dateOfBirth"] || "") as string,
     aadhaarNumber: (row["Aadhaar Number"] || row["aadhaarNumber"] || "") as string,
     applicationType,

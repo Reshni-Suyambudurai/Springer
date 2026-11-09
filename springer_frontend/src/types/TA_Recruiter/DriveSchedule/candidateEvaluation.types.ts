@@ -37,6 +37,8 @@ export interface CandidateEvaluationResponse {
   applicationId: number;
   candidateId: number;
   candidateName: string;
+  registrationCode: string | null;
+  candidateEmail: string | null;
   roundConfigId: number;
   roundName: string;
   score: number;
@@ -75,9 +77,11 @@ export interface EvaluationData {
   candidateName: string;
   candidateEmail: string;
   sections: Record<string, number>;
+  status?: string;
 }
 
 export interface BulkCandidateEvaluationRequest {
+  driveId: number;
   roundConfigId: number;
   roundNo: number;
   updatedBy: number;

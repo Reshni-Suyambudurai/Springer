@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -40,7 +42,8 @@ public class RoundTemplate {
     
     private Integer weightage; // e.g., 0.4
     
-    @Column(columnDefinition = "JSON")
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(columnDefinition = "jsonb")
     private String sections; // can be null - sub-category marks like {apptitude, logical, problem-solving, verbal}
     
     private Boolean isActive; // is this round active

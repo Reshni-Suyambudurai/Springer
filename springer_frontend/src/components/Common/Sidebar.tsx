@@ -1,6 +1,7 @@
-import {  useState } from "react";
+﻿import {  useState } from "react";
 import { tokenstore } from "../../auth/tokenstore";
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Tooltip } from "@mui/material";
 import type { MenuItem } from "../../types/sidebar";
 import '../../css/Common/Sidebar.css';
 
@@ -443,14 +444,23 @@ function Sidebar({ collapsed, onToggle }: SidebarProps) {
       </div>
       <nav className="sidebar-nav">
         {links.map((item) => (
-          <Link
+          <Tooltip
             key={item.path}
-            to={item.path}
-            className={`sidebar-link${location.pathname === item.path || location.pathname.startsWith(item.path + '/') ? ' active' : ''}`}
+            title={item.name}
+            placement="right"
+            arrow
+            disableHoverListener={!collapsed}
+            classes={{ tooltip: 'sidebar-tooltip', arrow: 'sidebar-tooltip-arrow' }}
           >
-            <span className="sidebar-icon">{item.icon}</span>
-            {!collapsed && <span className="sidebar-text">{item.name}</span>}
-          </Link>
+            <Link
+              to={item.path}
+              className={`sidebar-link${location.pathname === item.path || location.pathname.startsWith(item.path + '/') ? ' active' : ''}`}
+              aria-label={collapsed ? item.name : undefined}
+            >
+              <span className="sidebar-icon">{item.icon}</span>
+              {!collapsed && <span className="sidebar-text">{item.name}</span>}
+            </Link>
+          </Tooltip>
         ))}
       </nav>
       <div className="sidebar-user" onClick={() => setShowUserMenu(!showUserMenu)} style={{ cursor: 'pointer' }}>

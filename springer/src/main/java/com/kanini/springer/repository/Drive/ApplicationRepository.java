@@ -29,6 +29,12 @@ public interface ApplicationRepository extends JpaRepository<Application, Long> 
     @Query("SELECT a FROM Application a JOIN FETCH a.candidate WHERE a.registrationCode IN :codes")
     List<Application> findByRegistrationCodeInWithCandidate(@Param("codes") List<String> codes);
 
+    @Query("SELECT a FROM Application a JOIN FETCH a.candidate c " +
+          "WHERE a.drive.driveId = :driveId AND LOWER(c.email) IN :emails")
+    List<Application> findByDriveIdAndCandidateEmails(
+           @Param("driveId") Long driveId,
+           @Param("emails") List<String> emails);
+
     Long countByDriveDriveId(Long driveId);
 
     @Query("SELECT COUNT(DISTINCT a.batchTime) FROM Application a WHERE a.drive.driveId = :driveId")

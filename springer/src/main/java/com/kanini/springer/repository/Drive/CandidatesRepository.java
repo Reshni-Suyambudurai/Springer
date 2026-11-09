@@ -108,9 +108,9 @@ public interface CandidatesRepository extends JpaRepository<Candidate, Long>, Jp
        "AND i.instituteName = :instituteName " +
        "AND COALESCE(c.degree, '') = COALESCE(:degree, '') " +
        "AND COALESCE(c.department, '') = COALESCE(:department, '') " +
-       "AND (c.dateOfBirth = :dateOfBirth OR (c.dateOfBirth IS NULL AND :dateOfBirth IS NULL)) " +
-       "AND (c.passoutYear = :passoutYear OR (c.passoutYear IS NULL AND :passoutYear IS NULL)) " +
-       "AND (:aadhaarNumber IS NULL OR c.aadhaarNumber IS NULL OR c.aadhaarNumber = :aadhaarNumber)")
+       "AND (c.dateOfBirth = CAST(:dateOfBirth AS date) OR (c.dateOfBirth IS NULL AND CAST(:dateOfBirth AS date) IS NULL)) " +
+       "AND (c.passoutYear = CAST(:passoutYear AS integer) OR (c.passoutYear IS NULL AND CAST(:passoutYear AS integer) IS NULL)) " +
+       "AND (CAST(:aadhaarNumber AS string) IS NULL OR c.aadhaarNumber IS NULL OR c.aadhaarNumber = :aadhaarNumber)")
 List<Candidate> findMatchingCandidates(
         @Param("fullName") String fullName,
         @Param("instituteName") String instituteName,

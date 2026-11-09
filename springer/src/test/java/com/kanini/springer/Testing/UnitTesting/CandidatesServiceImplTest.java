@@ -9,6 +9,8 @@ import com.kanini.springer.dto.Drive.CandidateRequest;
 import com.kanini.springer.dto.Drive.CandidateResponse;
 import com.kanini.springer.dto.Drive.CandidateStatusUpdateRequest;
 import com.kanini.springer.dto.Drive.CandidateUpdateRequest;
+import com.kanini.springer.dto.Drive.CandidateValidationRequest;
+import com.kanini.springer.dto.Drive.CandidateValidationResponse;
 import com.kanini.springer.dto.Drive.EligibilityValidationResult;
 import com.kanini.springer.entity.Drive.Candidate;
 import com.kanini.springer.entity.HiringReq.HiringCycle;
@@ -220,14 +222,35 @@ class CandidatesServiceImplTest {
         }
 
         @Test
-        @DisplayName("Negative: throws ValidationException when mobile is blank")
-        void createCandidate_blankMobile_throwsValidation() {
-            CandidateRequest req = buildValidRequest();
-            req.setMobile("  ");
+        @DisplayName("Positive: creates candidate with only first name and email")
+        void createCandidate_onlyFirstNameAndEmail_success() {
+            CandidateRequest req = new CandidateRequest();
+            req.setFirstName("Arjun");
+            req.setEmail("arjun@test.com");
 
-            assertThatThrownBy(() -> candidatesService.createCandidate(req))
-                    .isInstanceOf(ValidationException.class)
-                    .hasMessageContaining("Mobile number is required");
+                Candidate minimalCandidate = new Candidate();
+                minimalCandidate.setCandidateId(1L);
+                minimalCandidate.setFirstName("Arjun");
+                minimalCandidate.setEmail("arjun@test.com");
+                minimalCandidate.setApplicationStage(ApplicationStage.APPLIED);
+                minimalCandidate.setLifecycleStatus(LifecycleStatus.ACTIVE);
+                minimalCandidate.setCandidateSkills(new ArrayList<>());
+
+            when(candidatesRepository.findByEmail("arjun@test.com")).thenReturn(Optional.empty());
+                when(mapper.toEntity(req)).thenReturn(minimalCandidate);
+            when(eligibilityRuleService.checkEligibility(null, null, null, null, null))
+                .thenReturn(eligibleResult());
+                when(candidatesRepository.save(minimalCandidate)).thenReturn(minimalCandidate);
+                when(candidatesRepository.findByIdWithInstitute(1L)).thenReturn(Optional.of(minimalCandidate));
+                when(mapper.toResponse(minimalCandidate)).thenReturn(stubResponse);
+
+            CandidateResponse result = candidatesService.createCandidate(req);
+
+            assertThat(result).isNotNull();
+            verify(instituteRepository, never()).findById(anyLong());
+            verify(candidatesRepository, never()).findMatchingCandidates(
+                anyString(), anyString(), any(), any(), any(), any(), any());
+            verify(candidatesRepository).save(minimalCandidate);
         }
 
         @Test
@@ -936,12 +959,91 @@ class CandidatesServiceImplTest {
     }
 
     // =======================================================================
+        // bulkValidateCandidates
+        // =======================================================================
+
+        @Nested
+        @DisplayName("bulkValidateCandidates()")
+        class BulkValidateCandidates {
+
+        @Test
+        @DisplayName("Positive: marks an unmatched candidate as new")
+        void bulkValidate_noMatch_returnsNew() {
+            CandidateValidationRequest request = validationRequest();
+            when(instituteRepository.findById(1L)).thenReturn(Optional.of(stubInstitute));
+            when(candidatesRepository.findMatchingCandidates(
+                anyString(), anyString(), any(), any(), any(), any(), any()))
+                .thenReturn(Collections.emptyList());
+
+            List<CandidateValidationResponse> result =
+                candidatesService.bulkValidateCandidates(List.of(request));
+
+            assertThat(result).hasSize(1);
+            assertThat(result.get(0).getTempId()).isEqualTo("row-1");
+            assertThat(result.get(0).getStatus()).isEqualTo("NEW");
+            assertThat(result.get(0).getCanProceed()).isTrue();
+        }
+
+        @Test
+        @DisplayName("Negative: returns a row error when candidate lookup fails")
+        void bulkValidate_repositoryFailure_returnsErrorResponse() {
+            CandidateValidationRequest request = validationRequest();
+            when(instituteRepository.findById(1L)).thenReturn(Optional.of(stubInstitute));
+            when(candidatesRepository.findMatchingCandidates(
+                anyString(), anyString(), any(), any(), any(), any(), any()))
+                .thenThrow(new RuntimeException("candidate lookup failed"));
+
+            List<CandidateValidationResponse> result =
+                candidatesService.bulkValidateCandidates(List.of(request));
+
+            assertThat(result).hasSize(1);
+            assertThat(result.get(0).getTempId()).isEqualTo("row-1");
+            assertThat(result.get(0).getStatus()).isEqualTo("ERROR");
+            assertThat(result.get(0).getCanProceed()).isFalse();
+            assertThat(result.get(0).getComment()).contains("candidate lookup failed");
+        }
+        }
+
+        // =======================================================================
     // bulkCreateCandidates — key scenarios
     // =======================================================================
 
     @Nested
     @DisplayName("bulkCreateCandidates()")
     class BulkCreateCandidates {
+
+        @Test
+        @DisplayName("Positive: creates candidate with only first name and email")
+        void bulkCreate_onlyFirstNameAndEmail_success() {
+            CandidateRequest request = new CandidateRequest();
+            request.setFirstName("Ram");
+            request.setEmail("ram@test.com");
+
+            Candidate candidate = new Candidate();
+            candidate.setCandidateId(10L);
+            candidate.setFirstName("Ram");
+            candidate.setEmail("ram@test.com");
+
+            CandidateResponse candidateResponse = new CandidateResponse();
+            candidateResponse.setCandidateId(10L);
+
+            when(candidatesRepository.findByEmailIn(List.of("ram@test.com")))
+                .thenReturn(Collections.emptyList());
+            when(mapper.toEntity(request)).thenReturn(candidate);
+            when(eligibilityRuleService.checkEligibility(null, null, null, null, null))
+                .thenReturn(eligibleResult());
+            when(candidatesRepository.saveAll(anyList())).thenReturn(List.of(candidate));
+            when(candidatesRepository.findByIdsWithInstitute(List.of(10L)))
+                .thenReturn(List.of(candidate));
+            when(mapper.toResponseList(List.of(candidate))).thenReturn(List.of(candidateResponse));
+
+            BulkCandidateCreateResponse result = candidatesService.bulkCreateCandidates(List.of(request));
+
+            assertThat(result.getSuccessCount()).isEqualTo(1);
+            assertThat(result.getFailureCount()).isEqualTo(0);
+            verify(instituteRepository, never()).findAllById(any());
+            verify(candidatesRepository).saveAll(anyList());
+        }
 
         @Test
         @DisplayName("Negative: fails all when one email is duplicate within the batch")
@@ -1007,5 +1109,18 @@ class CandidatesServiceImplTest {
         req.setCgpa(new BigDecimal("7.5"));
         req.setPassoutYear(2026);
         return req;
+    }
+
+    private CandidateValidationRequest validationRequest() {
+        CandidateValidationRequest request = new CandidateValidationRequest();
+        request.setTempId("row-1");
+        request.setInstituteId(1L);
+        request.setCycleId(3L);
+        request.setFirstName("Arjun");
+        request.setLastName("Kumar");
+        request.setDegree("B.Tech");
+        request.setDepartment("CSE");
+        request.setPassoutYear(2026);
+        return request;
     }
 }

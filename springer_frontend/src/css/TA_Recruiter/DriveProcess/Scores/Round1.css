@@ -227,15 +227,19 @@
   padding: 6px 12px !important;
 }
 
-.r1-email-btn {
+.r1-copy-btn {
   color: var(--color-primary) !important;
   padding: 4px !important;
   transition: all 0.2s ease !important;
 }
 
-.r1-email-btn:hover {
+.r1-copy-btn:hover {
   background-color: var(--color-primary) !important;
   color: var(--color-white, #fff) !important;
+}
+
+.r1-copy-btn:disabled {
+  color: var(--color-text-disabled) !important;
 }
 
 /* ========== Allocate Panel Button ========== */
@@ -781,7 +785,7 @@
     min-width: 100px !important;
   }
 
-  .r1-email-btn {
+  .r1-copy-btn {
     display: none !important;
   }
 

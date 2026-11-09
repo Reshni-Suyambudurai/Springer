@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -51,7 +53,8 @@ public class TrainingCourse {
      * Format: [{"name":"<field>","maxScore":<int>}, ...]
      * Null for non-communication courses.
      */
-    @Column(columnDefinition = "JSON")
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(columnDefinition = "jsonb")
     private String communicationTemplate;
 
     private LocalDateTime createdAt;

@@ -20,13 +20,15 @@ import {
   TextField,
   Select,
   MenuItem,
+  Tooltip,
 } from "@mui/material";
 import MenuIcon from "@mui/icons-material/Menu";
 import CloseIcon from "@mui/icons-material/Close";
 import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
 import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
-import EmailIcon from "@mui/icons-material/Email";
+import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import NavigateNextIcon from "@mui/icons-material/NavigateNext";
+import copy from "copy-to-clipboard";
 import { candidateEvaluationApi } from "../../../../services/driveschedule.api";
 import { tokenstore } from "../../../../auth/tokenstore";
 import { showToast } from "../../../../utils/toast";
@@ -45,7 +47,31 @@ interface Round1Props {
 }
 
 type SortDirection = "asc" | "desc";
+type RoundSection = { sectionName: string; outOf: number };
+type ClipboardColumn = {
+  header: string;
+  getValue: (evaluation: CandidateEvaluationResponse, index: number) => unknown;
+};
+
 const STATUS_OPTIONS = ["PASS", "FAIL", "ABSENT", "HOLD", "SKIP"] as const;
+
+const formatSectionHeader = ({ sectionName, outOf }: RoundSection) =>
+  `${sectionName} (Out of ${outOf})`;
+
+const sanitizeClipboardCell = (value: unknown) =>
+  String(value ?? "—").replace(/[\t\r\n]+/g, " ").trim();
+
+const toTabSeparatedValues = (
+  columns: ClipboardColumn[],
+  evaluations: CandidateEvaluationResponse[]
+) => [
+  columns.map((column) => sanitizeClipboardCell(column.header)).join("\t"),
+  ...evaluations.map((evaluation, index) =>
+    columns
+      .map((column) => sanitizeClipboardCell(column.getValue(evaluation, index)))
+      .join("\t")
+  ),
+].join("\r\n");
 
 const Round1: React.FC<Round1Props> = ({ data, onStatusUpdated, onAllocatePanel }) => {
   const { roundTemplate, evaluations } = data;
@@ -64,14 +90,20 @@ const Round1: React.FC<Round1Props> = ({ data, onStatusUpdated, onAllocatePanel 
   const [skipReason, setSkipReason] = useState("");
 
 
-  // Extract section names from the roundTemplate sections array
-  const sectionNames: string[] = useMemo(() =>
+  const sections: RoundSection[] = useMemo(() =>
     Array.isArray(roundTemplate.sections)
-      ? (roundTemplate.sections as { sectionName: string; outOf: number }[]).map(
-          (s) => s.sectionName
-        )
+      ? (roundTemplate.sections as RoundSection[])
+          .filter((section) => section.sectionName)
       : [],
     [roundTemplate.sections]
+  );
+  const sectionNames = useMemo(
+    () => sections.map((section) => section.sectionName),
+    [sections]
+  );
+  const sectionHeaderByName = useMemo(
+    () => new Map(sections.map((section) => [section.sectionName, formatSectionHeader(section)])),
+    [sections]
   );
 
   const showAverage = selectedAvgColumns.length >= 2;
@@ -202,6 +234,61 @@ const Round1: React.FC<Round1Props> = ({ data, onStatusUpdated, onAllocatePanel 
     }
     return result;
   }, [sortedEvaluations, filterName, filterStatus, showAverage, minAvgInput, getAverage, roundTemplate.roundNo]);
+
+  const clipboardColumns = useMemo<ClipboardColumn[]>(() => {
+    const columns: ClipboardColumn[] = [
+      { header: "Index", getValue: (_evaluation, index) => index + 1 },
+      {
+        header: "Registration No",
+        getValue: (evaluation) => evaluation.registrationCode || "—",
+      },
+      {
+        header: "Candidate Name",
+        getValue: (evaluation) => `${evaluation.candidateName} (${evaluation.evaluationStatus})`,
+      },
+      {
+        header: "Email",
+        getValue: (evaluation) => evaluation.candidateEmail || "—",
+      },
+      { header: "Total Score", getValue: (evaluation) => evaluation.score ?? 0 },
+      ...sections.map((section) => ({
+        header: formatSectionHeader(section),
+        getValue: (evaluation: CandidateEvaluationResponse) => {
+          const sectionScore = evaluation.sectionScore as Record<string, number> | null;
+          return sectionScore?.[section.sectionName] ?? "—";
+        },
+      })),
+    ];
+
+    if (showAverage) {
+      columns.push({
+        header: "Average",
+        getValue: (evaluation) => getAverage(evaluation).toFixed(2),
+      });
+    }
+    if (roundTemplate.roundNo === 2 || roundTemplate.roundNo === 3) {
+      columns.push({
+        header: "Reviewed By",
+        getValue: (evaluation) => evaluation.reviewedByName || "—",
+      });
+    }
+
+    return columns;
+  }, [getAverage, roundTemplate.roundNo, sections, showAverage]);
+
+  const handleCopyTable = useCallback(async () => {
+    if (displayedEvaluations.length === 0) return;
+
+    try {
+      const copied = await copy(toTabSeparatedValues(clipboardColumns, displayedEvaluations));
+      showToast(
+        copied ? "Table copied successfully" : "Unable to copy table",
+        copied ? "success" : "error"
+      );
+    } catch {
+      showToast("Unable to copy table", "error");
+    }
+  }, [clipboardColumns, displayedEvaluations]);
 
   const handleBulkUpdate = useCallback(async (reason?: string) => {
     if (!bulkStatus) return;
@@ -376,9 +463,19 @@ const Round1: React.FC<Round1Props> = ({ data, onStatusUpdated, onAllocatePanel 
                   <MenuItem key={s} value={s}>{s}</MenuItem>
                 ))}
               </Select>
-              <IconButton className="r1-email-btn" size="small">
-                <EmailIcon />
-              </IconButton>
+              <Tooltip title="Copy displayed table">
+                <span>
+                  <IconButton
+                    className="r1-copy-btn"
+                    size="small"
+                    onClick={handleCopyTable}
+                    disabled={displayedEvaluations.length === 0}
+                    aria-label="Copy displayed table"
+                  >
+                    <ContentCopyIcon />
+                  </IconButton>
+                </span>
+              </Tooltip>
               {onAllocatePanel && displayedEvaluations.length > 0 && (
                 <Button
                   variant="contained"
@@ -508,7 +605,7 @@ const Round1: React.FC<Round1Props> = ({ data, onStatusUpdated, onAllocatePanel 
                         onClick={() => handleSort(col)}
                       >
                         <Box className="r1-th-sort-wrapper">
-                          {col}
+                          {sectionHeaderByName.get(col) ?? col}
                           {sortColumn === col ? (
                             <ArrowUpwardIcon className="r1-sort-icon r1-sort-icon-active" />
                           ) : (

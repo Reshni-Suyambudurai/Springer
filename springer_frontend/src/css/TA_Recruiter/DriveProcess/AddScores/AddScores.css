@@ -1,9 +1,12 @@
 /* ========== Container ========== */
 .as-container {
-  padding: 16px;
-  background-color: var(--color-bg);
-  height: 100vh;
-  overflow: hidden;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--color-primary) 6%, transparent), transparent 50%),
+    var(--color-bg);
+  min-height: calc(100vh - 96px);
   box-sizing: border-box;
 }
 
@@ -14,7 +17,7 @@
   gap: 16px;
   background: var(--color-surface) !important;
   padding: 16px 20px !important;
-  border-radius: 12px !important;
+  border-radius: 8px !important;
   border: 1px solid var(--color-border) !important;
   box-shadow: none !important;
   margin-bottom: 32px;
@@ -30,8 +33,15 @@
 /* ========== Cards Grid ========== */
 .as-cards-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 24px;
+  width: 100%;
+  max-width: 1080px;
+  flex: 1;
+  align-content: start;
+  margin: 0 auto;
+  padding-bottom: 32px;
+  box-sizing: border-box;
 }
 
 /* ========== Card ========== */
@@ -42,7 +52,8 @@
   text-align: center;
   gap: 16px;
   padding: 32px 24px !important;
-  border-radius: 12px !important;
+  min-height: 240px;
+  border-radius: 8px !important;
   border: 1px solid var(--color-border) !important;
   background: var(--color-surface) !important;
   box-shadow: none !important;
@@ -55,6 +66,11 @@
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1) !important;
 }
 
+.as-card:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--color-primary) 35%, transparent);
+  outline-offset: 3px;
+}
+
 /* ========== Icon ========== */
 .as-card-icon-wrap {
   display: flex;
@@ -62,7 +78,7 @@
   justify-content: center;
   width: 64px;
   height: 64px;
-  border-radius: 16px;
+  border-radius: 8px;
 }
 
 .as-card-icon {
@@ -98,9 +114,38 @@
   line-height: 1.5;
 }
 
+.as-upload-btn {
+  margin-top: auto !important;
+  min-width: 116px !important;
+  padding: 8px 18px !important;
+  border-radius: 6px !important;
+  background-color: var(--color-primary) !important;
+  color: var(--color-white) !important;
+  font-size: var(--text-sm) !important;
+  font-weight: 600 !important;
+  text-transform: none !important;
+  box-shadow: none !important;
+}
+
+.as-upload-btn:hover {
+  background-color: var(--color-primary-dark) !important;
+}
+
 /* ========== Responsive ========== */
 @media (max-width: 900px) {
   .as-cards-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 600px) {
+  .as-container {
+    padding: 16px;
+  }
+
+  .as-cards-grid {
     grid-template-columns: 1fr;
+    align-content: start;
+    padding-bottom: 0;
   }
 }

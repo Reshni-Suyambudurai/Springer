@@ -3,6 +3,8 @@ package com.kanini.springer.mapper.Drive;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.kanini.springer.dto.Drive.CandidateEvaluationResponse;
+import com.kanini.springer.entity.Drive.Application;
+import com.kanini.springer.entity.Drive.Candidate;
 import com.kanini.springer.entity.Drive.CandidateEvaluation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -25,15 +27,18 @@ public class CandidateEvaluationMapper {
         response.setScoreId(evaluation.getScoreId());
         
         // Application info
-        if (evaluation.getApplication() != null) {
-            response.setApplicationId(evaluation.getApplication().getApplicationId());
+        Application application = evaluation.getApplication();
+        if (application != null) {
+            response.setApplicationId(application.getApplicationId());
+            response.setRegistrationCode(application.getRegistrationCode());
             
             // Candidate info from application
-            if (evaluation.getApplication().getCandidate() != null) {
-                response.setCandidateId(evaluation.getApplication().getCandidate().getCandidateId());
-                String candidateName = evaluation.getApplication().getCandidate().getFirstName() + 
-                        (evaluation.getApplication().getCandidate().getLastName() != null ? 
-                                " " + evaluation.getApplication().getCandidate().getLastName() : "");
+            Candidate candidate = application.getCandidate();
+            if (candidate != null) {
+                response.setCandidateId(candidate.getCandidateId());
+                response.setCandidateEmail(candidate.getEmail());
+                String candidateName = candidate.getFirstName() +
+                        (candidate.getLastName() != null ? " " + candidate.getLastName() : "");
                 response.setCandidateName(candidateName);
             }
         }

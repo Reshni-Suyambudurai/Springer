@@ -24,7 +24,6 @@ import type { ApplicationRequest } from "../../../types/TA_Recruiter/DriveSchedu
 interface ScheduleDriveProps {
   cycleId: number | null;
   driveId: number | null;
-  isPastDrive?: boolean;
   candidateIds: number[];
   selectMode: boolean;
   selectedCount: number;
@@ -36,7 +35,6 @@ interface ScheduleDriveProps {
 const ScheduleDrive: React.FC<ScheduleDriveProps> = ({
   cycleId,
   driveId,
-  isPastDrive = false,
   candidateIds,
   selectMode,
   selectedCount,
@@ -75,13 +73,30 @@ const ScheduleDrive: React.FC<ScheduleDriveProps> = ({
         const upcomingDrives = response.data.data;
         const matchedDrive = upcomingDrives.find((d) => d.driveId === driveId);
 
-        if (!matchedDrive) {
-          showToast("The drive is in past can't schedule", "error");
-        } else {
+        if (matchedDrive) {
           setSelectedDrive(matchedDrive);
           setBatchTimeInput("");
           setBatchTimeError(false);
           setShowConfirmDialog(true);
+          return;
+        }
+
+        const driveResponse = await driveScheduleApi.getDriveById(driveId);
+        const drive = driveResponse.data?.data;
+        if (drive) {
+          setSelectedDrive({
+            driveId: drive.driveId,
+            driveName: drive.driveName,
+            driveMode: drive.driveMode,
+            startDate: drive.startDate,
+            location: drive.location,
+            applicationsPerBatchTime: {},
+          });
+          setBatchTimeInput("");
+          setBatchTimeError(false);
+          setShowConfirmDialog(true);
+        } else {
+          showToast("Selected drive could not be found", "error");
         }
       }
     } catch (error) {
@@ -183,9 +198,7 @@ const ScheduleDrive: React.FC<ScheduleDriveProps> = ({
     <>
       <Tooltip
         title={
-          isPastDrive
-            ? "Cannot schedule candidates for a past drive"
-            : !driveId
+          !driveId
             ? "Select a drive first"
             : `Schedule ${selectMode ? selectedCount : totalElements} candidate(s) to drive`
         }
@@ -195,8 +208,8 @@ const ScheduleDrive: React.FC<ScheduleDriveProps> = ({
         <span>
           <IconButton
             onClick={handleScheduleClick}
-            disabled={!driveId || isPastDrive || (selectMode ? candidateIds.length === 0 : totalElements === 0) || loadingDrives || scheduling}
-            className={`g-icon-btn schedule-drive-btn${driveId && !isPastDrive ? ' schedule-drive-btn--active' : ''}`}
+            disabled={!driveId || (selectMode ? candidateIds.length === 0 : totalElements === 0) || loadingDrives || scheduling}
+            className={`g-icon-btn schedule-drive-btn${driveId ? ' schedule-drive-btn--active' : ''}`}
           >
             <EventIcon />
           </IconButton>

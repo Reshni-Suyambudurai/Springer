@@ -23,6 +23,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -64,6 +65,7 @@ class CandidateEvaluationControllerIntegrationTest {
 
     private String jwtToken;
     private Long testUserId;
+        private Long testDriveId;
     private Long testApplicationId1;
     private Long testApplicationId2;
     private Long testRoundConfigId;
@@ -143,6 +145,7 @@ class CandidateEvaluationControllerIntegrationTest {
         drive.setEndDate(LocalDate.now().plusDays(10));
         drive.setStatus(DriveStatus.PLANNED);
         drive = driveRepository.save(drive);
+        testDriveId = drive.getDriveId();
 
         // Create test applications
         Application application1 = new Application();
@@ -263,10 +266,51 @@ class CandidateEvaluationControllerIntegrationTest {
     // =========================================================================
 
     @Test
+    @Order(0)
+    @DisplayName("POST /api/candidate-evaluations/bulk — one invalid score prevents all writes")
+    void bulkCreateEvaluations_invalidScorePreventsAllWrites() throws Exception {
+        BulkCandidateEvaluationRequest request = new BulkCandidateEvaluationRequest();
+        request.setDriveId(testDriveId);
+        request.setRoundConfigId(testRoundConfigId);
+        request.setUpdatedBy(testUserId);
+
+        BulkCandidateEvaluationRequest.EvaluationData valid = new BulkCandidateEvaluationRequest.EvaluationData();
+        valid.setRegistrationCode("NEW001");
+        valid.setCandidateName("John Doe");
+        valid.setCandidateEmail("john.doe.evaluation@test.com");
+        valid.setSections(Map.of("Coding", 50, "Problem Solving", 45));
+
+        BulkCandidateEvaluationRequest.EvaluationData invalid = new BulkCandidateEvaluationRequest.EvaluationData();
+        invalid.setRegistrationCode("NEW002");
+        invalid.setCandidateName("Jane Smith");
+        invalid.setCandidateEmail("jane.smith.evaluation@test.com");
+        invalid.setSections(Map.of("Coding", 51, "Problem Solving", 40));
+        request.setEvaluations(List.of(valid, invalid));
+
+        mockMvc.perform(post("/api/candidate-evaluations/bulk")
+                        .header("Authorization", "Bearer " + jwtToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.data.successCount").value(0))
+                .andExpect(jsonPath("$.data.failureCount").value(1))
+                .andExpect(jsonPath("$['data']['errorMessages']['1']",
+                        containsString("Coding must be a whole number from 0 to 50")));
+
+        assertThat(evaluationRepository.findByApplicationApplicationId(testApplicationId1)).isEmpty();
+        assertThat(evaluationRepository.findByApplicationApplicationId(testApplicationId2)).isEmpty();
+        assertThat(applicationRepository.findById(testApplicationId1).orElseThrow().getRegistrationCode())
+                .isEqualTo("REG001");
+        assertThat(applicationRepository.findById(testApplicationId2).orElseThrow().getRegistrationCode())
+                .isEqualTo("REG002");
+    }
+
+    @Test
     @Order(4)
     @DisplayName("POST /api/candidate-evaluations/bulk — creates bulk evaluations successfully")
     void bulkCreateEvaluations_success() throws Exception {
         BulkCandidateEvaluationRequest request = new BulkCandidateEvaluationRequest();
+                request.setDriveId(testDriveId);
         request.setRoundConfigId(testRoundConfigId);
         request.setUpdatedBy(testUserId);
 
@@ -300,6 +344,7 @@ class CandidateEvaluationControllerIntegrationTest {
     @DisplayName("POST /api/candidate-evaluations/bulk — validation error when roundConfigId is null")
     void bulkCreateEvaluations_nullRoundConfigId_validationError() throws Exception {
         BulkCandidateEvaluationRequest request = new BulkCandidateEvaluationRequest();
+                request.setDriveId(testDriveId);
         request.setRoundConfigId(null); // Missing
         request.setUpdatedBy(testUserId);
         request.setEvaluations(new ArrayList<>());

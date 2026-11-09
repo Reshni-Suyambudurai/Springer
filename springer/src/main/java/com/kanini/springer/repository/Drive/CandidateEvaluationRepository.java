@@ -29,6 +29,7 @@ public interface CandidateEvaluationRepository extends JpaRepository<CandidateEv
      */
     @Query("SELECT e FROM CandidateEvaluation e " +
            "JOIN FETCH e.application a " +
+           "JOIN FETCH a.candidate " +
            "WHERE a.applicationId IN :applicationIds AND e.roundConfig.roundConfigId = :roundConfigId")
     List<CandidateEvaluation> findByApplicationIdsAndRoundConfigIdFetched(
             @Param("applicationIds") List<Long> applicationIds,

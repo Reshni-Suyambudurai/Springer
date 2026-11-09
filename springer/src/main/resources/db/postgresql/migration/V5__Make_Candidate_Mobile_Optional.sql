@@ -1,0 +1,2 @@
+ALTER TABLE candidates
+    ALTER COLUMN mobile DROP NOT NULL;

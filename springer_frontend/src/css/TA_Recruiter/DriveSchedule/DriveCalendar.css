@@ -165,6 +165,16 @@
 .drive-calendar-day-cell:hover { border: 2px solid var(--color-primary) !important; z-index: 10; background-color: var(--color-primary-hover-4); }
 .drive-calendar-day-cell:has(.drive-calendar-event:hover) { border: 2px solid var(--color-primary) !important; z-index: 10; }
 
+.drive-calendar-addable-cell {
+  cursor: pointer;
+}
+
+.drive-calendar-addable-cell:focus-visible {
+  outline: 3px solid var(--color-primary);
+  outline-offset: -3px;
+  z-index: 10;
+}
+
 /* Saturday (7th col) and Sunday (1st col) — gray background */
 .drive-calendar-day-cell:nth-child(7n),
 .drive-calendar-day-cell:nth-child(7n+1) {

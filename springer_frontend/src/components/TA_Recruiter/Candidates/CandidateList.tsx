@@ -704,7 +704,6 @@ const CandidateList: React.FC = () => {
                   <ScheduleDrive
                     cycleId={selectedCycle}
                     driveId={selectedDrive || null}
-                    isPastDrive={isPastDriveDate(drives.find(d => d.driveId === selectedDrive)?.startDate)}
                     candidateIds={selectMode ? Array.from(selectedCandidates) : []}
                     selectMode={selectMode}
                     selectedCount={selectedCandidates.size}

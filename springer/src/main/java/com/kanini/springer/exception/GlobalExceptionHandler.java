@@ -2,6 +2,8 @@ package com.kanini.springer.exception;
 
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
@@ -20,6 +22,7 @@ import java.util.stream.Collectors;
  * Global exception handler for the application
  */
 @ControllerAdvice
+@Slf4j
 public class GlobalExceptionHandler {
     
     /**
@@ -101,6 +104,16 @@ public class GlobalExceptionHandler {
             IllegalStateException ex, WebRequest request) {
         ApiResponse<Object> response = ApiResponse.error(ex.getMessage());
         return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(DataAccessException.class)
+    public ResponseEntity<ApiResponse<Object>> handleDataAccessException(
+            DataAccessException ex, WebRequest request) {
+        log.error("Database operation failed while processing {}", request.getDescription(false), ex);
+        ApiResponse<Object> response = ApiResponse.error(
+            "Unable to process the request because of a database error. Please try again."
+        );
+        return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
     }
     
     /**

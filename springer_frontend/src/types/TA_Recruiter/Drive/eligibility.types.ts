@@ -15,6 +15,7 @@ export interface EligibilityRuleDTO {
 export interface EligibilityRuleUpdateRequest {
   rules: EligibilityRuleDTO[];
   logic: string; // AND or OR
+  screeningEnabled: boolean;
 }
 
 export interface EligibilityValidationResult {

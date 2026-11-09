@@ -147,7 +147,7 @@ export const documentSubmissionApi = {
   },
 
   getFileUrl(documentId: number): string {
-    const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
+    const baseURL = import.meta.env.VITE_API_URL || '/api';
     return `${baseURL}/documents/submissions/${documentId}/file`;
   },
 };

@@ -1,5 +1,6 @@
 package com.kanini.springer.service.Drive.impl;
 
+import com.kanini.springer.config.MailFeature;
 import com.kanini.springer.entity.utils.EmailTemplate;
 import com.kanini.springer.repository.Common.EmailTemplateRepository;
 import lombok.RequiredArgsConstructor;
@@ -29,6 +30,7 @@ public class EvaluationEmailService {
     private final EmailTemplateRepository emailTemplateRepository;
     private final JavaMailSender mailSender;
     private final Executor mailExecutor;
+    private final MailFeature mailFeature;
 
     @Value("${spring.mail.username}")
     private String fromEmail;
@@ -48,10 +50,12 @@ public class EvaluationEmailService {
     public EvaluationEmailService(
             EmailTemplateRepository emailTemplateRepository,
             JavaMailSender mailSender,
-            @Qualifier("mailExecutor") Executor mailExecutor) {
+            @Qualifier("mailExecutor") Executor mailExecutor,
+            MailFeature mailFeature) {
         this.emailTemplateRepository = emailTemplateRepository;
         this.mailSender = mailSender;
         this.mailExecutor = mailExecutor;
+        this.mailFeature = mailFeature;
     }
 
     /**
@@ -72,6 +76,10 @@ public class EvaluationEmailService {
      */
     public void sendEvaluationEmails(String evaluationStatus, List<EvaluationEmailRecipient> recipients) {
         if (recipients == null || recipients.isEmpty()) return;
+        if (!mailFeature.isEnabled()) {
+            log.info("Email disabled; skipping evaluation emails for status {}", evaluationStatus);
+            return;
+        }
 
         Integer templateId = resolveTemplateId(evaluationStatus);
         if (templateId == null) {

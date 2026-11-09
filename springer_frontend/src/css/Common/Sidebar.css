@@ -247,6 +247,22 @@
   overflow: hidden;
 }
 
+.sidebar-tooltip {
+  background-color: var(--color-white) !important;
+  color: var(--color-sidebar-bg) !important;
+  border: 1px solid var(--color-sidebar-border);
+  border-radius: 6px !important;
+  box-shadow: 0 4px 12px var(--opacity-shadow-dark);
+  padding: 7px 10px !important;
+  font-size: var(--text-sm) !important;
+  font-weight: 600 !important;
+  letter-spacing: 0;
+}
+
+.sidebar-tooltip-arrow {
+  color: var(--color-white) !important;
+}
+
 .sidebar::-webkit-scrollbar { width: 4px; }
 .sidebar::-webkit-scrollbar-track { background: transparent; }
 .sidebar::-webkit-scrollbar-thumb { background: var(--color-sidebar-border); border-radius: 3px; }

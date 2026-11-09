@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import {
   Box, Card, Typography, Button, CircularProgress,
-  Alert, Chip, TextField, Checkbox, FormControlLabel, FormHelperText,
+  Alert, Chip, TextField, Checkbox, FormControlLabel, FormHelperText, Switch,
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import SaveIcon from '@mui/icons-material/Save';
@@ -29,6 +29,8 @@ const EligibilityManagement = () => {
   const [loading, setLoading] = useState(true);
   const [editMode, setEditMode] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [toggleSaving, setToggleSaving] = useState(false);
+  const [screeningEnabled, setScreeningEnabled] = useState(false);
   const [rules, setRules] = useState<EligibilityRuleDTO[]>([]);
   const [original, setOriginal] = useState<EligibilityRuleUpdateRequest | null>(null);
   const [errors, setErrors] = useState<Record<number, string>>({});
@@ -47,14 +49,18 @@ const EligibilityManagement = () => {
       setAction(null);
     }
     return () => setAction(null);
-  }, [editMode]);
+  }, [editMode, setAction]);
 
   const fetchRules = async () => {
     try {
       setLoading(true);
       const res = await candidateApi.getEligibilityRules();
       if (res.success && res.data) {
-        setRules(res.data.rules || []); setOriginal(res.data);
+        const enabled = res.data.screeningEnabled === true;
+        const persistedConfig = { ...res.data, screeningEnabled: enabled };
+        setRules(res.data.rules || []);
+        setScreeningEnabled(enabled);
+        setOriginal(persistedConfig);
       } else showToast(res.message || 'Failed to load rules', 'error');
     } catch (error: unknown) {
       console.error('Error fetching eligibility rules:', error);
@@ -117,13 +123,37 @@ const EligibilityManagement = () => {
     });
   };
 
+  const handleScreeningToggle = async (enabled: boolean) => {
+    if (!original) return;
+    setToggleSaving(true);
+    try {
+      const res = await candidateApi.updateEligibilityRules({
+        rules: original.rules || [],
+        logic: original.logic || 'AND',
+        screeningEnabled: enabled,
+      });
+      if (res.success && res.data) {
+        const persistedConfig = { ...res.data, screeningEnabled: res.data.screeningEnabled === true };
+        setScreeningEnabled(persistedConfig.screeningEnabled);
+        setOriginal(persistedConfig);
+        showToast(`Auto screening turned ${persistedConfig.screeningEnabled ? 'on' : 'off'}`, 'success');
+      } else {
+        showToast(res.message || 'Failed to update auto screening', 'error');
+      }
+    } catch {
+      showToast('Failed to update auto screening', 'error');
+    } finally {
+      setToggleSaving(false);
+    }
+  };
+
   const handleSave = async () => {
     const newErrors: Record<number, string> = {};
     rules.forEach((r, i) => { const e = validate(r); if (e) newErrors[i] = e; });
     if (Object.keys(newErrors).length) { setErrors(newErrors); showToast('Fix errors before saving', 'error'); return; }
     setSaving(true);
     try {
-      const res = await candidateApi.updateEligibilityRules({ rules, logic: 'AND' });
+      const res = await candidateApi.updateEligibilityRules({ rules, logic: 'AND', screeningEnabled });
       if (res.success) {
         showToast('Eligibility rules updated', 'success');
         setOriginal(res.data); setEditMode(false); fetchRules();
@@ -205,6 +235,20 @@ const EligibilityManagement = () => {
 
         {/* Body */}
         <Box className="t-body">
+          <Box className="eligibility-screening-toggle-row">
+            <Typography className="eligibility-screening-toggle-label">Auto Screening</Typography>
+            <Box className="eligibility-screening-toggle-control">
+              <Typography className={screeningEnabled ? 'eligibility-screening-state--on' : 'eligibility-screening-state--off'}>
+                {screeningEnabled ? 'On' : 'Off'}
+              </Typography>
+              <Switch
+                checked={screeningEnabled}
+                onChange={(_, checked) => handleScreeningToggle(checked)}
+                disabled={loading || saving || toggleSaving || editMode || !original || rules.length === 0}
+                inputProps={{ 'aria-label': 'Toggle auto screening' }}
+              />
+            </Box>
+          </Box>
           {loading ? (
             <Box className="t-loading">
               <CircularProgress size={32} sx={{ color: 'var(--color-primary)' }} />

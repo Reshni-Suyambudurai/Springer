@@ -1,9 +1,9 @@
 /* ========== Container ========== */
 .ar1-container {
-  padding: 16px;
+  padding: 20px clamp(16px, 5vw, 64px);
   background-color: var(--color-bg);
   height: 100vh;
-  overflow: hidden;
+  overflow: auto;
   box-sizing: border-box;
 }
 
@@ -62,24 +62,36 @@
 }
 
 /* ========== Drag & Drop Zone ========== */
+.ar1-upload-card {
+  width: min(100%, 1120px);
+  margin: 0 auto 22px;
+  padding: 14px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background-color: var(--color-surface);
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.1);
+  box-sizing: border-box;
+}
+
 .ar1-dropzone {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 12px;
-  padding: 64px 24px;
-  margin-bottom: 20px;
-  border: 2px dashed var(--color-border);
-  border-radius: 12px;
-  background-color: var(--color-surface);
+  gap: 8px;
+  min-height: 232px;
+  padding: 32px 24px;
+  border: 1px dashed #b9c9d8;
+  border-radius: 8px;
+  background: linear-gradient(110deg, #f8fbfd 0%, #edf4f9 52%, #f8fbfd 100%);
   cursor: pointer;
-  transition: border-color 0.2s ease, background-color 0.2s ease;
+  transition: border-color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+  box-sizing: border-box;
 }
 
 .ar1-dropzone:hover {
   border-color: var(--color-primary);
-  background-color: var(--color-bg);
+  box-shadow: inset 0 0 0 1px rgba(23, 68, 122, 0.08);
 }
 
 .ar1-dropzone-active {
@@ -88,19 +100,115 @@
 }
 
 .ar1-dropzone-icon {
-  font-size: 56px !important;
-  color: var(--color-primary) !important;
+  font-size: 68px !important;
+  color: #0c2d5a !important;
+  margin-bottom: 2px;
 }
 
 .ar1-dropzone-title {
   color: var(--color-text) !important;
-  font-weight: 600 !important;
-  font-size: 16px !important;
+  font-weight: 700 !important;
+  font-size: 18px !important;
+  line-height: 1.3 !important;
 }
 
 .ar1-dropzone-subtitle {
   color: var(--color-text-muted) !important;
+  font-size: 14px !important;
+}
+
+.ar1-browse-link {
+  color: #25658f;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.ar1-file-support {
+  color: var(--color-text-muted);
+}
+
+.ar1-fields-reference {
+  width: min(100%, 1120px);
+  margin: 0 auto 20px;
+  padding: 18px 18px 14px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background-color: var(--color-surface);
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.1);
+  color: var(--color-text-muted);
+  box-sizing: border-box;
+}
+
+.ar1-fields-reference-label {
+  color: var(--color-text) !important;
+  font-size: 14px !important;
+  font-weight: 700 !important;
+  line-height: 1.2 !important;
+  text-transform: uppercase;
+}
+
+.ar1-fields-reference-help {
+  color: var(--color-text-muted) !important;
+  font-size: 14px !important;
+  margin-top: 6px !important;
+  line-height: 1.45 !important;
+}
+
+.ar1-field-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.ar1-field-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 34px;
+  padding: 5px 11px;
+  border: 1px solid #8fc4df;
+  border-radius: 17px;
+  background-color: #edf8fd;
+  color: #13233b;
+  font-size: 13px;
+  line-height: 1.2;
+  box-sizing: border-box;
+}
+
+.ar1-field-chip-icon {
+  flex: 0 0 auto;
+  font-size: 17px !important;
+  color: #45677c !important;
+}
+
+.ar1-field-chip-icon-text {
+  font-size: 20px !important;
+}
+
+.ar1-status-reference {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: 14px;
+  padding: 9px 11px;
+  border: 1px solid #66a9ca;
+  border-radius: 4px;
+  background-color: #eaf6fc;
+  color: #17233a;
+}
+
+.ar1-status-reference-icon {
+  flex: 0 0 auto;
+  margin-top: 1px;
+  font-size: 18px !important;
+  color: #2585b9 !important;
+}
+
+.ar1-status-reference-text {
+  color: inherit !important;
   font-size: 13px !important;
+  line-height: 1.45 !important;
 }
 
 /* ========== File Info ========== */
@@ -387,6 +495,33 @@
 
 /* ========== Responsive ========== */
 @media (max-width: 768px) {
+  .ar1-container {
+    padding: 12px;
+  }
+
+  .ar1-upload-card {
+    padding: 10px;
+  }
+
+  .ar1-dropzone {
+    min-height: 210px;
+    padding: 26px 16px;
+    text-align: center;
+  }
+
+  .ar1-dropzone-title {
+    font-size: 16px !important;
+  }
+
+  .ar1-fields-reference {
+    padding: 16px 14px 12px;
+  }
+
+  .ar1-field-chip {
+    max-width: 100%;
+    overflow-wrap: anywhere;
+  }
+
   .ar1-header {
     flex-direction: column;
     align-items: flex-start;

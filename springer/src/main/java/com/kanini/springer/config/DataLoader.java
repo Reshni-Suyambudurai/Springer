@@ -69,6 +69,9 @@ public class DataLoader {
                 seedEmailTemplates();
             }
 
+            // Keep enum-backed academic programs synchronized on existing databases.
+            seedPrograms();
+
             // Check if main data already exists (check for TA_HEAD instead of just count)
             if (roleRepository.findByRoleName(RoleName.TA_HEAD).isPresent()) {
                 log.info("Data already exists. Skipping seed data loading.");
@@ -93,16 +96,13 @@ public class DataLoader {
             // 4. Seed Institutes
             seedInstitutes();
 
-            // 5. Seed Programs
-            seedPrograms();
-
-            // 6. Seed Institute Programs (relationships)
+            // 5. Seed Institute Programs (relationships)
             seedInstitutePrograms();
 
-            // 7. Seed Skills
+            // 6. Seed Skills
             seedSkills();
 
-            // 8. Seed Round Templates
+            // 7. Seed Round Templates
             seedRoundTemplates();
 
             log.info("Data seeding completed successfully!");
@@ -287,16 +287,17 @@ public class DataLoader {
     private void seedPrograms() {
         log.info("Seeding programs...");
 
-        // Seed all available degree programs from the enum
-        ProgramName[] programs = ProgramName.values();
-        
-        for (ProgramName programName : programs) {
-            Program program = new Program();
-            program.setProgramName(programName);
-            programRepository.save(program);
+        int seededCount = 0;
+        for (ProgramName programName : ProgramName.values()) {
+            if (programRepository.findByProgramName(programName).isEmpty()) {
+                Program program = new Program();
+                program.setProgramName(programName);
+                programRepository.save(program);
+                seededCount++;
+            }
         }
 
-        log.info("Seeded {} programs", programs.length);
+        log.info("Seeded {} missing programs", seededCount);
     }
 
     private void seedInstitutePrograms() {

@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.time.LocalDateTime;
 
@@ -50,7 +52,8 @@ public class TrainingScore {
      * Format: [{"name":"Grammar","score":16,"maxScore":20}, ...]
      * The overall score field holds the sum of all sub-scores.
      */
-    @Column(columnDefinition = "JSON")
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(columnDefinition = "jsonb")
     private String communicationBreakdown;
 
     @Enumerated(EnumType.STRING)

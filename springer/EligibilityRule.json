@@ -40,5 +40,6 @@
     "message" : "Department must be one of: {allowedValues}",
     "allowedValues" : [ ]
   } ],
-  "logic" : "AND"
+  "logic" : "AND",
+  "screeningEnabled" : false
 }

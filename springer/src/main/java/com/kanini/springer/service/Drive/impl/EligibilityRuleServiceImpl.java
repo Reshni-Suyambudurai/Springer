@@ -32,8 +32,12 @@ public class EligibilityRuleServiceImpl implements IEligibilityRuleService {
         
         try {
             EligibilityRuleUpdateRequest rulesConfig = loadRulesFromFile();
+
+            if (rulesConfig == null || !Boolean.TRUE.equals(rulesConfig.getScreeningEnabled())) {
+                return result;
+            }
             
-            if (rulesConfig == null || rulesConfig.getRules() == null || rulesConfig.getRules().isEmpty()) {
+            if (rulesConfig.getRules() == null || rulesConfig.getRules().isEmpty()) {
                 // No rules defined, consider eligible by default
                 return result;
             }
@@ -92,6 +96,9 @@ public class EligibilityRuleServiceImpl implements IEligibilityRuleService {
             
             if (request.getLogic() == null || request.getLogic().isBlank()) {
                 request.setLogic("AND");
+            }
+            if (request.getScreeningEnabled() == null) {
+                request.setScreeningEnabled(false);
             }
             
             // Write to JSON file

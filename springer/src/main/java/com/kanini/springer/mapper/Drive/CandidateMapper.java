@@ -10,6 +10,7 @@ import com.kanini.springer.entity.Drive.Drive;
 import com.kanini.springer.entity.HiringReq.HiringCycle;
 import com.kanini.springer.entity.HiringReq.Institute;
 import com.kanini.springer.entity.enums.Enums.ApplicationStage;
+import com.kanini.springer.entity.enums.Enums.ApplicationType;
 import com.kanini.springer.entity.enums.Enums.LifecycleStatus;
 import com.kanini.springer.repository.Hiring.HiringCycleRepository;
 import com.kanini.springer.repository.Hiring.InstituteRepository;
@@ -194,12 +195,32 @@ public class CandidateMapper {
         candidate.setFirstName(request.getFirstName());
         candidate.setLastName(request.getLastName());
         candidate.setEmail(request.getEmail());
-        candidate.setMobile(request.getMobile());
-        candidate.setCgpa(request.getCgpa());
+        candidate.setMobile(
+            request.getMobile() != null && !request.getMobile().isBlank()
+                ? request.getMobile()
+                : null
+        );
+        candidate.setCgpa(
+            request.getCgpa() != null && request.getCgpa().signum() > 0
+                ? request.getCgpa()
+                : null
+        );
         candidate.setHistoryOfArrears(request.getHistoryOfArrears());
-        candidate.setDegree(request.getDegree());
-        candidate.setDepartment(request.getDepartment());
-        candidate.setPassoutYear(request.getPassoutYear());
+        candidate.setDegree(
+            request.getDegree() != null && !request.getDegree().isBlank()
+                ? request.getDegree()
+                : null
+        );
+        candidate.setDepartment(
+            request.getDepartment() != null && !request.getDepartment().isBlank()
+                ? request.getDepartment()
+                : null
+        );
+        candidate.setPassoutYear(
+            request.getPassoutYear() != null && request.getPassoutYear() > 0
+                ? request.getPassoutYear()
+                : null
+        );
         candidate.setDateOfBirth(request.getDateOfBirth());
         candidate.setAadhaarNumber(
             request.getAadhaarNumber() != null && !request.getAadhaarNumber().isBlank()
@@ -207,10 +228,11 @@ public class CandidateMapper {
                 : null
         );
         
-        // Set applicationType from request
-        if (request.getApplicationType() != null) {
-            candidate.setApplicationType(request.getApplicationType());
-        }
+        candidate.setApplicationType(
+            request.getApplicationType() != null
+                ? request.getApplicationType()
+                : ApplicationType.STANDARD
+        );
         
         // Note: isEligible and reason are set by eligibility validation, not from request
         // ApplicationStage is always APPLIED for new candidates

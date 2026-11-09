@@ -46,16 +46,19 @@ import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
 import jakarta.persistence.criteria.Root;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.kanini.springer.dto.Drive.FilterOptionsResponse;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -66,6 +69,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class CandidatesServiceImpl implements ICandidatesService {
     
     private final CandidatesRepository candidatesRepository;
@@ -90,36 +94,29 @@ public class CandidatesServiceImpl implements ICandidatesService {
         if (request.getEmail() == null || request.getEmail().isBlank()) {
             throw new ValidationException("Email is required");
         }
-        if (request.getMobile() == null || request.getMobile().isBlank()) {
-            throw new ValidationException("Mobile number is required");
-        }
-        
         // Validate cycle status if cycleId is provided
         if (request.getCycleId() != null) {
             validateCycleIsOpen(request.getCycleId());
         }
         
-        // Get institute name for comprehensive matching
-        Institute institute = instituteRepository.findById(request.getInstituteId())
+        List<Candidate> matches = Collections.emptyList();
+        if (request.getInstituteId() != null) {
+            Institute institute = instituteRepository.findById(request.getInstituteId())
                 .orElseThrow(() -> new ResourceNotFoundException("Institute", "ID", request.getInstituteId()));
-        String instituteName = institute.getInstituteName();
-        
-        // Check for existing candidate using comprehensive matching criteria
-        // Combine firstName + lastName with whitespace removed for fuzzy name matching
-        String fullName = (request.getFirstName() != null ? request.getFirstName() : "") +
-                          (request.getLastName() != null ? request.getLastName() : "");
-        // Normalize empty aadhaar to null so the query skips aadhaar filtering
-        String aadhaarForQuery = (request.getAadhaarNumber() != null && !request.getAadhaarNumber().isBlank())
+            String fullName = (request.getFirstName() != null ? request.getFirstName() : "") +
+                      (request.getLastName() != null ? request.getLastName() : "");
+            String aadhaarForQuery = (request.getAadhaarNumber() != null && !request.getAadhaarNumber().isBlank())
                 ? request.getAadhaarNumber() : null;
-        List<Candidate> matches = candidatesRepository.findMatchingCandidates(
+            matches = candidatesRepository.findMatchingCandidates(
                 fullName,
-                instituteName,
+                institute.getInstituteName(),
                 request.getDegree(),
                 request.getDepartment(),
                 request.getDateOfBirth(),
                 request.getPassoutYear(),
                 aadhaarForQuery
-        );
+            );
+        }
         
         // If candidate exists, check cycle and provide detailed error
         if (!matches.isEmpty()) {
@@ -164,7 +161,9 @@ public class CandidatesServiceImpl implements ICandidatesService {
             if (request.getEmail() != null && !request.getEmail().isBlank()) {
                 existingCandidate.setEmail(request.getEmail());
             }
-            existingCandidate.setMobile(request.getMobile());
+            if (request.getMobile() != null && !request.getMobile().isBlank()) {
+                existingCandidate.setMobile(request.getMobile());
+            }
             if (request.getCgpa() != null) {
                 existingCandidate.setCgpa(request.getCgpa());
             }
@@ -293,6 +292,7 @@ public class CandidatesServiceImpl implements ICandidatesService {
     public BulkCandidateCreateResponse bulkCreateCandidates(List<CandidateRequest> requests) {
         BulkCandidateCreateResponse response = new BulkCandidateCreateResponse();
         response.setTotalProcessed(requests.size());
+        log.info("Bulk candidate upload started: rows={}", requests.size());
         
         if (requests == null || requests.isEmpty()) {
             response.getErrorMessages().add("Request list cannot be empty");
@@ -370,28 +370,31 @@ public class CandidatesServiceImpl implements ICandidatesService {
             
             // Check identity match FIRST to determine if this is an OLD candidate
             try {
-                Institute institute = instituteMap.get(request.getInstituteId());
-                if (institute == null) {
+                Institute institute = request.getInstituteId() != null
+                    ? instituteMap.get(request.getInstituteId())
+                    : null;
+                if (request.getInstituteId() != null && institute == null) {
                     validationErrors.add(candidateRef + ": Institute not found with ID: " + request.getInstituteId());
                     continue;
                 }
-                String instituteName = institute.getInstituteName();
-                
-                // Combine firstName + lastName with whitespace removed for fuzzy name matching
-                String fullName = (request.getFirstName() != null ? request.getFirstName() : "") +
-                                  (request.getLastName() != null ? request.getLastName() : "");
-                // Normalize empty aadhaar to null so the query skips aadhaar filtering
-                String aadhaarForQuery = (request.getAadhaarNumber() != null && !request.getAadhaarNumber().isBlank())
+                List<Candidate> matches = Collections.emptyList();
+                if (institute != null && hasComprehensiveIdentity(
+                        request.getDegree(), request.getDepartment(),
+                        request.getDateOfBirth(), request.getPassoutYear())) {
+                    String fullName = (request.getFirstName() != null ? request.getFirstName() : "") +
+                              (request.getLastName() != null ? request.getLastName() : "");
+                    String aadhaarForQuery = (request.getAadhaarNumber() != null && !request.getAadhaarNumber().isBlank())
                         ? request.getAadhaarNumber() : null;
-                List<Candidate> matches = candidatesRepository.findMatchingCandidates(
+                    matches = candidatesRepository.findMatchingCandidates(
                         fullName,
-                        instituteName,
+                        institute.getInstituteName(),
                         request.getDegree(),
                         request.getDepartment(),
                         request.getDateOfBirth(),
                         request.getPassoutYear(),
                         aadhaarForQuery
-                );
+                    );
+                }
                 
                 if (!matches.isEmpty()) {
                     Candidate existingCandidate = matches.get(0);
@@ -418,6 +421,17 @@ public class CandidatesServiceImpl implements ICandidatesService {
                         updateIndices.add(i);
                     }
                 }
+            } catch (DataAccessException e) {
+                Throwable rootCause = e;
+                while (rootCause.getCause() != null && rootCause.getCause() != rootCause) {
+                    rootCause = rootCause.getCause();
+                }
+                log.error(
+                    "Bulk candidate duplicate lookup failed: row={}, instituteId={}, "
+                        + "exceptionType={}, rootCauseType={}, rootCauseMessage={}",
+                    i + 1, request.getInstituteId(), e.getClass().getName(),
+                    rootCause.getClass().getName(), rootCause.getMessage(), e);
+                throw e;
             } catch (Exception e) {
                 validationErrors.add(candidateRef + ": Error checking for duplicates - " + e.getMessage());
             }
@@ -479,12 +493,6 @@ public class CandidatesServiceImpl implements ICandidatesService {
             // Validate required fields
             if (request.getFirstName() == null || request.getFirstName().isBlank()) {
                 validationErrors.add(candidateRef + ": First name is required");
-            }
-            if (request.getCgpa() == null) {
-                validationErrors.add(candidateRef + ": CGPA is required");
-            }
-            if (request.getPassoutYear() == null) {
-                validationErrors.add(candidateRef + ": Passout year is required");
             }
         }
         
@@ -576,7 +584,9 @@ public class CandidatesServiceImpl implements ICandidatesService {
             if (request.getEmail() != null && !request.getEmail().isBlank()) {
                 existingCandidate.setEmail(request.getEmail());
             }
-            existingCandidate.setMobile(request.getMobile());
+            if (request.getMobile() != null && !request.getMobile().isBlank()) {
+                existingCandidate.setMobile(request.getMobile());
+            }
             if (request.getCgpa() != null) {
                 existingCandidate.setCgpa(request.getCgpa());
             }
@@ -1141,34 +1151,34 @@ public class CandidatesServiceImpl implements ICandidatesService {
     }
     
     @Override
-    @Transactional(readOnly = true)
     public List<CandidateValidationResponse> bulkValidateCandidates(List<CandidateValidationRequest> requests) {
         List<CandidateValidationResponse> responses = new ArrayList<>();
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("d/M/yy - h:mma");
         
         for (CandidateValidationRequest req : requests) {
             try {
-                // Get institute name for query
-                Institute institute = instituteRepository.findById(req.getInstituteId())
+                List<Candidate> matches;
+                if (req.getInstituteId() != null) {
+                    Institute institute = instituteRepository.findById(req.getInstituteId())
                         .orElseThrow(() -> new ResourceNotFoundException("Institute", "ID", req.getInstituteId()));
-                String instituteName = institute.getInstituteName();
-                
-                // Find matching candidates
-                // Combine firstName + lastName with whitespace removed for fuzzy name matching
-                String fullName = (req.getFirstName() != null ? req.getFirstName() : "") +
-                                  (req.getLastName() != null ? req.getLastName() : "");
-                // Normalize empty aadhaar to null so the query skips aadhaar filtering
-                String aadhaarForQuery = (req.getAadhaarNumber() != null && !req.getAadhaarNumber().isBlank())
+                    String fullName = (req.getFirstName() != null ? req.getFirstName() : "") +
+                              (req.getLastName() != null ? req.getLastName() : "");
+                    String aadhaarForQuery = (req.getAadhaarNumber() != null && !req.getAadhaarNumber().isBlank())
                         ? req.getAadhaarNumber() : null;
-                List<Candidate> matches = candidatesRepository.findMatchingCandidates(
+                    matches = candidatesRepository.findMatchingCandidates(
                         fullName,
-                        instituteName,
+                        institute.getInstituteName(),
                         req.getDegree(),
                         req.getDepartment(),
                         req.getDateOfBirth(),
                         req.getPassoutYear(),
                         aadhaarForQuery
-                );
+                    );
+                } else {
+                    matches = candidatesRepository.findByEmail(req.getEmail())
+                        .map(List::of)
+                        .orElseGet(Collections::emptyList);
+                }
                 
                 // Determine status and build comment
                 CandidateValidationResponse response = new CandidateValidationResponse();
@@ -1223,6 +1233,14 @@ public class CandidatesServiceImpl implements ICandidatesService {
         }
         
         return responses;
+    }
+
+    private boolean hasComprehensiveIdentity(String degree, String department,
+            java.time.LocalDate dateOfBirth, Integer passoutYear) {
+        return degree != null && !degree.isBlank()
+            && department != null && !department.isBlank()
+            && dateOfBirth != null
+            && passoutYear != null && passoutYear > 0;
     }
     
    

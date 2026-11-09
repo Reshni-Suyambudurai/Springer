@@ -7,6 +7,7 @@ import com.kanini.springer.dto.Common.EmailTemplateResponse;
 import com.kanini.springer.dto.Common.EmailTemplateUpdateRequest;
 import com.kanini.springer.dto.Common.PersonalizedRecipient;
 import com.kanini.springer.dto.Common.SharedEmailContext;
+import com.kanini.springer.config.MailFeature;
 import com.kanini.springer.entity.utils.EmailTemplate;
 import com.kanini.springer.exception.ResourceNotFoundException;
 import com.kanini.springer.mapper.Common.EmailTemplateMapper;
@@ -47,6 +48,7 @@ public class EmailTemplateServiceImpl implements IEmailTemplateService {
     private final EmailTemplateRepository emailTemplateRepository;
     private final EmailTemplateMapper mapper;
     private final JavaMailSender mailSender;
+    private final MailFeature mailFeature;
 
     @Autowired
     @Qualifier("mailExecutor")
@@ -220,6 +222,11 @@ public class EmailTemplateServiceImpl implements IEmailTemplateService {
 
     @Override
     public BulkEmailResult sendBulkEmail(BulkEmailRequest request, List<MultipartFile> attachments) {
+        if (!mailFeature.isEnabled()) {
+            log.info("Email disabled; skipping bulk email request");
+            List<String> skipped = request.getEmailIds() == null ? List.of() : request.getEmailIds();
+            return new BulkEmailResult(skipped.size(), 0, skipped.size(), List.of(), skipped);
+        }
         log.info("Bulk email send requested — templateId={}, templateName='{}', recipients={}, attachments={}",
                  request.getTemplateId(), request.getTemplateName(), request.getEmailIds().size(),
                  attachments != null ? attachments.size() : 0);
@@ -333,6 +340,11 @@ public class EmailTemplateServiceImpl implements IEmailTemplateService {
                                           String location,
                                           List<PersonalizedRecipient> recipients) {
 
+        if (!mailFeature.isEnabled()) {
+            log.info("Email disabled; skipping personalized bulk email");
+            return;
+        }
+
         if (recipients == null || recipients.isEmpty()) {
             log.warn("sendPersonalizedBulkEmail called with no recipients — skipping");
             return;
@@ -400,6 +412,10 @@ public class EmailTemplateServiceImpl implements IEmailTemplateService {
      */
     @Override
     public void sendPersonalizedEmail(SharedEmailContext ctx) {
+        if (!mailFeature.isEnabled()) {
+            log.info("Email disabled; skipping personalized email");
+            return;
+        }
         if (ctx == null || ctx.getRecipients() == null || ctx.getRecipients().isEmpty()) {
             log.warn("sendPersonalizedEmail called with null context or empty recipients — skipping");
             return;

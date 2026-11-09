@@ -12,4 +12,5 @@ import java.util.List;
 public class EligibilityRuleUpdateRequest {
     private List<EligibilityRuleDTO> rules;
     private String logic; // AND or OR
+    private Boolean screeningEnabled = false;
 }

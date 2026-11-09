@@ -1,6 +1,7 @@
 package com.kanini.springer.service.DocumentCollection.impl;
 
 import com.kanini.springer.dto.DocumentCollection.RequiredDocumentDTO;
+import com.kanini.springer.config.MailFeature;
 import com.kanini.springer.entity.utils.EmailTemplate;
 import com.kanini.springer.repository.Common.EmailTemplateRepository;
 import com.kanini.springer.service.DocumentCollection.IEmailService;
@@ -25,6 +26,7 @@ public class EmailServiceImpl implements IEmailService {
 
     private final JavaMailSender mailSender;
     private final EmailTemplateRepository emailTemplateRepository;
+    private final MailFeature mailFeature;
 
     @Value("${spring.mail.username}")
     private String fromEmail;
@@ -36,6 +38,10 @@ public class EmailServiceImpl implements IEmailService {
     public boolean sendDocumentSubmissionLink(String candidateEmail, String candidateName,
             String submissionLink, List<RequiredDocumentDTO> requiredDocuments,
             LocalDateTime expiryDate) {
+        if (!mailFeature.isEnabled()) {
+            log.info("Email disabled; skipping document submission email to {}", candidateEmail);
+            return true;
+        }
         try {
             log.info("📧 Attempting to send submission link email to: {}", candidateEmail);
             EmailTemplate template = emailTemplateRepository
@@ -69,6 +75,10 @@ public class EmailServiceImpl implements IEmailService {
     @Override
     public boolean sendRejectionEmail(String candidateEmail, String candidateName,
             String documentType, String rejectionReason, String resubmitLink) {
+        if (!mailFeature.isEnabled()) {
+            log.info("Email disabled; skipping document rejection email to {}", candidateEmail);
+            return true;
+        }
         try {
             EmailTemplate template = emailTemplateRepository
                     .findByTemplateName("DOCUMENT_REJECTION")
@@ -89,6 +99,10 @@ public class EmailServiceImpl implements IEmailService {
 
     @Override
     public boolean sendInternWelcomeEmail(String internEmail, String internName, String tempPassword) {
+        if (!mailFeature.isEnabled()) {
+            log.info("Email disabled; skipping intern welcome email to {}", internEmail);
+            return true;
+        }
         try {
             String subject = "Welcome to Kanini Academy \u2014 Your Login Credentials";
             String body = "<!DOCTYPE html><html><body style='font-family:Arial,sans-serif;background:#f0f2f5;padding:40px 20px;'>" +
@@ -125,6 +139,10 @@ public class EmailServiceImpl implements IEmailService {
     @Override
     public boolean sendWarningEmail(String internEmail, String internName,
             String warningType, String severity, String message, String issuedBy) {
+        if (!mailFeature.isEnabled()) {
+            log.info("Email disabled; skipping warning email to {}", internEmail);
+            return true;
+        }
         try {
             String subject = "Warning Issued \u2014 Kanini Academy";
             String severityColor = severity.equals("SEVERE") ? "#C62828"

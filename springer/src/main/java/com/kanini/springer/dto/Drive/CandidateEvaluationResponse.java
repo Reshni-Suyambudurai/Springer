@@ -18,6 +18,8 @@ public class CandidateEvaluationResponse {
     private Long applicationId;
     private Long candidateId;
     private String candidateName;
+    private String registrationCode;
+    private String candidateEmail;
     private Long roundConfigId;
     private String roundName;
     private Integer score;

@@ -109,7 +109,7 @@ export interface CandidateFilters {
 }
 
 export interface CandidateRequest {
-  instituteId: number;
+  instituteId?: number;
   cycleId?: number;
   driveId?: number;
   firstName: string;
@@ -265,7 +265,7 @@ export interface BulkCandidateCreateResponse {
 
 export interface CandidateValidationRequest {
   tempId: string; // Temporary identifier from frontend (e.g., "row-1", "row-2")
-  instituteId: number;
+  instituteId?: number;
   cycleId: number;
   firstName: string;
   lastName: string;

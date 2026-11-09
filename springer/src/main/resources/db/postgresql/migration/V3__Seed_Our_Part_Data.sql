@@ -1,4 +1,6 @@
--- PostgreSQL seed lineage. Invalid offer status values are normalized to the schema check value.
+/*
+ PostgreSQL demo seed disabled: candidates, drives, documents, offers, and
+ training data must not be inserted by the production seed chain.
 
 DELETE FROM intern_warnings;
 
@@ -332,3 +334,4 @@ VALUES
 END
 
 $migration$;
+*/

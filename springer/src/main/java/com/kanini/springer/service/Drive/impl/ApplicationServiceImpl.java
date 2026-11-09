@@ -57,7 +57,6 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 
 @Service
@@ -175,10 +174,6 @@ public class ApplicationServiceImpl implements IApplicationService {
                 application.setBatchTime(request.getBatchTime());
                 application.setApplicationStatus(ApplicationStatus.ALLOTED);
                 application.setCreatedByUser(createdByUser);
-                
-                // Generate unique 6-digit registration code per drive
-                String registrationCode = generateRegistrationCode(drive.getDriveId());
-                application.setRegistrationCode(registrationCode);
                 
                 applicationsToSave.add(application);
                 
@@ -589,24 +584,6 @@ public class ApplicationServiceImpl implements IApplicationService {
         CandidateHistoryResponse response = mapper.toCandidateHistoryResponse(application, assignments, evaluations);
         response.setOverrides(manualOverrideMapper.toResponseList(overrides));
         return response;
-    }
-
-    /**
-     * Generates a unique 6-digit registration code (100000–999999).
-     * Retries if the generated code already exists in the database.
-     */
-    private String generateRegistrationCode(Long driveId) {
-        String code;
-        int maxAttempts = 10;
-        int attempt = 0;
-        do {
-            code = String.valueOf(ThreadLocalRandom.current().nextInt(100000, 1000000));
-            attempt++;
-            if (attempt > maxAttempts) {
-                throw new ValidationException("Unable to generate a unique registration code after " + maxAttempts + " attempts");
-            }
-        } while (applicationRepository.existsByDriveDriveIdAndRegistrationCode(driveId, code));
-        return code;
     }
 
     @Override

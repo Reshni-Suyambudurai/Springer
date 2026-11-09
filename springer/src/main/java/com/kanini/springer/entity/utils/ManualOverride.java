@@ -43,7 +43,7 @@ public class ManualOverride {
     
     @NotNull(message = "Changes are required")
     @JdbcTypeCode(SqlTypes.JSON)
-    @Column(columnDefinition = "JSON")
+    @Column(columnDefinition = "jsonb")
     private List<FieldChange> changes;
     
     @NotBlank(message = "Override reason is required")

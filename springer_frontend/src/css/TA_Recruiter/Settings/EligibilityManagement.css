@@ -1,4 +1,44 @@
 
+.eligibility-screening-toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 48px;
+  margin-bottom: 16px;
+  padding: 8px 16px;
+  border: 1px solid var(--color-border-card);
+  border-radius: 8px;
+  background: var(--color-surface);
+}
+
+.eligibility-screening-toggle-label {
+  font-size: var(--text-sm) !important;
+  font-weight: 700 !important;
+  color: var(--color-text-primary) !important;
+}
+
+.eligibility-screening-toggle-control {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.eligibility-screening-state--on,
+.eligibility-screening-state--off {
+  min-width: 24px;
+  font-size: var(--text-xs) !important;
+  font-weight: 700 !important;
+  text-align: right;
+}
+
+.eligibility-screening-state--on {
+  color: var(--color-success-dark) !important;
+}
+
+.eligibility-screening-state--off {
+  color: var(--color-text-secondary) !important;
+}
+
 .eligibility-table-wrap {
   width: 1214.4px;
   max-width: 100%;

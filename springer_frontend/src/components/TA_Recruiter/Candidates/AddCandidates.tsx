@@ -82,7 +82,7 @@ const AddCandidates: React.FC = () => {
   };
 
   const [singleForm, setSingleForm] = useState<CandidateRequest>({
-    instituteId: 0,
+    instituteId: undefined,
     cycleId: cycleId || 0,
     driveId: driveId || undefined,
     firstName: "",
@@ -93,7 +93,7 @@ const AddCandidates: React.FC = () => {
     historyOfArrears: 0,
     degree: "",
     department: "",
-    passoutYear: new Date().getFullYear(),
+    passoutYear: 0,
     dateOfBirth: "",
     aadhaarNumber: "",
     applicationType: "STANDARD",
@@ -143,14 +143,6 @@ console.log("Skills data:", response.data);
     const errors: Record<string, boolean> = {};
     if (!singleForm.firstName) errors.firstName = true;
     if (!singleForm.email) errors.email = true;
-    if (!singleForm.mobile) errors.mobile = true;
-    if (!singleForm.instituteId) errors.instituteId = true;
-    if (singleForm.cgpa === 0) errors.cgpa = true;
-    if (!singleForm.passoutYear) errors.passoutYear = true;
-    if (!singleForm.degree) errors.degree = true;
-    if (!singleForm.department) errors.department = true;
-    if (singleForm.historyOfArrears === undefined || singleForm.historyOfArrears === null) errors.historyOfArrears = true;
-    if (!singleForm.dateOfBirth) errors.dateOfBirth = true;
 
     if (Object.keys(errors).length > 0) {
       setFieldErrors(errors);
@@ -180,7 +172,7 @@ console.log("Skills data:", response.data);
     }
 
     // Validate mobile number (10 digits)
-    if (!mobileRegex.test(singleForm.mobile)) {
+    if (singleForm.mobile && !mobileRegex.test(singleForm.mobile)) {
       setFieldErrors({ mobile: true });
       showToast("Mobile number must be exactly 10 digits", "error");
       return;
@@ -224,7 +216,7 @@ console.log("Skills data:", response.data);
       setAddDialog(false);
       setFieldErrors({});
       setSingleForm({
-        instituteId: 0,
+        instituteId: undefined,
         cycleId: cycleId || 0,
         driveId: driveId || undefined,
         firstName: "",
@@ -235,7 +227,7 @@ console.log("Skills data:", response.data);
         historyOfArrears: 0,
         degree: "",
         department: "",
-        passoutYear: new Date().getFullYear(),
+        passoutYear: 0,
         dateOfBirth: "",
         aadhaarNumber: "",
         applicationType: "STANDARD",
@@ -513,7 +505,6 @@ console.log("Skills data:", response.data);
               <TextField
                 label="Mobile"
                 fullWidth
-                required
                 className={fieldErrors.mobile ? "ac-field-error" : ""}
                 error={!!fieldErrors.mobile}
                 value={singleForm.mobile}
@@ -541,7 +532,7 @@ console.log("Skills data:", response.data);
                 }}
                 className={`add-candidates-autocomplete${fieldErrors.instituteId ? " ac-field-error" : ""}`}
                 renderInput={(params) => (
-                  <TextField {...params} label="Institute" placeholder="Search institute..." required error={!!fieldErrors.instituteId} />
+                  <TextField {...params} label="Institute" placeholder="Search institute..." error={!!fieldErrors.instituteId} />
                 )}
               />
             </Box>
@@ -551,7 +542,6 @@ console.log("Skills data:", response.data);
                 label="CGPA"
                 type="number"
                 fullWidth
-                required
                 className={fieldErrors.cgpa ? "ac-field-error" : ""}
                 error={!!fieldErrors.cgpa}
                 inputProps={{ step: 0.01, min: 0, max: 10 }}
@@ -567,7 +557,6 @@ console.log("Skills data:", response.data);
                 label="History of Arrears"
                 type="number"
                 fullWidth
-                required
                 className={fieldErrors.historyOfArrears ? "ac-field-error" : ""}
                 error={!!fieldErrors.historyOfArrears}
                 inputProps={{ min: 0 }}
@@ -582,7 +571,7 @@ console.log("Skills data:", response.data);
             </Box>
 
             <Box className="add-candidates-form-row">
-              <FormControl fullWidth required error={!!fieldErrors.degree} className={fieldErrors.degree ? "ac-field-error" : ""}>
+              <FormControl fullWidth error={!!fieldErrors.degree} className={fieldErrors.degree ? "ac-field-error" : ""}>
                 <InputLabel>Degree</InputLabel>
                 <Select
                   value={singleForm.degree || ""}
@@ -596,7 +585,7 @@ console.log("Skills data:", response.data);
                   ))}
                 </Select>
               </FormControl>
-              <FormControl fullWidth required error={!!fieldErrors.department} className={fieldErrors.department ? "ac-field-error" : ""}>
+              <FormControl fullWidth error={!!fieldErrors.department} className={fieldErrors.department ? "ac-field-error" : ""}>
                 <InputLabel>Department</InputLabel>
                 <Select
                   value={singleForm.department || ""}
@@ -617,7 +606,6 @@ console.log("Skills data:", response.data);
                 label="Passout Year"
                 type="number"
                 fullWidth
-                required
                 className={fieldErrors.passoutYear ? "ac-field-error" : ""}
                 error={!!fieldErrors.passoutYear}
                 inputProps={{ min: 2020, max: 2050 }}
@@ -631,7 +619,6 @@ console.log("Skills data:", response.data);
                 label="Date of Birth"
                 type="date"
                 fullWidth
-                required
                 className={fieldErrors.dateOfBirth ? "ac-field-error" : ""}
                 error={!!fieldErrors.dateOfBirth}
                 InputLabelProps={{ shrink: true }}
@@ -659,7 +646,7 @@ console.log("Skills data:", response.data);
                 inputProps={{ maxLength: 12 }}
                 helperText="12 digits (optional)"
               />
-              <FormControl fullWidth required>
+              <FormControl fullWidth>
                 <InputLabel>Application Type</InputLabel>
                 <Select
                   value={singleForm.applicationType || "STANDARD"}

@@ -23,16 +23,12 @@ SELECT * FROM (
     SELECT 'Mozhiarasan',       'mozhi@kanini.com',     '$2b$10$gYIEhX824ocE20if5lJV/eA2.sTNgvZeaA9Khd/kJgGiRgRZJRRHW', 'Product Engineering',  'Coimbatore', (SELECT role_id FROM roles WHERE role_name = 'MEMBERS'),              TRUE, NOW() UNION ALL
     SELECT 'Praveen Kumar',     'praveen@kanini.com',   '$2b$10$MgPLyULhHlc01n01JfSx/ORzBuzBDQ1bpNsP/amJYaHk81.K6Um/C', 'Product Engineering',  'Coimbatore', (SELECT role_id FROM roles WHERE role_name = 'MEMBERS'),              TRUE, NOW() UNION ALL
     SELECT 'Admin',             'admin@kanini.com',     '$2b$10$MgPLyULhHlc01n01JfSx/ORzBuzBDQ1bpNsP/amJYaHk81.K6Um/C', 'Data Analytics & AI',  'Coimbatore', (SELECT role_id FROM roles WHERE role_name = 'SYSTEM_ADMIN'),         TRUE, NOW() UNION ALL
-    SELECT 'Lavanya',           'lavanya@kanini.com',   '$2b$10$MgPLyULhHlc01n01JfSx/ORzBuzBDQ1bpNsP/amJYaHk81.K6Um/C', 'Data Analytics & AI',  'Coimbatore', (SELECT role_id FROM roles WHERE role_name = 'TRAINING_COORDINATOR'), TRUE, NOW() UNION ALL
-    SELECT 'John',              'john@kanini.com',      '$2b$10$MgPLyULhHlc01n01JfSx/ORzBuzBDQ1bpNsP/amJYaHk81.K6Um/C', 'Training',             'Coimbatore', (SELECT role_id FROM roles WHERE role_name = 'INTERN'),               TRUE, NOW() UNION ALL
-    SELECT 'Joe',               'joe@kanini.com',       '$2b$10$MgPLyULhHlc01n01JfSx/ORzBuzBDQ1bpNsP/amJYaHk81.K6Um/C', 'Training',             'Coimbatore', (SELECT role_id FROM roles WHERE role_name = 'INTERN'),               TRUE, NOW()
+    SELECT 'Lavanya',           'lavanya@kanini.com',   '$2b$10$MgPLyULhHlc01n01JfSx/ORzBuzBDQ1bpNsP/amJYaHk81.K6Um/C', 'Data Analytics & AI',  'Coimbatore', (SELECT role_id FROM roles WHERE role_name = 'TRAINING_COORDINATOR'), TRUE, NOW()
 ) AS tmp
 WHERE NOT EXISTS (SELECT 1 FROM users LIMIT 1);
 
 INSERT INTO hiring_cycles (cycle_year, cycle_name, status, created_at)
 SELECT * FROM (
-    SELECT 2024, '2024 Campus Hiring', 'CLOSED', NOW() UNION ALL
-    SELECT 2025, '2025 Campus Hiring', 'CLOSED', NOW() UNION ALL
     SELECT 2026, '2026 Campus Hiring', 'OPEN', NOW()
 ) AS tmp
 WHERE NOT EXISTS (SELECT 1 FROM hiring_cycles LIMIT 1);
@@ -40,80 +36,22 @@ WHERE NOT EXISTS (SELECT 1 FROM hiring_cycles LIMIT 1);
 INSERT INTO institutes (institute_name, institute_tier, state, city, is_active, created_at)
 SELECT * FROM (
     SELECT 'OTHERS', 'TIER_1', 'Tamil Nadu', 'Chennai', TRUE, NOW() UNION ALL
-    SELECT 'Anna University', 'TIER_1', 'Tamil Nadu', 'Chennai', TRUE, NOW() UNION ALL
-    SELECT 'SSN College of Engineering', 'TIER_1', 'Tamil Nadu', 'Chennai', TRUE, NOW() UNION ALL
-    SELECT 'PSG College of Technology', 'TIER_2', 'Tamil Nadu', 'Coimbatore', TRUE, NOW() UNION ALL
-    SELECT 'Amrita Vishwa Vidyapeetham', 'TIER_1', 'Tamil Nadu', 'Coimbatore', TRUE, NOW() UNION ALL
-    SELECT 'VIT University', 'TIER_1', 'Tamil Nadu', 'Vellore', TRUE, NOW() UNION ALL
-    SELECT 'SRM Institute of Science and Technology', 'TIER_2', 'Tamil Nadu', 'Chennai', TRUE, NOW() UNION ALL
-    SELECT 'Karunya Institute of Technology', 'TIER_2', 'Tamil Nadu', 'Coimbatore', TRUE, NOW() UNION ALL
-    SELECT 'CEG - College of Engineering Guindy', 'TIER_1', 'Tamil Nadu', 'Chennai', TRUE, NOW()
+    SELECT 'PSG College of Technology', 'TIER_2', 'Tamil Nadu', 'Coimbatore', TRUE, NOW()
 ) AS tmp
 WHERE NOT EXISTS (SELECT 1 FROM institutes LIMIT 1);
 
 INSERT INTO programs (program_name)
 SELECT * FROM (
-    SELECT 'B_E' UNION ALL SELECT 'B_TECH' UNION ALL SELECT 'M_E' UNION ALL SELECT 'M_TECH' UNION ALL
-    SELECT 'MBA' UNION ALL SELECT 'MCA' UNION ALL SELECT 'BCA' UNION ALL SELECT 'BBA' UNION ALL
-    SELECT 'B_SC' UNION ALL SELECT 'M_SC' UNION ALL SELECT 'B_COM' UNION ALL SELECT 'M_COM' UNION ALL
-    SELECT 'DIPLOMA' UNION ALL SELECT 'PHD'
+    SELECT 'B_TECH'
 ) AS tmp
 WHERE NOT EXISTS (SELECT 1 FROM programs LIMIT 1);
 
 INSERT INTO institute_programs (institute_id, program_id)
-SELECT * FROM (SELECT * FROM (
-    SELECT (SELECT institute_id FROM institutes WHERE institute_name = 'Anna University'), (SELECT program_id FROM programs WHERE program_name = 'B_TECH') UNION ALL
-    SELECT (SELECT institute_id FROM institutes WHERE institute_name = 'Anna University'), (SELECT program_id FROM programs WHERE program_name = 'M_TECH') UNION ALL
-    SELECT (SELECT institute_id FROM institutes WHERE institute_name = 'Anna University'), (SELECT program_id FROM programs WHERE program_name = 'MBA') UNION ALL
-    SELECT (SELECT institute_id FROM institutes WHERE institute_name = 'Anna University'), (SELECT program_id FROM programs WHERE program_name = 'PHD')
-) AS data) AS tmp
+SELECT (SELECT institute_id FROM institutes WHERE institute_name = 'PSG College of Technology'), (SELECT program_id FROM programs WHERE program_name = 'B_TECH')
 WHERE NOT EXISTS (SELECT 1 FROM institute_programs LIMIT 1) ON CONFLICT DO NOTHING;
 
-INSERT INTO institute_programs (institute_id, program_id)
-SELECT (SELECT institute_id FROM institutes WHERE institute_name = 'SSN College of Engineering'), (SELECT program_id FROM programs WHERE program_name = 'B_E') UNION ALL
-SELECT (SELECT institute_id FROM institutes WHERE institute_name = 'SSN College of Engineering'), (SELECT program_id FROM programs WHERE program_name = 'M_E') UNION ALL
-SELECT (SELECT institute_id FROM institutes WHERE institute_name = 'SSN College of Engineering'), (SELECT program_id FROM programs WHERE program_name = 'M_TECH') ON CONFLICT DO NOTHING;
-
-INSERT INTO institute_programs (institute_id, program_id)
-SELECT (SELECT institute_id FROM institutes WHERE institute_name = 'PSG College of Technology'), (SELECT program_id FROM programs WHERE program_name = 'B_E') UNION ALL
-SELECT (SELECT institute_id FROM institutes WHERE institute_name = 'PSG College of Technology'), (SELECT program_id FROM programs WHERE program_name = 'M_E') UNION ALL
-SELECT (SELECT institute_id FROM institutes WHERE institute_name = 'PSG College of Technology'), (SELECT program_id FROM programs WHERE program_name = 'MBA') UNION ALL
-SELECT (SELECT institute_id FROM institutes WHERE institute_name = 'PSG College of Technology'), (SELECT program_id FROM programs WHERE program_name = 'MCA') ON CONFLICT DO NOTHING;
-
-INSERT INTO institute_programs (institute_id, program_id)
-SELECT (SELECT institute_id FROM institutes WHERE institute_name = 'Amrita Vishwa Vidyapeetham'), (SELECT program_id FROM programs WHERE program_name = 'B_TECH') UNION ALL
-SELECT (SELECT institute_id FROM institutes WHERE institute_name = 'Amrita Vishwa Vidyapeetham'), (SELECT program_id FROM programs WHERE program_name = 'M_TECH') UNION ALL
-SELECT (SELECT institute_id FROM institutes WHERE institute_name = 'Amrita Vishwa Vidyapeetham'), (SELECT program_id FROM programs WHERE program_name = 'MBA') UNION ALL
-SELECT (SELECT institute_id FROM institutes WHERE institute_name = 'Amrita Vishwa Vidyapeetham'), (SELECT program_id FROM programs WHERE program_name = 'PHD') UNION ALL
-SELECT (SELECT institute_id FROM institutes WHERE institute_name = 'Amrita Vishwa Vidyapeetham'), (SELECT program_id FROM programs WHERE program_name = 'MCA') UNION ALL
-SELECT (SELECT institute_id FROM institutes WHERE institute_name = 'Amrita Vishwa Vidyapeetham'), (SELECT program_id FROM programs WHERE program_name = 'M_SC') ON CONFLICT DO NOTHING;
-
-INSERT INTO institute_programs (institute_id, program_id)
-SELECT (SELECT institute_id FROM institutes WHERE institute_name = 'VIT University'), (SELECT program_id FROM programs WHERE program_name = 'B_TECH') UNION ALL
-SELECT (SELECT institute_id FROM institutes WHERE institute_name = 'VIT University'), (SELECT program_id FROM programs WHERE program_name = 'M_TECH') UNION ALL
-SELECT (SELECT institute_id FROM institutes WHERE institute_name = 'VIT University'), (SELECT program_id FROM programs WHERE program_name = 'MBA') UNION ALL
-SELECT (SELECT institute_id FROM institutes WHERE institute_name = 'VIT University'), (SELECT program_id FROM programs WHERE program_name = 'PHD') UNION ALL
-SELECT (SELECT institute_id FROM institutes WHERE institute_name = 'VIT University'), (SELECT program_id FROM programs WHERE program_name = 'MCA') ON CONFLICT DO NOTHING;
-
-INSERT INTO institute_programs (institute_id, program_id)
-SELECT (SELECT institute_id FROM institutes WHERE institute_name = 'SRM Institute of Science and Technology'), (SELECT program_id FROM programs WHERE program_name = 'B_TECH') UNION ALL
-SELECT (SELECT institute_id FROM institutes WHERE institute_name = 'SRM Institute of Science and Technology'), (SELECT program_id FROM programs WHERE program_name = 'M_TECH') UNION ALL
-SELECT (SELECT institute_id FROM institutes WHERE institute_name = 'SRM Institute of Science and Technology'), (SELECT program_id FROM programs WHERE program_name = 'MBA') UNION ALL
-SELECT (SELECT institute_id FROM institutes WHERE institute_name = 'SRM Institute of Science and Technology'), (SELECT program_id FROM programs WHERE program_name = 'BCA') UNION ALL
-SELECT (SELECT institute_id FROM institutes WHERE institute_name = 'SRM Institute of Science and Technology'), (SELECT program_id FROM programs WHERE program_name = 'MCA') UNION ALL
-SELECT (SELECT institute_id FROM institutes WHERE institute_name = 'SRM Institute of Science and Technology'), (SELECT program_id FROM programs WHERE program_name = 'BBA') ON CONFLICT DO NOTHING;
-
-INSERT INTO institute_programs (institute_id, program_id)
-SELECT (SELECT institute_id FROM institutes WHERE institute_name = 'Karunya Institute of Technology'), (SELECT program_id FROM programs WHERE program_name = 'B_E') UNION ALL
-SELECT (SELECT institute_id FROM institutes WHERE institute_name = 'Karunya Institute of Technology'), (SELECT program_id FROM programs WHERE program_name = 'M_E') UNION ALL
-SELECT (SELECT institute_id FROM institutes WHERE institute_name = 'Karunya Institute of Technology'), (SELECT program_id FROM programs WHERE program_name = 'MBA') UNION ALL
-SELECT (SELECT institute_id FROM institutes WHERE institute_name = 'Karunya Institute of Technology'), (SELECT program_id FROM programs WHERE program_name = 'DIPLOMA') ON CONFLICT DO NOTHING;
-
-INSERT INTO institute_programs (institute_id, program_id)
-SELECT (SELECT institute_id FROM institutes WHERE institute_name = 'CEG - College of Engineering Guindy'), (SELECT program_id FROM programs WHERE program_name = 'B_E') UNION ALL
-SELECT (SELECT institute_id FROM institutes WHERE institute_name = 'CEG - College of Engineering Guindy'), (SELECT program_id FROM programs WHERE program_name = 'M_E') UNION ALL
-SELECT (SELECT institute_id FROM institutes WHERE institute_name = 'CEG - College of Engineering Guindy'), (SELECT program_id FROM programs WHERE program_name = 'M_TECH') UNION ALL
-SELECT (SELECT institute_id FROM institutes WHERE institute_name = 'CEG - College of Engineering Guindy'), (SELECT program_id FROM programs WHERE program_name = 'PHD') ON CONFLICT DO NOTHING;
+INSERT INTO training_courses (course_name, description, min_score, weightage, is_communication, communication_template, created_at)
+VALUES ('Java Fundamentals', 'Core Java concepts including OOP, collections, streams, and exception handling', 50, 100, FALSE, NULL, NOW());
 
 INSERT INTO skills (skill_name, category)
 SELECT * FROM (

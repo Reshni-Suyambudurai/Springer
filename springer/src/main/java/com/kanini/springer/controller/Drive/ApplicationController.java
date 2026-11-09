@@ -38,7 +38,7 @@ public class ApplicationController {
     @Operation(summary = "Create applications for candidates", 
                description = "Creates applications for candidates in a drive. " +
                              "Validates that candidates have status=SHORTLISTED and isEligible=true. " +
-                             "Successful candidates get applicationStatus=IN_DRIVE, registrationCode (GUID), " +
+                             "Successful candidates get an application record without a generated registration code, " +
                              "and their candidate status is updated to SCHEDULED.")
     public ResponseEntity<ApiResponse<BulkApplicationResponse>> createApplications(@RequestBody ApplicationRequest request) {
         BulkApplicationResponse response = applicationService.createApplications(request);

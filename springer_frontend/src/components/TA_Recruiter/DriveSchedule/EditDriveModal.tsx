@@ -207,7 +207,7 @@ const EditDriveModal: React.FC<EditDriveModalProps> = ({
         {isPastDrive && (
           <Box className="edit-drive-warning">
             <Typography variant="body2" color="error">
-              ⚠ This drive has ended. Editing past drives may affect historical records.
+              This drive has ended. Changes may affect historical records.
             </Typography>
           </Box>
         )}
@@ -224,7 +224,7 @@ const EditDriveModal: React.FC<EditDriveModalProps> = ({
               required
               fullWidth
               className="edit-drive-input"
-              disabled={loading || isPastDrive}
+              disabled={loading}
             />
 
             {/* Drive Status */}
@@ -256,7 +256,7 @@ const EditDriveModal: React.FC<EditDriveModalProps> = ({
               fullWidth
               className="edit-drive-input"
               error={!!errors.location}
-              disabled={loading || isPastDrive}
+              disabled={loading}
               required
             >
               <InputLabel>Location</InputLabel>
@@ -298,7 +298,7 @@ const EditDriveModal: React.FC<EditDriveModalProps> = ({
               fullWidth
               className="edit-drive-input"
               InputLabelProps={{ shrink: true }}
-              disabled={loading || isPastDrive}
+              disabled={loading}
             />
 
             {/* End Date */}
@@ -313,7 +313,7 @@ const EditDriveModal: React.FC<EditDriveModalProps> = ({
               fullWidth
               className="edit-drive-input"
               InputLabelProps={{ shrink: true }}
-              disabled={loading || isPastDrive}
+              disabled={loading}
             />
 
             {/* Description (Full Width) */}
@@ -342,7 +342,7 @@ const EditDriveModal: React.FC<EditDriveModalProps> = ({
         <Button
           onClick={handleSubmit}
           variant="contained"
-          disabled={loading || isPastDrive}
+          disabled={loading}
           className="edit-drive-submit-btn"
         >
           {loading ? <CircularProgress size={20} color="inherit" /> : "Update Drive"}

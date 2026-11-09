@@ -57,7 +57,7 @@ export const useBulkCandidateUpload = ({ cycleId }: UseBulkCandidateUploadOption
           passoutYear: cand.passoutYear,
           dateOfBirth: cand.dateOfBirth,
           aadhaarNumber: cand.aadhaarNumber,
-          applicationType: "STANDARD",
+          applicationType: cand.applicationType ?? "STANDARD",
         }));
 
         const response = await candidateApi.bulkValidateCandidates(validationRequests);

@@ -122,7 +122,10 @@ function Navbar({ onMobileMenuToggle }: NavbarProps) {
 
     const getPageInfo = () => {
         const path = location.pathname;
-        if (path.startsWith('/drive-process/add-scores/')) return { title: 'Upload Aptitude Score', subtitle: '' };
+        if (/\/drive-process\/add-scores\/[^/]+\/round1$/.test(path)) return { title: 'Upload Aptitude Score', subtitle: '' };
+        if (/\/drive-process\/add-scores\/[^/]+\/round2$/.test(path)) return { title: 'Upload Communication Score', subtitle: '' };
+        if (/\/drive-process\/add-scores\/[^/]+\/round3$/.test(path)) return { title: 'Upload Technical Score', subtitle: '' };
+        if (path.startsWith('/drive-process/add-scores/')) return { title: 'Add Score', subtitle: '' };
         if (PAGE_TITLES[path]) return PAGE_TITLES[path];
         // Check for 3-segment paths like /ta-recruiter/settings/skills
         const base3 = '/' + path.split('/').slice(1, 4).join('/');
@@ -144,8 +147,9 @@ function Navbar({ onMobileMenuToggle }: NavbarProps) {
                 if (res.success && res.data) setNotifications(res.data);
             } catch { /* silent */ }
         })();
-        // Use correct WebSocket port (8080, same as API)
-        const wsUrl = `ws://localhost:8080/ws/notifications?userId=${user.userId}`;
+        const wsBaseUrl = import.meta.env.VITE_WS_URL
+            || `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}`;
+        const wsUrl = `${wsBaseUrl}/ws/notifications?userId=${user.userId}`;
         const ws = new WebSocket(wsUrl);
         wsRef.current = ws;
         ws.onmessage = (event) => {

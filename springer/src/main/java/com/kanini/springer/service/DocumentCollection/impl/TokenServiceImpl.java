@@ -25,7 +25,7 @@ public class TokenServiceImpl implements ITokenService {
     private static final String CLAIM_PURPOSE         = "purpose";
     private static final String CLAIM_CANDIDATE_EMAIL = "candidateEmail";
     private static final String CLAIM_DOCUMENT_TYPE_ID = "documentTypeId";
-    @Value("${app.jwt.secret:your-secret-key-min-256-chars-long-for-hs256-algorithm-min-32-bytes}")
+    @Value("${app.jwt.secret}")
     private String jwtSecret;
 
     @Value("${app.jwt.expiration.days:7}")

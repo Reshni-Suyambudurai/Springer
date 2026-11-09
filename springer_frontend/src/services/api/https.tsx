@@ -2,7 +2,7 @@ import axios from 'axios';
 import { tokenstore } from '../../auth/tokenstore';
 
 export const http = axios.create({
-    baseURL : import.meta.env.VITE_API_URL,
+  baseURL : import.meta.env.VITE_API_URL || '/api',
     headers: {
         "Content-Type" : "application/json"
     }
@@ -12,7 +12,7 @@ export const http = axios.create({
 // Used for candidate-facing pages (document submission) where the candidate
 // is not a logged-in user. Authentication is done via the JWT token in the URL.
 export const publicHttp = axios.create({
-    baseURL : import.meta.env.VITE_API_URL,
+  baseURL : import.meta.env.VITE_API_URL || '/api',
     headers: {
         "Content-Type" : "application/json"
     }

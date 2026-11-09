@@ -19,6 +19,9 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -69,7 +72,7 @@ class CandidateEvaluationServiceImplTest {
     private CandidateEvaluationResponse stubResponse;
 
     @BeforeEach
-    void initFixtures() {
+    void initFixtures() throws JsonProcessingException {
         // Candidate
         stubCandidate = new Candidate();
         stubCandidate.setCandidateId(1L);
@@ -93,6 +96,12 @@ class CandidateEvaluationServiceImplTest {
         stubRoundTemplate.setMinScore(50);
         stubRoundTemplate.setOutoffScore(100);
         stubRoundTemplate.setWeightage(40);
+        stubRoundTemplate.setSections("[{\"sectionName\":\"Coding\",\"outOf\":100},"
+            + "{\"sectionName\":\"Aptitude\",\"outOf\":100},"
+            + "{\"sectionName\":\"Technical\",\"outOf\":100},"
+            + "{\"sectionName\":\"Score\",\"outOf\":100}]");
+        lenient().when(objectMapper.readTree(anyString())).thenAnswer(invocation ->
+            new ObjectMapper().readTree(invocation.getArgument(0, String.class)));
 
         // User
         stubUser = new User();
@@ -293,6 +302,7 @@ class CandidateEvaluationServiceImplTest {
         @DisplayName("Positive: creates bulk evaluations successfully")
         void bulkCreateEvaluations_success() throws JsonProcessingException {
             BulkCandidateEvaluationRequest request = new BulkCandidateEvaluationRequest();
+            request.setDriveId(1L);
             request.setRoundConfigId(1L);
             request.setUpdatedBy(1L);
 
@@ -308,7 +318,7 @@ class CandidateEvaluationServiceImplTest {
 
             when(roundTemplateRepository.findById(1L)).thenReturn(Optional.of(stubRoundTemplate));
             when(userRepository.findById(1L)).thenReturn(Optional.of(stubUser));
-            when(applicationRepository.findByRegistrationCodeInWithCandidate(anyList()))
+                when(applicationRepository.findByDriveIdAndCandidateEmails(eq(1L), anyList()))
                     .thenReturn(List.of(stubApplication));
             when(evaluationRepository.findByApplicationIdsAndRoundConfigIdFetched(anyList(), anyLong()))
                     .thenReturn(Collections.emptyList());
@@ -320,13 +330,292 @@ class CandidateEvaluationServiceImplTest {
             assertThat(result).isNotNull();
             assertThat(result.getSuccessCount()).isEqualTo(1);
             assertThat(result.getFailureCount()).isEqualTo(0);
+                assertThat(stubApplication.getRegistrationCode()).isEqualTo("REG001");
+                verify(applicationRepository).saveAll(argThat(applications ->
+                    applications.iterator().next().getRegistrationCode().equals("REG001")));
+                verify(evaluationRepository).saveAll(argThat(evaluations -> {
+                java.util.Iterator<CandidateEvaluation> iterator = evaluations.iterator();
+                return iterator.hasNext()
+                    && iterator.next().getStatus() == EvaluationStatus.PENDING
+                    && !iterator.hasNext();
+                }));
+            }
+
+            @ParameterizedTest
+            @ValueSource(strings = {"PASS", "SELECTED"})
+            @DisplayName("Round 1/2: PASS or SELECTED records evaluation PASS")
+            void bulkCreateEvaluations_roundOnePassStatuses_recordPass(String status) throws JsonProcessingException {
+                stubRoundTemplate.setRoundNo(1);
+                BulkCandidateEvaluationRequest request = new BulkCandidateEvaluationRequest();
+                request.setDriveId(1L);
+                request.setRoundConfigId(1L);
+                request.setUpdatedBy(1L);
+
+                BulkCandidateEvaluationRequest.EvaluationData evalData = new BulkCandidateEvaluationRequest.EvaluationData();
+                evalData.setRegistrationCode("REG001");
+                evalData.setCandidateName("John Doe");
+                evalData.setCandidateEmail("john.doe@test.com");
+                evalData.setSections(Map.of("Aptitude", 80));
+                evalData.setStatus(status);
+                request.setEvaluations(List.of(evalData));
+
+                when(roundTemplateRepository.findById(1L)).thenReturn(Optional.of(stubRoundTemplate));
+                when(userRepository.findById(1L)).thenReturn(Optional.of(stubUser));
+                when(applicationRepository.findByDriveIdAndCandidateEmails(eq(1L), anyList()))
+                    .thenReturn(List.of(stubApplication));
+                when(evaluationRepository.findByApplicationIdsAndRoundConfigIdFetched(anyList(), anyLong()))
+                    .thenReturn(Collections.emptyList());
+                when(objectMapper.writeValueAsString(any())).thenReturn("{\"Aptitude\":80}");
+
+                BulkCandidateEvaluationResponse result = evaluationService.bulkCreateEvaluations(request);
+
+                assertThat(result.getSuccessCount()).isEqualTo(1);
+                verify(evaluationRepository).saveAll(argThat(evaluations ->
+                    evaluations.iterator().next().getStatus() == EvaluationStatus.PASS));
+                assertThat(stubCandidate.getApplicationStage()).isEqualTo(ApplicationStage.APPLIED);
+                verify(candidatesRepository, never()).saveAll(any());
+                verify(applicationRepository, never()).updateStatusByApplicationIds(
+                    eq(ApplicationStatus.SELECTED), anyList());
+            }
+
+            @ParameterizedTest
+            @ValueSource(strings = {"PASS", "SELECTED"})
+            @DisplayName("Round 3: PASS or SELECTED records PASS and selects application")
+            void bulkCreateEvaluations_roundThreePassStatuses_selectApplication(String status) throws JsonProcessingException {
+                BulkCandidateEvaluationRequest request = new BulkCandidateEvaluationRequest();
+                request.setDriveId(1L);
+                request.setRoundConfigId(1L);
+                request.setUpdatedBy(1L);
+
+                BulkCandidateEvaluationRequest.EvaluationData evalData = new BulkCandidateEvaluationRequest.EvaluationData();
+                evalData.setRegistrationCode("REG001");
+                evalData.setCandidateName("John Doe");
+                evalData.setCandidateEmail("john.doe@test.com");
+                evalData.setSections(Map.of("Technical", 85));
+                evalData.setStatus(status);
+                request.setEvaluations(List.of(evalData));
+
+                when(roundTemplateRepository.findById(1L)).thenReturn(Optional.of(stubRoundTemplate));
+                when(userRepository.findById(1L)).thenReturn(Optional.of(stubUser));
+                when(applicationRepository.findByDriveIdAndCandidateEmails(eq(1L), anyList()))
+                    .thenReturn(List.of(stubApplication));
+                when(evaluationRepository.findByApplicationIdsAndRoundConfigIdFetched(anyList(), anyLong()))
+                    .thenReturn(Collections.emptyList());
+                when(objectMapper.writeValueAsString(any())).thenReturn("{\"Technical\":85}");
+
+                BulkCandidateEvaluationResponse result = evaluationService.bulkCreateEvaluations(request);
+
+                assertThat(result.getSuccessCount()).isEqualTo(1);
+                verify(evaluationRepository).saveAll(argThat(evaluations ->
+                    evaluations.iterator().next().getStatus() == EvaluationStatus.PASS));
+                verify(applicationRepository).updateStatusByApplicationIds(
+                    ApplicationStatus.SELECTED, List.of(1L));
+                assertThat(stubCandidate.getApplicationStage()).isEqualTo(ApplicationStage.APPLIED);
+                verify(candidatesRepository, never()).saveAll(any());
+        }
+
+        @ParameterizedTest
+        @CsvSource({
+            "1, FAIL, FAIL, FAILED",
+            "1, ABSENT, ABSENT, DROPPED",
+            "1, DROPPED, ABSENT, DROPPED",
+            "2, FAIL, FAIL, FAILED",
+            "2, ABSENT, ABSENT, DROPPED",
+            "2, DROPPED, ABSENT, DROPPED",
+            "3, FAIL, FAIL, FAILED",
+            "3, ABSENT, ABSENT, DROPPED",
+            "3, DROPPED, ABSENT, DROPPED"
+        })
+        @DisplayName("Rounds 1-3: FAIL and absence aliases update evaluation and application")
+        void bulkCreateEvaluations_failureStatuses_updateApplication(
+                int roundNo,
+                String suppliedStatus,
+                EvaluationStatus expectedEvaluationStatus,
+                ApplicationStatus expectedApplicationStatus) throws JsonProcessingException {
+            stubRoundTemplate.setRoundNo(roundNo);
+            BulkCandidateEvaluationRequest request = new BulkCandidateEvaluationRequest();
+            request.setDriveId(1L);
+            request.setRoundConfigId(1L);
+            request.setUpdatedBy(1L);
+
+            BulkCandidateEvaluationRequest.EvaluationData evalData = new BulkCandidateEvaluationRequest.EvaluationData();
+            evalData.setRegistrationCode("REG001");
+            evalData.setCandidateName("John Doe");
+            evalData.setCandidateEmail("john.doe@test.com");
+            evalData.setSections(Map.of("Score", 40));
+            evalData.setStatus(suppliedStatus);
+            request.setEvaluations(List.of(evalData));
+
+            when(roundTemplateRepository.findById(1L)).thenReturn(Optional.of(stubRoundTemplate));
+            when(userRepository.findById(1L)).thenReturn(Optional.of(stubUser));
+            when(applicationRepository.findByDriveIdAndCandidateEmails(eq(1L), anyList()))
+                .thenReturn(List.of(stubApplication));
+            when(evaluationRepository.findByApplicationIdsAndRoundConfigIdFetched(anyList(), anyLong()))
+                .thenReturn(Collections.emptyList());
+            when(objectMapper.writeValueAsString(any())).thenReturn("{\"Score\":40}");
+
+            BulkCandidateEvaluationResponse result = evaluationService.bulkCreateEvaluations(request);
+
+            assertThat(result.getSuccessCount()).isEqualTo(1);
+            verify(evaluationRepository).saveAll(argThat(evaluations ->
+                evaluations.iterator().next().getStatus() == expectedEvaluationStatus));
+            verify(applicationRepository).updateStatusByApplicationIds(
+                expectedApplicationStatus, List.of(1L));
+            assertThat(stubCandidate.getApplicationStage()).isEqualTo(ApplicationStage.APPLIED);
+            verify(candidatesRepository, never()).saveAll(any());
+        }
+
+        @ParameterizedTest
+        @ValueSource(ints = {0, 100})
+        @DisplayName("Accepts section scores at zero and the configured maximum")
+        void bulkCreateEvaluations_boundaryScoresAccepted(int score) throws JsonProcessingException {
+            BulkCandidateEvaluationRequest request = bulkRequest(
+                List.of(evaluationData("REG001", "John Doe", "john.doe@test.com", Map.of(" coding ", score))));
+            stubBulkDependencies(List.of(stubApplication));
+
+            BulkCandidateEvaluationResponse result = evaluationService.bulkCreateEvaluations(request);
+
+            assertThat(result.getSuccessCount()).isEqualTo(1);
+            assertThat(result.getFailureCount()).isZero();
+            verify(objectMapper).writeValueAsString(Map.of("Coding", score));
             verify(evaluationRepository).saveAll(anyList());
+        }
+
+        @ParameterizedTest
+        @CsvSource({"101", "-1", "20.5"})
+        @DisplayName("Rejects above-maximum, negative, and fractional section scores")
+        void bulkCreateEvaluations_invalidScoreRejected(String suppliedScore) throws JsonProcessingException {
+            BulkCandidateEvaluationRequest request = bulkRequest(List.of(evaluationData(
+                "REG001", "John Doe", "john.doe@test.com",
+                Map.of("Coding", new java.math.BigDecimal(suppliedScore)))));
+            stubBulkDependencies(List.of(stubApplication));
+
+            BulkCandidateEvaluationResponse result = evaluationService.bulkCreateEvaluations(request);
+
+            assertThat(result.getSuccessCount()).isZero();
+            assertThat(result.getFailureCount()).isEqualTo(1);
+            assertThat(result.getErrorMessages().get(0))
+                .contains("Coding must be a whole number from 0 to 100")
+                .contains("received " + suppliedScore);
+            verifyNoBulkWrites();
+        }
+
+        @Test
+        @DisplayName("Rejects unknown categories")
+        void bulkCreateEvaluations_unknownCategoryRejected() throws JsonProcessingException {
+            BulkCandidateEvaluationRequest request = bulkRequest(List.of(evaluationData(
+                "REG001", "John Doe", "john.doe@test.com", Map.of("Unconfigured", 10))));
+            stubBulkDependencies(List.of(stubApplication));
+
+            BulkCandidateEvaluationResponse result = evaluationService.bulkCreateEvaluations(request);
+
+            assertThat(result.getErrorMessages().get(0)).contains("Unknown category 'Unconfigured'");
+            verifyNoBulkWrites();
+        }
+
+        @Test
+        @DisplayName("Supports legacy object-shaped template sections")
+        void bulkCreateEvaluations_objectTemplateSectionsAccepted() throws JsonProcessingException {
+            stubRoundTemplate.setSections("{\"Coding\":100}");
+            BulkCandidateEvaluationRequest request = bulkRequest(List.of(evaluationData(
+                "REG001", "John Doe", "john.doe@test.com", Map.of("Coding", 100))));
+            stubBulkDependencies(List.of(stubApplication));
+
+            BulkCandidateEvaluationResponse result = evaluationService.bulkCreateEvaluations(request);
+
+            assertThat(result.getSuccessCount()).isEqualTo(1);
+            verify(evaluationRepository).saveAll(anyList());
+        }
+
+        @Test
+        @DisplayName("Rejects malformed template sections before persistence")
+        void bulkCreateEvaluations_malformedTemplateRejected() {
+            stubRoundTemplate.setSections("not-json");
+            BulkCandidateEvaluationRequest request = bulkRequest(List.of(evaluationData(
+                "REG001", "John Doe", "john.doe@test.com", Map.of("Coding", 10))));
+            when(roundTemplateRepository.findById(1L)).thenReturn(Optional.of(stubRoundTemplate));
+
+            assertThatThrownBy(() -> evaluationService.bulkCreateEvaluations(request))
+                .isInstanceOf(ValidationException.class)
+                .hasMessageContaining("Invalid section configuration");
+            verifyNoBulkWrites();
+        }
+
+        @Test
+        @DisplayName("One invalid row prevents all rows from being saved")
+        void bulkCreateEvaluations_oneInvalidRowPreventsAllWrites() throws JsonProcessingException {
+            Candidate secondCandidate = new Candidate();
+            secondCandidate.setCandidateId(2L);
+            secondCandidate.setFirstName("Jane");
+            secondCandidate.setLastName("Smith");
+            secondCandidate.setEmail("jane.smith@test.com");
+
+            Application secondApplication = new Application();
+            secondApplication.setApplicationId(2L);
+            secondApplication.setRegistrationCode("ORIGINAL002");
+            secondApplication.setCandidate(secondCandidate);
+
+            BulkCandidateEvaluationRequest request = bulkRequest(List.of(
+                evaluationData("NEW001", "John Doe", "john.doe@test.com", Map.of("Coding", 80)),
+                evaluationData("NEW002", "Jane Smith", "jane.smith@test.com", Map.of("Coding", 101))));
+            stubBulkDependencies(List.of(stubApplication, secondApplication));
+
+            BulkCandidateEvaluationResponse result = evaluationService.bulkCreateEvaluations(request);
+
+            assertThat(result.getSuccessCount()).isZero();
+            assertThat(result.getFailureCount()).isEqualTo(1);
+            assertThat(result.getErrorMessages()).containsKey(1);
+            assertThat(stubApplication.getRegistrationCode()).isEqualTo("REG001");
+            assertThat(secondApplication.getRegistrationCode()).isEqualTo("ORIGINAL002");
+            verifyNoBulkWrites();
+        }
+
+        private BulkCandidateEvaluationRequest bulkRequest(
+                List<BulkCandidateEvaluationRequest.EvaluationData> evaluations) {
+            BulkCandidateEvaluationRequest request = new BulkCandidateEvaluationRequest();
+            request.setDriveId(1L);
+            request.setRoundConfigId(1L);
+            request.setUpdatedBy(1L);
+            request.setEvaluations(evaluations);
+            return request;
+        }
+
+        private BulkCandidateEvaluationRequest.EvaluationData evaluationData(
+                String registrationCode,
+                String candidateName,
+                String candidateEmail,
+                Map<String, Number> sections) {
+            BulkCandidateEvaluationRequest.EvaluationData evaluation =
+                new BulkCandidateEvaluationRequest.EvaluationData();
+            evaluation.setRegistrationCode(registrationCode);
+            evaluation.setCandidateName(candidateName);
+            evaluation.setCandidateEmail(candidateEmail);
+            evaluation.setSections(sections);
+            return evaluation;
+        }
+
+        private void stubBulkDependencies(List<Application> applications) throws JsonProcessingException {
+            when(roundTemplateRepository.findById(1L)).thenReturn(Optional.of(stubRoundTemplate));
+            when(userRepository.findById(1L)).thenReturn(Optional.of(stubUser));
+            when(applicationRepository.findByDriveIdAndCandidateEmails(eq(1L), anyList()))
+                .thenReturn(applications);
+            when(evaluationRepository.findByApplicationIdsAndRoundConfigIdFetched(anyList(), eq(1L)))
+                .thenReturn(Collections.emptyList());
+            when(objectMapper.writeValueAsString(any())).thenReturn("{}");
+        }
+
+        private void verifyNoBulkWrites() {
+            verify(applicationRepository, never()).saveAll(anyList());
+            verify(evaluationRepository, never()).saveAll(anyList());
+            verify(applicationRepository, never()).updateStatusByApplicationIds(any(), anyList());
+            verify(applicationRepository, never()).appendHistoryByApplicationIds(anyString(), anyList());
         }
 
         @Test
         @DisplayName("Negative: throws ValidationException when roundConfigId is null")
         void bulkCreateEvaluations_nullRoundConfigId_throwsValidationException() {
             BulkCandidateEvaluationRequest request = new BulkCandidateEvaluationRequest();
+            request.setDriveId(1L);
             request.setRoundConfigId(null);
             request.setUpdatedBy(1L);
             request.setEvaluations(new ArrayList<>());
@@ -342,6 +631,7 @@ class CandidateEvaluationServiceImplTest {
         @DisplayName("Negative: throws ValidationException when evaluations list is empty")
         void bulkCreateEvaluations_emptyList_throwsValidationException() {
             BulkCandidateEvaluationRequest request = new BulkCandidateEvaluationRequest();
+            request.setDriveId(1L);
             request.setRoundConfigId(1L);
             request.setUpdatedBy(1L);
             request.setEvaluations(Collections.emptyList());
@@ -354,9 +644,10 @@ class CandidateEvaluationServiceImplTest {
         }
 
         @Test
-        @DisplayName("Negative: returns errors when registration code not found")
-        void bulkCreateEvaluations_registrationCodeNotFound_returnsErrors() {
+        @DisplayName("Negative: returns errors when candidate email is not found in drive")
+        void bulkCreateEvaluations_candidateEmailNotFound_returnsErrors() {
             BulkCandidateEvaluationRequest request = new BulkCandidateEvaluationRequest();
+            request.setDriveId(1L);
             request.setRoundConfigId(1L);
             request.setUpdatedBy(1L);
 
@@ -372,7 +663,7 @@ class CandidateEvaluationServiceImplTest {
 
             when(roundTemplateRepository.findById(1L)).thenReturn(Optional.of(stubRoundTemplate));
             when(userRepository.findById(1L)).thenReturn(Optional.of(stubUser));
-            when(applicationRepository.findByRegistrationCodeInWithCandidate(anyList()))
+                when(applicationRepository.findByDriveIdAndCandidateEmails(eq(1L), anyList()))
                     .thenReturn(Collections.emptyList()); // No applications found
 
             BulkCandidateEvaluationResponse result = evaluationService.bulkCreateEvaluations(request);

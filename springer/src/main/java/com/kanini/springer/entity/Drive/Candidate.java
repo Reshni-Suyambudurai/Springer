@@ -68,7 +68,7 @@ public class Candidate {
 
     @NotBlank(message = "Candidate first name is required")
     @Pattern(regexp = "^[a-zA-Z\\s.]+$", message = "First name should contain only letters")
-    @Size(min = 2, max = 50)
+    @Size(max = 50)
     private String firstName;
 
     private String lastName;
@@ -77,7 +77,6 @@ public class Candidate {
     @Email(message = "Email should be valid")
     private String email;
 
-    @NotBlank(message = "Mobile number is required")
     @Pattern(regexp = "^[6-9]\\d{9}$", message = "Mobile number should be a valid 10-digit Indian number")
     private String mobile;
 

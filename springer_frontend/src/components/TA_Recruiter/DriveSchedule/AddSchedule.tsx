@@ -27,8 +27,14 @@ import "../../../css/TA_Recruiter/DriveSchedule/AddSchedule.css";
 const AddSchedule: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const cycleIdFromCalendar = (location.state as { cycleId?: number; cycleName?: string })?.cycleId || null;
-  const cycleNameFromCalendar = (location.state as { cycleId?: number; cycleName?: string })?.cycleName || "";
+  const calendarState = location.state as {
+    cycleId?: number;
+    cycleName?: string;
+    startDate?: string;
+  } | null;
+  const cycleIdFromCalendar = calendarState?.cycleId || null;
+  const cycleNameFromCalendar = calendarState?.cycleName || "";
+  const startDateFromCalendar = calendarState?.startDate || "";
   const [loading, setLoading] = useState(false);
   const [cycles, setCycles] = useState<HiringCycleSummaryResponse[]>([]);
   const [loadingCycles, setLoadingCycles] = useState(!cycleIdFromCalendar);
@@ -39,8 +45,8 @@ const AddSchedule: React.FC = () => {
     driveName: "",
     description: "",
     instituteId: undefined,
-    startDate: "",
-    endDate: "",
+    startDate: startDateFromCalendar,
+    endDate: startDateFromCalendar,
     location: "",
     eligibilityLocked: false,
     driveStatus: "PLANNED",
@@ -223,7 +229,6 @@ const AddSchedule: React.FC = () => {
                         <MenuItem
                           key={cycle.cycleId}
                           value={cycle.cycleId}
-                          disabled={cycle.status === "CLOSED"}
                         >
                           {cycle.cycleName} ({cycle.cycleYear}) - {cycle.status}
                         </MenuItem>
@@ -273,7 +278,6 @@ const AddSchedule: React.FC = () => {
                 helperText={errors.startDate}
                 className="add-schedule-input"
                 InputLabelProps={{ shrink: true }}
-                inputProps={{ min: new Date().toISOString().split("T")[0] }}
               />
 
               {/* End Date */}
@@ -287,7 +291,6 @@ const AddSchedule: React.FC = () => {
                 helperText={errors.endDate}
                 className="add-schedule-input"
                 InputLabelProps={{ shrink: true }}
-                inputProps={{ min: new Date().toISOString().split("T")[0] }}
               />
 
               {/* Drive Status */}

@@ -1,6 +1,7 @@
 package com.kanini.springer.service.Drive.impl;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.kanini.springer.dto.Common.FieldChangeDTO;
 import com.kanini.springer.dto.Common.ManualOverrideRequest;
@@ -28,15 +29,19 @@ import com.kanini.springer.repository.Hiring.UserRepository;
 import com.kanini.springer.service.Common.IOverrideService;
 import com.kanini.springer.service.Drive.ICandidateEvaluationService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.EnumMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -44,6 +49,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class CandidateEvaluationServiceImpl implements ICandidateEvaluationService {
     
     private final CandidateEvaluationRepository evaluationRepository;
@@ -260,6 +266,9 @@ public class CandidateEvaluationServiceImpl implements ICandidateEvaluationServi
         BulkCandidateEvaluationResponse response = new BulkCandidateEvaluationResponse();
         
         // Validate required fields
+        if (request.getDriveId() == null) {
+            throw new ValidationException("Drive ID is required");
+        }
         if (request.getRoundConfigId() == null) {
             throw new ValidationException("Round config ID is required");
         }
@@ -273,28 +282,52 @@ public class CandidateEvaluationServiceImpl implements ICandidateEvaluationServi
         // 1. Fetch round template (1 DB hit)
         RoundTemplate roundTemplate = roundTemplateRepository.findById(request.getRoundConfigId())
             .orElseThrow(() -> new ResourceNotFoundException("Round template", "ID", request.getRoundConfigId()));
+        Map<String, SectionLimit> sectionLimits = parseSectionLimits(roundTemplate);
         
         // 2. Fetch user (1 DB hit)
         User updatedByUser = userRepository.findById(request.getUpdatedBy())
             .orElseThrow(() -> new ResourceNotFoundException("User", "ID", request.getUpdatedBy()));
         
-        // 3. Collect all registration codes and batch fetch applications + candidates (1 DB hit)
-        List<String> registrationCodes = request.getEvaluations().stream()
-            .map(BulkCandidateEvaluationRequest.EvaluationData::getRegistrationCode)
-            .filter(code -> code != null && !code.isBlank())
+        // 3. Match applications by normalized candidate email within the selected drive.
+        List<String> candidateEmails = request.getEvaluations().stream()
+            .map(BulkCandidateEvaluationRequest.EvaluationData::getCandidateEmail)
+            .filter(email -> email != null && !email.isBlank())
+            .map(email -> email.trim().toLowerCase())
             .distinct()
             .collect(Collectors.toList());
         
-        Map<String, Application> appByRegCode = Map.of();
-        if (!registrationCodes.isEmpty()) {
-            List<Application> applications = applicationRepository.findByRegistrationCodeInWithCandidate(registrationCodes);
-            appByRegCode = applications.stream()
-                .collect(Collectors.toMap(Application::getRegistrationCode, app -> app, (a, b) -> a));
+        List<Application> matchedApplications = candidateEmails.isEmpty()
+            ? List.of()
+            : applicationRepository.findByDriveIdAndCandidateEmails(request.getDriveId(), candidateEmails);
+        Map<String, List<Application>> applicationsByEmail = matchedApplications.stream()
+            .collect(Collectors.groupingBy(application ->
+                application.getCandidate().getEmail().trim().toLowerCase()));
+        Map<Long, Application> applicationsById = matchedApplications.stream()
+            .collect(Collectors.toMap(Application::getApplicationId, application -> application, (first, ignored) -> first));
+
+        Map<String, Long> uploadedEmailCounts = request.getEvaluations().stream()
+            .map(BulkCandidateEvaluationRequest.EvaluationData::getCandidateEmail)
+            .filter(email -> email != null && !email.isBlank())
+            .map(email -> email.trim().toLowerCase())
+            .collect(Collectors.groupingBy(email -> email, Collectors.counting()));
+
+        Set<String> duplicateDatabaseEmails = applicationsByEmail.entrySet().stream()
+            .filter(entry -> entry.getValue().size() > 1)
+            .map(Map.Entry::getKey)
+            .collect(Collectors.toSet());
+
+        Map<String, Application> applicationByEmail = applicationsByEmail.entrySet().stream()
+            .filter(entry -> entry.getValue().size() == 1)
+            .collect(Collectors.toMap(Map.Entry::getKey, entry -> entry.getValue().get(0)));
+
+        if (!duplicateDatabaseEmails.isEmpty()) {
+            log.warn("Duplicate candidate emails found for drive {}: {}", request.getDriveId(), duplicateDatabaseEmails);
         }
         
         // 4. Pre-fetch existing evaluations for this round to detect duplicates / overrides (1 DB hit)
-        List<Long> allApplicationIds = appByRegCode.values().stream()
+        List<Long> allApplicationIds = matchedApplications.stream()
             .map(Application::getApplicationId)
+            .distinct()
             .collect(Collectors.toList());
         Map<Long, CandidateEvaluation> existingEvalByAppId = Map.of();
         if (!allApplicationIds.isEmpty()) {
@@ -309,22 +342,44 @@ public class CandidateEvaluationServiceImpl implements ICandidateEvaluationServi
         Map<Long, String> overriddenAppStatus = new LinkedHashMap<>();
         Map<Integer, String> errors = new LinkedHashMap<>();
         Set<Long> seenAppIds = new HashSet<>();
+        Map<ApplicationStatus, List<Long>> applicationStatusUpdates = new EnumMap<>(ApplicationStatus.class);
+        Map<Long, String> registrationCodesToAssign = new LinkedHashMap<>();
         
         List<BulkCandidateEvaluationRequest.EvaluationData> evalList = request.getEvaluations();
         for (int i = 0; i < evalList.size(); i++) {
             BulkCandidateEvaluationRequest.EvaluationData evalData = evalList.get(i);
             String name = evalData.getCandidateName() != null ? evalData.getCandidateName() : "Unknown";
+
+            String normalizedEmail = evalData.getCandidateEmail() != null
+                ? evalData.getCandidateEmail().trim().toLowerCase()
+                : "";
+
+            if (normalizedEmail.isBlank()) {
+                errors.put(i, name + ": Candidate email is required");
+                continue;
+            }
+
+            if (uploadedEmailCounts.getOrDefault(normalizedEmail, 0L) > 1) {
+                errors.put(i, name + ": Duplicate email in uploaded file - " + evalData.getCandidateEmail());
+                continue;
+            }
+
+            if (duplicateDatabaseEmails.contains(normalizedEmail)) {
+                errors.put(i, name + ": Duplicate email found in database for the selected drive - "
+                    + evalData.getCandidateEmail());
+                continue;
+            }
             
-            // Validate registration code
+            // Registration number comes from Excel and is assigned after all rows validate.
             if (evalData.getRegistrationCode() == null || evalData.getRegistrationCode().isBlank()) {
                 errors.put(i, name + ": Registration code is required");
                 continue;
             }
             
-            // Look up application from pre-fetched map
-            Application application = appByRegCode.get(evalData.getRegistrationCode());
+            Application application = applicationByEmail.get(normalizedEmail);
             if (application == null) {
-                errors.put(i, name + ": No application found for registration code " + evalData.getRegistrationCode());
+                errors.put(i, name + ": No application found for email " + evalData.getCandidateEmail()
+                    + " in the selected drive");
                 continue;
             }
             
@@ -335,12 +390,6 @@ public class CandidateEvaluationServiceImpl implements ICandidateEvaluationServi
                 continue;
             }
             
-            // Verify email against the candidate record
-            if (evalData.getCandidateEmail() != null && !evalData.getCandidateEmail().isBlank()
-                    && !evalData.getCandidateEmail().equalsIgnoreCase(candidate.getEmail())) {
-                errors.put(i, name + ": Email mismatch — expected " + candidate.getEmail() + " but got " + evalData.getCandidateEmail());
-                continue;
-            }            
             // Check for duplicate in DB — allow override if HOLD/SKIP
             CandidateEvaluation existingEval = existingEvalByAppId.get(application.getApplicationId());
             if (existingEval != null) {
@@ -355,14 +404,43 @@ public class CandidateEvaluationServiceImpl implements ICandidateEvaluationServi
             if (!seenAppIds.add(application.getApplicationId())) {
                 errors.put(i, name + ": Duplicate entry in upload \u2014 registration code " + evalData.getRegistrationCode() + " appears more than once");
                 continue;
-            }            
-            // Compute total score from sections
-            int totalScore = 0;
-            if (evalData.getSections() != null) {
-                for (Number val : evalData.getSections().values()) {
-                    totalScore += (val != null ? val.intValue() : 0);
+            }
+
+            String suppliedStatus = evalData.getStatus() != null ? evalData.getStatus().trim().toUpperCase() : "";
+            EvaluationStatus evaluationStatus = EvaluationStatus.PENDING;
+            ApplicationStatus targetApplicationStatus = null;
+            Integer roundNo = roundTemplate.getRoundNo();
+            if (!suppliedStatus.isBlank() && !"PENDING".equals(suppliedStatus)) {
+                if ("PASS".equals(suppliedStatus) || "SELECTED".equals(suppliedStatus)) {
+                    evaluationStatus = EvaluationStatus.PASS;
+                    if (roundNo != null && roundNo == 3) {
+                        targetApplicationStatus = ApplicationStatus.SELECTED;
+                    }
+                } else if ("FAIL".equals(suppliedStatus)) {
+                    evaluationStatus = EvaluationStatus.FAIL;
+                    targetApplicationStatus = ApplicationStatus.FAILED;
+                } else if ("ABSENT".equals(suppliedStatus) || "DROPPED".equals(suppliedStatus)) {
+                    evaluationStatus = EvaluationStatus.ABSENT;
+                    targetApplicationStatus = ApplicationStatus.DROPPED;
+                } else {
+                    String allowedValues = "blank, PENDING, PASS, SELECTED, FAIL, ABSENT, or DROPPED";
+                    errors.put(i, name + ": Invalid status '" + evalData.getStatus()
+                        + "'. Allowed values: " + allowedValues);
+                    continue;
                 }
             }
+
+            SectionScoreValidation scoreValidation = validateSectionScores(
+                evalData.getSections(), sectionLimits);
+            if (!scoreValidation.errors().isEmpty()) {
+                errors.put(i, name + ": Invalid section score(s): "
+                    + String.join("; ", scoreValidation.errors()));
+                continue;
+            }
+
+            int totalScore = scoreValidation.scores().values().stream()
+                .mapToInt(Integer::intValue)
+                .sum();
             
             // Build or update evaluation entity
             CandidateEvaluation evaluation;
@@ -376,13 +454,13 @@ public class CandidateEvaluationServiceImpl implements ICandidateEvaluationServi
                 evaluation.setRoundConfig(roundTemplate);
             }
             evaluation.setScore(totalScore);
-            evaluation.setStatus(EvaluationStatus.PENDING);
+            evaluation.setStatus(evaluationStatus);
             evaluation.setReviewedBy(updatedByUser);
             
             // Serialize sections to JSON sectionScore
-            if (evalData.getSections() != null && !evalData.getSections().isEmpty()) {
+            if (!scoreValidation.scores().isEmpty()) {
                 try {
-                    evaluation.setSectionScore(objectMapper.writeValueAsString(evalData.getSections()));
+                    evaluation.setSectionScore(objectMapper.writeValueAsString(scoreValidation.scores()));
                 } catch (JsonProcessingException e) {
                     errors.put(i, name + ": Failed to serialize section scores");
                     continue;
@@ -390,6 +468,12 @@ public class CandidateEvaluationServiceImpl implements ICandidateEvaluationServi
             }
             
             evaluationsToSave.add(evaluation);
+            registrationCodesToAssign.put(application.getApplicationId(), evalData.getRegistrationCode().trim());
+            if (targetApplicationStatus != null) {
+                applicationStatusUpdates
+                    .computeIfAbsent(targetApplicationStatus, ignored -> new ArrayList<>())
+                    .add(application.getApplicationId());
+            }
         }
         
         int totalProcessed = evalList.size();
@@ -403,8 +487,21 @@ public class CandidateEvaluationServiceImpl implements ICandidateEvaluationServi
             return response;
         }
         
+        List<Application> applicationsToUpdate = registrationCodesToAssign.entrySet().stream()
+            .map(entry -> {
+                Application application = applicationsById.get(entry.getKey());
+                application.setRegistrationCode(entry.getValue());
+                return application;
+            })
+            .toList();
+        applicationRepository.saveAll(applicationsToUpdate);
+
         // 6. Bulk save all evaluations (1 DB hit)
         evaluationRepository.saveAll(evaluationsToSave);
+        for (Map.Entry<ApplicationStatus, List<Long>> entry : applicationStatusUpdates.entrySet()) {
+            applicationRepository.updateStatusByApplicationIds(
+            entry.getKey(), entry.getValue());
+        }
         
         // 7. Append override history for HOLD/SKIP entries that were overridden (batched by status)
         if (!overriddenAppStatus.isEmpty()) {
@@ -430,6 +527,128 @@ public class CandidateEvaluationServiceImpl implements ICandidateEvaluationServi
         
         return response;
     }
+
+    private Map<String, SectionLimit> parseSectionLimits(RoundTemplate roundTemplate) {
+        String sectionsJson = roundTemplate.getSections();
+        if (sectionsJson == null || sectionsJson.isBlank()) {
+            throw new ValidationException("Round template sections are not configured for "
+                + roundTemplate.getRoundName());
+        }
+
+        try {
+            JsonNode sectionsNode = objectMapper.readTree(sectionsJson);
+            Map<String, SectionLimit> limits = new LinkedHashMap<>();
+
+            if (sectionsNode.isArray()) {
+                for (JsonNode sectionNode : sectionsNode) {
+                    addSectionLimit(limits, sectionNode.path("sectionName").asText(), sectionNode.get("outOf"));
+                }
+            } else if (sectionsNode.isObject()) {
+                sectionsNode.fields().forEachRemaining(entry ->
+                    addSectionLimit(limits, entry.getKey(), entry.getValue()));
+            } else {
+                throw invalidSectionConfiguration(roundTemplate);
+            }
+
+            if (limits.isEmpty()) {
+                throw invalidSectionConfiguration(roundTemplate);
+            }
+            return limits;
+        } catch (JsonProcessingException e) {
+            throw new ValidationException("Invalid section configuration for round template "
+                + roundTemplate.getRoundName());
+        }
+    }
+
+    private void addSectionLimit(
+            Map<String, SectionLimit> limits, String sectionName, JsonNode outOfNode) {
+        String trimmedName = sectionName != null ? sectionName.trim() : "";
+        if (trimmedName.isEmpty() || outOfNode == null || !outOfNode.isNumber()
+                || outOfNode.decimalValue().compareTo(BigDecimal.ZERO) <= 0) {
+            throw new ValidationException("Round template contains an invalid section limit");
+        }
+
+        String normalizedName = normalizeSectionName(trimmedName);
+        if (limits.putIfAbsent(
+                normalizedName,
+                new SectionLimit(trimmedName, outOfNode.decimalValue())) != null) {
+            throw new ValidationException("Round template contains duplicate section: " + trimmedName);
+        }
+    }
+
+    private ValidationException invalidSectionConfiguration(RoundTemplate roundTemplate) {
+        return new ValidationException("Invalid section configuration for round template "
+            + roundTemplate.getRoundName());
+    }
+
+    private SectionScoreValidation validateSectionScores(
+            Map<String, Number> suppliedScores, Map<String, SectionLimit> sectionLimits) {
+        if (suppliedScores == null || suppliedScores.isEmpty()) {
+            return new SectionScoreValidation(Map.of(), List.of());
+        }
+
+        Map<String, Integer> validatedScores = new LinkedHashMap<>();
+        Set<String> seenSections = new HashSet<>();
+        List<String> errors = new ArrayList<>();
+
+        for (Map.Entry<String, Number> entry : suppliedScores.entrySet()) {
+            String suppliedName = entry.getKey() != null ? entry.getKey().trim() : "";
+            String normalizedName = normalizeSectionName(suppliedName);
+            SectionLimit limit = sectionLimits.get(normalizedName);
+
+            if (limit == null) {
+                errors.add("Unknown category '" + suppliedName + "'");
+                continue;
+            }
+            if (!seenSections.add(normalizedName)) {
+                errors.add("Duplicate category '" + limit.name() + "'");
+                continue;
+            }
+
+            BigDecimal score = toBigDecimal(entry.getValue());
+            if (score == null || score.stripTrailingZeros().scale() > 0
+                    || score.compareTo(BigDecimal.ZERO) < 0
+                    || score.compareTo(limit.maximum()) > 0) {
+                errors.add(limit.name() + " must be a whole number from 0 to "
+                    + limit.maximum().stripTrailingZeros().toPlainString()
+                    + " (received " + String.valueOf(entry.getValue()) + ")");
+                continue;
+            }
+
+            try {
+                validatedScores.put(limit.name(), score.intValueExact());
+            } catch (ArithmeticException e) {
+                errors.add(limit.name() + " is outside the supported score range");
+            }
+        }
+
+        return new SectionScoreValidation(validatedScores, errors);
+    }
+
+    private BigDecimal toBigDecimal(Number value) {
+        if (value == null) {
+            return null;
+        }
+        if (value instanceof Double doubleValue && !Double.isFinite(doubleValue)) {
+            return null;
+        }
+        if (value instanceof Float floatValue && !Float.isFinite(floatValue)) {
+            return null;
+        }
+        try {
+            return new BigDecimal(value.toString());
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
+    private String normalizeSectionName(String sectionName) {
+        return sectionName.trim().toLowerCase(Locale.ROOT);
+    }
+
+    private record SectionLimit(String name, BigDecimal maximum) {}
+
+    private record SectionScoreValidation(Map<String, Integer> scores, List<String> errors) {}
     
     @Override
     @Transactional(readOnly = true)

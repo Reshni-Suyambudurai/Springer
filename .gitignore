@@ -54,7 +54,10 @@ springer_frontend/dist-ssr/
 .env.*
 !.env.example
 *.properties.local
+springer/src/main/resources/application-local.properties
+token.txt
 
 *.md
 !POSTGRESQL_MIGRATION_AUDIT.md
+!DEPLOYMENT.md
 

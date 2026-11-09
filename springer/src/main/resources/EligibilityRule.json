@@ -1,4 +1,5 @@
 {
+  "screeningEnabled" : false,
   "rules" : [ {
     "field" : "CGPA",
     "operator" : ">=",

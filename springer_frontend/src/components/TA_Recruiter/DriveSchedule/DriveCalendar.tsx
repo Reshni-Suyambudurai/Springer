@@ -51,6 +51,13 @@ function buildCalendarDays(currentDate: Date): (Date | null)[] {
   return days;
 }
 
+function formatDateForInput(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
 const DriveCalendar: React.FC = () => {
   const navigate = useNavigate();
   const [drives, setDrives] = useState<CalendarDrive[]>([]);
@@ -66,8 +73,6 @@ const DriveCalendar: React.FC = () => {
     () => cycles.find((c) => c.cycleId === selectedCycle) ?? null,
     [cycles, selectedCycle]
   );
-
-  const isSelectedCycleOpen = selectedCycleData?.status === "OPEN";
 
   const calendarDays = useMemo(() => buildCalendarDays(currentDate), [currentDate]);
 
@@ -127,15 +132,16 @@ const DriveCalendar: React.FC = () => {
     }
   };
 
-  const handleAddDrive = useCallback(() => {
-    if (!isSelectedCycleOpen || selectedCycle === null || !selectedCycleData) return;
+  const handleAddDrive = useCallback((startDate?: string) => {
+    if (selectedCycle === null || !selectedCycleData) return;
     navigate("/ta-recruiter/drive-schedules/add", {
       state: {
         cycleId: selectedCycle,
         cycleName: `${selectedCycleData.cycleName} (${selectedCycleData.cycleYear})`,
+        startDate,
       },
     });
-  }, [isSelectedCycleOpen, selectedCycle, selectedCycleData, navigate]);
+  }, [selectedCycle, selectedCycleData, navigate]);
 
   const handleEventClick = async (driveId: number, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -212,12 +218,10 @@ const DriveCalendar: React.FC = () => {
     );
   }, []);
 
-  const addDriveDisabled = selectedCycle === null || !isSelectedCycleOpen;
+  const addDriveDisabled = selectedCycle === null;
 
   const addDriveTooltip =
-    addDriveDisabled && selectedCycle !== null
-      ? "Cannot add drives to a closed hiring cycle"
-      : "";
+    addDriveDisabled ? "Select a hiring cycle first" : "";
 
   return (
     <Box className="drive-calendar-container">
@@ -295,7 +299,7 @@ const DriveCalendar: React.FC = () => {
               <Button
                 variant="contained"
                 startIcon={<AddIcon />}
-                onClick={handleAddDrive}
+                onClick={() => handleAddDrive()}
                 disabled={addDriveDisabled}
                 className="g-btn g-btn-primary"
               >
@@ -325,13 +329,39 @@ const DriveCalendar: React.FC = () => {
             {calendarDays.map((date, index) => {
               const drivesForDay = getDrivesForDate(date);
               const isCurrentDay = isToday(date);
+              const isAddableDate =
+                date !== null && drivesForDay.length === 0 && selectedCycleData !== null;
 
               return (
                 <Box
                   key={index}
                   className={`drive-calendar-day-cell ${
                     !date ? "drive-calendar-empty-cell" : ""
-                  } ${isCurrentDay ? "drive-calendar-today-cell" : ""}`}
+                  } ${isCurrentDay ? "drive-calendar-today-cell" : ""} ${
+                    isAddableDate ? "drive-calendar-addable-cell" : ""
+                  }`}
+                  role={isAddableDate ? "button" : undefined}
+                  tabIndex={isAddableDate ? 0 : undefined}
+                  aria-label={
+                    isAddableDate && date
+                      ? `Add drive starting ${formatDateForInput(date)}`
+                      : undefined
+                  }
+                  onClick={
+                    isAddableDate && date
+                      ? () => handleAddDrive(formatDateForInput(date))
+                      : undefined
+                  }
+                  onKeyDown={
+                    isAddableDate && date
+                      ? (event) => {
+                          if (event.key === "Enter" || event.key === " ") {
+                            event.preventDefault();
+                            handleAddDrive(formatDateForInput(date));
+                          }
+                        }
+                      : undefined
+                  }
                 >
                   {date && (
                     <>

@@ -231,7 +231,12 @@ class ApplicationServiceImplTest {
             assertThat(result.getSuccessCount()).isEqualTo(1);
             assertThat(result.getFailureCount()).isEqualTo(0);
             assertThat(result.getSuccessfulApplications()).hasSize(1);
-            verify(applicationRepository).saveAll(anyList());
+                verify(applicationRepository).saveAll(argThat(applications -> {
+                    java.util.Iterator<Application> iterator = applications.iterator();
+                    return iterator.hasNext()
+                        && iterator.next().getRegistrationCode() == null
+                        && !iterator.hasNext();
+                }));
         }
 
         @Test

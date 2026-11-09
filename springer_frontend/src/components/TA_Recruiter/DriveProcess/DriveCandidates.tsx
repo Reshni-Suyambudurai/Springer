@@ -475,6 +475,18 @@ const DriveCandidates: React.FC = () => {
     );
   }
 
+  const finalizeStatusMapping = (
+    <div className="dc-finalize-status-summary">
+      <Typography className="dc-finalize-status-heading">Candidate stage updates</Typography>
+      <ul className="dc-finalize-status-list">
+        <li><strong>Application FAILED, IN DRIVE, or ALLOTED</strong><span>Candidate stage becomes REJECTED</span></li>
+      </ul>
+      <Typography className="dc-finalize-status-note">
+        Application and evaluation statuses are not changed. The drive becomes CLOSED only when every application has finished.
+      </Typography>
+    </div>
+  );
+
   const navbarSlot = document.getElementById("navbar-actions-slot");
 
   return (
@@ -521,7 +533,7 @@ const DriveCandidates: React.FC = () => {
           <button
             className="dc-navbar-btn"
             disabled={!canAddScores}
-            onClick={() => navigate(`/drive-process/add-scores/${driveId}/round1`)}
+            onClick={() => navigate(`/drive-process/add-scores/${driveId}`)}
           >
             Add Score
           </button>
@@ -815,8 +827,9 @@ const DriveCandidates: React.FC = () => {
                 <Typography className="dc-dialog-title dc-dialog-title-warning">⚠️ Warning</Typography>
                 <Typography className="dc-dialog-message">
                   {unfinishedCount} candidate(s) haven't finished the interview process 
-                  (status is IN_DRIVE). Would you like to proceed anyway?
+                  (application status is IN DRIVE or ALLOTED). Proceeding will set their candidate stage to REJECTED.
                 </Typography>
+                {finalizeStatusMapping}
                 <div className="dc-dialog-actions">
                   <Button
                     className="dc-dialog-btn-cancel"
@@ -842,12 +855,12 @@ const DriveCandidates: React.FC = () => {
               <>
                 <Typography className="dc-dialog-title">Confirm Finalization</Typography>
                 <Typography className="dc-dialog-message">
-                  Are you sure you want to finalize these applications? 
-                  This will update candidate stages based on their application status.
+                  Are you sure you want to finalize these applications?
                   {selectedBatch === "ALL" 
                     ? ` All ${filteredApplications.length} applications will be finalized.`
                     : ` ${filteredApplications.filter(app => batchMap[selectedBatch]?.includes(app.applicationId)).length} applications in the selected batch will be finalized.`}
                 </Typography>
+                {finalizeStatusMapping}
                 <div className="dc-dialog-actions">
                   <Button
                     className="dc-dialog-btn-cancel"

@@ -23,6 +23,10 @@ import CheckIcon from "@mui/icons-material/Check";
 import CloseIcon from "@mui/icons-material/Close";
 import SearchIcon from "@mui/icons-material/Search";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
+import AbcIcon from "@mui/icons-material/Abc";
+import EmailOutlinedIcon from "@mui/icons-material/EmailOutlined";
+import NumbersIcon from "@mui/icons-material/Numbers";
+import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import ErrorOverlay from "../../../Common/ErrorOverlay";
 import { useNavbarAction } from "../../../../contexts/NavbarActionContext";
 import { showToast } from "../../../../utils/toast";
@@ -31,11 +35,73 @@ import { roundTemplateApi } from "../../../../services/drive.api";
 import { tokenstore } from "../../../../auth/tokenstore";
 import "../../../../css/TA_Recruiter/DriveProcess/AddScores/AddRound1.css";
 
-const STATIC_HEADERS = ["Registration_code", "Candidate_name", "Candidate_email"];
+const IDENTITY_HEADERS = ["Registration_code", "Candidate_name", "Candidate_email"];
+const STATUS_HEADER = "Status";
+const STATIC_HEADERS = [...IDENTITY_HEADERS, STATUS_HEADER];
 const EDITABLE_HEADERS = ["Candidate_name", "Candidate_email"];
 
-const AddRound1: React.FC = () => {
+interface AddRound1Props {
+  roundNo?: 1 | 2 | 3;
+}
+
+interface RoundSection {
+  sectionName: string;
+  outOf: number | null;
+}
+
+const ROUND_NAMES = {
+  1: "Aptitude",
+  2: "Communication",
+  3: "Technical",
+} as const;
+
+const formatSectionHeader = ({ sectionName, outOf }: RoundSection) =>
+  outOf === null ? sectionName : `${sectionName} (Out of ${outOf})`;
+
+const getRoundSections = (sections: unknown): RoundSection[] => {
+  if (Array.isArray(sections)) {
+    return sections
+      .map((section) => {
+        if (typeof section === "string") {
+          return { sectionName: section.trim(), outOf: null };
+        }
+        if (section && typeof section === "object") {
+          const item = section as { sectionName?: unknown; name?: unknown; outOf?: unknown };
+          const parsedOutOf = Number(item.outOf);
+          return {
+            sectionName: String(item.sectionName ?? item.name ?? "").trim(),
+            outOf: Number.isFinite(parsedOutOf) ? parsedOutOf : null,
+          };
+        }
+        return { sectionName: "", outOf: null };
+      })
+      .filter((section) => section.sectionName);
+  }
+
+  if (sections && typeof sections === "object") {
+    return Object.entries(sections as Record<string, unknown>).map(([sectionName, outOf]) => {
+      const parsedOutOf = Number(outOf);
+      return {
+        sectionName,
+        outOf: Number.isFinite(parsedOutOf) ? parsedOutOf : null,
+      };
+    });
+  }
+
+  return [];
+};
+
+const findSectionForHeader = (header: string, sections: RoundSection[]) => {
+  const normalizedHeader = header.trim().toLowerCase();
+  return sections.find((section) =>
+    section.sectionName.toLowerCase() === normalizedHeader
+    || formatSectionHeader(section).toLowerCase() === normalizedHeader
+  );
+};
+
+const AddRound1: React.FC<AddRound1Props> = ({ roundNo = 1 }) => {
   const { driveId } = useParams<{ driveId: string }>();
+  const roundName = ROUND_NAMES[roundNo];
   const { setAction } = useNavbarAction();
   const [dynamicHeaders, setDynamicHeaders] = useState<string[]>([]);
   const [rows, setRows] = useState<Record<string, unknown>[]>([]);
@@ -49,87 +115,28 @@ const AddRound1: React.FC = () => {
   const [errorMap, setErrorMap] = useState<Record<string, string>>({});
   const [uploadErrors, setUploadErrors] = useState<string[]>([]);
   const [errorEmailMap, setErrorEmailMap] = useState<Map<number, string>>(new Map());
-  const [dupRowIds, setDupRowIds] = useState<Set<number>>(new Set()); // Upload duplicate row IDs (reg code duplicates)
   const [dupEmailRowIds, setDupEmailRowIds] = useState<Set<number>>(new Set()); // Upload duplicate row IDs (email duplicates)
-  const [dbDupRegCodes, setDbDupRegCodes] = useState<Set<string>>(new Set()); // DB duplicates (red)
-  const [checkingDuplicates, setCheckingDuplicates] = useState(false);
+  const [templateSections, setTemplateSections] = useState<RoundSection[]>([]);
+  const templateHeaders = templateSections.map(formatSectionHeader);
 
   // All headers = static + dynamic (score columns from Excel)
-  const allHeaders = [...STATIC_HEADERS, ...dynamicHeaders];
+  const allHeaders = [...IDENTITY_HEADERS, ...dynamicHeaders, STATUS_HEADER];
 
   const computeDuplicates = (data: Record<string, unknown>[]) => {
-    const regCodeMap = new Map<string, number[]>();
-    const emailMap = new Map<string, number[]>();
+    const seenEmails = new Set<string>();
+    const dupEM = new Set<number>();
     data.forEach((row) => {
-      const rc = String(row["Registration_code"] ?? "").trim().toLowerCase();
       const em = String(row["Candidate_email"] ?? "").trim().toLowerCase();
       const rowId = Number(row["_rowId"]);
-      if (rc) {
-        if (!regCodeMap.has(rc)) regCodeMap.set(rc, []);
-        regCodeMap.get(rc)!.push(rowId);
-      }
       if (em) {
-        if (!emailMap.has(em)) emailMap.set(em, []);
-        emailMap.get(em)!.push(rowId);
-      }
-    });
-    const dupRC = new Set<number>();
-    const dupEM = new Set<number>();
-    // Only mark 2nd, 3rd, etc. occurrences as duplicates (skip first with slice(1))
-    regCodeMap.forEach((rowIds) => { if (rowIds.length > 1) rowIds.slice(1).forEach(id => dupRC.add(id)); });
-    emailMap.forEach((rowIds) => { if (rowIds.length > 1) rowIds.slice(1).forEach(id => dupEM.add(id)); });
-    return { dupRC, dupEM };
-  };
-
-  const checkDatabaseDuplicates = async (data: Record<string, unknown>[]) => {
-    if (!driveId) return;
-    
-    setCheckingDuplicates(true);
-    try {
-      const candidates = data.map((row) => ({
-        applicationId: 0, // Will be resolved by backend via registrationCode
-        registrationCode: String(row["Registration_code"] ?? ""),
-      })).filter(c => c.registrationCode);
-
-      if (candidates.length === 0) {
-        setDbDupRegCodes(new Set());
-        return;
-      }
-
-      const response = await candidateEvaluationApi.checkExistingEvaluations({
-        driveId: Number(driveId),
-        roundConfigId: 1,
-        candidates,
-      });
-
-      if (response.success && response.data) {
-        const existingRegCodes = new Set(
-          response.data.existingEvaluations.map(e => e.registrationCode.toLowerCase())
-        );
-        
-        const dbDups = new Set<string>();
-        data.forEach((row) => {
-          const regCode = String(row["Registration_code"] ?? "").trim().toLowerCase();
-          if (regCode && existingRegCodes.has(regCode)) {
-            dbDups.add(regCode);
-          }
-        });
-        
-        setDbDupRegCodes(dbDups);
-        
-        if (dbDups.size > 0) {
-          showToast(
-            `${dbDups.size} record(s) already exist in database`,
-            "error"
-          );
+        if (seenEmails.has(em)) {
+          dupEM.add(rowId);
+        } else {
+          seenEmails.add(em);
         }
       }
-    } catch (error) {
-      console.error("Failed to check existing evaluations:", error);
-      showToast("Failed to check for existing evaluations", "error");
-    } finally {
-      setCheckingDuplicates(false);
-    }
+    });
+    return { dupEM };
   };
 
   const processFile = useCallback((file: File) => {
@@ -150,7 +157,23 @@ const AddRound1: React.FC = () => {
 
         // Dynamic headers = everything from Excel that isn't one of the 3 static columns
         const staticLower = new Set(STATIC_HEADERS.map((h) => h.toLowerCase()));
-        const dynamic = headerStrings.filter((h) => !staticLower.has(h.toLowerCase()));
+        const sourceDynamicHeaders = headerStrings.filter((h) => !staticLower.has(h.toLowerCase()));
+        if (templateSections.length === 0) {
+          showToast("Round template sections are still loading. Please try again.", "error");
+          return;
+        }
+
+        const unknownHeaders = sourceDynamicHeaders.filter(
+          (header) => !findSectionForHeader(header, templateSections)
+        );
+        if (unknownHeaders.length > 0) {
+          showToast(`Unknown score field(s): ${unknownHeaders.join(", ")}`, "error");
+          return;
+        }
+
+        const dynamic = sourceDynamicHeaders.map((header) =>
+          formatSectionHeader(findSectionForHeader(header, templateSections)!)
+        );
 
         const jsonData = XLSX.utils.sheet_to_json(sheet) as Record<string, unknown>[];
 
@@ -160,7 +183,13 @@ const AddRound1: React.FC = () => {
         }
 
         // Add unique row IDs to track duplicates properly
-        const dataWithIds = jsonData.map((row, idx) => ({ ...row, _rowId: idx })) as Record<string, unknown>[];
+        const dataWithIds = jsonData.map((row, idx) => {
+          const normalizedRow = { ...row };
+          sourceDynamicHeaders.forEach((sourceHeader, headerIndex) => {
+            normalizedRow[dynamic[headerIndex]] = row[sourceHeader];
+          });
+          return { ...normalizedRow, _rowId: idx };
+        }) as Record<string, unknown>[];
 
         setDynamicHeaders(dynamic);
         setRows(dataWithIds);
@@ -170,12 +199,8 @@ const AddRound1: React.FC = () => {
         const names = [...new Set(dataWithIds.map((r) => String(r["Candidate_name"] || "")).filter(Boolean))];
         setNameOptions(names);
 
-        const { dupRC, dupEM } = computeDuplicates(dataWithIds);
-        setDupRowIds(dupRC);
+        const { dupEM } = computeDuplicates(dataWithIds);
         setDupEmailRowIds(dupEM);
-
-        // Check for DB duplicates
-        checkDatabaseDuplicates(dataWithIds);
 
         showToast(`${dataWithIds.length} rows loaded from ${file.name}`, "success");
       } catch {
@@ -183,8 +208,7 @@ const AddRound1: React.FC = () => {
       }
     };
     reader.readAsArrayBuffer(file);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [templateSections]);
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -224,8 +248,7 @@ const AddRound1: React.FC = () => {
     }
     const updatedRows = rows.filter((_, i) => i !== index);
     setRows(updatedRows);
-    const { dupRC, dupEM } = computeDuplicates(updatedRows);
-    setDupRowIds(dupRC);
+    const { dupEM } = computeDuplicates(updatedRows);
     setDupEmailRowIds(dupEM);
     if (editingIndex === index) setEditingIndex(null);
     showToast("Row removed", "success");
@@ -244,8 +267,7 @@ const AddRound1: React.FC = () => {
     if (editingIndex === null) return;
     const updatedRows = rows.map((row, i) => (i === editingIndex ? { ...row, ...editValues } : row));
     setRows(updatedRows);
-    const { dupRC: eRC, dupEM: eEM } = computeDuplicates(updatedRows);
-    setDupRowIds(eRC);
+    const { dupEM: eEM } = computeDuplicates(updatedRows);
     setDupEmailRowIds(eEM);
     // Clear error for this row
     const regCode = String(rows[editingIndex]["Registration_code"] ?? "");
@@ -288,47 +310,87 @@ const AddRound1: React.FC = () => {
     setEditValues({});
     setNameOptions([]);
     setErrorMap({});
-    setDupRowIds(new Set());
     setDupEmailRowIds(new Set());
-    setDbDupRegCodes(new Set());
   };
 
   const handleRemoveDuplicates = () => {
-    const allDupRowIds = new Set([...dupRowIds, ...dupEmailRowIds]);
     const filtered = rows.filter((row) => {
       const rowId = Number(row["_rowId"]);
-      const rc = String(row["Registration_code"] ?? "").trim().toLowerCase();
-      // Remove if: row ID is in duplicate list OR registration code exists in DB
-      return !allDupRowIds.has(rowId) && !dbDupRegCodes.has(rc);
+      return !dupEmailRowIds.has(rowId);
     });
     const count = rows.length - filtered.length;
     if (count === 0) return;
     setRows(filtered);
-    const { dupRC, dupEM } = computeDuplicates(filtered);
-    setDupRowIds(dupRC);
+    const { dupEM } = computeDuplicates(filtered);
     setDupEmailRowIds(dupEM);
-    setDbDupRegCodes(new Set()); // Clear DB duplicates as they were removed
     showToast(`Removed ${count} duplicate row(s)`, "success");
+  };
+
+  const handleRemoveErrorRowsByEmail = (email: string, errorIndex: number) => {
+    const normalizedEmail = email.trim().toLowerCase();
+    const removedRegistrationCodes = new Set(
+      rows
+        .filter((row) => String(row["Candidate_email"] ?? "").trim().toLowerCase() === normalizedEmail)
+        .map((row) => String(row["Registration_code"] ?? ""))
+        .filter(Boolean)
+    );
+    const updatedRows = rows.filter(
+      (row) => String(row["Candidate_email"] ?? "").trim().toLowerCase() !== normalizedEmail
+    );
+
+    setRows(updatedRows);
+    setDupEmailRowIds(computeDuplicates(updatedRows).dupEM);
+    setErrorMap((prev) => Object.fromEntries(
+      Object.entries(prev).filter(([registrationCode]) =>
+        !removedRegistrationCodes.has(registrationCode)
+      )
+    ));
+    setUploadErrors((prev) => prev.filter((_, index) => index !== errorIndex));
+    setErrorEmailMap((prev) => {
+      const updated = new Map<number, string>();
+      let newIndex = 0;
+      for (const [oldIndex, mappedEmail] of prev.entries()) {
+        if (oldIndex !== errorIndex) {
+          updated.set(newIndex, mappedEmail);
+          newIndex++;
+        }
+      }
+      return updated;
+    });
   };
 
   const handleDownloadFormat = async () => {
     try {
-      const res = await roundTemplateApi.getRoundTemplateById(1);
-      const sections = res.data.sections;
-      const sectionHeaders: string[] = Array.isArray(sections)
-        ? (sections as { sectionName: string }[]).map((s) => s.sectionName)
-        : [];
-      const headers = [...STATIC_HEADERS, ...sectionHeaders];
+      const res = await roundTemplateApi.getRoundTemplateById(roundNo);
+      const sectionHeaders = getRoundSections(res.data.sections).map(formatSectionHeader);
+      const headers = [...IDENTITY_HEADERS, ...sectionHeaders, STATUS_HEADER];
       const ws = XLSX.utils.aoa_to_sheet([headers]);
       const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, "Aptitude Scores");
-      XLSX.writeFile(wb, "aptitude_score_template.xlsx");
+      XLSX.utils.book_append_sheet(wb, ws, `${roundName} Scores`);
+      XLSX.writeFile(wb, `${roundName.toLowerCase()}_score_template.xlsx`);
     } catch {
       showToast("Failed to fetch round template", "error");
     }
   };
 
   const [uploading, setUploading] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+
+    roundTemplateApi.getRoundTemplateById(roundNo)
+      .then((response) => {
+        if (active) setTemplateSections(getRoundSections(response.data.sections));
+      })
+      .catch((error) => {
+        console.error(`Failed to load ${roundName} template fields:`, error);
+        if (active) setTemplateSections([]);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [roundNo, roundName]);
 
   const handleUpload = async () => {
     if (rows.length === 0) {
@@ -346,7 +408,8 @@ const AddRound1: React.FC = () => {
       const sections: Record<string, number> = {};
       dynamicHeaders.forEach((header) => {
         const val = Number(row[header]);
-        sections[header] = isNaN(val) ? 0 : val;
+        const section = findSectionForHeader(header, templateSections);
+        sections[section?.sectionName ?? header] = isNaN(val) ? 0 : val;
       });
 
       return {
@@ -354,12 +417,14 @@ const AddRound1: React.FC = () => {
         candidateName: String(row["Candidate_name"] ?? ""),
         candidateEmail: String(row["Candidate_email"] ?? ""),
         sections,
+        status: String(row[STATUS_HEADER] ?? "").trim(),
       };
     });
 
     const payload = {
-      roundConfigId: 1,
-      roundNo: 1,
+      driveId: Number(driveId),
+      roundConfigId: roundNo,
+      roundNo,
       updatedBy: user.userId,
       evaluations,
     };
@@ -424,28 +489,72 @@ const AddRound1: React.FC = () => {
 
       {/* Drag and Drop zone — shown when no data */}
       {rows.length === 0 && (
-        <Box
-          className={`ar1-dropzone ${dragging ? "ar1-dropzone-active" : ""}`}
-          onDragOver={handleDragOver}
-          onDragLeave={handleDragLeave}
-          onDrop={handleDrop}
-          onClick={() => fileInputRef.current?.click()}
-        >
-          <input
-            ref={fileInputRef}
-            type="file"
-            hidden
-            accept=".xlsx,.xls"
-            onChange={handleFileUpload}
-          />
-          <CloudUploadIcon className="ar1-dropzone-icon" />
-          <Typography variant="h6" className="ar1-dropzone-title">
-            Drag & drop your Excel file here
-          </Typography>
-          <Typography variant="body2" className="ar1-dropzone-subtitle">
-            or click to browse — supports .xlsx, .xls
-          </Typography>
-        </Box>
+        <>
+          <Box className="ar1-upload-card">
+            <Box
+              className={`ar1-dropzone ${dragging ? "ar1-dropzone-active" : ""}`}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
+              onClick={() => fileInputRef.current?.click()}
+            >
+              <input
+                ref={fileInputRef}
+                type="file"
+                hidden
+                accept=".xlsx,.xls"
+                onChange={handleFileUpload}
+              />
+              <CloudUploadIcon className="ar1-dropzone-icon" />
+              <Typography variant="h6" className="ar1-dropzone-title">
+                Drag and drop your Excel file here
+              </Typography>
+              <Typography variant="body2" className="ar1-dropzone-subtitle">
+                or <span className="ar1-browse-link">browse files</span>
+                <span className="ar1-file-support"> - supports .xlsx, .xls</span>
+              </Typography>
+            </Box>
+          </Box>
+
+          <Box className="ar1-fields-reference">
+            <Typography className="ar1-fields-reference-label">
+              Required Excel Fields
+            </Typography>
+            <Typography className="ar1-fields-reference-help">
+              Ensure your spreadsheet contains the following exact column headers to prevent errors during upload:
+            </Typography>
+            <Box className="ar1-field-chips">
+              {[...IDENTITY_HEADERS, ...templateHeaders, STATUS_HEADER].map((header) => {
+                const isEmail = header === "Candidate_email";
+                const isScore = templateHeaders.includes(header);
+                return (
+                  <Box className="ar1-field-chip" key={header}>
+                    {isEmail ? (
+                      <EmailOutlinedIcon className="ar1-field-chip-icon" />
+                    ) : isScore ? (
+                      <NumbersIcon className="ar1-field-chip-icon" />
+                    ) : header !== STATUS_HEADER ? (
+                      <AbcIcon className="ar1-field-chip-icon ar1-field-chip-icon-text" />
+                    ) : null}
+                    <span>{header}</span>
+                  </Box>
+                );
+              })}
+            </Box>
+            <Box className="ar1-status-reference">
+              <InfoOutlinedIcon className="ar1-status-reference-icon" />
+              <Typography className="ar1-status-reference-text">
+                <strong>Status Rules:</strong>{" "}
+                {roundNo === 3
+                  ? "Blank or PENDING records PENDING; PASS or SELECTED records PASS and marks the application SELECTED; FAIL records FAIL and marks the application FAILED; ABSENT or DROPPED records ABSENT and marks the application DROPPED."
+                  : "Blank or PENDING records PENDING; PASS or SELECTED records PASS; FAIL records FAIL and marks the application FAILED; ABSENT or DROPPED records ABSENT and marks the application DROPPED."}
+                <br />
+                <strong>Score Rules:</strong>{" "}
+                Enter a whole number from 0 through the category&apos;s displayed Out of value.
+              </Typography>
+            </Box>
+          </Box>
+        </>
       )}
 
       {/* File info + search */}
@@ -474,13 +583,11 @@ const AddRound1: React.FC = () => {
             <Button size="small" onClick={handleClear} className="ar1-btn-clear">
               Clear
             </Button>
-            {(dupRowIds.size > 0 || dupEmailRowIds.size > 0 || dbDupRegCodes.size > 0) && (() => {
+            {dupEmailRowIds.size > 0 && (() => {
               // Calculate actual rows that would be removed
-              const allDupRowIds = new Set([...dupRowIds, ...dupEmailRowIds]);
               const wouldRemove = rows.filter((row) => {
                 const rowId = Number(row["_rowId"]);
-                const rc = String(row["Registration_code"] ?? "").trim().toLowerCase();
-                return allDupRowIds.has(rowId) || dbDupRegCodes.has(rc);
+                return dupEmailRowIds.has(rowId);
               }).length;
               return (
                 <Button
@@ -488,7 +595,6 @@ const AddRound1: React.FC = () => {
                   variant="outlined"
                   onClick={handleRemoveDuplicates}
                   className="ar1-btn-remove-dup"
-                  disabled={checkingDuplicates}
                 >
                   Remove Duplicates ({wouldRemove})
                 </Button>
@@ -497,11 +603,11 @@ const AddRound1: React.FC = () => {
             <Button
               size="small"
               onClick={handleUpload}
-              disabled={uploading || rows.length === 0 || Object.keys(errorMap).length > 0 || checkingDuplicates}
+              disabled={uploading || rows.length === 0 || Object.keys(errorMap).length > 0 || dupEmailRowIds.size > 0}
               className="ar1-btn ar1-btn-upload"
               startIcon={<CloudUploadIcon />}
             >
-              {uploading ? "Uploading..." : checkingDuplicates ? "Checking..." : "Upload"}
+              {uploading ? "Uploading..." : "Upload"}
             </Button>
           </Box>
         </Box>
@@ -523,37 +629,25 @@ const AddRound1: React.FC = () => {
             <TableBody>
               {filteredRows.map(({ row, originalIndex }, displayIndex) => {
                 const regCode = String(row["Registration_code"] ?? "");
-                const regCodeLower = regCode.trim().toLowerCase();
                 const rowId = Number(row["_rowId"]);
                 const hasError = regCode !== "" && regCode in errorMap;
-                const isDbDup = dbDupRegCodes.has(regCodeLower); // DB duplicate (red - priority)
-                const isDupRegCode = dupRowIds.has(rowId); // Upload duplicate reg code (blue) - 2nd+ occurrence only
                 const isDupEmail = dupEmailRowIds.has(rowId); // Upload duplicate email (blue) - 2nd+ occurrence only
                 
-                // Priority: DB dup (red) > Upload error > Upload dup email > Upload dup reg code
-                const rowDupClass = isDbDup 
-                  ? "ar1-row-db-dup" 
-                  : hasError 
+                const rowDupClass = hasError 
                     ? "ar1-row-error" 
                     : isDupEmail 
                       ? "ar1-row-dup-email" 
-                      : isDupRegCode 
-                        ? "ar1-row-dup-regcode" 
-                        : "";
+                      : "";
                 
                 return (
                 <TableRow key={originalIndex} className={`ar1-table-row ${rowDupClass}`}>
                   <TableCell className="ar1-td">{displayIndex + 1}</TableCell>
                   {allHeaders.map((header) => {
                     const isStaticError = hasError && STATIC_HEADERS.includes(header);
-                    const isDbDupCell = isDbDup && header === "Registration_code";
-                    const isDupRC = isDupRegCode && header === "Registration_code";
                     const isDupEM = isDupEmail && header === "Candidate_email";
                     
                     const cellClass = `ar1-td${
-                      isDbDupCell ? " ar1-cell-db-dup" : 
                       isStaticError ? " ar1-cell-error" : 
-                      isDupRC ? " ar1-cell-dup-regcode" : 
                       isDupEM ? " ar1-cell-dup-email" : 
                       ""
                     }`;
@@ -575,14 +669,8 @@ const AddRound1: React.FC = () => {
                     // Candidate_name: show a combined tooltip for all applicable errors/duplicates
                     if (header === "Candidate_name" && editingIndex !== originalIndex) {
                       const tooltipLines: string[] = [];
-                      if (isDbDup) tooltipLines.push("Already exists in database");
                       if (hasError) tooltipLines.push(errorMap[regCode]);
-                      const duplicateParts: string[] = [];
-                      if (isDupRegCode) duplicateParts.push("Registration code");
-                      if (isDupEmail) duplicateParts.push("Email");
-                      if (duplicateParts.length > 0) {
-                        tooltipLines.push(`Duplicate: ${duplicateParts.join(" and ")} repeated in this upload`);
-                      }
+                      if (isDupEmail) tooltipLines.push("Duplicate: Email repeated in this upload");
                       
                       if (tooltipLines.length > 0) {
                         return (
@@ -597,7 +685,7 @@ const AddRound1: React.FC = () => {
                               placement="top"
                               classes={{ tooltip: "g-tooltip", arrow: "g-tooltip-arrow" }}
                             >
-                              <span className={isDbDup ? "ar1-db-dup-name" : hasError ? "ar1-error-name" : "ar1-dup-name"}>
+                              <span className={hasError ? "ar1-error-name" : "ar1-dup-name"}>
                                 {String(row[header] ?? "")}
                               </span>
                             </Tooltip>
@@ -648,25 +736,7 @@ const AddRound1: React.FC = () => {
           errorMessages={uploadErrors}
           errorEmailMap={errorEmailMap}
           onClose={() => setUploadErrors([])}
-          onRemoveByEmail={(email, errorIndex) => {
-            setRows((prev) => prev.filter((r) => String(r["Candidate_email"] ?? "").toLowerCase() !== email));
-            setUploadErrors((prev) => {
-              const remaining = prev.filter((_, i) => i !== errorIndex);
-              if (remaining.length === 0) setErrorEmailMap(new Map());
-              return remaining;
-            });
-            setErrorEmailMap((prev) => {
-              const updated = new Map<number, string>();
-              let newIdx = 0;
-              for (const [oldIdx, e] of prev.entries()) {
-                if (oldIdx !== errorIndex) {
-                  updated.set(newIdx, e);
-                  newIdx++;
-                }
-              }
-              return updated;
-            });
-          }}
+          onRemoveByEmail={handleRemoveErrorRowsByEmail}
         />
       )}
     </Box>
